@@ -16,4 +16,4 @@ All agent skills and source-of-truth docs live here.
 | **game-readiness** | [game-readiness/SKILL.md](game-readiness/SKILL.md) | Playability, clarity, feedback, scale-readiness (e.g. games). |
 | **visual-match** | [visual-match/SKILL.md](visual-match/SKILL.md) | Matching UI to reference examples (screenshots, specs). |
 
-Scope/sprints stay in root: [PM_PLAN.md](../../PM_PLAN.md). Rules in `.cursor/rules/` reference this directory.
+Scope/sprints: [PM_PLAN.md](../../PM_PLAN.md). Product epics or roadmap: your choice (e.g. `doc/plan/`). Session handoff files: often gitignored — see [.cursor/handoff/README.md](../handoff/README.md). Rules in `.cursor/rules/` reference this directory.

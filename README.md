@@ -1,8 +1,6 @@
 # Agentic Template (stack-agnostic)
 
-Cursor **rules**, **skills**, **handoff protocol**, and **test discipline** for any project — **not** tied to Flutter, Node, or a specific stack. Use this for browser extensions (Edge, Chrome), backends, CLIs, or other codebases where you do not want a mobile scaffold.
-
-**Related:** For a **Flutter iOS-only** app template with the same agentic layer plus `lib/`, `ios/`, and Dart tests, use [FlutterAgenticTemplate](https://github.com/pbuckles22/FlutterAgenticTemplate).
+Cursor **rules**, **skills**, **handoff protocol**, and **test discipline** for any codebase — browser extensions (Edge, Chrome), backends, CLIs, native apps, etc. Bring your own runtime and document commands in **AGENT_HANDOFF.md** and **TEST_PLAN.md**.
 
 ## Quick start
 
@@ -21,16 +19,16 @@ Document your **test** and **coverage** commands in [AGENT_HANDOFF.md](AGENT_HAN
 | **.cursor/rules** | `always.mdc`, `handoff-checklist.mdc`, `testing.mdc` |
 | **.cursor/skills** | DEV_GUIDE, TEST_TDD, DESIGN_SYSTEM, techwriter, tester, code-reviewer, tech-debt-evaluator, pm-governance, ui-ux, game-readiness, visual-match |
 | **.cursor/handoff** | Handoff note template and README |
-| **doc/** | Placeholder for requirements |
-| **examples/** | Placeholder for reference UI/specs |
-| **script/** | README — add your own test runner scripts |
+| **doc/** | Requirements and optional **`doc/handoff/`** for tracked contributor notes (see `.gitignore` for gitignored session files) |
+| **examples/** | Reference UI/specs for **visual-match** / **ui-ux** |
+| **script/** | Optional — test or CI helper scripts; document in AGENT_HANDOFF |
 
 No application runtime is included — bring your own stack.
 
 ## What not to put in the repo
 
 - **No secrets** — API keys, tokens, credentials. Use environment variables or a local config that is gitignored.
-- **Handoff notes** — `.cursor/handoff/handoff-*.md` are gitignored so local handoff notes are not pushed. The template `_template.md` and `README.md` are committed.
+- **Session handoff notes** — By default `.cursor/handoff/handoff-*.md` and `doc/handoff/HANDOFF-*.md` are gitignored (see `.gitignore`). Commit `_template.md`, `.cursor/handoff/README.md`, and any tracked docs you choose under `doc/handoff/`.
 
 ## Source of truth
 
