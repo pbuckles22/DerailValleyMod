@@ -41,4 +41,11 @@ Replace the block above with your real commands and keep them in sync with TEST_
 
 ## Handoff protocol
 
-When ending a session: (1) Run the handoff checklist (code review, tech debt, tests/coverage). (2) Update "Current state" above if needed. (3) Write a handoff note in `.cursor/handoff/` (filename: `handoff-YYYY-MM-DD_HHmm.md`). (4) Include Code review, Tech debt, Code coverage / tests, Done this session, Next up. Use `.cursor/handoff/_template.md` as a starting point.
+When ending a session:
+
+1. Run the handoff checklist (code review, tech debt, tests/coverage). See [.cursor/rules/handoff-checklist.mdc](.cursor/rules/handoff-checklist.mdc).
+2. Update **PM_PLAN.md** and your **product plan / roadmap** (if you maintain one under `doc/plan/` or similar) when shipped scope changed — that is what **`main`** should carry for product state.
+3. Write a **local** session note (gitignored by default): **`doc/handoff/HANDOFF-*.md`** and/or **`.cursor/handoff/handoff-YYYY-MM-DD_HHmm.md`**. Include Code review, Tech debt, Tests / coverage, Done this session, Next up. Use [.cursor/handoff/_template.md](.cursor/handoff/_template.md) as a starting point. See [.cursor/handoff/README.md](.cursor/handoff/README.md).
+4. Update **"Current state"** above only when it helps the next session; keep **AGENT_HANDOFF** for process and commands, not epic inventories.
+
+Anything the team must see on the remote should land in **PM_PLAN**, the **product plan**, **README**, or the **PR** — not only in gitignored handoff files.

@@ -4,15 +4,40 @@
 
 - **Black-box:** Assert on behavior (public API: inputs and outputs). Do not depend on implementation details. See [tester/SKILL.md](tester/SKILL.md).
 - **Continuous:** Run your project’s test command after adding or changing logic or tests; keep the suite green.
-- **Hybrid (TEST_PLAN.md):** **Tier 1** — fast feedback. **Tier 2** — integration or E2E when needed. Run both when validating.
+- **Tiers ([TEST_PLAN.md](../../TEST_PLAN.md)):** When defined, **Tier 1** is fast feedback; **Tier 2** is integration or E2E. Validate at every tier that applies to the change.
 
-## Test-first (mandatory for new behavior)
+---
 
-**Before writing production code for new behavior:** Read this file and [tester/SKILL.md](tester/SKILL.md), then write a failing test.
+## TDD when TEST_PLAN defines Tier 1 and Tier 2
 
-1. **Write test** — Add a black-box test. Run your test command → **red**.
-2. **Write code** — Implement until **green**.
-3. **Tier 2 if needed** — Add integration or E2E test(s) per TEST_PLAN.md.
-4. **Document** — Update AGENT_HANDOFF or docs if contract/scope changed.
+**Default:** Do not merge production changes until the right tier(s) have **failing test → passing test** for the behavior you are adding or changing.
 
-Never leave failing tests in the tree.
+### Tier 1
+
+Use for logic covered by your fast test command (unit, headless, mocked APIs — whatever TEST_PLAN.md says).
+
+1. **Red** — Add or extend a test that describes the new behavior and fails with the current code.
+2. **Green** — Implement until the Tier 1 command passes.
+
+### Tier 2
+
+Use when behavior must hold in a real runtime (browser, device, network, DB — whatever TEST_PLAN.md says).
+
+1. **Red** — Add or extend an integration or E2E test that fails until the feature exists.
+2. **Green** — Implement until the Tier 2 command passes.
+
+**When both apply:** Usually Tier 1 first, then Tier 2. Pure integration-only changes may start at Tier 2; add Tier 1 later if you extract testable logic.
+
+### Exceptions
+
+- Docs-only, config-only, or comment-only changes.
+- Trivial one-line fixes with no behavior change (still run your merge-ready command if the project uses one).
+- Pure refactors preserving behavior: keep tests green.
+
+Never leave failing tests on the default branch.
+
+---
+
+## Merge-ready
+
+Document your **merge-ready** or **CI** command in **AGENT_HANDOFF.md** and run it before merge when your team uses that gate.
