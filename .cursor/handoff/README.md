@@ -4,8 +4,29 @@
 
 **Session narratives (usually gitignored):**
 
-- **`doc/handoff/HANDOFF-*.md`** — optional naming for dated session notes.
-- **`.cursor/handoff/handoff-YYYY-MM-DD_HHmm.md`** — alternative location.
+- **`doc/handoff/NNNN-HANDOFF-YYYY-MM-DD_HHmm.md`** — optional naming for dated session notes (monotonic `NNNN`).
+- **`.cursor/handoff/NNNN-handoff-YYYY-MM-DD_HHmm.md`** — alternative location (monotonic `NNNN`).
+
+**Naming rules (do not overwrite history):**
+
+- **`NNNN`**: zero-padded monotonic serial (**0001**, **0002**, …) that always increases.
+- **`YYYY-MM-DD_HHmm`**: local timestamp in 24h time.
+- **Never reuse** an `NNNN` and **never edit** a previous handoff file in place—append a new file.
+
+**Pick the next serial (PowerShell) — `.cursor/handoff/`:**
+
+```powershell
+$dir = Join-Path $PSScriptRoot '.'
+$next = 1
+Get-ChildItem -LiteralPath $dir -Filter '*-handoff-*.md' -File -ErrorAction SilentlyContinue |
+  ForEach-Object {
+    if ($_.Name -match '^(\d{4})-handoff-\d{4}-\d{2}-\d{2}_\d{4}\.md$') {
+      [int]$n = $matches[1]
+      if ($n -ge $next) { $next = $n + 1 }
+    }
+  }
+'{0:0000}-handoff-YYYY-MM-DD_HHmm.md' -f $next
+```
 
 See [`.gitignore`](../.gitignore). If you need a **tracked** contributor guide under `doc/handoff/`, add the file and use a `.gitignore` exception (`!doc/handoff/YourFile.md`) so it is not ignored by the `HANDOFF-*` pattern.
 

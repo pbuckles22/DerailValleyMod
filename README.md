@@ -28,7 +28,7 @@ No application runtime is included — bring your own stack.
 ## What not to put in the repo
 
 - **No secrets** — API keys, tokens, credentials. Use environment variables or a local config that is gitignored.
-- **Session handoff notes** — By default `.cursor/handoff/handoff-*.md` and `doc/handoff/HANDOFF-*.md` are gitignored (see `.gitignore`). Commit `_template.md`, `.cursor/handoff/README.md`, and any tracked docs you choose under `doc/handoff/`.
+- **Session handoff notes** — By default `.cursor/handoff/*-handoff-*.md` (and legacy `.cursor/handoff/handoff-*.md`) plus `doc/handoff/*-HANDOFF-*.md` (and legacy `doc/handoff/HANDOFF-*.md`) are gitignored (see `.gitignore`). Commit `_template.md`, `.cursor/handoff/README.md`, and any tracked docs you choose under `doc/handoff/`.
 
 ## Source of truth
 

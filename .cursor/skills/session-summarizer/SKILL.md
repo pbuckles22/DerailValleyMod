@@ -42,6 +42,15 @@ If you exceed the budget, remove execution details first.
 
 Write the handoff note using this structure (mirrors the repo template):
 
+### Filename rules (mandatory)
+
+- Prefer: `.cursor/handoff/NNNN-handoff-YYYY-MM-DD_HHmm.md`
+- Optional second location: `doc/handoff/NNNN-HANDOFF-YYYY-MM-DD_HHmm.md`
+- **`NNNN` must be new and monotonic** (0001, 0002, …). Never reuse a number.
+- Never edit a prior handoff file to “update” it—write a new one.
+
+### Note contents
+
 - **TL;DR (1–2 sentences)**: current state + the one key thing the next agent must know
 - **Decisions made**: bullet list (decision + rationale)
 - **Done this session**: summary bullets (no logs)
