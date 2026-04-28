@@ -7,7 +7,56 @@ This repo is an **agentic template**: Cursor rules, skills, handoff protocol, an
 ## Source of truth
 
 - **Scope / sprints:** [PM_PLAN.md](PM_PLAN.md)
-- **Skills:** [.cursor/skills/](.cursor/skills/) — DEV_GUIDE.md, TEST_TDD.md, DESIGN_SYSTEM.md, techwriter, tester, code-reviewer, tech-debt-evaluator, pm-governance, ui-ux, game-readiness, visual-match
+- **Skills:** [.cursor/skills/](.cursor/skills/) — DEV_GUIDE.md, TEST_TDD.md, DESIGN_SYSTEM.md, techwriter, tester, code-reviewer, tech-debt-evaluator, eval-engineer, risk-manager, release-manager, security-reviewer, incident-triager, green-and-clean, context-bootstrapper, session-summarizer, pm-governance, ui-ux, game-readiness, visual-match
+
+## Green and clean operating model (how we work)
+
+This template assumes a strict operating model aimed at **green and clean** delivery:
+
+- **Green**: each change is verifiable against explicit acceptance criteria and validated at the appropriate tier.
+- **Clean**: context is curated; durable state lives in tracked docs; handoffs are compressed and decision-first.
+
+Skills that enforce this:
+
+- [.cursor/skills/green-and-clean/SKILL.md](.cursor/skills/green-and-clean/SKILL.md)
+- [.cursor/skills/context-bootstrapper/SKILL.md](.cursor/skills/context-bootstrapper/SKILL.md)
+- [.cursor/skills/session-summarizer/SKILL.md](.cursor/skills/session-summarizer/SKILL.md)
+- [.cursor/skills/eval-engineer/SKILL.md](.cursor/skills/eval-engineer/SKILL.md)
+
+## Context hierarchy (what belongs where)
+
+- **Level 1 — Project baseline**: `.cursor/rules/always.mdc`, `AGENT_HANDOFF.md`
+- **Level 2 — Phase/feature**: `PM_PLAN.md`, `TEST_PLAN.md`
+- **Level 3 — Task**: your current plan + acceptance criteria + verifiable steps
+- **Level 4 — Session delta**: latest `.cursor/handoff/handoff-YYYY-MM-DD_HHmm.md` (and/or `doc/handoff/HANDOFF-*.md`)
+
+Token hygiene: prefer a small “Level 1 + Level 2 + one handoff note + current files” payload over transcript dumps.
+
+## Risk discipline
+
+Keep the top risks explicit and current:
+
+- [RISKS.md](RISKS.md) — top 5 only (impact/likelihood/trigger/mitigation/rollback)
+
+## Release / merge discipline
+
+Keep “ship” criteria explicit and boring:
+
+- [RELEASE.md](RELEASE.md) — merge-ready expectations and rollback posture
+
+## Technical debt discipline
+
+Track debt continuously and evaluate ROI:
+
+- [.cursor/skills/tech-debt-evaluator/SKILL.md](.cursor/skills/tech-debt-evaluator/SKILL.md) — produces “Do first” items during handoff
+- [TECH_DEBT.md](TECH_DEBT.md) — durable ranked backlog (promote persistent “Do first” items here)
+
+## Incident / debugging discipline
+
+When something breaks, use evidence-driven triage and keep it bounded:
+
+- [.cursor/skills/incident-triager/SKILL.md](.cursor/skills/incident-triager/SKILL.md)
+- [INCIDENTS.md](INCIDENTS.md) — what to capture (minimum) for handoff and prevention
 
 ## Pod (agents always working)
 
@@ -45,7 +94,7 @@ When ending a session:
 
 1. Run the handoff checklist (code review, tech debt, tests/coverage). See [.cursor/rules/handoff-checklist.mdc](.cursor/rules/handoff-checklist.mdc).
 2. Update **PM_PLAN.md** and your **product plan / roadmap** (if you maintain one under `doc/plan/` or similar) when shipped scope changed — that is what **`main`** should carry for product state.
-3. Write a **local** session note (gitignored by default): **`doc/handoff/HANDOFF-*.md`** and/or **`.cursor/handoff/handoff-YYYY-MM-DD_HHmm.md`**. Include Code review, Tech debt, Tests / coverage, Done this session, Next up. Use [.cursor/handoff/_template.md](.cursor/handoff/_template.md) as a starting point. See [.cursor/handoff/README.md](.cursor/handoff/README.md).
+3. Use [.cursor/skills/session-summarizer/SKILL.md](.cursor/skills/session-summarizer/SKILL.md), then write a **local** session note (gitignored by default): **`doc/handoff/HANDOFF-*.md`** and/or **`.cursor/handoff/handoff-YYYY-MM-DD_HHmm.md`**. Include Code review, Tech debt, Tests / coverage, Done this session, Next up. Use [.cursor/handoff/_template.md](.cursor/handoff/_template.md) as a starting point. See [.cursor/handoff/README.md](.cursor/handoff/README.md).
 4. Update **"Current state"** above only when it helps the next session; keep **AGENT_HANDOFF** for process and commands, not epic inventories.
 
 Anything the team must see on the remote should land in **PM_PLAN**, the **product plan**, **README**, or the **PR** — not only in gitignored handoff files.
