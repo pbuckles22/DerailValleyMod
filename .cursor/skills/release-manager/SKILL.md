@@ -38,3 +38,56 @@ Goal: make shipping predictable with minimal ceremony.
 
 Document the chosen convention in a tracked release doc (e.g. `RELEASE.md`) and keep it consistent.
 
+---
+
+## GitHub operations (optional): GitHub CLI (`gh`) playbook
+
+Use this section when you need boring, repeatable GitHub mechanics. Prefer **`gh`** over ad-hoc UI steps when it’s available.
+
+### Safety / hygiene (always)
+
+- Treat **`gh`/git output as sensitive** if it includes tokens or private URLs.
+- Before publishing anything, run a quick **security-reviewer** pass if the change touched credentials, generated files, logs, or remote access.
+- If a push fails with “too large” / HTTP 500 / unexpected disconnect, assume **history contains large blobs** until proven otherwise (`.gitignore` does not fix history).
+
+### Common flows (examples — adjust names)
+
+**Confirm auth**
+
+```bash
+gh auth status
+```
+
+**Create a new repo + push an existing local repo**
+
+```bash
+gh repo create OWNER/REPO --private --source . --remote origin --push
+```
+
+If you already have commits locally, this should set `origin` and push your current branch. If `origin` already exists, use `git remote -v` and push normally.
+
+**Push all branches (after a clean history rewrite)**
+
+```bash
+git push -u origin --all
+```
+
+**Open a PR from the current branch**
+
+```bash
+gh pr create --fill
+```
+
+**Create a GitHub Release from a tag (optional)**
+
+```bash
+gh release create v1.2.3 --notes-file RELEASE_NOTES.md
+```
+
+### History rewrite note (high risk / high leverage)
+
+If you removed large files from history (e.g., ISOs), remember:
+
+- Commit hashes change; anyone with old clones must **re-clone** or hard-reset.
+- Coordinate `main`/release branches and CI expectations after rewrite.
+
