@@ -28,7 +28,7 @@ Skills that enforce this:
 - **Level 1 — Project baseline**: `.cursor/rules/always.mdc`, `AGENT_HANDOFF.md`
 - **Level 2 — Phase/feature**: `PM_PLAN.md`, `TEST_PLAN.md`
 - **Level 3 — Task**: your current plan + acceptance criteria + verifiable steps
-- **Level 4 — Session delta**: latest `.cursor/handoff/handoff-YYYY-MM-DD_HHmm.md` (and/or `doc/handoff/HANDOFF-*.md`)
+- **Level 4 — Session delta**: latest `.cursor/handoff/NNNN-handoff-YYYY-MM-DD_HHmm.md` (and/or `doc/handoff/NNNN-HANDOFF-YYYY-MM-DD_HHmm.md`) — highest `NNNN`, tie-break by timestamp
 
 Token hygiene: prefer a small “Level 1 + Level 2 + one handoff note + current files” payload over transcript dumps.
 
@@ -94,7 +94,7 @@ When ending a session:
 
 1. Run the handoff checklist (code review, tech debt, tests/coverage). See [.cursor/rules/handoff-checklist.mdc](.cursor/rules/handoff-checklist.mdc).
 2. Update **PM_PLAN.md** and your **product plan / roadmap** (if you maintain one under `doc/plan/` or similar) when shipped scope changed — that is what **`main`** should carry for product state.
-3. Use [.cursor/skills/session-summarizer/SKILL.md](.cursor/skills/session-summarizer/SKILL.md), then write a **local** session note (gitignored by default): **`doc/handoff/HANDOFF-*.md`** and/or **`.cursor/handoff/handoff-YYYY-MM-DD_HHmm.md`**. Include Code review, Tech debt, Tests / coverage, Done this session, Next up. Use [.cursor/handoff/_template.md](.cursor/handoff/_template.md) as a starting point. See [.cursor/handoff/README.md](.cursor/handoff/README.md).
+3. Use [.cursor/skills/session-summarizer/SKILL.md](.cursor/skills/session-summarizer/SKILL.md), then write a **local** session note (gitignored by default): **`doc/handoff/NNNN-HANDOFF-YYYY-MM-DD_HHmm.md`** and/or **`.cursor/handoff/NNNN-handoff-YYYY-MM-DD_HHmm.md`** (new monotonic `NNNN` each time; never overwrite prior notes). Include Code review, Tech debt, Tests / coverage, Done this session, Next up. Use [.cursor/handoff/_template.md](.cursor/handoff/_template.md) as a starting point. See [.cursor/handoff/README.md](.cursor/handoff/README.md).
 4. Update **"Current state"** above only when it helps the next session; keep **AGENT_HANDOFF** for process and commands, not epic inventories.
 
 Anything the team must see on the remote should land in **PM_PLAN**, the **product plan**, **README**, or the **PR** — not only in gitignored handoff files.

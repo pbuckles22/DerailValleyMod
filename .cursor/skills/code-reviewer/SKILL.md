@@ -15,7 +15,7 @@ Use this skill when performing a code review: before commit, on a diff, or when 
 - **Security:** No hardcoded secrets or credentials; no sensitive data in logs; input validation where applicable.
 - **Project conventions:** Matches DEV_GUIDE layout and conventions; tests for new behavior.
 - **Tests:** New behavior should have a test; run your project’s test command (see AGENT_HANDOFF.md) and note result. See tester skill and TEST_TDD.md.
-- **Documentation:** If behavior or scope changed, update **PM_PLAN.md** and your **product plan / roadmap** on **`main`** when applicable. Session handoffs are often **local** (gitignored `HANDOFF-*.md`). Update **AGENT_HANDOFF** when process or commands change; use techwriter when editing docs.
+- **Documentation:** If behavior or scope changed, update **PM_PLAN.md** and your **product plan / roadmap** on **`main`** when applicable. Session handoffs are often **local** (gitignored `*-HANDOFF-*.md` / `HANDOFF-*.md` and `.cursor/handoff/*-handoff-*.md`). Update **AGENT_HANDOFF** when process or commands change; use techwriter when editing docs.
 - **Performance:** No blocking work on critical paths where avoidable; avoid unnecessary work in hot loops or render paths.
 
 ## Review checklist

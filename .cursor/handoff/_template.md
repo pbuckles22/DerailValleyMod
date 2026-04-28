@@ -1,6 +1,6 @@
-# Handoff — YYYY-MM-DD HHmm
+# Handoff — NNNN — YYYY-MM-DD HHmm
 
-(Filename: `handoff-YYYY-MM-DD_HHmm.md` — date and 24h time required.)
+(Filename: `NNNN-handoff-YYYY-MM-DD_HHmm.md` — monotonic serial + date + 24h time required.)
 
 **Before writing this note:** Run code review (code-reviewer skill), tech debt (tech-debt-evaluator skill), and your **tests/coverage** commands documented in AGENT_HANDOFF.md. Then fill the sections below.
 
@@ -50,6 +50,11 @@
 
 -
 ( none )
+
+## Handoff filename (mandatory)
+
+- Save as: `.cursor/handoff/NNNN-handoff-YYYY-MM-DD_HHmm.md`
+- **`NNNN` must be new** (see [.cursor/handoff/README.md](README.md)). Never overwrite an existing handoff.
 
 ## Key files (optional)
 
