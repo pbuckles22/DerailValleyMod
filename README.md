@@ -17,7 +17,7 @@ Document your **test** and **coverage** commands in [AGENT_HANDOFF.md](AGENT_HAN
 | Area | Contents |
 |------|----------|
 | **.cursor/rules** | `always.mdc`, `handoff-checklist.mdc`, `testing.mdc` |
-| **.cursor/skills** | DEV_GUIDE, TEST_TDD, DESIGN_SYSTEM, techwriter, tester, code-reviewer, tech-debt-evaluator, pm-governance, ui-ux, game-readiness, visual-match |
+| **.cursor/skills** | DEV_GUIDE, TEST_TDD, DESIGN_SYSTEM, techwriter, tester, code-reviewer, tech-debt-evaluator, pm-governance, ui-ux, game-readiness, visual-match, github-feature-workflow |
 | **.cursor/handoff** | Handoff note template and README |
 | **doc/** | Requirements and optional **`doc/handoff/`** for tracked contributor notes (see `.gitignore` for gitignored session files) |
 | **examples/** | Reference UI/specs for **visual-match** / **ui-ux** |
