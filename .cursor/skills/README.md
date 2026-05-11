@@ -23,5 +23,6 @@ All agent skills and source-of-truth docs live here.
 | **ui-ux** | [ui-ux/SKILL.md](ui-ux/SKILL.md) | Screens, animations, layout, design tokens. |
 | **game-readiness** | [game-readiness/SKILL.md](game-readiness/SKILL.md) | Playability, clarity, feedback, scale-readiness (e.g. games). |
 | **visual-match** | [visual-match/SKILL.md](visual-match/SKILL.md) | Matching UI to reference examples (screenshots, specs). |
+| **github-feature-workflow** | [github-feature-workflow/SKILL.md](github-feature-workflow/SKILL.md) | Feature branch → CI gate → commit → push → cleanup; optional PR per AGENT_HANDOFF. |
 
 Scope/sprints: [PM_PLAN.md](../../PM_PLAN.md). Product epics or roadmap: your choice (e.g. `doc/plan/`). Session handoff files: often gitignored — see [.cursor/handoff/README.md](../handoff/README.md). Rules in `.cursor/rules/` reference this directory.
