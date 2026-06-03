@@ -2,7 +2,68 @@
 
 ## Purpose
 
-This repo is an **agentic template**: Cursor rules, skills, handoff protocol, and testing discipline. **Replace** stack-specific placeholders below with your project’s commands (test runner, coverage, integration or E2E).
+This repo is an **agentic template**: Cursor rules, skills, handoff protocol, and testing discipline. **Replace** stack-specific placeholders below with your project's commands (test runner, coverage, integration or E2E).
+
+---
+
+## Creating variant templates (e.g. Flutter, React Native, backend)
+
+Use this pattern when you need a **stack-specific** variant that shares the agentic layer but has its own tooling (e.g. [FlutterAgenticTemplate](https://github.com/pbuckles22/FlutterAgenticTemplate)).
+
+### Initial setup (create the variant)
+
+```bash
+# 1. Create your variant repo on GitHub, then clone it
+git clone https://github.com/YOUR_ORG/YourVariantTemplate.git
+cd YourVariantTemplate
+
+# 2. Add AgenticTemplate as upstream remote
+git remote add upstream https://github.com/pbuckles22/AgenticTemplate.git
+git fetch upstream
+
+# 3. Merge the base template (first time only)
+git merge upstream/main --allow-unrelated-histories
+# Resolve any conflicts, keeping your stack-specific files
+
+# 4. Push
+git push origin main
+```
+
+### Syncing updates from AgenticTemplate
+
+When AgenticTemplate gets new skills or enhancements:
+
+```bash
+cd YourVariantTemplate
+git fetch upstream
+git merge upstream/main
+# Resolve conflicts — keep stack-specific overrides in:
+#   - DEV_GUIDE.md, TEST_TDD.md, DESIGN_SYSTEM.md
+#   - always.mdc (project context)
+#   - AGENT_HANDOFF.md (run/test commands)
+git push origin main
+```
+
+### What stays shared vs stack-specific
+
+| Shared (sync from upstream)                | Stack-specific (keep yours)           |
+| ------------------------------------------ | ------------------------------------- |
+| Most skills (techwriter, tester, code-reviewer, code-quality-gate, tech-lead, etc.) | `DEV_GUIDE.md` (architecture, tooling) |
+| Rules (handoff-checklist, testing.mdc)     | `TEST_TDD.md` (test commands)         |
+| Handoff templates                          | `DESIGN_SYSTEM.md` (UI framework)     |
+| Operating model skills (green-and-clean, etc.) | `always.mdc` (project context)    |
+|                                            | `AGENT_HANDOFF.md` (run/test section) |
+
+### Document the upstream in your variant
+
+Add this to your variant's AGENT_HANDOFF.md under Purpose:
+
+```markdown
+**Sync:** This repo tracks **AgenticTemplate** as an **upstream remote** for shared skills/rules.
+To pull shared updates: `git fetch upstream && git merge upstream/main` (resolve stack-specific conflicts manually).
+```
+
+---
 
 ## Source of truth
 
@@ -30,7 +91,7 @@ Skills that enforce this:
 - **Level 3 — Task**: your current plan + acceptance criteria + verifiable steps
 - **Level 4 — Session delta**: latest `.cursor/handoff/NNNN-handoff-YYYY-MM-DD_HHmm.md` (and/or `doc/handoff/NNNN-HANDOFF-YYYY-MM-DD_HHmm.md`) — highest `NNNN`, tie-break by timestamp
 
-Token hygiene: prefer a small “Level 1 + Level 2 + one handoff note + current files” payload over transcript dumps.
+Token hygiene: prefer a small "Level 1 + Level 2 + one handoff note + current files" payload over transcript dumps.
 
 ## Risk discipline
 
@@ -40,7 +101,7 @@ Keep the top risks explicit and current:
 
 ## Release / merge discipline
 
-Keep “ship” criteria explicit and boring:
+Keep "ship" criteria explicit and boring:
 
 - [RELEASE.md](RELEASE.md) — merge-ready expectations and rollback posture
 
@@ -48,8 +109,8 @@ Keep “ship” criteria explicit and boring:
 
 Track debt continuously and evaluate ROI:
 
-- [.cursor/skills/tech-debt-evaluator/SKILL.md](.cursor/skills/tech-debt-evaluator/SKILL.md) — produces “Do first” items during handoff
-- [TECH_DEBT.md](TECH_DEBT.md) — durable ranked backlog (promote persistent “Do first” items here)
+- [.cursor/skills/tech-debt-evaluator/SKILL.md](.cursor/skills/tech-debt-evaluator/SKILL.md) — produces "Do first" items during handoff
+- [TECH_DEBT.md](TECH_DEBT.md) — durable ranked backlog (promote persistent "Do first" items here)
 
 ## Incident / debugging discipline
 
