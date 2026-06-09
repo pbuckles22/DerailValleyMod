@@ -156,8 +156,9 @@ Document **your** team rules here and keep them in sync with what you run locall
 1. **Integration branch:** Usually **`main`**. All shipped product state (PM_PLAN, roadmap checkboxes) should reflect what is merged here.
 2. **Optional short-lived branches:** For larger slices, use `feature/<topic>` or `fix/<topic>`, then merge or rebase into `main`. Agents should follow [.cursor/skills/github-feature-workflow/SKILL.md](.cursor/skills/github-feature-workflow/SKILL.md) when branching or pushing.
 3. **Before push / merge-ready:** Run your **full gate** (document it in the **Run and test** section above — e.g. tests + build + integration/E2E). Same checks should run in CI if you use GitHub Actions (or equivalent).
-4. **Pull requests:** **Optional** in this template — set `Required` or `Optional` for your org. If optional, direct push to `main` after green CI is still valid; if required, open a PR and use the same test plan text you ran locally.
-5. **After merge:** Delete the local feature branch; delete the remote feature branch if your flow created one.
+4. **After push — verify CI:** Agents do not get GitHub failure emails. When Actions exist, run `gh run watch --repo OWNER/REPO` (or `gh run list` + `gh run view --log-failed`) before declaring work done on `main`. See [.cursor/skills/github-feature-workflow/SKILL.md](.cursor/skills/github-feature-workflow/SKILL.md).
+5. **Pull requests:** **Optional** in this template — set `Required` or `Optional` for your org. If optional, direct push to `main` after green CI is still valid; if required, open a PR and use the same test plan text you ran locally.
+6. **After merge:** Delete the local feature branch; delete the remote feature branch if your flow created one.
 
 ---
 
