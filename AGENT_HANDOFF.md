@@ -86,12 +86,14 @@ Skills that enforce this:
 
 ## Context hierarchy (what belongs where)
 
-- **Level 1 — Project baseline**: `.cursor/rules/always.mdc`, `AGENT_HANDOFF.md`
-- **Level 2 — Phase/feature**: `PM_PLAN.md`, `TEST_PLAN.md`
-- **Level 3 — Task**: your current plan + acceptance criteria + verifiable steps
-- **Level 4 — Session delta**: latest `.cursor/handoff/NNNN-handoff-YYYY-MM-DD_HHmm.md` (and/or `doc/handoff/NNNN-HANDOFF-YYYY-MM-DD_HHmm.md`) — highest `NNNN`, tie-break by timestamp
+Contributors and agents use **tracked docs** for product truth. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
-Token hygiene: prefer a small "Level 1 + Level 2 + one handoff note + current files" payload over transcript dumps.
+- **Level 1:** [CONTRIBUTING.md](CONTRIBUTING.md), [doc/PROJECT_STATUS.md](doc/PROJECT_STATUS.md), `.cursor/rules/always.mdc`, this file
+- **Level 2:** [PM_PLAN.md](PM_PLAN.md), [TEST_PLAN.md](TEST_PLAN.md)
+- **Level 3:** current task plan + acceptance criteria
+- **Level 4 (optional, local only):** `.cursor/handoff/NNNN-handoff-*.md` — gitignored; never sole source of truth
+
+Token hygiene: prefer Level 1 + Level 2 + current files over transcript dumps.
 
 ## Risk discipline
 
@@ -125,9 +127,18 @@ When something breaks, use evidence-driven triage and keep it bounded:
 - **Tester:** Black-box tests; run your **documented** test command after changes; keep the suite green. See [TEST_PLAN.md](TEST_PLAN.md).
 - **Handoff (mandatory):** When the user wants a handoff, run code review (code-reviewer), tech debt (tech-debt-evaluator), and your **tests or coverage** as documented below; record in the handoff note. See [.cursor/rules/handoff-checklist.mdc](.cursor/rules/handoff-checklist.mdc).
 
+## Contributor onboarding (norm)
+
+1. [CONTRIBUTING.md](CONTRIBUTING.md)
+2. [doc/PROJECT_STATUS.md](doc/PROJECT_STATUS.md)
+3. [PM_PLAN.md](PM_PLAN.md)
+
+When shipping: update **PM_PLAN**, **doc/PROJECT_STATUS.md**, and **Current state** below in the same PR.
+
 ## Current state
 
-- **Template:** Agentic rules and skills in place. Add your codebase and document run/test commands here and in TEST_PLAN.md.
+- **Template:** Agentic rules and skills in place; contributor onboarding norm (CONTRIBUTING, PROJECT_STATUS, GitHub templates).
+- **Next:** Add your codebase; document run/test commands here and in TEST_PLAN.md.
 
 ## Run and test
 
@@ -166,9 +177,9 @@ Document **your** team rules here and keep them in sync with what you run locall
 
 When ending a session:
 
-1. Run the handoff checklist (code review, tech debt, tests/coverage). See [.cursor/rules/handoff-checklist.mdc](.cursor/rules/handoff-checklist.mdc).
-2. Update **PM_PLAN.md** and your **product plan / roadmap** (if you maintain one under `doc/plan/` or similar) when shipped scope changed — that is what **`main`** should carry for product state.
-3. Use [.cursor/skills/session-summarizer/SKILL.md](.cursor/skills/session-summarizer/SKILL.md), then write a **local** session note (gitignored by default): **`doc/handoff/NNNN-HANDOFF-YYYY-MM-DD_HHmm.md`** and/or **`.cursor/handoff/NNNN-handoff-YYYY-MM-DD_HHmm.md`** (new monotonic `NNNN` each time; never overwrite prior notes). Include Code review, Tech debt, Tests / coverage, Done this session, Next up. Use [.cursor/handoff/_template.md](.cursor/handoff/_template.md) as a starting point. See [.cursor/handoff/README.md](.cursor/handoff/README.md).
-4. Update **"Current state"** above only when it helps the next session; keep **AGENT_HANDOFF** for process and commands, not epic inventories.
+1. Run the handoff checklist ([handoff-checklist.mdc](.cursor/rules/handoff-checklist.mdc)).
+2. Update **PM_PLAN.md** when shipped scope changed.
+3. Update **[doc/PROJECT_STATUS.md](doc/PROJECT_STATUS.md)** and **Current state** above (required for contributor-visible changes).
+4. Optional local note: `.cursor/handoff/NNNN-handoff-*.md` ([template](.cursor/handoff/_template.md)) — gitignored; promote decisions to tracked docs.
 
-Anything the team must see on the remote should land in **PM_PLAN**, the **product plan**, **README**, or the **PR** — not only in gitignored handoff files.
+Anything the team must see on GitHub belongs in **PROJECT_STATUS**, **PM_PLAN**, **README**, or the **PR** — not only gitignored handoff files.

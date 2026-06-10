@@ -2,6 +2,12 @@
 
 Cursor **rules**, **skills**, **handoff protocol**, and **test discipline** for any codebase — browser extensions (Edge, Chrome), backends, CLIs, native apps, etc. Bring your own runtime and document commands in **AGENT_HANDOFF.md** and **TEST_PLAN.md**.
 
+## New here?
+
+**Start with [CONTRIBUTING.md](CONTRIBUTING.md)** — reading order, tracked vs gitignored docs, PR expectations.
+
+**Current work:** [doc/PROJECT_STATUS.md](doc/PROJECT_STATUS.md)
+
 ## Quick start
 
 ```bash
@@ -32,4 +38,4 @@ No application runtime is included — bring your own stack.
 
 ## Source of truth
 
-[AGENT_HANDOFF.md](AGENT_HANDOFF.md), [PM_PLAN.md](PM_PLAN.md), [TEST_PLAN.md](TEST_PLAN.md), and `.cursor/skills/`.
+[CONTRIBUTING.md](CONTRIBUTING.md), [doc/PROJECT_STATUS.md](doc/PROJECT_STATUS.md), [AGENT_HANDOFF.md](AGENT_HANDOFF.md), [PM_PLAN.md](PM_PLAN.md), [TEST_PLAN.md](TEST_PLAN.md), and `.cursor/skills/`.

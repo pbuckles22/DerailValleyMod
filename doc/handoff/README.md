@@ -1,7 +1,11 @@
-# Handoff (optional)
+# Handoff (optional, local)
 
-Session handoff narratives often live in **`NNNN-HANDOFF-YYYY-MM-DD_HHmm.md`** files here (legacy: `HANDOFF-*.md`) or under **`.cursor/handoff/`** as **`NNNN-handoff-YYYY-MM-DD_HHmm.md`**. Those patterns are **gitignored** by default (see root `.gitignore`) so local session notes are not pushed.
+Session notes under **`NNNN-HANDOFF-*.md`** or **`.cursor/handoff/*-handoff-*.md`** are **gitignored** by default.
 
-If you need a **tracked** file in this folder (e.g. contributor setup), add it and use a `.gitignore` exception so it is not matched by `HANDOFF-*.md` / `*-HANDOFF-*.md`.
+## Tracked source of truth (norm)
 
-Product state belongs in **PM_PLAN.md** and your product plan under **`doc/plan/`** (or equivalent), not only in handoff notes.
+1. [CONTRIBUTING.md](../CONTRIBUTING.md)
+2. [PROJECT_STATUS.md](../PROJECT_STATUS.md)
+3. [PM_PLAN.md](../PM_PLAN.md)
+
+Update **PROJECT_STATUS.md** and [AGENT_HANDOFF.md](../AGENT_HANDOFF.md) when phases ship — in the same PR as the code.
