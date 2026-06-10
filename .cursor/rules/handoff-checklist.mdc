@@ -27,6 +27,12 @@ When the user wants a handoff, or when you are writing or updating a handoff not
 
 7. **Git commit + push** — If the first checks passed: stage the changes and run `git commit` with a short message. **`git push origin main`** (or merge your branch into `main` then push) after the merge-ready command is green — see **AGENT_HANDOFF.md** → *Git workflow*. Treat "committed but not pushed" as **unfinished** unless the user asked to stop before push.
 
-Then complete the rest of the handoff (update **PM_PLAN** / product plan if scope changed; **Done this session**, **Next up**, etc. in your **`doc/handoff/`** or `.cursor/handoff/` note — see **AGENT_HANDOFF.md**). When you summarize **Done this session** for humans, use the **two-audience** approach: a short maintainer-oriented recap plus a **non-technical** summary of "what someone using the product would notice" (see **techwriter** skill → *Dual-audience blurbs*).
+Then complete the rest of the handoff:
+
+- Update **PM_PLAN** when scope changed
+- Update **[doc/PROJECT_STATUS.md](../../doc/PROJECT_STATUS.md)** and **AGENT_HANDOFF.md** → *Current state* (required — contributor-visible truth on GitHub)
+- Optional local note: **`doc/handoff/`** or `.cursor/handoff/` (gitignored — promote decisions to tracked docs)
+
+When you summarize **Done this session** for humans, use the **two-audience** approach (see **techwriter** skill → *Dual-audience blurbs*).
 
 **Filename and timestamp:** Prefer **`doc/handoff/NNNN-HANDOFF-YYYY-MM-DD_HHmm.md`** (monotonic `NNNN`, date, 24h time — Windows-safe) so multiple handoffs per day get unique files. Add a **`Recorded:`** line under the H1 (ISO-8601 or local offset). See **AGENT_HANDOFF.md** → handoff protocol.
