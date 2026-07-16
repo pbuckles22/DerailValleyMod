@@ -16,7 +16,8 @@
 
 | Branch | Role |
 |--------|------|
-| **`main`** | Integration (E1-S1 shipped at `d4e63f7`) |
+| **`main`** | Integration (E1-S1 at `d4e63f7`) |
+| **`feature/e1-s2-grade-tonnage`** | E1-S2 grade/tonnage L→R HUD (v0.3.0) |
 
 ---
 
@@ -26,16 +27,17 @@
 - Private GitHub repo: https://github.com/pbuckles22/DerailValleyMod
 - Product plan locked to **v3.0** (Monitor / Governor / Yard Master + parking lot)
 - Canonical docs: [requirements/product.md](requirements/product.md), [requirements/modding.md](requirements/modding.md), [PM_PLAN.md](../PM_PLAN.md)
-- Phase 0 scaffold: template-umm layout (`YardMasterSuite/`, `info.json`, `package.ps1`); `dotnet build YardMasterSuite.sln` green
-- Phase 0 in-game smoke: Yard Master Suite Active in UMM; toggle off/on works
-- E1-S1 Monitor speed HUD: `YardMasterSuite.Core` + xUnit; top-left km/h; UMM toggle; sandbox smoke matched cab speedometer
+- Phase 0 scaffold + in-game smoke
+- E1-S1 Monitor speed HUD
+- E1-S2 grade % + consist tonnes (L→R HUD); E2-S5 Startup Assist parked on Phase 2
 
 ---
 
 ## Next up
 
-- E1-S2 grade/tonnage (HUD extends L→R)
-- Phase 2 later: E2-S5 Startup Assist (after Three-Gate)
+- Tier 2 smoke E1-S2 (grade sign + tonnage sensible in sandbox)
+- E1-S3 Switch Path Tracer
+- Phase 2: E2-S1 Three-Gate → E2-S5 Startup Assist
 
 ---
 

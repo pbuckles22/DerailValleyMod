@@ -29,7 +29,7 @@ Keep in sync with [doc/requirements/product.md](doc/requirements/product.md), [d
 | ID | Story | Done when | Status |
 |----|-------|-----------|--------|
 | E1-S1 | Telemetry HUD (speed and related readouts) | Accurate while driving; toggleable | **Done** — km/h HUD; UMM toggle; Tier 1 tests + Tier 2 sandbox smoke (matches cab speedo) |
-| E1-S2 | Grade / tonnage calculation display | Clear units/sign; read-only | |
+| E1-S2 | Grade / tonnage calculation display | Clear units/sign; read-only | **Done** — L→R HUD `km/h | ±% | t`; Tier 1 unit tests |
 | E1-S3 | Switch Path Tracer | Next switch path visualized (Monitor only) | |
 
 ---
