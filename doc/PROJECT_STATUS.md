@@ -8,7 +8,7 @@
 
 ## Summary
 
-**DerailValleyMod** — Derail Valley mod project. Uses Cursor rules, skills, handoff protocol, and TDD discipline from AgenticTemplate. Application/mod runtime to be added.
+**DerailValleyMod** — *Yard Master Suite*: Fleet Operator utilities for Derail Valley. Stack: Unity / C# `net48` / UMM / Harmony. Plan: Safe Boot → Monitor HUD → Governors → Yard Master.
 
 ---
 
@@ -22,21 +22,24 @@
 
 ## Completed
 
-- Agentic rules, skills, handoff protocol (from template)
-- Governance stubs: PM_PLAN, TEST_PLAN, TECH_DEBT, RISKS, RELEASE, INCIDENTS
-- **Contributor onboarding norm:** CONTRIBUTING.md, PROJECT_STATUS, GitHub PR/issue templates
-- Project renamed to **DerailValleyMod**
+- Agentic rules, skills, handoff protocol
+- Private GitHub repo: https://github.com/pbuckles22/DerailValleyMod
+- Product plan locked to **v3.0** (Monitor / Governor / Yard Master + parking lot)
+- Canonical docs: [requirements/product.md](requirements/product.md), [requirements/modding.md](requirements/modding.md), [PM_PLAN.md](../PM_PLAN.md)
 
 ---
 
 ## Next up
 
-- Add mod codebase; document run/test commands in AGENT_HANDOFF and TEST_PLAN
-- Fill `doc/requirements/` as product specs land
-- Merge upstream AgenticTemplate when shared skills/rules change
+- **Phase 0 Safe Boot:** create `net48` classlib, UMM empty mod, document Mods drop path, verify load
+- Then Phase 1 Monitor HUD
 
 ---
 
-## Reading order for contributors
+## Reading order
 
-See [CONTRIBUTING.md](../CONTRIBUTING.md).
+1. [CONTRIBUTING.md](../CONTRIBUTING.md)
+2. This file
+3. [requirements/product.md](requirements/product.md)
+4. [PM_PLAN.md](../PM_PLAN.md)
+5. [requirements/modding.md](requirements/modding.md) + [DEV_GUIDE](../.cursor/skills/DEV_GUIDE.md)

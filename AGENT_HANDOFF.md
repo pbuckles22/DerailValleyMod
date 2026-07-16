@@ -110,8 +110,10 @@ When shipping: update **PM_PLAN**, **doc/PROJECT_STATUS.md**, and **Current stat
 
 ## Current state
 
-- **Project:** DerailValleyMod — agentic rules/skills in place; contributor onboarding norm (CONTRIBUTING, PROJECT_STATUS, GitHub templates).
-- **Next:** Add mod codebase; document run/test commands here and in TEST_PLAN.md.
+- **Project:** DerailValleyMod — *Yard Master Suite* (UMM / Harmony / net48).
+- **Plan:** v3.0 locked — Phase 0 Safe Boot → 1 Monitor → 2 Governor → 3 Yard Master. See `PM_PLAN.md` + `doc/requirements/product.md`.
+- **Next (fresh agent):** Phase 0 — `dotnet new classlib -f net48`, UMM empty mod loads, document build→Mods path here and in TEST_PLAN.md.
+- **Not started:** Any C# mod source under `src/`.
 
 ## Run and test
 

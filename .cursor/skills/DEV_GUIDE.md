@@ -2,30 +2,58 @@
 
 ## Tech stack
 
-**You define it.** Document languages, frameworks, and runtime here as you adopt them (for example: Unity/C# for a Derail Valley mod, Python tooling, etc.).
+| Layer | Choice |
+|-------|--------|
+| Game | Derail Valley (Unity) |
+| Language | C# |
+| Target framework | `net48` (class library) |
+| Mod loader | Unity Mod Manager (UMM) |
+| Patching | Harmony — Prefix / Postfix only |
+| IDE | Cursor + C# Dev Kit |
+| Inspection | [dnSpy](https://github.com/dnSpy/dnSpy/releases) |
 
-## Architecture
+Product: [doc/requirements/product.md](../../doc/requirements/product.md)  
+Modding notes: [doc/requirements/modding.md](../../doc/requirements/modding.md)  
+Plan: [PM_PLAN.md](../../PM_PLAN.md)
 
-Describe how you organize source, tests, and integration or E2E assets. Point to real paths in this repo (for example `src/`, `extension/`, `tests/`).
+## Environment setup (Phase 0)
+
+Install order:
+
+1. **.NET SDK** 8+ — [download](https://dotnet.microsoft.com/download)
+2. **Visual Studio Installer** — “.NET desktop development” (for .NET Framework 4.8 targeting)
+3. **Cursor** + **C# Dev Kit**
+4. **dnSpy**
+
+Scaffold:
+
+```bash
+dotnet new classlib -f net48
+```
+
+## Architecture (intended)
+
+```
+(repo root)
+  src/                 # C# class library (UMM mod) — not created yet
+  doc/requirements/    # product + modding truth
+```
+
+Never commit game `Managed/` DLLs or `DerailValley_Data/` (see `.gitignore`).
+
+## Build / deploy workflow
+
+1. Browse `Assembly-CSharp.dll` in dnSpy (local game install).
+2. Write Harmony patches (Prefix / Postfix).
+3. `dotnet build`
+4. Copy output `.dll` + `Info.json` into the game’s `Mods/<ModName>/` folder.
+5. Launch; toggle mod in UMM (Ctrl+F10).
+
+Document the exact merge-ready command in `AGENT_HANDOFF.md` / `TEST_PLAN.md` once the classlib exists.
 
 ## Conventions
 
-- Prefer pure functions for business logic where possible.
-- See AGENT_HANDOFF.md for run/test commands and source of truth.
-
----
-
-## When you adopt Python (JIT — add when a project needs it)
-
-Do **not** add Python scaffolding preemptively. When DerailValleyMod needs Python, document the layout in this `DEV_GUIDE.md` and wire commands into `TEST_PLAN.md` / `AGENT_HANDOFF.md`.
-
-Patterns proven in production (add only what the project uses):
-
-| Need | JIT addition | Notes |
-|------|--------------|-------|
-| Tests | `pytest` + `tests/` + `pyproject.toml` with `[tool.pytest.ini_options] pythonpath` | Run as `python -m pytest -q` (works when `pytest` is not on PATH) |
-| Dev deps | `requirements-dev.txt` or `[project.optional-dependencies] dev` | Keep runtime deps minimal |
-| CI | `.github/workflows/ci.yml` running the same command as local merge-ready | Verify with `gh run watch` after push — see github-feature-workflow skill |
-| Cross-platform tests | Mock platform keys; set both `HOME` and `USERPROFILE` for tilde tests | Linux CI will not parse `C:\` paths — gate OS-specific tests with `skipif` |
-
-Reference implementation: [dj-library-tools](https://github.com/pbuckles22/dj-library-tools) (CLI, pytest, no PRs, upstream syncs skills from AgenticTemplate).
+- Fail closed: log + self-disable on missing Harmony targets.
+- All state writes: Three-Gate + governor safety gates (product.md).
+- Prefer pure helpers for non-Unity logic where possible.
+- See `AGENT_HANDOFF.md` for run/test commands.
