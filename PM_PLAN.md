@@ -26,11 +26,11 @@ Keep in sync with [doc/requirements/product.md](doc/requirements/product.md), [d
 
 **Goal:** Situational awareness only — **no game-state writes**.
 
-| ID | Story | Done when |
-|----|-------|-----------|
-| E1-S1 | Telemetry HUD (speed and related readouts) | Accurate while driving; toggleable |
-| E1-S2 | Grade / tonnage calculation display | Clear units/sign; read-only |
-| E1-S3 | Switch Path Tracer | Next switch path visualized (Monitor only) |
+| ID | Story | Done when | Status |
+|----|-------|-----------|--------|
+| E1-S1 | Telemetry HUD (speed and related readouts) | Accurate while driving; toggleable | **Done** — km/h HUD; UMM toggle; Tier 1 tests + Tier 2 sandbox smoke (matches cab speedo) |
+| E1-S2 | Grade / tonnage calculation display | Clear units/sign; read-only | |
+| E1-S3 | Switch Path Tracer | Next switch path visualized (Monitor only) | |
 
 ---
 

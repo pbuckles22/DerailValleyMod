@@ -29,17 +29,20 @@ After clone, copy `Directory.Build.targets.example` → `Directory.Build.targets
 
 ```
 YardMasterSuite.sln
-YardMasterSuite/           # classlib (Main.cs + .csproj)
+YardMasterSuite/           # classlib (Main.cs + Monitor HUD + .csproj)
+YardMasterSuite.Core/      # pure helpers (netstandard2.0) — unit-tested
+YardMasterSuite.Tests/     # xUnit (net10)
 info.json                  # UMM metadata (repo root)
 package.ps1                # zip / copy for Mods
 repository.json            # UMM update check stub
 Directory.Build.targets    # local only — game ReferencePath
-build/                     # post-build dll copy
+build/                     # post-build dll copy (mod + Core)
 ```
 
 ## Build / deploy
 
 ```bash
+dotnet test YardMasterSuite.sln
 dotnet build YardMasterSuite.sln -c Debug
 dotnet build YardMasterSuite.sln -c Release   # also runs package.ps1 → dist/
 ```
