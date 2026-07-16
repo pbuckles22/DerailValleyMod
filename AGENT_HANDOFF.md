@@ -112,10 +112,9 @@ When shipping: update **PM_PLAN**, **doc/PROJECT_STATUS.md**, and **Current stat
 
 - **Project:** DerailValleyMod — *Yard Master Suite* (UMM / Harmony / net48).
 - **Plan:** v3.0 — Phase 0 Safe Boot → 1 Monitor → 2 Governor → 3 Yard Master.
-- **Shipped on `main`:** Phase 0 Safe Boot (`4b6906c`).
-- **This branch:** E1-S1 Monitor speed HUD (v0.2.0) — Tier 1 + Tier 2 sandbox smoke green.
+- **Shipped on `main`:** Phase 0 Safe Boot; E1-S1 Monitor speed HUD (`d4e63f7`, v0.2.0).
 - **Build / deploy:** `dotnet test YardMasterSuite.sln`; `dotnet build YardMasterSuite.sln -c Release`; `package.ps1 -NoArchive -OutputDirectory "...\Mods"`.
-- **Next after merge:** E1-S2 grade/tonnage (HUD L→R); Startup Assist parked as Phase 2.
+- **Next:** E1-S2 grade/tonnage (HUD L→R). Startup Assist parked as E2-S5.
 
 ## Run and test
 

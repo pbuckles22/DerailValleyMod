@@ -44,6 +44,7 @@ Keep in sync with [doc/requirements/product.md](doc/requirements/product.md), [d
 | E2-S2 | Thermal Governor | Heat managed when enabled; aborts if unsafe |
 | E2-S3 | Anti-Wheelslip | Wheelslip mitigated when enabled; safety gates enforced |
 | E2-S4 | Auto-Brake Release | Brake release assisted when safe; abort otherwise |
+| E2-S5 | Startup Assist | On starter intent: soft-write missing prereqs (Electrics / Starter / TM as applicable) via Three-Gate; while engine running: re-enable tripped/off required breakers when safe; fail closed; Prefix/Postfix only. **Depends on E2-S1.** |
 
 **Not in this phase (parking lot):** Engine Temp Soft Governor (dynamic throttle scaling), Auto-Service, Auto-Shop, AT override.
 
