@@ -15,6 +15,7 @@ git clone https://github.com/pbuckles22/DerailValleyMod.git
 cd DerailValleyMod
 copy Directory.Build.targets.example Directory.Build.targets
 # Edit Directory.Build.targets if your Steam library path differs, then:
+dotnet test YardMasterSuite.sln
 dotnet build YardMasterSuite.sln -c Release
 ```
 
@@ -35,7 +36,9 @@ powershell -ExecutionPolicy Bypass -File package.ps1 -NoArchive -OutputDirectory
 | **.cursor/handoff** | Handoff note template and README |
 | **doc/** | Requirements and optional **`doc/handoff/`** for tracked contributor notes (see `.gitignore` for gitignored session files) |
 | **examples/** | Reference UI/specs for **visual-match** / **ui-ux** |
-| **YardMasterSuite/** | UMM mod project (template-umm layout) |
+| **YardMasterSuite/** | UMM mod + Monitor HUD |
+| **YardMasterSuite.Core/** | Pure helpers (unit-tested) |
+| **YardMasterSuite.Tests/** | xUnit Tier 1 |
 | **package.ps1** / **info.json** | Standard UMM package metadata |
 
 Phase 0 on `feature/e0-safe-boot` — see [doc/PROJECT_STATUS.md](doc/PROJECT_STATUS.md).

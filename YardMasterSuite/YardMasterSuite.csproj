@@ -17,6 +17,8 @@
   <ItemGroup>
     <Reference Include="UnityEngine" />
     <Reference Include="UnityEngine.CoreModule" />
+    <Reference Include="UnityEngine.IMGUIModule" />
+    <Reference Include="UnityEngine.TextRenderingModule" />
   </ItemGroup>
 
   <!-- Mod Loader (NuGet; same as derail-valley-modding/template-umm) -->
@@ -29,10 +31,17 @@
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageReference Include="Nullable" Version="1.3.1" PrivateAssets="all" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\YardMasterSuite.Core\YardMasterSuite.Core.csproj" />
+  </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <!-- Copy to build folder -->
-    <Copy SourceFiles="$(TargetPath)" DestinationFolder="../build/" />
+    <!-- Copy mod + Core dependency to build/ (package.ps1 deploys build/*) -->
+    <ItemGroup>
+      <_ModDeploy Include="$(TargetPath)" />
+      <_ModDeploy Include="$(TargetDir)YardMasterSuite.Core.dll" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_ModDeploy)" DestinationFolder="../build/" />
 
     <!-- Package after Release build (template-umm) -->
     <Exec Condition="'$(Configuration)' == 'Release' And '$(OS)' == 'Windows_NT'" Command="&quot;$(windir)\System32\WindowsPowerShell\v1.0\powershell.exe&quot; -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)..\package.ps1&quot;" />

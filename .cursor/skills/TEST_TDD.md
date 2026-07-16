@@ -41,7 +41,8 @@ Never leave failing tests on the default branch.
 ## Merge-ready
 
 ```bash
+dotnet test YardMasterSuite.sln
 dotnet build YardMasterSuite.sln -c Release
 ```
 
-Phase 0 Safe Boot **gate** also needs Tier 2 in-game smoke ([TEST_PLAN.md](../../TEST_PLAN.md)). Documented in **AGENT_HANDOFF.md**.
+In-world UI / telemetry also needs Tier 2 smoke ([TEST_PLAN.md](../../TEST_PLAN.md)). Documented in **AGENT_HANDOFF.md**.
