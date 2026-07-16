@@ -30,6 +30,20 @@ Companion to [product.md](product.md). Day-to-day toolchain: [DEV_GUIDE.md](../.
 | `Awake()` / `Start()` | `OnToggle()` | Load/unload Harmony patches |
 | GUI manager patch | Harmony patching | Manual `[HarmonyPatch]` on game types |
 
+## Local paths (this machine)
+
+| Item | Path |
+|------|------|
+| Game root | `C:\Program Files (x86)\Steam\steamapps\common\Derail Valley` |
+| Mods drop | `...\Derail Valley\Mods\YardMasterSuite\` |
+| Build output | repo `build/` (dll) + root `info.json` |
+| Package / deploy | `package.ps1` (same as [template-umm](https://github.com/derail-valley-modding/template-umm)) |
+| Player.log | `%USERPROFILE%\AppData\LocalLow\Altfuture\Derail Valley\Player.log` |
+
+Install [Unity Mod Manager](https://www.nexusmods.com/site/mods/21) into Derail Valley so `Mods\` exists. Compile uses NuGet `UnityModManager`; runtime needs the game-side installer.
+
+After clone: copy `Directory.Build.targets.example` → `Directory.Build.targets` with your `Managed\` path.
+
 ## Launch recovery (3 steps)
 
 If the game crashes on boot or fails to load:

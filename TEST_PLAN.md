@@ -1,27 +1,36 @@
 # Test plan (TEST_PLAN.md)
 
-Define **Tier 1** (fast feedback: unit, headless, or local) and **Tier 2** (integration, browser, device, or E2E) for your stack. Replace the placeholders below.
+Two-tier strategy for *Yard Master Suite*. Keep in sync with [AGENT_HANDOFF.md](AGENT_HANDOFF.md).
 
 ---
 
-## Tier 1: Fast feedback
+## Tier 1: Fast feedback (build)
 
 ```bash
-# Example: npm test
-# Example: pytest -q
+dotnet build YardMasterSuite.sln -c Release
 ```
+
+**Pass:** 0 errors; `build/YardMasterSuite.dll` present; Release also produces `dist/YardMasterSuite_v*.zip` via `package.ps1`.
+
+Requires local `Directory.Build.targets` (copy from `Directory.Build.targets.example`).
 
 ---
 
-## Tier 2: Integration / E2E
+## Tier 2: In-game smoke (UMM load)
 
-Use when behavior spans a real runtime (browser, device, network, or native APIs).
+Requires UMM installed (`Mods\` exists under the game root).
 
-```bash
-# Example: npm run test:e2e
-# Example: playwright test
+```powershell
+dotnet build YardMasterSuite.sln -c Debug
+powershell -ExecutionPolicy Bypass -File package.ps1 -NoArchive -OutputDirectory "C:\Program Files (x86)\Steam\steamapps\common\Derail Valley\Mods"
 ```
+
+1. Launch Derail Valley; UMM Ctrl+F10 — **Yard Master Suite** listed.
+2. Toggle off/on; no red flag.
+3. Player.log: `%USERPROFILE%\AppData\LocalLow\Altfuture\Derail Valley\Player.log` — no mod errors.
+
+Recovery: [modding.md](doc/requirements/modding.md).
 
 ---
 
-**Handoff:** Document the exact commands you use for coverage in AGENT_HANDOFF.md so agents can run them consistently.
+**Handoff:** Phase 0 scaffolding merge-ready = Tier 1. Phase 0 **gate** = Tier 1 + Tier 2.

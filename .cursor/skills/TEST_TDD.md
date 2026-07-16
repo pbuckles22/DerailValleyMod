@@ -40,4 +40,8 @@ Never leave failing tests on the default branch.
 
 ## Merge-ready
 
-Document your **merge-ready** or **CI** command in **AGENT_HANDOFF.md** and run it before merge when your team uses that gate.
+```bash
+dotnet build YardMasterSuite.sln -c Release
+```
+
+Phase 0 Safe Boot **gate** also needs Tier 2 in-game smoke ([TEST_PLAN.md](../../TEST_PLAN.md)). Documented in **AGENT_HANDOFF.md**.
