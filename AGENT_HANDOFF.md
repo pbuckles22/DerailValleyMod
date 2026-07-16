@@ -111,21 +111,28 @@ When shipping: update **PM_PLAN**, **doc/PROJECT_STATUS.md**, and **Current stat
 ## Current state
 
 - **Project:** DerailValleyMod — *Yard Master Suite* (UMM / Harmony / net48).
-- **Plan:** v3.0 locked — Phase 0 Safe Boot → 1 Monitor → 2 Governor → 3 Yard Master. See `PM_PLAN.md` + `doc/requirements/product.md`.
-- **Next (fresh agent):** Phase 0 — `dotnet new classlib -f net48`, UMM empty mod loads, document build→Mods path here and in TEST_PLAN.md.
-- **Not started:** Any C# mod source under `src/`.
+- **Plan:** v3.0 — Phase 0 Safe Boot → 1 Monitor → 2 Governor → 3 Yard Master.
+- **Branch (WIP):** `feature/e0-safe-boot` — template-umm layout; **Phase 0 smoke passed** (UMM Active, toggle OK).
+- **Build / deploy:** `dotnet build YardMasterSuite.sln`; `package.ps1 -NoArchive -OutputDirectory "...\Mods"`.
+- **Next:** Commit + merge Phase 0, then Phase 1 Monitor HUD (read-only).
 
 ## Run and test
 
-**Document your commands** (examples — replace with yours):
+**Game (this machine):** `C:\Program Files (x86)\Steam\steamapps\common\Derail Valley`  
+**Mods drop:** `...\Mods\YardMasterSuite\` (`info.json` + dll from `build\`)  
+**Player.log:** `%USERPROFILE%\AppData\LocalLow\Altfuture\Derail Valley\Player.log`
 
 ```bash
-# e.g. npm test && npm run build
-# e.g. cargo test
-# e.g. pytest
+# One-time after clone: copy Directory.Build.targets.example → Directory.Build.targets
+
+dotnet build YardMasterSuite.sln -c Debug
+dotnet build YardMasterSuite.sln -c Release   # merge-ready + package.ps1 → dist/
+
+# Deploy (UMM must already create Mods\):
+powershell -ExecutionPolicy Bypass -File package.ps1 -NoArchive -OutputDirectory "C:\Program Files (x86)\Steam\steamapps\common\Derail Valley\Mods"
 ```
 
-Replace the block above with your real commands and keep them in sync with TEST_PLAN.md.
+Keep in sync with [TEST_PLAN.md](TEST_PLAN.md).
 
 ## Conventions
 

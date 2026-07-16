@@ -10,13 +10,13 @@ Keep in sync with [doc/requirements/product.md](doc/requirements/product.md), [d
 
 **Goal:** Toolchain works; UMM loads an empty mod; fail-closed before any UI or state writes.
 
-| ID | Story | Done when |
-|----|-------|-----------|
-| E0-S1 | Environment setup (.NET 8+ SDK, net48 targeting workload, Cursor + C# Dev Kit, dnSpy) | Can target `net48` and inspect game assemblies |
-| E0-S2 | Project initializer: `dotnet new classlib -f net48` + `Info.json` + UMM `Main`/`Load`/`OnToggle` | Empty mod appears in UMM and toggles cleanly |
-| E0-S3 | Document build → Mods drop path + 3-step recovery in DEV_GUIDE / modding.md | Another session can deploy and recover without guesswork |
-| E0-S4 | Graceful fail: missing Harmony target → log + self-disable (no game crash) | Broken signature does not take down the session |
-| E0-S5 | Smoke: game launches with mod enabled; Player.log clean of mod errors | Safe Boot complete |
+| ID | Story | Done when | Status |
+|----|-------|-----------|--------|
+| E0-S1 | Environment setup (.NET 8+ SDK, net48 targeting workload, Cursor + C# Dev Kit, dnSpy) | Can target `net48` and inspect game assemblies | **Done** — SDK 10 + net48 build; dnSpy optional |
+| E0-S2 | Project initializer: template-umm layout + `info.json` + UMM `Main`/`Load`/`OnToggle` | Empty mod appears in UMM and toggles cleanly | **Done** — Active in UMM 0.32.5; toggle OK |
+| E0-S3 | Document build → Mods drop path + 3-step recovery in DEV_GUIDE / modding.md | Another session can deploy and recover without guesswork | **Done** |
+| E0-S4 | Graceful fail: missing Harmony target → log + self-disable (no game crash) | Broken signature does not take down the session | **Scaffold done** — try/catch on Load; no broken target yet to force in-game |
+| E0-S5 | Smoke: game launches with mod enabled; Player.log clean of mod errors | Safe Boot complete | **Done** — green Active; toggle off/on works |
 
 **Gate:** Phase 0 must load perfectly before Phase 1 UI or Phase 2+ writes.
 

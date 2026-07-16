@@ -46,16 +46,13 @@ doc/handoff/*-HANDOFF-*.md
 # Build output folders
 bin/
 obj/
-
-# Unity / UMM generated files
-[Ll]ibrary/
-[Tt]emp/
-[Oo]bj/
 [Bb]uild/
-[Bb]uilds/
-[Ll]ogs/
+[Dd]ist/
 
-# Derail Valley game files (NEVER push these)
-*.dll
+# Local game reference paths (copy from Directory.Build.targets.example)
+Directory.Build.targets
+Directory.Build.props.user
+
+# Never commit game Managed assemblies
 DerailValley_Data/
 Managed/

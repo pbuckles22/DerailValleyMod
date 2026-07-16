@@ -13,10 +13,18 @@ Derail Valley mod project. Cursor **rules**, **skills**, **handoff protocol**, a
 ```bash
 git clone https://github.com/pbuckles22/DerailValleyMod.git
 cd DerailValleyMod
-# Install your toolchain, then open this folder in Cursor.
+copy Directory.Build.targets.example Directory.Build.targets
+# Edit Directory.Build.targets if your Steam library path differs, then:
+dotnet build YardMasterSuite.sln -c Release
 ```
 
-Document your **test** and **coverage** commands in [AGENT_HANDOFF.md](AGENT_HANDOFF.md) and [TEST_PLAN.md](TEST_PLAN.md), then follow the tester skill and handoff checklist.
+Stack and layout follow [derail-valley-modding/template-umm](https://github.com/derail-valley-modding/template-umm) (UMM / Harmony / `net48`). Deploy: [AGENT_HANDOFF.md](AGENT_HANDOFF.md), [TEST_PLAN.md](TEST_PLAN.md).
+
+**In-game:** Install Unity Mod Manager into Derail Valley, then:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File package.ps1 -NoArchive -OutputDirectory "C:\Program Files (x86)\Steam\steamapps\common\Derail Valley\Mods"
+```
 
 ## What’s included
 
@@ -27,9 +35,10 @@ Document your **test** and **coverage** commands in [AGENT_HANDOFF.md](AGENT_HAN
 | **.cursor/handoff** | Handoff note template and README |
 | **doc/** | Requirements and optional **`doc/handoff/`** for tracked contributor notes (see `.gitignore` for gitignored session files) |
 | **examples/** | Reference UI/specs for **visual-match** / **ui-ux** |
-| **script/** | Optional — test or CI helper scripts; document in AGENT_HANDOFF |
+| **YardMasterSuite/** | UMM mod project (template-umm layout) |
+| **package.ps1** / **info.json** | Standard UMM package metadata |
 
-No application runtime is included yet — add the mod stack and document it here.
+Phase 0 on `feature/e0-safe-boot` — see [doc/PROJECT_STATUS.md](doc/PROJECT_STATUS.md).
 
 ## What not to put in the repo
 

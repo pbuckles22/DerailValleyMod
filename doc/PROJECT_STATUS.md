@@ -17,6 +17,7 @@
 | Branch | Role |
 |--------|------|
 | **`main`** | Integration branch |
+| **`feature/e0-safe-boot`** | Phase 0 scaffolding (WIP) |
 
 ---
 
@@ -26,13 +27,15 @@
 - Private GitHub repo: https://github.com/pbuckles22/DerailValleyMod
 - Product plan locked to **v3.0** (Monitor / Governor / Yard Master + parking lot)
 - Canonical docs: [requirements/product.md](requirements/product.md), [requirements/modding.md](requirements/modding.md), [PM_PLAN.md](../PM_PLAN.md)
+- Phase 0 scaffold: template-umm layout (`YardMasterSuite/`, `info.json`, `package.ps1`); `dotnet build YardMasterSuite.sln` green
+- Phase 0 in-game smoke: Yard Master Suite Active in UMM; toggle off/on works
 
 ---
 
 ## Next up
 
-- **Phase 0 Safe Boot:** create `net48` classlib, UMM empty mod, document Mods drop path, verify load
-- Then Phase 1 Monitor HUD
+- Commit/merge `feature/e0-safe-boot`
+- Phase 1 Monitor HUD (read-only)
 
 ---
 
