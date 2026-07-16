@@ -111,10 +111,10 @@ When shipping: update **PM_PLAN**, **doc/PROJECT_STATUS.md**, and **Current stat
 ## Current state
 
 - **Project:** DerailValleyMod — *Yard Master Suite* (UMM / Harmony / net48).
-- **Plan:** v3.0 — Phase 0 Safe Boot → 1 Monitor → 2 Governor → 3 Yard Master.
-- **Shipped on `main`:** Phase 0; E1-S1 speed HUD (`d4e63f7`). E1-S2 grade/tonnage on this branch (v0.3.0) — Tier 1 green; deploy for Tier 2.
+- **Plan:** v3.0 + CMD backlog — Phase 0 done; MVP = Diagnostic HUD (CMD-01…03).
+- **Shipped on `main`:** Phase 0; E1-S1 speed; E1-S2 grade/tonnage (merge pending → then this SHA).
 - **Build / deploy:** `dotnet test YardMasterSuite.sln`; `dotnet build YardMasterSuite.sln -c Release`; `package.ps1 -NoArchive -OutputDirectory "...\Mods"`.
-- **Next:** Tier 2 smoke for E1-S2; then E1-S3 Switch Path Tracer. E2-S5 Startup Assist remains Phase 2 backlog.
+- **Next:** CMD-01 Integrity Monitor (brake pipe, handbrake count, coupling status).
 
 ## Run and test
 

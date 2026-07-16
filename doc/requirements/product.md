@@ -4,6 +4,8 @@
 
 A **Fleet Operator** utility suite for *Derail Valley*: automate the tedium, preserve the simulation, prioritize stability.
 
+**MVP:** Situational awareness (Diagnostic HUD) before active Governors.
+
 ## Non-goals
 
 - Full autopilot / replacing the need to drive
@@ -15,8 +17,8 @@ A **Fleet Operator** utility suite for *Derail Valley*: automate the tedium, pre
 
 1. **Teleportation is the last resort** — Never delete. Teleport only after verification.
 2. **Governor vs Monitor**
-   - **Monitors (read-only):** Situational awareness — speed, path, grade, tonnage.
-   - **Governors (active):** Automate physics/maintenance — thermal, wheelslip, brake release, **startup assist** (breakers / electrics prereqs on starter + while running) — only through gated soft writes.
+   - **Monitors (read-only):** Diagnostic HUD — speed, grade, tonnage, integrity (brake pipe / handbrakes / coupling), power (ammeter / TM), terrain (grade + speed limits).
+   - **Governors (active):** Thermal throttle-cap, auto-brake release — only through gated soft writes.
 3. **Stability first** — Phase 0 (Foundation / Safe Boot) must load perfectly before UI or logic manipulation.
 
 ## Three-Gate pattern (all state writes)
@@ -33,20 +35,21 @@ Governors additionally require **safety gates** (e.g. stationary checks) before 
 
 | Phase | Name | Intent |
 |-------|------|--------|
-| **0** | Foundation / Safe Boot | Empty UMM mod loads; fail-closed; recovery documented |
-| **1** | Monitor Mode | Read-only HUD: telemetry, Switch Path Tracer, grade/tonnage |
-| **2** | Governor Mode | Thermal Governor, Anti-Wheelslip, Auto-Brake Release, Startup Assist |
-| **3** | Yard Master | Helper tools + manual teleportation (needs Phase 0–2 abort stability) |
+| **0** | Foundation / Safe Boot | **Completed** — empty UMM mod loads; fail-closed; recovery documented |
+| **1** | Diagnostic HUD (HIGH) | CMD-01 Integrity → CMD-02 Power → CMD-03 Terrain (grade shipped; speed limits TBD) |
+| **2** | Governor Mode (MEDIUM) | Three-Gate → CMD-04 Thermal → CMD-05 Auto-Brake |
+| **3** | Yard Master | CMD-06 Manual Consist Management / teleport (needs prior abort stability) |
 
 Stories and acceptance criteria: [PM_PLAN.md](../../PM_PLAN.md).
 
 ## Parking lot (future aspirations)
 
-- Auto-Service (pay-for-service remote)
-- Auto-Shop (remote parts management)
-- Manual Transmission Override (shift to automatic)
-- Mounting Suite (bracket auto-install and alignment)
-- Engine Temp Soft Governor (dynamic throttle scaling) — distinct from Phase 2 Thermal Governor
+- Switch Path Tracer
+- Anti-Wheelslip / Startup Assist
+- Auto-Service / Auto-Shop
+- Manual Transmission Override
+- Mounting Suite / turntable helpers
+- Engine Temp Soft Governor (if distinct from CMD-04)
 
 ## Testing philosophy
 
@@ -54,4 +57,4 @@ Use in-game Dev Tools (Comms Radio / Sandbox / Spawner). Do not burn development
 
 ## Source
 
-Master Project Context v3.0 + Developer Roadmap v3.0 (2026-07).
+Master Project Context v3.0 + Developer Roadmap v3.0 (2026-07); CMD backlog refresh 2026-07-16.
