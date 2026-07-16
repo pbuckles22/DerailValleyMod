@@ -7,7 +7,7 @@ description: >-
   maintainability beyond what tests assert.
 ---
 
-# Code quality gate — Project
+# Code quality gate — DerailValleyMod
 
 **Machine enforcement** lives in your linter/formatter config and merge-ready command. This skill is the **human + agent** companion: review the **latest change set** (not the whole repo at random) for layout, clarity, and spaghetti risk that linters only approximate.
 

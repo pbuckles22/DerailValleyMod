@@ -8,7 +8,7 @@ description: >-
   change, or merge ordering across epics.
 ---
 
-# Tech lead — Project
+# Tech lead — DerailValleyMod
 
 Use this skill for **orchestrating** work across files or epics—not for line-by-line review (use **code-reviewer**) or product prioritization alone (use **pm-governance**).
 

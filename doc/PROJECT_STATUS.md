@@ -2,13 +2,13 @@
 
 **Human-readable current state.** Keep in sync with [AGENT_HANDOFF.md](../AGENT_HANDOFF.md) → *Current state* when milestones ship.
 
-**Last updated:** 2026-06-10
+**Last updated:** 2026-07-16
 
 ---
 
 ## Summary
 
-**AgenticTemplate** — stack-agnostic Cursor rules, skills, handoff protocol, and TDD discipline. No application runtime; bolt-ons add their own stack.
+**DerailValleyMod** — Derail Valley mod project. Uses Cursor rules, skills, handoff protocol, and TDD discipline from AgenticTemplate. Application/mod runtime to be added.
 
 ---
 
@@ -16,22 +16,24 @@
 
 | Branch | Role |
 |--------|------|
-| **`main`** | Integration branch — template baseline |
+| **`main`** | Integration branch |
 
 ---
 
-## Completed (template baseline)
+## Completed
 
-- Agentic rules, skills, handoff protocol
+- Agentic rules, skills, handoff protocol (from template)
 - Governance stubs: PM_PLAN, TEST_PLAN, TECH_DEBT, RISKS, RELEASE, INCIDENTS
 - **Contributor onboarding norm:** CONTRIBUTING.md, PROJECT_STATUS, GitHub PR/issue templates
+- Project renamed to **DerailValleyMod**
 
 ---
 
-## Next up (maintainers)
+## Next up
 
-- Consumers: clone → customize AGENT_HANDOFF run/test → add product code under `doc/requirements/`
-- Variants: merge upstream when AgenticTemplate skills/rules change
+- Add mod codebase; document run/test commands in AGENT_HANDOFF and TEST_PLAN
+- Fill `doc/requirements/` as product specs land
+- Merge upstream AgenticTemplate when shared skills/rules change
 
 ---
 

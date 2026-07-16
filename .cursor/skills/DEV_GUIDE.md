@@ -1,8 +1,8 @@
-# DEV_GUIDE — Project
+# DEV_GUIDE — DerailValleyMod
 
 ## Tech stack
 
-**You define it.** This template is stack-agnostic. Document languages, frameworks, and runtime here as you adopt them (for example: TypeScript + npm for an Edge extension, Rust, Python, etc.).
+**You define it.** Document languages, frameworks, and runtime here as you adopt them (for example: Unity/C# for a Derail Valley mod, Python tooling, etc.).
 
 ## Architecture
 
@@ -17,7 +17,7 @@ Describe how you organize source, tests, and integration or E2E assets. Point to
 
 ## When you adopt Python (JIT — add when a project needs it)
 
-Do **not** add Python scaffolding to this template preemptively. When a real Python project uses AgenticTemplate, document **that project's** layout in its own `DEV_GUIDE.md` and wire commands into `TEST_PLAN.md` / `AGENT_HANDOFF.md`.
+Do **not** add Python scaffolding preemptively. When DerailValleyMod needs Python, document the layout in this `DEV_GUIDE.md` and wire commands into `TEST_PLAN.md` / `AGENT_HANDOFF.md`.
 
 Patterns proven in production (add only what the project uses):
 
@@ -28,4 +28,4 @@ Patterns proven in production (add only what the project uses):
 | CI | `.github/workflows/ci.yml` running the same command as local merge-ready | Verify with `gh run watch` after push — see github-feature-workflow skill |
 | Cross-platform tests | Mock platform keys; set both `HOME` and `USERPROFILE` for tilde tests | Linux CI will not parse `C:\` paths — gate OS-specific tests with `skipif` |
 
-Reference implementation: [dj-library-tools](https://github.com/pbuckles22/dj-library-tools) (CLI, pytest, no PRs, upstream syncs skills from this template).
+Reference implementation: [dj-library-tools](https://github.com/pbuckles22/dj-library-tools) (CLI, pytest, no PRs, upstream syncs skills from AgenticTemplate).

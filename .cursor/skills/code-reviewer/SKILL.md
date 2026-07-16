@@ -3,7 +3,7 @@ name: code-reviewer
 description: Review code changes for correctness, security, project conventions, and maintainability. Use when reviewing a diff, before commit, or when the user asks for a code review.
 ---
 
-# Code reviewer — Project
+# Code reviewer — DerailValleyMod
 
 Use this skill when performing a code review: before commit, on a diff, or when the user asks "review this." Focus on actionable feedback with line references and concrete fixes.
 

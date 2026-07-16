@@ -10,7 +10,7 @@ description: >-
 
 # Git / GitHub feature branch workflow
 
-**Policy in this template:** [AGENT_HANDOFF.md](../../AGENT_HANDOFF.md) — `main` is the integration branch; the **merge-ready command** is the quality bar. This skill defines **how work is finished**: tests (TDD where the tier applies), lint, format, merge-ready green, then **commit** (and **push** per AGENT_HANDOFF). **Pull requests are not part of the default exit** for this template unless the user explicitly asks for a PR or GitHub-based review.
+**Policy in this project:** [AGENT_HANDOFF.md](../../AGENT_HANDOFF.md) — `main` is the integration branch; the **merge-ready command** is the quality bar. This skill defines **how work is finished**: tests (TDD where the tier applies), lint, format, merge-ready green, then **commit** (and **push** per AGENT_HANDOFF). **Pull requests are not part of the default exit** for this project unless the user explicitly asks for a PR or GitHub-based review.
 
 ## Do not prompt for PRs (agents)
 

@@ -3,7 +3,7 @@ name: game-readiness
 description: Validates a game or interactive product for playability, clarity, feedback, and scale-readiness. Use at milestones, before large scope changes, or when the user asks if the product feels ready or is ready to scale.
 ---
 
-# Game Readiness — Project
+# Game Readiness — DerailValleyMod
 
 Validates that the product feels **ready** (not just correct) and is **ready to scale** without costly rework. Apply at milestones or before major scope. Useful for games, puzzles, or any interactive product.
 

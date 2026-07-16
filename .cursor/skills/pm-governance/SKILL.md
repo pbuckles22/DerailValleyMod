@@ -3,7 +3,7 @@ name: pm-governance
 description: Project management and governance. Use when planning sprints, making scope decisions, enforcing quality gates, or identifying risks.
 ---
 
-# PM governance — Project
+# PM governance — DerailValleyMod
 
 Use this skill when doing sprint planning, scope tradeoffs, quality gates, or risk mitigation. Keep in sync with doc/requirements/ if present.
 

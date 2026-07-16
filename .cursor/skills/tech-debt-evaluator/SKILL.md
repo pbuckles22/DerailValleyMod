@@ -3,7 +3,7 @@ name: tech-debt-evaluator
 description: Assess and prioritize technical debt (code, architecture, tests, docs, performance). Use when planning refactors, sprint planning, or evaluating codebase health.
 ---
 
-# Tech debt evaluator — Project
+# Tech debt evaluator — DerailValleyMod
 
 Use this skill when evaluating technical debt, planning refactors, or assessing codebase health. Produces a structured, prioritized list.
 

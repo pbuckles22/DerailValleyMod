@@ -1,10 +1,10 @@
 # Contributing
 
-Thank you for contributing. This template uses **tracked documentation** as the source of truth — not chat history and not local handoff files alone.
+Thank you for contributing. This project uses **tracked documentation** as the source of truth — not chat history and not local handoff files alone.
 
 ## Start here (reading order)
 
-1. [README.md](README.md) — what this template provides
+1. [README.md](README.md) — what this project provides
 2. **[doc/PROJECT_STATUS.md](doc/PROJECT_STATUS.md)** — current state, active branch, what's next
 3. [PM_PLAN.md](PM_PLAN.md) — phased checklist (customize for your product)
 4. [AGENT_HANDOFF.md](AGENT_HANDOFF.md) — run/test commands, merge-ready gate, conventions
@@ -26,16 +26,16 @@ Thank you for contributing. This template uses **tracked documentation** as the 
 ## Development setup
 
 ```bash
-git clone https://github.com/pbuckles22/AgenticTemplate.git
-cd AgenticTemplate
+git clone https://github.com/pbuckles22/DerailValleyMod.git
+cd DerailValleyMod
 # Install your stack toolchain, then open in Cursor
 ```
 
 Document your **merge-ready command** in [AGENT_HANDOFF.md](AGENT_HANDOFF.md) and [TEST_PLAN.md](TEST_PLAN.md).
 
-## Variant templates
+## Upstream agentic template
 
-Stack-specific variants (e.g. [FlutterAgenticTemplate](https://github.com/pbuckles22/FlutterAgenticTemplate)) track this repo as **upstream**. See [AGENT_HANDOFF.md](AGENT_HANDOFF.md) → *Creating variant templates*.
+This repo tracks [AgenticTemplate](https://github.com/pbuckles22/AgenticTemplate) as an **upstream remote** for shared skills/rules. See [AGENT_HANDOFF.md](AGENT_HANDOFF.md) → *Syncing updates from AgenticTemplate*.
 
 ## Pull request expectations
 
