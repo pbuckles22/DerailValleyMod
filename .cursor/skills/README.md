@@ -1,4 +1,4 @@
-# Project skills
+# DerailValleyMod skills
 
 All agent skills and source-of-truth docs live here.
 

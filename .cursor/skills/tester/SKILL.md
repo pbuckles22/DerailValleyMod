@@ -3,7 +3,7 @@ name: tester
 description: Black-box tests, test-first for core logic, and continuous test runs. Use when adding or changing tests or app logic. Run your project’s test command after changes; keep suite green.
 ---
 
-# Tester — Project
+# Tester — DerailValleyMod
 
 Use this skill when writing or running tests, or when touching app logic or new behavior. **First action when adding new behavior:** Read this skill and [TEST_TDD.md](../TEST_TDD.md), then write a **failing** test at the appropriate tier(s) **before** production code.
 

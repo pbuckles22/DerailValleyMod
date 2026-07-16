@@ -3,7 +3,7 @@ name: visual-match
 description: Match UI graphics to reference examples (examples/ screenshots and specs). Use when drawing or changing visuals so the result matches the examples without back-and-forth.
 ---
 
-# Visual match — Project
+# Visual match — DerailValleyMod
 
 Use this skill when implementing or changing UI graphics (layout, grid, colors, strokes, icons) so the result **matches the reference examples** in `examples/` (screenshots, PDFs, specs). Ensures consistent look and alignment with design.
 

@@ -3,8 +3,8 @@ description: Project context — apply in every session
 alwaysApply: true
 ---
 
-# Agentic Template (stack-agnostic)
+# DerailValleyMod
 
-Cursor rules, skills, handoff protocol, and test discipline. **Not** tied to a specific stack — document your toolchain in AGENT_HANDOFF.md and TEST_PLAN.md.
+Cursor rules, skills, handoff protocol, and test discipline for the DerailValleyMod project. Document your toolchain in AGENT_HANDOFF.md and TEST_PLAN.md.
 
 Source of truth: PM_PLAN.md, AGENT_HANDOFF.md, TECH_DEBT.md, RISKS.md, RELEASE.md, INCIDENTS.md; .cursor/skills/ (DEV_GUIDE, TEST_TDD, DESIGN_SYSTEM, techwriter, tester, green-and-clean, context-bootstrapper, session-summarizer, code-reviewer, tech-debt-evaluator, eval-engineer, risk-manager, release-manager, security-reviewer, incident-triager, pm-governance, ui-ux, game-readiness, visual-match, github-feature-workflow). Use techwriter for docs; use tester + .cursor/rules/testing.mdc for black-box tests. **Operating model:** Use green-and-clean for scope discipline; use context-bootstrapper when starting/resuming; use session-summarizer when handing off. **TDD:** Read TEST_TDD.md and tester skill first; when TEST_PLAN.md defines Tier 1 / Tier 2, use test-first at the tier that covers the change. **CI / merge-ready:** Document the full gate (e.g. tests + build + E2E) in AGENT_HANDOFF.md and run it before considering work merge-ready. **Branches / push:** When implementing features or the user asks for git workflow, follow [.cursor/skills/github-feature-workflow/SKILL.md](.cursor/skills/github-feature-workflow/SKILL.md) and the **Git workflow** section in AGENT_HANDOFF.md. **Handoff:** When the user wants a handoff, run code review (code-reviewer), tech debt (tech-debt-evaluator), and your project’s test/coverage commands as documented in AGENT_HANDOFF.md; record in the handoff note. Prefer objective acceptance criteria (eval-engineer) and explicit rollback/risks for risky changes (risk-manager, release-manager). See AGENT_HANDOFF.md and .cursor/rules/handoff-checklist.mdc — do not skip.

@@ -3,7 +3,7 @@ name: techwriter
 description: Creates and edits project documentation for both public and internal audiences. Use when writing or updating README.md, AGENT_HANDOFF (or AGENTS.md), CONTRIBUTING, or internal docs (e.g. PM_PLAN, DEV_GUIDE, TEST_TDD, DESIGN_SYSTEM). Covers structure, tone, and what to include for each doc type.
 ---
 
-# Techwriter — Project Documentation
+# Techwriter — DerailValleyMod Documentation
 
 Use this skill when creating or revising project docs so they stay consistent and useful for humans and agents.
 

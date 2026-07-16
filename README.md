@@ -1,6 +1,6 @@
-# Agentic Template (stack-agnostic)
+# DerailValleyMod
 
-Cursor **rules**, **skills**, **handoff protocol**, and **test discipline** for any codebase — browser extensions (Edge, Chrome), backends, CLIs, native apps, etc. Bring your own runtime and document commands in **AGENT_HANDOFF.md** and **TEST_PLAN.md**.
+Derail Valley mod project. Cursor **rules**, **skills**, **handoff protocol**, and **test discipline** are included; document stack-specific commands in **AGENT_HANDOFF.md** and **TEST_PLAN.md**.
 
 ## New here?
 
@@ -11,9 +11,9 @@ Cursor **rules**, **skills**, **handoff protocol**, and **test discipline** for 
 ## Quick start
 
 ```bash
-git clone https://github.com/pbuckles22/AgenticTemplate.git
-cd AgenticTemplate
-# Install your toolchain (npm install, cargo build, etc.), then open this folder in Cursor.
+git clone https://github.com/pbuckles22/DerailValleyMod.git
+cd DerailValleyMod
+# Install your toolchain, then open this folder in Cursor.
 ```
 
 Document your **test** and **coverage** commands in [AGENT_HANDOFF.md](AGENT_HANDOFF.md) and [TEST_PLAN.md](TEST_PLAN.md), then follow the tester skill and handoff checklist.
@@ -29,7 +29,7 @@ Document your **test** and **coverage** commands in [AGENT_HANDOFF.md](AGENT_HAN
 | **examples/** | Reference UI/specs for **visual-match** / **ui-ux** |
 | **script/** | Optional — test or CI helper scripts; document in AGENT_HANDOFF |
 
-No application runtime is included — bring your own stack.
+No application runtime is included yet — add the mod stack and document it here.
 
 ## What not to put in the repo
 

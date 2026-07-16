@@ -1,8 +1,8 @@
 # Python (JIT)
 
-This folder exists as a **pointer**, not a boilerplate. AgenticTemplate stays stack-agnostic until a project actually needs Python.
+This folder exists as a **pointer**, not a boilerplate. DerailValleyMod stays stack-agnostic until the project actually needs Python.
 
-When you adopt Python in a variant repo:
+When you adopt Python in this repo:
 
 1. Document layout and commands in that repo's `.cursor/skills/DEV_GUIDE.md`.
 2. Fill in `TEST_PLAN.md` and `AGENT_HANDOFF.md` with real merge-ready commands (e.g. `python -m pytest -q`).

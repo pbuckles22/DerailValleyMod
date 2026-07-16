@@ -3,7 +3,7 @@ name: ui-ux
 description: UI/UX review and alignment. Use when writing or reviewing screens, animations, haptics, layout, or design tokens; or when adding/changing UX to match project requirements and accessibility.
 ---
 
-# UI/UX — Project
+# UI/UX — DerailValleyMod
 
 Use this skill when implementing or reviewing UI: screens, widgets, animations, haptics, layout, colors, tap targets, and feedback. Ensures alignment with doc/requirements/ (if present) and DESIGN_SYSTEM.md.
 

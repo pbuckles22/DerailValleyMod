@@ -1,40 +1,22 @@
-# Agent handoff — Project
+# Agent handoff — DerailValleyMod
 
 ## Purpose
 
-This repo is an **agentic template**: Cursor rules, skills, handoff protocol, and testing discipline. **Replace** stack-specific placeholders below with your project's commands (test runner, coverage, integration or E2E).
+**DerailValleyMod** — Derail Valley mod project with Cursor rules, skills, handoff protocol, and testing discipline.
+
+**Sync:** This repo tracks **AgenticTemplate** as an **upstream remote** for shared skills/rules.
+To pull shared updates: `git fetch upstream && git merge upstream/main` (resolve stack-specific conflicts manually).
+
+Document stack-specific commands below (test runner, coverage, integration or E2E).
 
 ---
 
-## Creating variant templates (e.g. Flutter, React Native, backend)
+## Syncing updates from AgenticTemplate
 
-Use this pattern when you need a **stack-specific** variant that shares the agentic layer but has its own tooling (e.g. [FlutterAgenticTemplate](https://github.com/pbuckles22/FlutterAgenticTemplate)).
-
-### Initial setup (create the variant)
+When [AgenticTemplate](https://github.com/pbuckles22/AgenticTemplate) gets new skills or enhancements:
 
 ```bash
-# 1. Create your variant repo on GitHub, then clone it
-git clone https://github.com/YOUR_ORG/YourVariantTemplate.git
-cd YourVariantTemplate
-
-# 2. Add AgenticTemplate as upstream remote
-git remote add upstream https://github.com/pbuckles22/AgenticTemplate.git
-git fetch upstream
-
-# 3. Merge the base template (first time only)
-git merge upstream/main --allow-unrelated-histories
-# Resolve any conflicts, keeping your stack-specific files
-
-# 4. Push
-git push origin main
-```
-
-### Syncing updates from AgenticTemplate
-
-When AgenticTemplate gets new skills or enhancements:
-
-```bash
-cd YourVariantTemplate
+cd DerailValleyMod
 git fetch upstream
 git merge upstream/main
 # Resolve conflicts — keep stack-specific overrides in:
@@ -54,15 +36,6 @@ git push origin main
 | Operating model skills (green-and-clean, etc.) | `always.mdc` (project context)    |
 |                                            | `AGENT_HANDOFF.md` (run/test section) |
 
-### Document the upstream in your variant
-
-Add this to your variant's AGENT_HANDOFF.md under Purpose:
-
-```markdown
-**Sync:** This repo tracks **AgenticTemplate** as an **upstream remote** for shared skills/rules.
-To pull shared updates: `git fetch upstream && git merge upstream/main` (resolve stack-specific conflicts manually).
-```
-
 ---
 
 ## Source of truth
@@ -72,7 +45,7 @@ To pull shared updates: `git fetch upstream && git merge upstream/main` (resolve
 
 ## Green and clean operating model (how we work)
 
-This template assumes a strict operating model aimed at **green and clean** delivery:
+This project assumes a strict operating model aimed at **green and clean** delivery:
 
 - **Green**: each change is verifiable against explicit acceptance criteria and validated at the appropriate tier.
 - **Clean**: context is curated; durable state lives in tracked docs; handoffs are compressed and decision-first.
@@ -137,8 +110,8 @@ When shipping: update **PM_PLAN**, **doc/PROJECT_STATUS.md**, and **Current stat
 
 ## Current state
 
-- **Template:** Agentic rules and skills in place; contributor onboarding norm (CONTRIBUTING, PROJECT_STATUS, GitHub templates).
-- **Next:** Add your codebase; document run/test commands here and in TEST_PLAN.md.
+- **Project:** DerailValleyMod — agentic rules/skills in place; contributor onboarding norm (CONTRIBUTING, PROJECT_STATUS, GitHub templates).
+- **Next:** Add mod codebase; document run/test commands here and in TEST_PLAN.md.
 
 ## Run and test
 
@@ -168,7 +141,7 @@ Document **your** team rules here and keep them in sync with what you run locall
 2. **Optional short-lived branches:** For larger slices, use `feature/<topic>` or `fix/<topic>`, then merge or rebase into `main`. Agents should follow [.cursor/skills/github-feature-workflow/SKILL.md](.cursor/skills/github-feature-workflow/SKILL.md) when branching or pushing.
 3. **Before push / merge-ready:** Run your **full gate** (document it in the **Run and test** section above — e.g. tests + build + integration/E2E). Same checks should run in CI if you use GitHub Actions (or equivalent).
 4. **After push — verify CI:** Agents do not get GitHub failure emails. When Actions exist, run `gh run watch --repo OWNER/REPO` (or `gh run list` + `gh run view --log-failed`) before declaring work done on `main`. See [.cursor/skills/github-feature-workflow/SKILL.md](.cursor/skills/github-feature-workflow/SKILL.md).
-5. **Pull requests:** **Optional** in this template — set `Required` or `Optional` for your org. If optional, direct push to `main` after green CI is still valid; if required, open a PR and use the same test plan text you ran locally.
+5. **Pull requests:** **Optional** for DerailValleyMod — set `Required` or `Optional` for your org. If optional, direct push to `main` after green CI is still valid; if required, open a PR and use the same test plan text you ran locally.
 6. **After merge:** Delete the local feature branch; delete the remote feature branch if your flow created one.
 
 ---
