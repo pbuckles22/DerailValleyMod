@@ -16,8 +16,7 @@
 
 | Branch | Role |
 |--------|------|
-| **`main`** | Integration branch (Phase 0 shipped at `4b6906c`) |
-| **`feature/e1-s1-telemetry-hud`** | E1-S1 Done — ready to merge (v0.2.0) |
+| **`main`** | Integration (E1-S1 shipped at `d4e63f7`) |
 
 ---
 
@@ -29,14 +28,14 @@
 - Canonical docs: [requirements/product.md](requirements/product.md), [requirements/modding.md](requirements/modding.md), [PM_PLAN.md](../PM_PLAN.md)
 - Phase 0 scaffold: template-umm layout (`YardMasterSuite/`, `info.json`, `package.ps1`); `dotnet build YardMasterSuite.sln` green
 - Phase 0 in-game smoke: Yard Master Suite Active in UMM; toggle off/on works
-- E1-S1 Monitor speed HUD: `YardMasterSuite.Core` + xUnit; top-left km/h; UMM toggle; sandbox smoke matched cab speedometer (5 / 15 km/h)
+- E1-S1 Monitor speed HUD: `YardMasterSuite.Core` + xUnit; top-left km/h; UMM toggle; sandbox smoke matched cab speedometer
 
 ---
 
 ## Next up
 
-- Merge `feature/e1-s1-telemetry-hud` → `main`
-- E1-S2 grade/tonnage
+- E1-S2 grade/tonnage (HUD extends L→R)
+- Phase 2 later: E2-S5 Startup Assist (after Three-Gate)
 
 ---
 

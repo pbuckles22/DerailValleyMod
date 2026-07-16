@@ -16,7 +16,7 @@ A **Fleet Operator** utility suite for *Derail Valley*: automate the tedium, pre
 1. **Teleportation is the last resort** — Never delete. Teleport only after verification.
 2. **Governor vs Monitor**
    - **Monitors (read-only):** Situational awareness — speed, path, grade, tonnage.
-   - **Governors (active):** Automate physics/maintenance — thermal, wheelslip, brake release — only through gated soft writes.
+   - **Governors (active):** Automate physics/maintenance — thermal, wheelslip, brake release, **startup assist** (breakers / electrics prereqs on starter + while running) — only through gated soft writes.
 3. **Stability first** — Phase 0 (Foundation / Safe Boot) must load perfectly before UI or logic manipulation.
 
 ## Three-Gate pattern (all state writes)
@@ -35,7 +35,7 @@ Governors additionally require **safety gates** (e.g. stationary checks) before 
 |-------|------|--------|
 | **0** | Foundation / Safe Boot | Empty UMM mod loads; fail-closed; recovery documented |
 | **1** | Monitor Mode | Read-only HUD: telemetry, Switch Path Tracer, grade/tonnage |
-| **2** | Governor Mode | Thermal Governor, Anti-Wheelslip, Auto-Brake Release |
+| **2** | Governor Mode | Thermal Governor, Anti-Wheelslip, Auto-Brake Release, Startup Assist |
 | **3** | Yard Master | Helper tools + manual teleportation (needs Phase 0–2 abort stability) |
 
 Stories and acceptance criteria: [PM_PLAN.md](../../PM_PLAN.md).
