@@ -112,9 +112,9 @@ When shipping: update **PM_PLAN**, **doc/PROJECT_STATUS.md**, and **Current stat
 
 - **Project:** DerailValleyMod — *Yard Master Suite* (UMM / Harmony / net48).
 - **Plan:** v3.0 — Phase 0 Safe Boot → 1 Monitor → 2 Governor → 3 Yard Master.
-- **Branch (WIP):** `feature/e0-safe-boot` — template-umm layout; **Phase 0 smoke passed** (UMM Active, toggle OK).
+- **Shipped on `main`:** Phase 0 Safe Boot (`ae7b481`) — template-umm layout; UMM Active + toggle OK.
 - **Build / deploy:** `dotnet build YardMasterSuite.sln`; `package.ps1 -NoArchive -OutputDirectory "...\Mods"`.
-- **Next:** Commit + merge Phase 0, then Phase 1 Monitor HUD (read-only).
+- **Next:** Phase 1 Monitor HUD (read-only telemetry).
 
 ## Run and test
 
