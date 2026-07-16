@@ -16,8 +16,7 @@
 
 | Branch | Role |
 |--------|------|
-| **`main`** | Integration branch |
-| **`feature/e0-safe-boot`** | Phase 0 scaffolding (WIP) |
+| **`main`** | Integration branch (Phase 0 shipped at `ae7b481`) |
 
 ---
 
@@ -34,7 +33,6 @@
 
 ## Next up
 
-- Commit/merge `feature/e0-safe-boot`
 - Phase 1 Monitor HUD (read-only)
 
 ---
