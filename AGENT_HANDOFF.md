@@ -114,7 +114,7 @@ When shipping: update **PM_PLAN**, **doc/PROJECT_STATUS.md**, and **Current stat
 - **Plan:** v3.0 + CMD backlog — Phase 0 done; MVP = Diagnostic HUD (CMD-01…03).
 - **Shipped on `main`:** Phase 0; E1-S1 speed; E1-S2 grade/tonnage (`c92c1b9`, v0.3.0) — Tier 1 + Tier 2 green.
 - **Build / deploy:** `dotnet test YardMasterSuite.sln`; `dotnet build YardMasterSuite.sln -c Release`; `package.ps1 -NoArchive -OutputDirectory "...\Mods"`.
-- **Next / WIP:** CMD-01a on `feature/cmd-01-integrity-monitor` (`dbf8037`, v0.4.0) — Tier 1 green; informal in-game OK; **merge after formal Tier 2**. Then CMD-01b consist summary.
+- **Next / WIP:** CMD-01a on `feature/cmd-01-integrity-monitor` (`3b8e9be`+, v0.4.0) — `T2 integrity` Player.log debug added; redeploy + finish Tier 2 log sign-off, then merge. Then CMD-01b (includes retro `T2 consist` logging).
 
 ## Run and test
 
@@ -165,4 +165,8 @@ When ending a session:
 3. Update **[doc/PROJECT_STATUS.md](doc/PROJECT_STATUS.md)** and **Current state** above (required for contributor-visible changes).
 4. Optional local note: `.cursor/handoff/NNNN-handoff-*.md` ([template](.cursor/handoff/_template.md)) — gitignored; promote decisions to tracked docs.
 
+
+## Epic close (automatic)
+
+When an epic's in-scope work is done, **do not wait for the user to ask**. Run [.cursor/rules/epic-close.mdc](.cursor/rules/epic-close.mdc) / pm-governance *Epic close*: **handoff checklist first**, then mark the epic complete in plan/status docs, close note, commit/push, summarize. See [.cursor/skills/pm-governance/SKILL.md](.cursor/skills/pm-governance/SKILL.md).
 Anything the team must see on GitHub belongs in **PROJECT_STATUS**, **PM_PLAN**, **README**, or the **PR** — not only gitignored handoff files.
