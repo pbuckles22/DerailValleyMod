@@ -2,7 +2,7 @@
 
 Keep in sync with [doc/requirements/product.md](doc/requirements/product.md), [doc/PROJECT_STATUS.md](doc/PROJECT_STATUS.md), and AGENT_HANDOFF “Current state”.
 
-**Source:** Master Context / Developer Roadmap v3.0 (2026-07), backlog refresh 2026-07-16 (CMD IDs).
+**Source:** Master Context / Developer Roadmap v3.0 (2026-07), backlog refresh 2026-07-16 (CMD IDs); CMD-01 sliced 2026-07-16 (01a–01d).
 
 **MVP focus:** Situational awareness (Diagnostic HUD) before Governor writes.
 
@@ -37,9 +37,23 @@ L→R read-only strip; UMM toggle; km/h (game-native).
 
 **Goal:** Situational awareness only — **no game-state writes**. HUD continues **left → right**.
 
+### CMD-01 — Integrity Monitor (slices)
+
+Cab summary first, then ground inspect; coupler tight/loose last.
+
 | ID | Story | Done when | Status |
 |----|-------|-----------|--------|
-| CMD-01 | Integrity Monitor | Real-time Brake Pipe pressure, Handbrake count (applied on consist), Coupling status | **In progress** — Tier 1 green; pending Tier 2 smoke |
+| CMD-01a | Car integrity readout | Brake pipe (bar), HB **applied** count on consist, F/R **coupled** (`+/-`) for car under player | **In progress** — Tier 1 green; pending Tier 2 smoke |
+| CMD-01b | Consist integrity summary | From loco/consist: **car count**, HB **on/off** (or on/total), **hose** connected vs open between coupled ends | Next after 01a |
+| CMD-01c | Coupler tight/loose | Show chain **tightened** vs loose when coupled (car and/or look-at) | After 01b/01d |
+| CMD-01d | Look-at inspect | Cursor raycast → same **per-car** integrity without standing on the car | After 01b |
+
+**Build order:** 01a → 01b → 01d → 01c.
+
+### Other Monitor stories
+
+| ID | Story | Done when | Status |
+|----|-------|-----------|--------|
 | CMD-02 | Power Monitor | Ammeter readouts + Traction Motor (TM) health warnings | |
 | CMD-03 | Terrain Monitor | Grade percentage + speed limit alerts | **Partial** — grade % shipped in E1-S2; speed-limit alerts remaining |
 

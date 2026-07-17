@@ -31,7 +31,8 @@
 
 ## Next up
 
-- **CMD-01** Integrity Monitor — implement done on feature branch; confirm in-game smoke then merge
+- **CMD-01a** car integrity — confirm Tier 2 smoke, then merge
+- **CMD-01b** consist summary (cars / HB on·off / hose) → **01d** look-at → **01c** tight/loose
 - Then CMD-02 Power Monitor; finish CMD-03 speed-limit alerts
 
 ---
