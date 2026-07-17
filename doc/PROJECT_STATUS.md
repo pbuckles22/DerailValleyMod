@@ -16,7 +16,7 @@
 
 | Branch | Role |
 |--------|------|
-| **`main`** | Integration (E1-S2 merge in progress) |
+| **`main`** | Integration (`c92c1b9` — E1-S2 + CMD backlog) |
 
 ---
 
