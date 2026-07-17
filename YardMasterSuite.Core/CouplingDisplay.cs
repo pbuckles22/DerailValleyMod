@@ -9,10 +9,10 @@ public static class CouplingDisplay
     {
         if (frontCoupled is null || rearCoupled is null)
         {
-            return "— cpl";
+            return "— Couplers";
         }
 
-        return $"F{Mark(frontCoupled.Value)} R{Mark(rearCoupled.Value)}";
+        return $"Couplers F{Mark(frontCoupled.Value)} R{Mark(rearCoupled.Value)}";
     }
 
     private static char Mark(bool coupled) => coupled ? '+' : '-';

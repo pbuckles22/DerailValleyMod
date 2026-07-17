@@ -43,12 +43,14 @@ Cab summary first, then ground inspect; coupler tight/loose last.
 
 | ID | Story | Done when | Status |
 |----|-------|-----------|--------|
-| CMD-01a | Car integrity readout | Brake pipe (bar), HB **applied** count on consist, F/R **coupled** (`+/-`) for car under player | **In progress** — Tier 1 green; pending Tier 2 smoke |
-| CMD-01b | Consist integrity summary | From loco/consist: **car count**, HB **on/off** (or on/total), **hose** connected vs open between coupled ends | Next after 01a |
-| CMD-01c | Coupler tight/loose | Show chain **tightened** vs loose when coupled (car and/or look-at) | After 01b/01d |
-| CMD-01d | Look-at inspect | Cursor raycast → same **per-car** integrity without standing on the car | After 01b |
+| CMD-01a | Car integrity readout | Brake pipe (bar), HB **applied** count on consist, F/R **coupled** (`+/-`) for car under player; **`T2 integrity` Player.log lines** for foot/car/change (see TEST_PLAN) | **In progress** — Tier 1 + T2 debug logging; redeploy then finish log sign-off |
+| CMD-01b | Consist integrity summary | From loco/consist: **car count**, HB **on/off** (or on/total), **hose** connected vs open between coupled ends; **`T2 consist` discrete Player.log** (retro Tier 2 logging) | Next after 01a |
+| CMD-01c | Coupler tight/loose | Show chain **tightened** vs loose when coupled (car and/or look-at); **`T2 coupler` logs** | After 01b/01d |
+| CMD-01d | Look-at inspect | Cursor on a car → **second HUD bar** directly under the main strip (same height, width fits content) with that car’s pipe / HB / cpl, **Car #** (front→back from loco; `XX` if not on the train), and **Job #**; bar gone when not looking; **`T2 look-at` logs** | After 01b |
 
 **Build order:** 01a → 01b → 01d → 01c.
+
+**Tier 2 logging (retro):** Every Monitor story that needs in-game sign-off ships discrete `T2 …` Player.log lines for its checklist — same pattern as CMD-01a (`Tier2IntegrityDebug`). No per-frame spam.
 
 ### Other Monitor stories
 

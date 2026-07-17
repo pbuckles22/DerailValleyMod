@@ -9,6 +9,6 @@ public static class BrakePipeDisplay
 {
     public static string FormatBar(float? pressureBar) =>
         pressureBar is null
-            ? "— bar"
-            : $"{Math.Round(pressureBar.Value, 1, MidpointRounding.AwayFromZero):0.0} bar";
+            ? "— Pipe"
+            : $"Pipe {Math.Round(pressureBar.Value, 1, MidpointRounding.AwayFromZero):0.0} bar";
 }

@@ -28,5 +28,5 @@ public static class HandbrakeDisplay
     }
 
     public static string FormatCount(int? appliedCount) =>
-        appliedCount is null ? "— HB" : $"{appliedCount.Value} HB";
+        appliedCount is null ? "— Handbrake" : $"Handbrake {appliedCount.Value}";
 }

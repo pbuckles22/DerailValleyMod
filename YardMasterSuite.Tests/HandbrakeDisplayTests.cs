@@ -7,13 +7,13 @@ public class HandbrakeDisplayTests
     [Fact]
     public void FormatCount_shows_placeholder_when_missing()
     {
-        Assert.Equal("— HB", HandbrakeDisplay.FormatCount(null));
+        Assert.Equal("— Handbrake", HandbrakeDisplay.FormatCount(null));
     }
 
     [Theory]
-    [InlineData(0, "0 HB")]
-    [InlineData(2, "2 HB")]
-    [InlineData(12, "12 HB")]
+    [InlineData(0, "Handbrake 0")]
+    [InlineData(2, "Handbrake 2")]
+    [InlineData(12, "Handbrake 12")]
     public void FormatCount_shows_applied_count(int applied, string expected)
     {
         Assert.Equal(expected, HandbrakeDisplay.FormatCount(applied));

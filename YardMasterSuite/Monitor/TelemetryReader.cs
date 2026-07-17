@@ -6,8 +6,9 @@ namespace YardMasterSuite.Monitor;
 
 /// <summary>
 /// Read-only telemetry from the player's car / trainset. No game-state writes.
+/// Internal — DV CommandTerminal scans public types across mod assemblies.
 /// </summary>
-public static class TelemetryReader
+internal static class TelemetryReader
 {
     /// <summary>
     /// Absolute speed in meters/second, or null when not on a car / unavailable.
@@ -190,4 +191,27 @@ public static class TelemetryReader
             HandbrakeDisplay.FormatCount(TryGetHandbrakeAppliedCount()),
             CouplingDisplay.Format(TryGetFrontCoupled(), TryGetRearCoupled()),
         });
+
+    /// <summary>
+    /// Integrity fields only — for Tier 2 Player.log snapshots (not speed/grade/tonnage).
+    /// Internal so DV CommandTerminal does not reflect over Core return types.
+    /// </summary>
+    internal static IntegrityDebugSnapshot CurrentIntegrityDebugSnapshot()
+    {
+        var onCar = false;
+        try
+        {
+            onCar = PlayerManager.Car != null;
+        }
+        catch
+        {
+            onCar = false;
+        }
+
+        return new IntegrityDebugSnapshot(
+            onCar,
+            BrakePipeDisplay.FormatBar(TryGetBrakePipePressureBar()),
+            HandbrakeDisplay.FormatCount(TryGetHandbrakeAppliedCount()),
+            CouplingDisplay.Format(TryGetFrontCoupled(), TryGetRearCoupled()));
+    }
 }

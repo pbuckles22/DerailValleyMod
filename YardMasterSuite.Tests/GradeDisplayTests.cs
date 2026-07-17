@@ -26,9 +26,9 @@ public class GradeDisplayTests
     [Fact]
     public void FormatPercent_shows_sign_and_placeholder()
     {
-        Assert.Equal("— %", GradeDisplay.FormatPercent(null));
-        Assert.Equal("+1.2 %", GradeDisplay.FormatPercent(1.24f));
-        Assert.Equal("-0.5 %", GradeDisplay.FormatPercent(-0.54f));
-        Assert.Equal("0.0 %", GradeDisplay.FormatPercent(0.01f));
+        Assert.Equal("— Grade", GradeDisplay.FormatPercent(null));
+        Assert.Equal("Grade +1.2 %", GradeDisplay.FormatPercent(1.24f));
+        Assert.Equal("Grade -0.5 %", GradeDisplay.FormatPercent(-0.54f));
+        Assert.Equal("Grade 0.0 %", GradeDisplay.FormatPercent(0.01f));
     }
 }

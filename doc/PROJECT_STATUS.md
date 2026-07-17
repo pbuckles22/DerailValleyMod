@@ -2,7 +2,7 @@
 
 **Human-readable current state.** Keep in sync with [AGENT_HANDOFF.md](../AGENT_HANDOFF.md) → *Current state* when milestones ship.
 
-**Last updated:** 2026-07-16
+**Last updated:** 2026-07-17
 
 ---
 
@@ -16,7 +16,7 @@
 
 | Branch | Role |
 |--------|------|
-| **`feature/cmd-01-integrity-monitor`** | CMD-01 Integrity (v0.4.0) — Tier 1 green; Tier 2 pending |
+| **`feature/cmd-01-integrity-monitor`** | CMD-01a Integrity (v0.4.0) — Tier 1 + `T2 integrity` Player.log debug; finish in-game log sign-off then merge |
 | **`main`** | Integration (`1b817ed` — E1-S2 + CMD backlog) |
 
 ---
@@ -31,8 +31,8 @@
 
 ## Next up
 
-- **CMD-01a** car integrity — confirm Tier 2 smoke, then merge
-- **CMD-01b** consist summary (cars / HB on·off / hose) → **01d** look-at → **01c** tight/loose
+- **CMD-01a** — redeploy with `T2 integrity` logs; sign off from Player.log; merge
+- **CMD-01b** consist summary + retro `T2 consist` logging → **01d** look-at (Car # / Job # / **second HUD bar** under main + `T2 look-at`) → **01c** tight/loose
 - Then CMD-02 Power Monitor; finish CMD-03 speed-limit alerts
 
 ---
