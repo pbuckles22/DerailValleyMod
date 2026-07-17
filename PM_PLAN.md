@@ -39,7 +39,7 @@ L→R read-only strip; UMM toggle; km/h (game-native).
 
 | ID | Story | Done when | Status |
 |----|-------|-----------|--------|
-| CMD-01 | Integrity Monitor | Real-time Brake Pipe pressure, Handbrake count (applied on consist), Coupling status | **Next** |
+| CMD-01 | Integrity Monitor | Real-time Brake Pipe pressure, Handbrake count (applied on consist), Coupling status | **In progress** — Tier 1 green; pending Tier 2 smoke |
 | CMD-02 | Power Monitor | Ammeter readouts + Traction Motor (TM) health warnings | |
 | CMD-03 | Terrain Monitor | Grade percentage + speed limit alerts | **Partial** — grade % shipped in E1-S2; speed-limit alerts remaining |
 

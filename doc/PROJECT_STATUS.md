@@ -16,7 +16,8 @@
 
 | Branch | Role |
 |--------|------|
-| **`main`** | Integration (`c92c1b9` — E1-S2 + CMD backlog) |
+| **`feature/cmd-01-integrity-monitor`** | CMD-01 Integrity (v0.4.0) — Tier 1 green; Tier 2 pending |
+| **`main`** | Integration (`1b817ed` — E1-S2 + CMD backlog) |
 
 ---
 
@@ -30,7 +31,7 @@
 
 ## Next up
 
-- **CMD-01** Integrity Monitor (brake pipe, handbrake count, coupling status)
+- **CMD-01** Integrity Monitor — implement done on feature branch; confirm in-game smoke then merge
 - Then CMD-02 Power Monitor; finish CMD-03 speed-limit alerts
 
 ---

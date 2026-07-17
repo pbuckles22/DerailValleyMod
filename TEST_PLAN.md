@@ -29,7 +29,7 @@ powershell -ExecutionPolicy Bypass -File package.ps1 -NoArchive -OutputDirectory
 ```
 
 1. Launch Derail Valley; UMM Ctrl+F10 — **Yard Master Suite** listed Active.
-2. Top-left HUD shows `— km/h  |  — %  |  — t` on foot; enter a loco and confirm speed / grade / tonnage update while moving (grade sign +/−; tonnes for consist).
+2. Top-left HUD shows `— km/h  |  — %  |  — t  |  — bar  |  — HB  |  — cpl` on foot; enter a loco and confirm speed / grade / tonnage / brake pipe (bar) / handbrake count / F± R± update (pipe while brakes charge; HB when handbrakes applied; cpl when couple/uncouple).
 3. Toggle mod off — HUD disappears; toggle on — HUD returns; no red flag.
 4. Player.log: `%USERPROFILE%\AppData\LocalLow\Altfuture\Derail Valley\Player.log` — no mod errors.
 

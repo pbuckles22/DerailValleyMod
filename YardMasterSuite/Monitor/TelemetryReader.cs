@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using YardMasterSuite.Core;
 
 namespace YardMasterSuite.Monitor;
@@ -87,11 +88,106 @@ public static class TelemetryReader
         }
     }
 
+    /// <summary>
+    /// Brake pipe pressure (bar) on the player's car.
+    /// </summary>
+    public static float? TryGetBrakePipePressureBar()
+    {
+        try
+        {
+            var brakes = PlayerManager.Car?.brakeSystem;
+            if (brakes == null)
+            {
+                return null;
+            }
+
+            return brakes.brakePipePressure;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Number of cars in the consist with handbrake applied (position above threshold).
+    /// </summary>
+    public static int? TryGetHandbrakeAppliedCount()
+    {
+        try
+        {
+            var car = PlayerManager.Car;
+            if (car == null)
+            {
+                return null;
+            }
+
+            var positions = new List<float>();
+            var set = car.trainset;
+            if (set?.cars != null && set.cars.Count > 0)
+            {
+                foreach (var c in set.cars)
+                {
+                    var brakes = c?.brakeSystem;
+                    if (brakes != null && brakes.hasHandbrake)
+                    {
+                        positions.Add(brakes.handbrakePosition);
+                    }
+                }
+            }
+            else if (car.brakeSystem != null && car.brakeSystem.hasHandbrake)
+            {
+                positions.Add(car.brakeSystem.handbrakePosition);
+            }
+
+            return HandbrakeDisplay.CountApplied(positions);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Whether the player's front coupler is coupled.
+    /// </summary>
+    public static bool? TryGetFrontCoupled()
+    {
+        try
+        {
+            var coupler = PlayerManager.Car?.frontCoupler;
+            return coupler == null ? (bool?)null : coupler.IsCoupled();
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Whether the player's rear coupler is coupled.
+    /// </summary>
+    public static bool? TryGetRearCoupled()
+    {
+        try
+        {
+            var coupler = PlayerManager.Car?.rearCoupler;
+            return coupler == null ? (bool?)null : coupler.IsCoupled();
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     public static string CurrentHudLine() =>
         MonitorHudLine.Join(new[]
         {
             SpeedDisplay.FormatFromMetersPerSecond(TryGetAbsSpeedMetersPerSecond()),
             GradeDisplay.FormatPercent(TryGetGradePercent()),
             TonnageDisplay.FormatFromKilograms(TryGetConsistMassKilograms()),
+            BrakePipeDisplay.FormatBar(TryGetBrakePipePressureBar()),
+            HandbrakeDisplay.FormatCount(TryGetHandbrakeAppliedCount()),
+            CouplingDisplay.Format(TryGetFrontCoupled(), TryGetRearCoupled()),
         });
 }

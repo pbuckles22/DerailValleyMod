@@ -10,7 +10,7 @@ public sealed class MonitorHudDriver : MonoBehaviour
     private const float RefreshSeconds = 0.1f;
 
     private float _elapsed;
-    private string _label = "— km/h  |  — %  |  — t";
+    private string _label = "— km/h  |  — %  |  — t  |  — bar  |  — HB  |  — cpl";
 
     private void Update()
     {
@@ -28,8 +28,8 @@ public sealed class MonitorHudDriver : MonoBehaviour
     {
         const float pad = 12f;
         const float height = 28f;
-        // Grow right as readouts are added (speed | grade | tonnage).
-        var width = Mathf.Max(320f, 12f + GUI.skin.box.CalcSize(new GUIContent(_label)).x + 24f);
+        // Grow right as readouts are added (speed | grade | tonnage | integrity).
+        var width = Mathf.Max(520f, 12f + GUI.skin.box.CalcSize(new GUIContent(_label)).x + 24f);
 
         var style = new GUIStyle(GUI.skin.box)
         {

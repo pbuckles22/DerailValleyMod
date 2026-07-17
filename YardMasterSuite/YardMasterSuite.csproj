@@ -11,6 +11,7 @@
   <!-- Derail Valley — resolved via Directory.Build.targets (local, gitignored) -->
   <ItemGroup>
     <Reference Include="Assembly-CSharp" />
+    <Reference Include="DV.BrakeSystem" />
   </ItemGroup>
 
   <!-- Unity -->
