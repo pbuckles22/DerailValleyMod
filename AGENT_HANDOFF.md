@@ -114,7 +114,7 @@ When shipping: update **PM_PLAN**, **doc/PROJECT_STATUS.md**, and **Current stat
 - **Plan:** v3.0 + CMD backlog — Phase 0 done; MVP = Diagnostic HUD (CMD-01…03).
 - **Shipped on `main`:** Phase 0; E1-S1 speed; E1-S2 grade/tonnage (`c92c1b9`, v0.3.0) — Tier 1 + Tier 2 green.
 - **Build / deploy:** `dotnet test YardMasterSuite.sln`; `dotnet build YardMasterSuite.sln -c Release`; `package.ps1 -NoArchive -OutputDirectory "...\Mods"`.
-- **Next / WIP:** CMD-01 Integrity Monitor on `feature/cmd-01-integrity-monitor` (v0.4.0) — brake pipe + HB count + F/R coupling; Tier 1 green; Tier 2 smoke pending.
+- **Next / WIP:** CMD-01a car integrity on `feature/cmd-01-integrity-monitor` (v0.4.0) — Tier 1 green; Tier 2 smoke pending. Then **01b** consist summary → **01d** look-at → **01c** tight/loose.
 
 ## Run and test
 

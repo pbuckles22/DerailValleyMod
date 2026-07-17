@@ -17,8 +17,8 @@ A **Fleet Operator** utility suite for *Derail Valley*: automate the tedium, pre
 
 1. **Teleportation is the last resort** — Never delete. Teleport only after verification.
 2. **Governor vs Monitor**
-   - **Monitors (read-only):** Diagnostic HUD — speed, grade, tonnage, integrity (brake pipe / handbrakes / coupling), power (ammeter / TM), terrain (grade + speed limits).
-   - **Governors (active):** Thermal throttle-cap, auto-brake release — only through gated soft writes.
+  - **Monitors (read-only):** Diagnostic HUD — speed, grade, tonnage, integrity (CMD-01a–d: car readout → consist summary → look-at inspect → coupler tight/loose), power (ammeter / TM), terrain (grade + speed limits).
+  - **Governors (active):** Thermal throttle-cap, auto-brake release — only through gated soft writes.
 3. **Stability first** — Phase 0 (Foundation / Safe Boot) must load perfectly before UI or logic manipulation.
 
 ## Three-Gate pattern (all state writes)
@@ -36,7 +36,7 @@ Governors additionally require **safety gates** (e.g. stationary checks) before 
 | Phase | Name | Intent |
 |-------|------|--------|
 | **0** | Foundation / Safe Boot | **Completed** — empty UMM mod loads; fail-closed; recovery documented |
-| **1** | Diagnostic HUD (HIGH) | CMD-01 Integrity → CMD-02 Power → CMD-03 Terrain (grade shipped; speed limits TBD) |
+| **1** | Diagnostic HUD (HIGH) | CMD-01 Integrity (01a→01b→01d→01c) → CMD-02 Power → CMD-03 Terrain (grade shipped; speed limits TBD) |
 | **2** | Governor Mode (MEDIUM) | Three-Gate → CMD-04 Thermal → CMD-05 Auto-Brake |
 | **3** | Yard Master | CMD-06 Manual Consist Management / teleport (needs prior abort stability) |
 
@@ -57,4 +57,4 @@ Use in-game Dev Tools (Comms Radio / Sandbox / Spawner). Do not burn development
 
 ## Source
 
-Master Project Context v3.0 + Developer Roadmap v3.0 (2026-07); CMD backlog refresh 2026-07-16.
+Master Project Context v3.0 + Developer Roadmap v3.0 (2026-07); CMD backlog refresh 2026-07-16; CMD-01 slices (01a–01d) 2026-07-16.
