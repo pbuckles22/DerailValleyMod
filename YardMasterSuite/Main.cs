@@ -14,12 +14,17 @@ public static class Main
 {
     private static Harmony? _harmony;
     private static GameObject? _hudRoot;
+    private static UnityModManager.ModEntry? _modEntry;
+
+    /// <summary>UMM logger → Player.log. Used for Tier 2 discrete debug lines.</summary>
+    internal static void Log(string message) => _modEntry?.Logger.Log(message);
 
     // https://wiki.nexusmods.com/index.php/Category:Unity_Mod_Manager
     private static bool Load(UnityModManager.ModEntry modEntry)
     {
         try
         {
+            _modEntry = modEntry;
             _harmony = new Harmony(modEntry.Info.Id);
             _harmony.PatchAll(Assembly.GetExecutingAssembly());
 
@@ -44,6 +49,7 @@ public static class Main
 
     private static bool OnToggle(UnityModManager.ModEntry modEntry, bool value)
     {
+        _modEntry = modEntry;
         if (value)
         {
             EnsureHud();
@@ -63,6 +69,7 @@ public static class Main
         DestroyHud();
         _harmony?.UnpatchAll(modEntry.Info.Id);
         _harmony = null;
+        _modEntry = null;
         return true;
     }
 
@@ -73,9 +80,18 @@ public static class Main
             return;
         }
 
-        _hudRoot = new GameObject("YardMasterSuite_MonitorHud");
-        UnityEngine.Object.DontDestroyOnLoad(_hudRoot);
-        _hudRoot.AddComponent<MonitorHudDriver>();
+        try
+        {
+            _hudRoot = new GameObject("YardMasterSuite_MonitorHud");
+            UnityEngine.Object.DontDestroyOnLoad(_hudRoot);
+            _hudRoot.AddComponent<MonitorHudDriver>();
+        }
+        catch (Exception ex)
+        {
+            DestroyHud();
+            _modEntry?.Logger.LogException("Failed to create Monitor HUD:", ex);
+            throw;
+        }
     }
 
     private static void DestroyHud()

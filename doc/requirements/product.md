@@ -6,6 +6,31 @@ A **Fleet Operator** utility suite for *Derail Valley*: automate the tedium, pre
 
 **MVP:** Situational awareness (Diagnostic HUD) before active Governors.
 
+## Diagnostic HUD — labels
+
+**Rule (all HUD segments, now and future):** Each readout uses a **short plain-English word** first so you can recognize it at a glance. Avoid cryptic abbreviations (`HB`, `cpl`, bare `%` / `t`). Units may follow the value (`km/h`, `bar`, `t`). Unknown = same word with an em dash (`— Pipe`).
+
+**Shipped — main strip (left → right):**
+
+| Word | Example live | Example unknown |
+|------|----------------|-----------------|
+| Speed | `Speed 36 km/h` | `— Speed` |
+| Grade | `Grade +1.2 %` | `— Grade` |
+| Mass | `Mass 240 t` | `— Mass` |
+| Pipe | `Pipe 2.0 bar` | `— Pipe` |
+| Handbrake | `Handbrake 1` (applied count on consist) | `— Handbrake` |
+| Couplers | `Couplers F- R+` | `— Couplers` |
+
+**Planned (not on HUD yet):**
+
+| Story | Segments (use the same naming rule) |
+|-------|-------------------------------------|
+| CMD-01b | Consist car count; Handbrake on/off (or on/total); Hose connected/open |
+| CMD-01d | **Second HUD bar** under the main strip: looked-at car Pipe / Handbrake / Couplers, Car # (`XX` if not on train), Job # |
+| CMD-01c | Coupler tight vs loose |
+| CMD-02 | Ammeter / Traction motor health |
+| CMD-03 | Speed-limit alerts (grade already shipped) |
+
 ## Non-goals
 
 - Full autopilot / replacing the need to drive
@@ -17,7 +42,7 @@ A **Fleet Operator** utility suite for *Derail Valley*: automate the tedium, pre
 
 1. **Teleportation is the last resort** — Never delete. Teleport only after verification.
 2. **Governor vs Monitor**
-  - **Monitors (read-only):** Diagnostic HUD — speed, grade, tonnage, integrity (CMD-01a–d: car readout → consist summary → look-at inspect → coupler tight/loose), power (ammeter / TM), terrain (grade + speed limits).
+  - **Monitors (read-only):** Diagnostic HUD — speed, grade, tonnage, integrity (CMD-01a–d: car under feet → consist summary → look-at **second HUD bar** under the main strip with Car # / Job # → coupler tight/loose), power (ammeter / TM), terrain (grade + speed limits).
   - **Governors (active):** Thermal throttle-cap, auto-brake release — only through gated soft writes.
 3. **Stability first** — Phase 0 (Foundation / Safe Boot) must load perfectly before UI or logic manipulation.
 
