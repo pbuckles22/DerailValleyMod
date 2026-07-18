@@ -1,7 +1,7 @@
 namespace YardMasterSuite.Core;
 
 /// <summary>
-/// Single-car HUD bar (standing on / looking at that car).
+/// Single-car HUD bar (standing on a car, or look-at when on foot).
 /// </summary>
 public static class LocalCarHudLine
 {

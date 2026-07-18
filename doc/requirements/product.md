@@ -24,7 +24,7 @@ A **Fleet Operator** utility suite for *Derail Valley*: automate the tedium, pre
 | Cars | `Cars 5` (freight only; loco not counted) | `— Cars` |
 | Handbrakes | `Handbrakes 3` (usable-consist applied count) | `— Handbrakes` |
 
-**Second = that car only** (standing on it now; look-at fills this bar in CMD-01d):
+**Second = that car only** (standing on it, or look-at on foot — standing wins):
 
 | Word | Example live | Example unknown |
 |------|----------------|-----------------|
@@ -38,8 +38,7 @@ A **Fleet Operator** utility suite for *Derail Valley*: automate the tedium, pre
 
 | Story | Segments (use the same naming rule) |
 |-------|-------------------------------------|
-| CMD-01d | On foot, look-at fills second bar like standing on that car; standing on a car always wins |
-| CMD-01c | Coupler tight vs loose |
+| CMD-01c | Coupler tight vs loose (chain tightened) |
 | CMD-02 | Ammeter / Traction motor health |
 | CMD-03 | Speed-limit alerts (grade already shipped) |
 

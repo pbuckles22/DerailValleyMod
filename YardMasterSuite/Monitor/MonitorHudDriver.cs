@@ -5,7 +5,7 @@ namespace YardMasterSuite.Monitor;
 
 /// <summary>
 /// In-world IMGUI overlay for Monitor Mode telemetry.
-/// Top bar = usable loco-train totals (red null when not usable); second bar = target car.
+/// Top bar = usable loco-train totals (red null when not usable); second bar = standing or look-at target.
 /// </summary>
 public sealed class MonitorHudDriver : MonoBehaviour
 {
@@ -42,6 +42,14 @@ public sealed class MonitorHudDriver : MonoBehaviour
     private string _lastCarNumber = "";
     private string _lastJob = "";
 
+    private bool _hasLookAtDebug;
+    private bool _lastLookAtVisible;
+    private string _lastLookAtPipe = "";
+    private string _lastLookAtHandbrake = "";
+    private string _lastLookAtCoupling = "";
+    private string _lastLookAtCarNumber = "";
+    private string _lastLookAtJob = "";
+
     private void OnEnable()
     {
         RebuildStyles();
@@ -66,6 +74,7 @@ public sealed class MonitorHudDriver : MonoBehaviour
         _localLabel = TelemetryReader.CurrentLocalCarHudLineOrNull();
         EmitConsistDebugIfNeeded();
         EmitLocalCarDebugIfNeeded();
+        EmitLookAtDebugIfNeeded();
     }
 
     private void EmitConsistDebugIfNeeded()
@@ -111,6 +120,35 @@ public sealed class MonitorHudDriver : MonoBehaviour
         _lastCarNumber = snap.CarNumber;
         _lastJob = snap.Job;
         _hasLocalDebug = true;
+        if (line != null)
+        {
+            Main.Log(line);
+        }
+    }
+
+    private void EmitLookAtDebugIfNeeded()
+    {
+        var snap = TelemetryReader.CurrentLookAtDebugSnapshot();
+        LocalCarDebugSnapshot? previous = null;
+        if (_hasLookAtDebug)
+        {
+            previous = new LocalCarDebugSnapshot(
+                _lastLookAtVisible,
+                _lastLookAtPipe,
+                _lastLookAtHandbrake,
+                _lastLookAtCoupling,
+                _lastLookAtCarNumber,
+                _lastLookAtJob);
+        }
+
+        var line = Tier2LookAtDebug.NextLogMessage(previous, snap);
+        _lastLookAtVisible = snap.Visible;
+        _lastLookAtPipe = snap.Pipe;
+        _lastLookAtHandbrake = snap.Handbrake;
+        _lastLookAtCoupling = snap.Coupling;
+        _lastLookAtCarNumber = snap.CarNumber;
+        _lastLookAtJob = snap.Job;
+        _hasLookAtDebug = true;
         if (line != null)
         {
             Main.Log(line);

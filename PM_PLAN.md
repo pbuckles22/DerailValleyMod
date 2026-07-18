@@ -45,8 +45,8 @@ Cab summary first, then ground inspect; coupler tight/loose last.
 |----|-------|-----------|--------|
 | CMD-01a | Car integrity readout | Single HUD: brake pipe (bar), **handbrake 0/1 for car under player**, F/R **coupled** (`+/-`) for car under player; **`T2 integrity` Player.log**; HUD width uses draw style (no Couplers clip) | **Done** — Tier 1 green; load/toggle + foot/on-car smoke OK. Dual-HUD / train-wide / look-at validation deferred to 01b/01d |
 | CMD-01b | Train + local-car HUD | Top bar = usable loco-train totals (Cars freight-only, Handbrakes, …); second bar = current vehicle; not usable → red null top; **`T2 consist` / `T2 local-car` logs**; HUD `v…` chip | **Done** — Tier 1 green; Tier 2 dual-HUD smoke OK (MU yellow warning deferred until 2nd loco) |
-| CMD-01c | Coupler tight/loose | Show chain **tightened** vs loose when coupled (car and/or look-at); **`T2 coupler` logs** | After 01d |
-| CMD-01d | Look-at inspect | On foot: look-at fills second bar like standing on that car; standing on a car always wins over look-at; bar gone when no target; **`T2 look-at` logs** | Next |
+| CMD-01c | Coupler tight/loose | Show chain **tightened** vs loose when coupled (car and/or look-at); **`T2 coupler` logs** | Next |
+| CMD-01d | Look-at inspect | On foot: look-at fills second bar like standing on that car; standing on a car always wins over look-at; bar gone when no target; **`T2 look-at` logs** | **Done** — Tier 1 green; Tier 2 HUD smoke OK (v0.4.3) |
 
 **Build order:** 01a → 01b → 01d → 01c.
 
