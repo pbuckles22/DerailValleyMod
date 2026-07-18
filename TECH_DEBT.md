@@ -19,13 +19,14 @@ This is the durable home for technical debt across sessions. Handoff notes can m
 
 (High ROI; frequent pain; not blocking.)
 
-- **Per-frame `GUIStyle` alloc in `MonitorHudDriver.OnGUI`** — Cache style in `Awake`/`OnEnable` before CMD-01b adds a second HUD bar (doubles OnGUI work).
+- **Tier 2: loco↔loco MU yellow `F*`/`R*`** — implemented; in-game smoke deferred until a second loco is available.
 
 ## Accept for now
 
 (Isolated + workaround + revisit trigger.)
 
 - **Core sources compiled into `YardMasterSuite.dll`** — Unity Mono failed to `LoadFile` sibling `YardMasterSuite.Core.dll`; csproj links Core `*.cs` into the mod assembly. Revisit if UMM/Unity can reliably load a sibling Core DLL.
+- **`CurrentIntegrityDebugSnapshot` / `Tier2IntegrityDebug`** — superseded by `T2 consist` / `T2 local-car` in the HUD driver; keep Core helpers until a cleanup pass.
 
 ---
 

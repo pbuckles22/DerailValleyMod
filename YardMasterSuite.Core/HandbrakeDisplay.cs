@@ -29,4 +29,9 @@ public static class HandbrakeDisplay
 
     public static string FormatCount(int? appliedCount) =>
         appliedCount is null ? "— Handbrake" : $"Handbrake {appliedCount.Value}";
+
+    /// <summary>Consist-wide applied handbrake total for the train HUD bar.</summary>
+    public static string FormatTotal(int? appliedCount) =>
+        appliedCount is null ? "— Handbrakes" : $"Handbrakes {appliedCount.Value}";
 }
+

@@ -42,7 +42,7 @@ powershell -ExecutionPolicy Bypass -File package.ps1 -NoArchive -OutputDirectory
 
 ### Lifecycle lines (every session)
 
-- `[YardMasterSuite] Version '0.4.0'. Loading.`
+- `[YardMasterSuite] Version '<info.json>'. Loading.` (also shown as `v…` chip next to the top HUD bar)
 - `[YardMasterSuite] Yard Master Suite enabled (Monitor HUD).`
 - `[YardMasterSuite] Active.`
 - After Off: `… disabled.` then `Inactive.`
@@ -51,31 +51,42 @@ powershell -ExecutionPolicy Bypass -File package.ps1 -NoArchive -OutputDirectory
 
 Ignore unrelated game noise (e.g. OpenVR) unless it mentions YardMasterSuite.
 
-### CMD-01a — `T2 integrity` lines (current)
+### CMD-01b — dual HUD (`T2 consist` / `T2 local-car`)
 
-Prefix: `T2 integrity`
+**Layout:** top bar = loco-anchored train totals; second bar = car under feet only. Look-at is **CMD-01d** (not this smoke).
+
+**Log file:** `%USERPROFILE%\AppData\LocalLow\Altfuture\Derail Valley\Player.log`  
+Filter: `[YardMasterSuite]`
+
+#### Expected `T2 consist` lines (top bar)
 
 | When you… | Expect in Player.log |
 |-----------|----------------------|
-| HUD first samples (usually on foot) | `T2 integrity init (on-foot): — Pipe  \|  — Handbrake  \|  — Couplers` |
-| Climb onto a car | `T2 integrity on-car: Pipe … bar  \|  Handbrake N  \|  Couplers F± R±` |
-| Step off the car | `T2 integrity on-foot: — Pipe  \|  — Handbrake  \|  — Couplers` |
-| Pipe / Handbrake / Couplers change while on car | `T2 integrity change: …` (new fragment only when those fields change) |
+| First sample, no loco | `T2 consist init (no-loco): — Cars  \|  — Handbrakes` |
+| Gain a usable loco train (stand on car fully linked to a loco) | `T2 consist loco: Cars N  \|  Handbrakes M` |
+| Lose usable path (step off / break hose-tight-cocks path to loco) | `T2 consist no-loco: — Cars  \|  — Handbrakes` |
+| Cars or Handbrakes total changes while loco present | `T2 consist change: Cars N  \|  Handbrakes M` |
 
----
+#### Expected `T2 local-car` lines (second bar)
 
-**CMD-01a closed:** Dual-HUD / train-wide / look-at checks are **deferred to CMD-01b / CMD-01d** (will retest when those ship). Remaining checklist is for the **current single strip** only.
+| When you… | Expect in Player.log |
+|-----------|----------------------|
+| First sample on foot (bar hidden) | `T2 local-car init (hidden)` |
+| Climb onto a car | `T2 local-car appear: Pipe …  \|  Handbrake N  \|  Couplers F± R±  \|  Car #  \|  Job …` |
+| Step off the car | `T2 local-car hide` |
+| Pipe / Handbrake / Couplers / Car # / Job change while on car | `T2 local-car change: …` |
 
-**CMD-01a sign-off checklist (stand on the car; pointing is CMD-01d later):**
+#### Sign-off checklist
 
 | # | Check (plain English) | Evidence |
 |---|------------------------|----------|
-| 1 | Mod loads; listed Active; no mod errors on boot | **Player.log** / UMM Logs |
-| 2 | Stand on the ground — dashes for Pipe / Handbrake / Couplers | **Player.log** `T2 integrity init` / `on-foot` + HUD |
-| 3 | Climb onto a car — live Pipe, Handbrake (1/0 for **this car**), Couplers (`F± R±`) for **car under feet** | **Player.log** `T2 integrity on-car: …` + HUD |
-| 4 | Uncouple/couple → `F`/`R` marks flip; this car's handbrake → Handbrake 1/0; charge brakes → Pipe moves | **Player.log** `T2 integrity change: …` + HUD |
-| 5 | Mod Off → HUD gone; On → HUD back; no red errors | **Player.log** `disabled` / `enabled` + HUD |
-| 6 | No YardMasterSuite exceptions for the session | **Player.log** |
+| 1 | Mod loads; Active; no mod errors on boot | Lifecycle lines + no exceptions |
+| 2 | No loco — top bar **red border** + `— Speed \| — Grade \| — Mass \| — Cars \| — Handbrakes` | HUD + `T2 consist … no-loco` |
+| 3 | On a loco train — top bar live Speed/Grade/Mass/Cars/Handbrakes | HUD + `T2 consist loco:` / `change:` |
+| 4 | On foot — **no second bar** | HUD + `T2 local-car hide` or `init (hidden)` |
+| 5 | Stand on a car — second bar under top: Pipe / Handbrake 0–1 / Couplers / Car # / Job # | HUD + `T2 local-car appear:` |
+| 6 | Couplers `+` only when fully linked (mech + air hose + blue MU wires if present); `-` if any missing | HUD couple/hose/MU smoke + `T2 local-car change:` |
+| 7 | Mod Off → HUD gone; On → back; no YardMasterSuite exceptions | Lifecycle `disabled` / `enabled` |
 
 Recovery: [modding.md](doc/requirements/modding.md).
 
@@ -83,7 +94,6 @@ Recovery: [modding.md](doc/requirements/modding.md).
 
 | Story | Planned `T2` topic (when implemented) |
 |-------|----------------------------------------|
-| **CMD-01b** consist summary | `T2 consist …` — Cars / Handbrake on·off / Hose; log on mount and when those fields change |
 | **CMD-01d** look-at | `T2 look-at …` — second HUD bar appear/disappear; Car # (`XX` if not on train); Job #; integrity fragment for looked-at car |
 | **CMD-01c** tight/loose | `T2 coupler …` — tight vs loose when it changes |
 | **CMD-02 / 03** | Same pattern: discrete lines for that monitor’s sign-off fields |

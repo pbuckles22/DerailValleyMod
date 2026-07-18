@@ -112,9 +112,9 @@ When shipping: update **PM_PLAN**, **doc/PROJECT_STATUS.md**, and **Current stat
 
 - **Project:** DerailValleyMod — *Yard Master Suite* (UMM / Harmony / net48).
 - **Plan:** v3.0 + CMD backlog — Phase 0 done; MVP = Diagnostic HUD (CMD-01…03).
-- **Shipped on `main`:** Phase 0; E1-S1 speed; E1-S2 grade/tonnage; **CMD-01a** Integrity Monitor (`22fed30`, v0.4.0) — single-strip car-under-feet Pipe / Handbrake 0–1 / Couplers; `T2 integrity` logs; Core inlined into mod DLL. Dual-HUD validation deferred to 01b/01d.
+- **Shipped on `main`:** Phase 0; E1-S1 speed; E1-S2 grade/tonnage; **CMD-01a**; **CMD-01b** dual HUD (v0.4.2) — usable loco-train top bar + local-car second bar; `T2 consist` / `T2 local-car`; HUD `v…` chip; Core inlined into mod DLL. MU yellow 2-loco smoke deferred.
 - **Build / deploy:** `dotnet test YardMasterSuite.sln`; `dotnet build YardMasterSuite.sln -c Release`; `package.ps1 -NoArchive -OutputDirectory "...\Mods"`.
-- **Next:** **CMD-01b** train top bar + local-car second bar (Cars N, Handbrakes total, red/null when no loco) → 01d look-at → 01c tight/loose.
+- **Next:** **CMD-01d** look-at second bar → **01c** tight/loose display → CMD-02 / finish CMD-03.
 
 ## Run and test
 
@@ -138,6 +138,7 @@ Keep in sync with [TEST_PLAN.md](TEST_PLAN.md).
 ## Conventions
 
 - Prefer pure functions for business logic where possible.
+- **Version:** Bump `info.json` (+ `repository.json`) patch (`0.4.x`) on every deployable fix/feature so UMM and the HUD `v…` chip prove the new DLL loaded. Minor bump for story closes; keep in sync with Player.log `Version '…'. Loading.`
 - **Docs:** Use the **techwriter** skill when editing README, AGENT_HANDOFF, or internal docs.
 - **Tests:** Black-box; run your project test command after logic or test changes; keep the suite green (see .cursor/skills/tester/SKILL.md). Prefer writing a failing test before new production code (TDD) where applicable.
 
