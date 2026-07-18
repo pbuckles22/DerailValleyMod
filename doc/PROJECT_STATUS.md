@@ -16,7 +16,7 @@
 
 | Branch | Role |
 |--------|------|
-| **`feature/cmd-01-integrity-monitor`** | CMD-01a Integrity (v0.4.0) — Tier 1 + `T2 integrity` Player.log debug; finish in-game log sign-off then merge |
+| **`feature/cmd-01-integrity-monitor`** | CMD-01a **Done** (v0.4.0) — merge to `main`, then start CMD-01b |
 | **`main`** | Integration (`1b817ed` — E1-S2 + CMD backlog) |
 
 ---
@@ -26,13 +26,15 @@
 - Phase 0 Safe Boot (UMM load + toggle)
 - E1-S1 speed HUD (km/h); E1-S2 grade % + consist tonnes (L→R); Tier 1 + Tier 2 green
 - CMD backlog adopted (CMD-01…06); Switch Path Tracer / Startup Assist parked
+- **CMD-01a** car integrity (Pipe / Handbrake 0–1 / Couplers on car under feet); dual-HUD checks deferred to 01b/01d
 
 ---
 
 ## Next up
 
-- **CMD-01a** — redeploy with `T2 integrity` logs; sign off from Player.log; merge
-- **CMD-01b** consist summary + retro `T2 consist` logging → **01d** look-at (Car # / Job # / **second HUD bar** under main + `T2 look-at`) → **01c** tight/loose
+- Merge `feature/cmd-01-integrity-monitor` → `main`
+- **CMD-01b** train top HUD + local-car second bar (Cars N, Handbrakes total, red/null when no loco)
+- **CMD-01d** look-at fills second bar on foot → **01c** tight/loose
 - Then CMD-02 Power Monitor; finish CMD-03 speed-limit alerts
 
 ---

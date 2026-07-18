@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using YardMasterSuite.Core;
 
 namespace YardMasterSuite.Monitor;
@@ -111,37 +110,20 @@ internal static class TelemetryReader
     }
 
     /// <summary>
-    /// Number of cars in the consist with handbrake applied (position above threshold).
+    /// Handbrake state for the player's car only (1 applied, 0 released).
+    /// Consist-wide handbrake count is CMD-01b scope.
     /// </summary>
     public static int? TryGetHandbrakeAppliedCount()
     {
         try
         {
-            var car = PlayerManager.Car;
-            if (car == null)
+            var brakes = PlayerManager.Car?.brakeSystem;
+            if (brakes == null || !brakes.hasHandbrake)
             {
                 return null;
             }
 
-            var positions = new List<float>();
-            var set = car.trainset;
-            if (set?.cars != null && set.cars.Count > 0)
-            {
-                foreach (var c in set.cars)
-                {
-                    var brakes = c?.brakeSystem;
-                    if (brakes != null && brakes.hasHandbrake)
-                    {
-                        positions.Add(brakes.handbrakePosition);
-                    }
-                }
-            }
-            else if (car.brakeSystem != null && car.brakeSystem.hasHandbrake)
-            {
-                positions.Add(car.brakeSystem.handbrakePosition);
-            }
-
-            return HandbrakeDisplay.CountApplied(positions);
+            return HandbrakeDisplay.IsApplied(brakes.handbrakePosition) ? 1 : 0;
         }
         catch
         {

@@ -61,8 +61,6 @@ public sealed class MonitorHudDriver : MonoBehaviour
     {
         const float pad = 12f;
         const float height = 28f;
-        // Grow right as readouts are added (speed | grade | tonnage | integrity).
-        var width = Mathf.Max(520f, 12f + GUI.skin.box.CalcSize(new GUIContent(_label)).x + 24f);
 
         var style = new GUIStyle(GUI.skin.box)
         {
@@ -70,6 +68,9 @@ public sealed class MonitorHudDriver : MonoBehaviour
             fontSize = 16,
             padding = new RectOffset(10, 10, 4, 4),
         };
+
+        // Measure with the drawing style (fontSize 16), or the tail gets clipped.
+        var width = Mathf.Max(520f, style.CalcSize(new GUIContent(_label)).x + 12f);
 
         GUI.Label(new Rect(pad, pad, width, height), _label, style);
     }
