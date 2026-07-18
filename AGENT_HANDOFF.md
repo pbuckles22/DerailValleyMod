@@ -112,7 +112,7 @@ When shipping: update **PM_PLAN**, **doc/PROJECT_STATUS.md**, and **Current stat
 
 - **Project:** DerailValleyMod — *Yard Master Suite* (UMM / Harmony / net48).
 - **Plan:** v3.0 + CMD backlog — Phase 0 done; MVP = Diagnostic HUD (CMD-01…03).
-- **Shipped on `main`:** Phase 0; E1-S1 speed; E1-S2 grade/tonnage; **CMD-01a**; **CMD-01b** dual HUD (v0.4.2) — usable loco-train top bar + local-car second bar; `T2 consist` / `T2 local-car`; HUD `v…` chip; Core inlined into mod DLL. MU yellow 2-loco smoke deferred.
+- **Shipped on `main`:** Phase 0; E1-S1 speed; E1-S2 grade/tonnage; **CMD-01a**; **CMD-01b** dual HUD (`18edffe`, v0.4.2) — usable loco-train top bar + local-car second bar; `T2 consist` / `T2 local-car`; HUD `v…` chip; Core inlined into mod DLL. MU yellow 2-loco smoke deferred.
 - **Build / deploy:** `dotnet test YardMasterSuite.sln`; `dotnet build YardMasterSuite.sln -c Release`; `package.ps1 -NoArchive -OutputDirectory "...\Mods"`.
 - **Next:** **CMD-01d** look-at second bar → **01c** tight/loose display → CMD-02 / finish CMD-03.
 

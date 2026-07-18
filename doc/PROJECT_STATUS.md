@@ -16,7 +16,7 @@
 
 | Branch | Role |
 |--------|------|
-| **`main`** | Integration — CMD-01b dual HUD shipped (v0.4.2) |
+| **`main`** | Integration — CMD-01b dual HUD shipped (`18edffe`, v0.4.2) |
 
 ---
 
