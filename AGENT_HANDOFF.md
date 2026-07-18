@@ -112,7 +112,7 @@ When shipping: update **PM_PLAN**, **doc/PROJECT_STATUS.md**, and **Current stat
 
 - **Project:** DerailValleyMod — *Yard Master Suite* (UMM / Harmony / net48).
 - **Plan:** v3.0 + CMD backlog — Phase 0 done; MVP = Diagnostic HUD (CMD-01…03).
-- **Shipped on `main`:** Phase 0; E1-S1 speed; E1-S2 grade/tonnage; **CMD-01a** Integrity Monitor (`ca0fdd5`, v0.4.0) — single-strip car-under-feet Pipe / Handbrake 0–1 / Couplers; `T2 integrity` logs; Core inlined into mod DLL. Dual-HUD validation deferred to 01b/01d.
+- **Shipped on `main`:** Phase 0; E1-S1 speed; E1-S2 grade/tonnage; **CMD-01a** Integrity Monitor (`22fed30`, v0.4.0) — single-strip car-under-feet Pipe / Handbrake 0–1 / Couplers; `T2 integrity` logs; Core inlined into mod DLL. Dual-HUD validation deferred to 01b/01d.
 - **Build / deploy:** `dotnet test YardMasterSuite.sln`; `dotnet build YardMasterSuite.sln -c Release`; `package.ps1 -NoArchive -OutputDirectory "...\Mods"`.
 - **Next:** **CMD-01b** train top bar + local-car second bar (Cars N, Handbrakes total, red/null when no loco) → 01d look-at → 01c tight/loose.
 

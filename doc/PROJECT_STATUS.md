@@ -16,7 +16,7 @@
 
 | Branch | Role |
 |--------|------|
-| **`main`** | Integration — CMD-01a Integrity Monitor shipped (`ca0fdd5`, v0.4.0) |
+| **`main`** | Integration — CMD-01a Integrity Monitor shipped (`22fed30`, v0.4.0) |
 
 ---
 
