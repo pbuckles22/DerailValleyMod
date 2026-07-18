@@ -4,7 +4,7 @@ param (
 )
 
 Set-Location "$PSScriptRoot"
-$FilesToInclude = "info.json", "build/*"
+$FilesToInclude = "info.json", "build/YardMasterSuite.dll"
 
 $modInfo = Get-Content -Raw -Path "info.json" | ConvertFrom-Json
 $modId = $modInfo.Id
@@ -19,6 +19,9 @@ if ($NoArchive) {
 $ZipOutDir = "$ZipWorkDir/$modId"
 
 New-Item "$ZipOutDir" -ItemType Directory -Force | Out-Null
+Get-ChildItem -Path $ZipOutDir -Filter "*.cache" -ErrorAction SilentlyContinue | Remove-Item -Force
+# Remove stale sibling Core from older deploys (logic is now inside YardMasterSuite.dll).
+Remove-Item -Force -ErrorAction SilentlyContinue "$ZipOutDir/YardMasterSuite.Core.dll"
 Copy-Item -Force -Path $FilesToInclude -Destination "$ZipOutDir"
 
 if (!$NoArchive) {

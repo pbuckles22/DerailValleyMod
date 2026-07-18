@@ -14,11 +14,11 @@ public static class SpeedDisplay
         metersPerSecond * MetersPerSecondToKmh;
 
     public static string FormatKmh(float kilometersPerHour) =>
-        $"{RoundHalfAwayFromZero(kilometersPerHour)} km/h";
+        $"Speed {RoundHalfAwayFromZero(kilometersPerHour)} km/h";
 
     public static string FormatFromMetersPerSecond(float? metersPerSecond) =>
         metersPerSecond is null
-            ? "— km/h"
+            ? "— Speed"
             : FormatKmh(ToKilometersPerHour(metersPerSecond.Value));
 
     private static int RoundHalfAwayFromZero(float value) =>

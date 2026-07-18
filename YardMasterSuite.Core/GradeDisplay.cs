@@ -23,8 +23,8 @@ public static class GradeDisplay
 
     public static string FormatPercent(float? gradePercent) =>
         gradePercent is null
-            ? "— %"
-            : $"{FormatSigned(gradePercent.Value)} %";
+            ? "— Grade"
+            : $"Grade {FormatSigned(gradePercent.Value)} %";
 
     private static string FormatSigned(float value)
     {

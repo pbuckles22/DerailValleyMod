@@ -14,11 +14,11 @@ public static class TonnageDisplay
 
     public static string FormatTonnes(float? tonnes) =>
         tonnes is null
-            ? "— t"
-            : $"{Math.Round(tonnes.Value, MidpointRounding.AwayFromZero):0} t";
+            ? "— Mass"
+            : $"Mass {Math.Round(tonnes.Value, MidpointRounding.AwayFromZero):0} t";
 
     public static string FormatFromKilograms(float? kilograms) =>
         kilograms is null
-            ? "— t"
+            ? "— Mass"
             : FormatTonnes(KilogramsToTonnes(kilograms.Value));
 }

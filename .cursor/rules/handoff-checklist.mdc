@@ -6,6 +6,8 @@ alwaysApply: false
 
 # Handoff checklist (mandatory before handoff)
 
+Also required as the **quality-gate half of epic close** — see [.cursor/rules/epic-close.mdc](epic-close.mdc). When an epic finishes, run this checklist first, then finish epic status docs (do not wait for the user to ask).
+
 When the user wants a handoff, or when you are writing or updating a handoff note (e.g. **`doc/handoff/*-HANDOFF-*.md`** / **`doc/handoff/HANDOFF-*.md`** or **`.cursor/handoff/*-handoff-*.md`** / **`.cursor/handoff/handoff-*.md`** â€” often **gitignored**, not on **`main`**) or **AGENT_HANDOFF** "Current state":
 
 ## When to create a handoff (timing)
