@@ -16,7 +16,7 @@
 
 | Branch | Role |
 |--------|------|
-| **`main`** | Integration — CMD-01d look-at shipped (`1208de1`, v0.4.3) |
+| **`main`** | Integration — CMD-01 complete (01a–01d); CMD-01c tight/loose v0.4.5 |
 
 ---
 
@@ -28,14 +28,14 @@
 - **CMD-01a** car integrity (Pipe / Handbrake 0–1 / Couplers on car under feet)
 - **CMD-01b** dual HUD: usable loco-train top bar + local-car second bar; usable = full link path to loco; Cars exclude loco; yellow `F*`/`R*` for open MU; `v…` HUD chip — **merged to `main`** (MU 2-loco smoke deferred)
 - **CMD-01d** look-at fills second bar on foot (shared `TryGetTargetCar`; standing wins) — **merged to `main`** (v0.4.3)
+- **CMD-01c** coupler tight/loose — plain `*` = loose chain, `+` = usable; `T2 coupler` — **merged to `main`** (v0.4.5)
 
 ---
 
 ## Next up
 
-- **CMD-01c** coupler tight/loose display
 - Tier 2: yellow MU warning with two locos (deferred from 01b)
-- Then CMD-02 Power Monitor; finish CMD-03 speed-limit alerts
+- CMD-02 Power Monitor; finish CMD-03 speed-limit alerts
 
 ---
 

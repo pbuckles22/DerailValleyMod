@@ -50,6 +50,10 @@ public sealed class MonitorHudDriver : MonoBehaviour
     private string _lastLookAtCarNumber = "";
     private string _lastLookAtJob = "";
 
+    private bool _hasCouplerDebug;
+    private bool _lastCouplerVisible;
+    private string _lastCouplerLine = "";
+
     private void OnEnable()
     {
         RebuildStyles();
@@ -75,6 +79,7 @@ public sealed class MonitorHudDriver : MonoBehaviour
         EmitConsistDebugIfNeeded();
         EmitLocalCarDebugIfNeeded();
         EmitLookAtDebugIfNeeded();
+        EmitCouplerDebugIfNeeded();
     }
 
     private void EmitConsistDebugIfNeeded()
@@ -149,6 +154,25 @@ public sealed class MonitorHudDriver : MonoBehaviour
         _lastLookAtCarNumber = snap.CarNumber;
         _lastLookAtJob = snap.Job;
         _hasLookAtDebug = true;
+        if (line != null)
+        {
+            Main.Log(line);
+        }
+    }
+
+    private void EmitCouplerDebugIfNeeded()
+    {
+        var snap = TelemetryReader.CurrentCouplerDebugSnapshot();
+        CouplerDebugSnapshot? previous = null;
+        if (_hasCouplerDebug)
+        {
+            previous = new CouplerDebugSnapshot(_lastCouplerVisible, _lastCouplerLine);
+        }
+
+        var line = Tier2CouplerDebug.NextLogMessage(previous, snap);
+        _lastCouplerVisible = snap.Visible;
+        _lastCouplerLine = snap.Coupling;
+        _hasCouplerDebug = true;
         if (line != null)
         {
             Main.Log(line);
