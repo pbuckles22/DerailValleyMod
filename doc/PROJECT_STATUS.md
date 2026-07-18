@@ -16,7 +16,7 @@
 
 | Branch | Role |
 |--------|------|
-| **`main`** | Integration — CMD-01a Integrity Monitor shipped (`22fed30`, v0.4.0) |
+| **`main`** | Integration — CMD-01b dual HUD shipped (v0.4.2) |
 
 ---
 
@@ -25,14 +25,15 @@
 - Phase 0 Safe Boot (UMM load + toggle)
 - E1-S1 speed HUD (km/h); E1-S2 grade % + consist tonnes (L→R); Tier 1 + Tier 2 green
 - CMD backlog adopted (CMD-01…06); Switch Path Tracer / Startup Assist parked
-- **CMD-01a** car integrity (Pipe / Handbrake 0–1 / Couplers on car under feet); dual-HUD checks deferred to 01b/01d — **merged to `main`**
+- **CMD-01a** car integrity (Pipe / Handbrake 0–1 / Couplers on car under feet)
+- **CMD-01b** dual HUD: usable loco-train top bar + local-car second bar; usable = full link path to loco; Cars exclude loco; yellow `F*`/`R*` for open MU; `v…` HUD chip — **merged to `main`** (MU 2-loco smoke deferred)
 
 ---
 
 ## Next up
 
-- **CMD-01b** train top HUD + local-car second bar (Cars N, Handbrakes total, red/null when no loco)
-- **CMD-01d** look-at fills second bar on foot → **01c** tight/loose
+- **CMD-01d** look-at fills second bar on foot (shared target-car logic) → **01c** tight/loose display
+- Tier 2: yellow MU warning with two locos (deferred from 01b)
 - Then CMD-02 Power Monitor; finish CMD-03 speed-limit alerts
 
 ---
@@ -43,4 +44,3 @@
 2. This file
 3. [requirements/product.md](requirements/product.md)
 4. [PM_PLAN.md](../PM_PLAN.md)
-5. [requirements/modding.md](requirements/modding.md) + [DEV_GUIDE](../.cursor/skills/DEV_GUIDE.md)

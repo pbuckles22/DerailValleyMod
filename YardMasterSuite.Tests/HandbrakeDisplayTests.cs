@@ -20,6 +20,20 @@ public class HandbrakeDisplayTests
     }
 
     [Fact]
+    public void FormatTotal_shows_placeholder_when_missing()
+    {
+        Assert.Equal("— Handbrakes", HandbrakeDisplay.FormatTotal(null));
+    }
+
+    [Theory]
+    [InlineData(0, "Handbrakes 0")]
+    [InlineData(3, "Handbrakes 3")]
+    public void FormatTotal_shows_consist_applied_count(int applied, string expected)
+    {
+        Assert.Equal(expected, HandbrakeDisplay.FormatTotal(applied));
+    }
+
+    [Fact]
     public void CountApplied_counts_positions_above_threshold()
     {
         var positions = new[] { 0f, 0.001f, 0.5f, 1f, 0.01f, 0.011f };

@@ -10,22 +10,34 @@ A **Fleet Operator** utility suite for *Derail Valley*: automate the tedium, pre
 
 **Rule (all HUD segments, now and future):** Each readout uses a **short plain-English word** first so you can recognize it at a glance. Avoid cryptic abbreviations (`HB`, `cpl`, bare `%` / `t`). Units may follow the value (`km/h`, `bar`, `t`). Unknown = same word with an em dash (`— Pipe`).
 
-**Shipped — main strip (left → right):**
+**Shipped — two bars (CMD-01a + CMD-01b wiring):**
+
+**Usable train (yard rule):** continuous full links from the target car to a loco. Full link = mechanical + chain tightened (either side) + air hose + cocks open both sides + MU blue wires only when **both** ends have MU (loco↔loco). Loco↔freight does not require MU. Incomplete link = officially decoupled for HUD (not “drivable”). Top bar is red/null when on the ground, or on a car with no usable path to a loco. Look-at (CMD-01d) will reuse the same target-car logic.
+
+**Top = usable train totals** (grey plate; red plate + nulls when not usable):
 
 | Word | Example live | Example unknown |
 |------|----------------|-----------------|
 | Speed | `Speed 36 km/h` | `— Speed` |
 | Grade | `Grade +1.2 %` | `— Grade` |
 | Mass | `Mass 240 t` | `— Mass` |
+| Cars | `Cars 5` (freight only; loco not counted) | `— Cars` |
+| Handbrakes | `Handbrakes 3` (usable-consist applied count) | `— Handbrakes` |
+
+**Second = that car only** (standing on it now; look-at fills this bar in CMD-01d):
+
+| Word | Example live | Example unknown |
+|------|----------------|-----------------|
 | Pipe | `Pipe 2.0 bar` | `— Pipe` |
-| Handbrake | `Handbrake 1` (car under feet: 1 on / 0 off; consist count is CMD-01b) | `— Handbrake` |
-| Couplers | `Couplers F- R+` | `— Couplers` |
+| Handbrake | `Handbrake 1` (this car: 1 on / 0 off) | `— Handbrake` |
+| Couplers | `F+` usable; `F-` open; yellow `F*` = loco↔loco usable but blue MU open (your call to connect) | `— Couplers` |
+| Car | `Car 3` (freight from loco); `Car N/A` on loco; `Car XX` if not on a usable train | `Car XX` |
+| Job | `Job FH-12` | `— Job` |
 
 **Planned (not on HUD yet):**
 
 | Story | Segments (use the same naming rule) |
 |-------|-------------------------------------|
-| CMD-01b | **Top train bar** (loco-anchored): Cars N, Handbrakes total, …; red border + nulls if no loco. **Second bar**: current vehicle Pipe / Handbrake 0–1 / Couplers / Car # / Job # |
 | CMD-01d | On foot, look-at fills second bar like standing on that car; standing on a car always wins |
 | CMD-01c | Coupler tight vs loose |
 | CMD-02 | Ammeter / Traction motor health |
