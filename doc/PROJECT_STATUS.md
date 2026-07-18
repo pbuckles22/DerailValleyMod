@@ -16,7 +16,7 @@
 
 | Branch | Role |
 |--------|------|
-| **`feature/cmd-01-integrity-monitor`** | CMD-01a **Done** (v0.4.0) — merge to `main`, then start CMD-01b |
+| **`feature/cmd-01-integrity-monitor`** | CMD-01a **Done** @ `75a726b` (v0.4.0, pushed) — merge to `main`, then start CMD-01b |
 | **`main`** | Integration (`1b817ed` — E1-S2 + CMD backlog) |
 
 ---

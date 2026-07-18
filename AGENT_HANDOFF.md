@@ -114,8 +114,8 @@ When shipping: update **PM_PLAN**, **doc/PROJECT_STATUS.md**, and **Current stat
 - **Plan:** v3.0 + CMD backlog — Phase 0 done; MVP = Diagnostic HUD (CMD-01…03).
 - **Shipped on `main`:** Phase 0; E1-S1 speed; E1-S2 grade/tonnage (`c92c1b9`, v0.3.0) — Tier 1 + Tier 2 green.
 - **Build / deploy:** `dotnet test YardMasterSuite.sln`; `dotnet build YardMasterSuite.sln -c Release`; `package.ps1 -NoArchive -OutputDirectory "...\Mods"`.
-- **Shipped (this branch):** CMD-01a **Done** (v0.4.0) — single-strip car-under-feet Pipe / Handbrake 0–1 / Couplers; `T2 integrity` logs; Core inlined into mod DLL. Dual-HUD validation deferred to 01b/01d.
-- **Next:** Merge `feature/cmd-01-integrity-monitor` → `main` (if not already), then **CMD-01b** train top bar + local-car second bar (Cars N, Handbrakes total, red/null when no loco).
+- **Shipped (feature branch):** CMD-01a **Done** @ `75a726b` (v0.4.0, pushed) — single-strip car-under-feet Pipe / Handbrake 0–1 / Couplers; `T2 integrity` logs; Core inlined into mod DLL. Dual-HUD validation deferred to 01b/01d.
+- **Next:** Merge `feature/cmd-01-integrity-monitor` → `main`, then **CMD-01b** train top bar + local-car second bar (Cars N, Handbrakes total, red/null when no loco).
 
 ## Run and test
 
