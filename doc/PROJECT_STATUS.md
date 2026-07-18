@@ -2,7 +2,7 @@
 
 **Human-readable current state.** Keep in sync with [AGENT_HANDOFF.md](../AGENT_HANDOFF.md) → *Current state* when milestones ship.
 
-**Last updated:** 2026-07-17
+**Last updated:** 2026-07-18
 
 ---
 
@@ -16,7 +16,7 @@
 
 | Branch | Role |
 |--------|------|
-| **`main`** | Integration — CMD-01 complete (01a–01d); CMD-01c at `89b5785` (v0.4.5) |
+| **`main`** | Integration — look-at priority + loco/cargo + QOL-06/07 (v0.4.12) |
 
 ---
 
@@ -25,17 +25,19 @@
 - Phase 0 Safe Boot (UMM load + toggle)
 - E1-S1 speed HUD (km/h); E1-S2 grade % + consist tonnes (L→R); Tier 1 + Tier 2 green
 - CMD backlog adopted (CMD-01…06); Switch Path Tracer / Startup Assist parked
-- **CMD-01a** car integrity (Pipe / Handbrake 0–1 / Couplers on car under feet)
-- **CMD-01b** dual HUD: usable loco-train top bar + local-car second bar; usable = full link path to loco; Cars exclude loco; yellow `F*`/`R*` for open MU; `v…` HUD chip — **merged to `main`** (MU 2-loco smoke deferred)
-- **CMD-01d** look-at fills second bar on foot (shared `TryGetTargetCar`; standing wins) — **merged to `main`** (v0.4.3)
-- **CMD-01c** coupler tight/loose — plain `*` = loose chain, `+` = usable; `T2 coupler` — **merged to `main`** (v0.4.5)
+- **CMD-01a–d** integrity / dual HUD / look-at / coupler tight-loose
+- **Look-at priority flip** (look-at wins; standing fallback) + **`Loco …`** type
+- **QOL-06** 250 m / 0.15 m spherecast — **PASS*** (slight sky-stickiness OK)
+- **QOL-07** `Cargo …` / `Empty Cargo` on second bar — load **PASS**; Empty Cargo wording smoke deferred
 
 ---
 
 ## Next up
 
-- Tier 2: yellow MU warning with two locos (deferred from 01b)
-- CMD-02 Power Monitor; finish CMD-03 speed-limit alerts
+- CMD-02 Power Monitor
+- Finish CMD-03 speed-limit alerts
+- Tier 2: yellow MU warning with two locos (deferred)
+- Smoke `Empty Cargo` next game session
 
 ---
 

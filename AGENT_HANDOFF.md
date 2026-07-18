@@ -112,9 +112,9 @@ When shipping: update **PM_PLAN**, **doc/PROJECT_STATUS.md**, and **Current stat
 
 - **Project:** DerailValleyMod — *Yard Master Suite* (UMM / Harmony / net48).
 - **Plan:** v3.0 + CMD backlog — Phase 0 done; MVP = Diagnostic HUD (CMD-01…03).
-- **Shipped on `main`:** Phase 0; E1-S1 speed; E1-S2 grade/tonnage; **CMD-01** complete (01a–01d) — **CMD-01c** tight/loose (`89b5785`, v0.4.5): plain `*` = loose chain, yellow `*` = MU; `T2 coupler`; look-at second bar; dual HUD; Core inlined into mod DLL. MU yellow 2-loco smoke deferred.
+- **Shipped on `main`:** Phase 0; E1-S1 speed; E1-S2 grade/tonnage; **CMD-01** complete (01a–01d). Look-at priority flip; `Loco …` / `Cargo …` / `Empty Cargo`; **QOL-06** spherecast 250 m / 0.15 m (**PASS***); **QOL-07** cargo (**PASS**, Empty Cargo smoke deferred). Version **0.4.12**. MU yellow 2-loco smoke deferred.
 - **Build / deploy:** `dotnet test YardMasterSuite.sln`; `dotnet build YardMasterSuite.sln -c Release`; `package.ps1 -NoArchive -OutputDirectory "...\Mods"`.
-- **Next:** CMD-02 Power Monitor / finish CMD-03; MU 2-loco smoke when second loco available.
+- **Next:** CMD-02 Power Monitor; finish CMD-03 speed-limit alerts; MU 2-loco when available; Empty Cargo smoke next session.
 
 ## Run and test
 

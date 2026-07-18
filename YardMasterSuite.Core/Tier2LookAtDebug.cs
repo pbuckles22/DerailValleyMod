@@ -2,7 +2,7 @@ namespace YardMasterSuite.Core;
 
 /// <summary>
 /// Discrete Player.log lines for Tier 2 look-at second-bar checks (on foot).
-/// Reuses <see cref="LocalCarDebugSnapshot"/> — same fragment fields as standing.
+/// Reuses <see cref="LocalCarDebugSnapshot"/> — same fragment fields as the second bar.
 /// </summary>
 public static class Tier2LookAtDebug
 {

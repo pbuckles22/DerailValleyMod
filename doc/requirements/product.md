@@ -12,7 +12,7 @@ A **Fleet Operator** utility suite for *Derail Valley*: automate the tedium, pre
 
 **Shipped — two bars (CMD-01a + CMD-01b wiring):**
 
-**Usable train (yard rule):** continuous full links from the target car to a loco. Full link = mechanical + chain tightened (either side) + air hose + cocks open both sides + MU blue wires only when **both** ends have MU (loco↔loco). Loco↔freight does not require MU. Incomplete link = officially decoupled for HUD (not “drivable”). Top bar is red/null when on the ground, or on a car with no usable path to a loco. Look-at (CMD-01d) will reuse the same target-car logic.
+**Usable train (yard rule):** continuous full links from the target car to a loco. Full link = mechanical + chain tightened (either side) + air hose + cocks open both sides + MU blue wires only when **both** ends have MU (loco↔loco). Loco↔freight does not require MU. Incomplete link = officially decoupled for HUD (not “drivable”). Top bar is red/null when on the ground, or on a car with no usable path to a loco. Target car = look-at preferred, standing fallback.
 
 **Top = usable train totals** (grey plate; red plate + nulls when not usable):
 
@@ -24,7 +24,7 @@ A **Fleet Operator** utility suite for *Derail Valley*: automate the tedium, pre
 | Cars | `Cars 5` (freight only; loco not counted) | `— Cars` |
 | Handbrakes | `Handbrakes 3` (usable-consist applied count) | `— Handbrakes` |
 
-**Second = that car only** (standing on it, or look-at on foot — standing wins):
+**Second = that car only** (look-at wins; standing fallback when crosshair is not on a car):
 
 | Word | Example live | Example unknown |
 |------|----------------|-----------------|
@@ -33,6 +33,8 @@ A **Fleet Operator** utility suite for *Derail Valley*: automate the tedium, pre
 | Couplers | `F+` usable; plain `F*` = coupled but chain loose; `F-` open / incomplete; yellow `F*` = loco↔loco usable but blue MU open | `— Couplers` |
 | Car | `Car 3` (freight from loco); `Car N/A` on loco; `Car XX` if not on a usable train | `Car XX` |
 | Job | `Job FH-12` | `— Job` |
+| Cargo | `Cargo Steel Rails` (freight load) | `Empty Cargo` |
+| Loco | `Loco DE6` (only when target is a locomotive; omit segment otherwise) | *(segment omitted)* |
 
 **Planned (not on HUD yet):**
 

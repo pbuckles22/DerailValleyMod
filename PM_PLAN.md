@@ -46,7 +46,7 @@ Cab summary first, then ground inspect; coupler tight/loose last.
 | CMD-01a | Car integrity readout | Single HUD: brake pipe (bar), **handbrake 0/1 for car under player**, F/R **coupled** (`+/-`) for car under player; **`T2 integrity` Player.log**; HUD width uses draw style (no Couplers clip) | **Done** — Tier 1 green; load/toggle + foot/on-car smoke OK. Dual-HUD / train-wide / look-at validation deferred to 01b/01d |
 | CMD-01b | Train + local-car HUD | Top bar = usable loco-train totals (Cars freight-only, Handbrakes, …); second bar = current vehicle; not usable → red null top; **`T2 consist` / `T2 local-car` logs**; HUD `v…` chip | **Done** — Tier 1 green; Tier 2 dual-HUD smoke OK (MU yellow warning deferred until 2nd loco) |
 | CMD-01c | Coupler tight/loose | Show chain **tightened** vs loose when coupled (car and/or look-at); **`T2 coupler` logs** | **Done** — Tier 1 green; Tier 2 HUD OK at v0.4.4; plain `*` glyph at v0.4.5 (re-smoke waived) |
-| CMD-01d | Look-at inspect | On foot: look-at fills second bar like standing on that car; standing on a car always wins over look-at; bar gone when no target; **`T2 look-at` logs** | **Done** — Tier 1 green; Tier 2 HUD smoke OK (v0.4.3) |
+| CMD-01d | Look-at inspect | Look-at fills second bar (wins over standing); standing fallback when not looking at a car; loco shows `Loco …` type; bar gone when no target; **`T2 look-at` logs** | **Done** — Tier 1 green; Job look-at **PASS**; priority flip + loco type at v0.4.6 (re-smoke); MU 2-loco still deferred |
 
 **Build order:** 01a → 01b → 01d → 01c.
 
@@ -80,6 +80,15 @@ Cab summary first, then ground inspect; coupler tight/loose last.
 | ID | Story | Done when | Status |
 |----|-------|-----------|--------|
 | CMD-06 | Manual Consist Management | Teleport cars / consist via native organizers; abort rules (hazmat, jobs, coupler, speed, unknowns); fail closed | |
+
+---
+
+## QOL (small HUD quality)
+
+| ID | Story | Done when | Status |
+|----|-------|-----------|--------|
+| QOL-06 | Enhanced targeting | Look-at spherecast **0.15 m** radius, max **250 m** | **PASS*** — good enough; slight sky-stickiness accepted; cargo segment helps ID cars |
+| QOL-07 | Cargo on second bar | Freight shows `Cargo …` / `Empty Cargo` from loaded cargo type | **Done** — load **PASS** v0.4.11; `Empty Cargo` label v0.4.12 (smoke deferred) |
 
 ---
 
