@@ -114,7 +114,8 @@ When shipping: update **PM_PLAN**, **doc/PROJECT_STATUS.md**, and **Current stat
 - **Plan:** v3.0 + CMD backlog — Phase 0 done; MVP = Diagnostic HUD (CMD-01…03).
 - **Shipped on `main`:** Phase 0; E1-S1 speed; E1-S2 grade/tonnage (`c92c1b9`, v0.3.0) — Tier 1 + Tier 2 green.
 - **Build / deploy:** `dotnet test YardMasterSuite.sln`; `dotnet build YardMasterSuite.sln -c Release`; `package.ps1 -NoArchive -OutputDirectory "...\Mods"`.
-- **Next:** CMD-01 Integrity Monitor (brake pipe, handbrake count, coupling status).
+- **Shipped (feature branch):** CMD-01a **Done** @ `75a726b` (v0.4.0, pushed) — single-strip car-under-feet Pipe / Handbrake 0–1 / Couplers; `T2 integrity` logs; Core inlined into mod DLL. Dual-HUD validation deferred to 01b/01d.
+- **Next:** Merge `feature/cmd-01-integrity-monitor` → `main`, then **CMD-01b** train top bar + local-car second bar (Cars N, Handbrakes total, red/null when no loco).
 
 ## Run and test
 
@@ -165,4 +166,8 @@ When ending a session:
 3. Update **[doc/PROJECT_STATUS.md](doc/PROJECT_STATUS.md)** and **Current state** above (required for contributor-visible changes).
 4. Optional local note: `.cursor/handoff/NNNN-handoff-*.md` ([template](.cursor/handoff/_template.md)) — gitignored; promote decisions to tracked docs.
 
+
+## Epic close (automatic)
+
+When an epic's in-scope work is done, **do not wait for the user to ask**. Run [.cursor/rules/epic-close.mdc](.cursor/rules/epic-close.mdc) / pm-governance *Epic close*: **handoff checklist first**, then mark the epic complete in plan/status docs, close note, commit/push, summarize. See [.cursor/skills/pm-governance/SKILL.md](.cursor/skills/pm-governance/SKILL.md).
 Anything the team must see on GitHub belongs in **PROJECT_STATUS**, **PM_PLAN**, **README**, or the **PR** — not only gitignored handoff files.

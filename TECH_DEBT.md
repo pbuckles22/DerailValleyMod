@@ -19,17 +19,16 @@ This is the durable home for technical debt across sessions. Handoff notes can m
 
 (High ROI; frequent pain; not blocking.)
 
-- (none)
+- **Per-frame `GUIStyle` alloc in `MonitorHudDriver.OnGUI`** — Cache style in `Awake`/`OnEnable` before CMD-01b adds a second HUD bar (doubles OnGUI work).
 
 ## Accept for now
 
 (Isolated + workaround + revisit trigger.)
 
-- (none)
+- **Core sources compiled into `YardMasterSuite.dll`** — Unity Mono failed to `LoadFile` sibling `YardMasterSuite.Core.dll`; csproj links Core `*.cs` into the mod assembly. Revisit if UMM/Unity can reliably load a sibling Core DLL.
 
 ---
 
 ## ROI rubric (quick)
 
 Score each: Impact (0–2) + Frequency (0–2) + RiskReduction (0–2) + Effort (0–2, reverse scale). Sort descending.
-

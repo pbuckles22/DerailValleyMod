@@ -16,19 +16,19 @@ public class SpeedDisplayTests
     [Fact]
     public void FormatKmh_rounds_to_whole_kilometers()
     {
-        Assert.Equal("36 km/h", SpeedDisplay.FormatKmh(36.4f));
-        Assert.Equal("37 km/h", SpeedDisplay.FormatKmh(36.5f));
+        Assert.Equal("Speed 36 km/h", SpeedDisplay.FormatKmh(36.4f));
+        Assert.Equal("Speed 37 km/h", SpeedDisplay.FormatKmh(36.5f));
     }
 
     [Fact]
     public void FormatFromMetersPerSecond_shows_placeholder_when_missing()
     {
-        Assert.Equal("— km/h", SpeedDisplay.FormatFromMetersPerSecond(null));
+        Assert.Equal("— Speed", SpeedDisplay.FormatFromMetersPerSecond(null));
     }
 
     [Fact]
     public void FormatFromMetersPerSecond_formats_converted_speed()
     {
-        Assert.Equal("36 km/h", SpeedDisplay.FormatFromMetersPerSecond(10f));
+        Assert.Equal("Speed 36 km/h", SpeedDisplay.FormatFromMetersPerSecond(10f));
     }
 }

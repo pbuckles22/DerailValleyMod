@@ -2,7 +2,7 @@
 
 Keep in sync with [doc/requirements/product.md](doc/requirements/product.md), [doc/PROJECT_STATUS.md](doc/PROJECT_STATUS.md), and AGENT_HANDOFF “Current state”.
 
-**Source:** Master Context / Developer Roadmap v3.0 (2026-07), backlog refresh 2026-07-16 (CMD IDs).
+**Source:** Master Context / Developer Roadmap v3.0 (2026-07), backlog refresh 2026-07-16 (CMD IDs); CMD-01 sliced 2026-07-16 (01a–01d).
 
 **MVP focus:** Situational awareness (Diagnostic HUD) before Governor writes.
 
@@ -37,9 +37,25 @@ L→R read-only strip; UMM toggle; km/h (game-native).
 
 **Goal:** Situational awareness only — **no game-state writes**. HUD continues **left → right**.
 
+### CMD-01 — Integrity Monitor (slices)
+
+Cab summary first, then ground inspect; coupler tight/loose last.
+
 | ID | Story | Done when | Status |
 |----|-------|-----------|--------|
-| CMD-01 | Integrity Monitor | Real-time Brake Pipe pressure, Handbrake count (applied on consist), Coupling status | **Next** |
+| CMD-01a | Car integrity readout | Single HUD: brake pipe (bar), **handbrake 0/1 for car under player**, F/R **coupled** (`+/-`) for car under player; **`T2 integrity` Player.log**; HUD width uses draw style (no Couplers clip) | **Done** — Tier 1 green; load/toggle + foot/on-car smoke OK. Dual-HUD / train-wide / look-at validation deferred to 01b/01d |
+| CMD-01b | Train + local-car HUD | Top bar = loco-anchored train (Cars N, Handbrakes total, …); second bar = current vehicle; no loco → red-border null train bar; **`T2 consist` / `T2 local-car` logs** | Next |
+| CMD-01c | Coupler tight/loose | Show chain **tightened** vs loose when coupled (car and/or look-at); **`T2 coupler` logs** | After 01b/01d |
+| CMD-01d | Look-at inspect | On foot: look-at fills second bar like standing on that car; standing on a car always wins over look-at; bar gone when no target; **`T2 look-at` logs** | After 01b |
+
+**Build order:** 01a → 01b → 01d → 01c.
+
+**Tier 2 logging (retro):** Every Monitor story that needs in-game sign-off ships discrete `T2 …` Player.log lines for its checklist — same pattern as CMD-01a (`Tier2IntegrityDebug`). No per-frame spam.
+
+### Other Monitor stories
+
+| ID | Story | Done when | Status |
+|----|-------|-----------|--------|
 | CMD-02 | Power Monitor | Ammeter readouts + Traction Motor (TM) health warnings | |
 | CMD-03 | Terrain Monitor | Grade percentage + speed limit alerts | **Partial** — grade % shipped in E1-S2; speed-limit alerts remaining |
 

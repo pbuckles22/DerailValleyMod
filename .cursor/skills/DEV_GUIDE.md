@@ -30,7 +30,7 @@ After clone, copy `Directory.Build.targets.example` → `Directory.Build.targets
 ```
 YardMasterSuite.sln
 YardMasterSuite/           # classlib (Main.cs + Monitor HUD + .csproj)
-YardMasterSuite.Core/      # pure helpers (netstandard2.0) — unit-tested
+YardMasterSuite.Core/      # pure helpers (net48) — unit-tested; **compiled into** YardMasterSuite.dll for UMM (single assembly)
 YardMasterSuite.Tests/     # xUnit (net10)
 info.json                  # UMM metadata (repo root)
 package.ps1                # zip / copy for Mods
@@ -56,10 +56,12 @@ powershell -ExecutionPolicy Bypass -File package.ps1 -NoArchive -OutputDirectory
 That copies `info.json` + `build/*` into `Mods\YardMasterSuite\`. Toggle in UMM with Ctrl+F10.
 
 **This machine:** game root `C:\Program Files (x86)\Steam\steamapps\common\Derail Valley`  
-**Player.log:** `%USERPROFILE%\AppData\LocalLow\Altfuture\Derail Valley\Player.log`
+**Player.log:** `%USERPROFILE%\AppData\LocalLow\Altfuture\Derail Valley\Player.log`  
+Tier 2 sign-off uses discrete `[YardMasterSuite] T2 …` lines (see [TEST_PLAN.md](../../TEST_PLAN.md)) — not per-frame HUD dumps.
 
 ## Conventions
 
 - Fail closed on Harmony load failure (`Main.Load` returns false).
 - Prefix/Postfix only — no Transpilers without an explicit decision.
 - All state writes: Three-Gate + governor safety gates (product.md).
+- In-game stories: emit discrete `T2` Player.log lines for checklist fields (`Tier2IntegrityDebug` pattern).
