@@ -16,7 +16,7 @@
 
 | Branch | Role |
 |--------|------|
-| **`main`** | Integration — CMD-01 complete (01a–01d); CMD-01c tight/loose v0.4.5 |
+| **`main`** | Integration — CMD-01 complete (01a–01d); CMD-01c at `89b5785` (v0.4.5) |
 
 ---
 
