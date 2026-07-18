@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using DV.Logic.Job;
+using UnityEngine;
 using YardMasterSuite.Core;
 
 namespace YardMasterSuite.Monitor;
@@ -11,10 +12,27 @@ namespace YardMasterSuite.Monitor;
 /// </summary>
 internal static class TelemetryReader
 {
+    private const float LookAtMaxDistanceMeters = 80f;
+
+    private static int _trainLookMask = -1;
+
     /// <summary>
-    /// Car under inspection: standing on it now; look-at will share this resolution later (CMD-01d).
+    /// Car under inspection: standing on it wins; else the car under the crosshair (CMD-01d).
     /// </summary>
     public static TrainCar? TryGetTargetCar()
+    {
+        var standing = TryGetStandingCar();
+        // Skip raycast when standing — selection policy still goes through TargetCarSelection.
+        var lookAt = standing == null ? TryGetLookAtCar() : null;
+        return TargetCarSelection.Resolve(standing != null, lookAt != null) switch
+        {
+            TargetCarSource.Standing => standing,
+            TargetCarSource.LookAt => lookAt,
+            _ => null,
+        };
+    }
+
+    public static TrainCar? TryGetStandingCar()
     {
         try
         {
@@ -24,6 +42,43 @@ internal static class TelemetryReader
         {
             return null;
         }
+    }
+
+    /// <summary>
+    /// Car under the center of the active camera (train collider layers). Null if none / fail-closed.
+    /// </summary>
+    public static TrainCar? TryGetLookAtCar()
+    {
+        try
+        {
+            var cam = PlayerManager.ActiveCamera;
+            if (cam == null)
+            {
+                return null;
+            }
+
+            var ray = cam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+            if (!Physics.Raycast(ray, out var hit, LookAtMaxDistanceMeters, TrainLookMask()))
+            {
+                return null;
+            }
+
+            return TrainCar.Resolve(hit.collider.transform);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static int TrainLookMask()
+    {
+        if (_trainLookMask < 0)
+        {
+            _trainLookMask = LayerMask.GetMask("Train_Big_Collider", "Train_Interior");
+        }
+
+        return _trainLookMask;
     }
 
     /// <summary>
@@ -262,20 +317,30 @@ internal static class TelemetryReader
             HandbrakeDisplay.FormatTotal(usable ? TryGetConsistHandbrakeAppliedCount() : null));
     }
 
-    internal static LocalCarDebugSnapshot CurrentLocalCarDebugSnapshot()
+    /// <summary>Standing-on-car second bar only (not look-at).</summary>
+    internal static LocalCarDebugSnapshot CurrentLocalCarDebugSnapshot() =>
+        SnapshotForCar(TryGetStandingCar());
+
+    /// <summary>Look-at second bar only when standing does not win.</summary>
+    internal static LocalCarDebugSnapshot CurrentLookAtDebugSnapshot()
     {
-        var car = TryGetTargetCar();
-        if (car == null)
+        if (TryGetStandingCar() != null)
         {
-            return new LocalCarDebugSnapshot(
-                visible: false,
-                pipe: "— Pipe",
-                handbrake: "— Handbrake",
-                coupling: "— Couplers",
-                carNumber: CarNumberDisplay.NotOnTrainLabel,
-                job: "— Job");
+            return HiddenLocalCarSnapshot();
         }
 
+        return SnapshotForCar(TryGetLookAtCar());
+    }
+
+    private static LocalCarDebugSnapshot SnapshotForCar(TrainCar? car)
+    {
+        if (car == null)
+        {
+            return HiddenLocalCarSnapshot();
+        }
+
+        // Callers only pass the active target (standing, or look-at when not standing),
+        // so TryGet* helpers that read TryGetTargetCar() match this car.
         return new LocalCarDebugSnapshot(
             visible: true,
             BrakePipeDisplay.FormatBar(TryGetBrakePipePressureBar()),
@@ -284,6 +349,15 @@ internal static class TelemetryReader
             FormatCarNumber(car),
             JobDisplay.Format(TryGetJobId()));
     }
+
+    private static LocalCarDebugSnapshot HiddenLocalCarSnapshot() =>
+        new(
+            visible: false,
+            pipe: "— Pipe",
+            handbrake: "— Handbrake",
+            coupling: "— Couplers",
+            carNumber: CarNumberDisplay.NotOnTrainLabel,
+            job: "— Job");
 
     internal static IntegrityDebugSnapshot CurrentIntegrityDebugSnapshot()
     {

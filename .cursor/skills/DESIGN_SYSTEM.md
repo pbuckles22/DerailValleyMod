@@ -5,7 +5,7 @@ Monitor HUD (IMGUI) rules for *Yard Master Suite*. Product inventory and naming:
 ## HUD layout
 
 - **Main strip:** one top-left bar; segments join left → right with `  |  `.
-- **Look-at (CMD-01d):** a **second HUD bar** directly under the main strip — same height, width fits its text; gone when not looking at a car.
+- **Second bar:** standing-on-car or look-at (on foot) — same height, width fits its text; gone when no target. Standing always wins over look-at.
 - Grow bar width from content (`GUI.skin.box.CalcSize`); do not clip labels.
 
 ## HUD label wording

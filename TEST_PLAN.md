@@ -90,15 +90,41 @@ Filter: `[YardMasterSuite]`
 
 Recovery: [modding.md](doc/requirements/modding.md).
 
+### CMD-01d — look-at second bar (`T2 look-at`) — **signed off**
+
+**Layout:** same second bar as standing-on-car. On foot, look-at fills it; standing on a car always wins (look-at ignored). Shared target car also drives usable-train top bar.
+
+**Log file:** `%USERPROFILE%\AppData\LocalLow\Altfuture\Derail Valley\Player.log`  
+Filter: `[YardMasterSuite]` · chip `v0.4.3`
+
+#### Expected `T2 look-at` lines
+
+| When you… | Expect in Player.log |
+|-----------|----------------------|
+| First sample on foot, not pointing at a car | `T2 look-at init (hidden)` |
+| On foot, point at a car | `T2 look-at appear: Pipe …  \|  Handbrake N  \|  Couplers F± R±  \|  Car #  \|  Job …` |
+| Stop pointing / look away | `T2 look-at hide` |
+| Look-at car fields change | `T2 look-at change: …` |
+| Climb onto a car while looking | `T2 local-car appear: …` then `T2 look-at hide` (emit order; standing wins) |
+
+#### Sign-off checklist
+
+| # | Check (plain English) | Evidence |
+|---|------------------------|----------|
+| 1 | Mod loads at **v0.4.3**; Active; no mod errors | Lifecycle + HUD chip — **PASS** |
+| 2 | On foot, not looking at a car — **no second bar** | HUD — **PASS** |
+| 3 | On foot, point at a car — second bar shows that car’s Pipe / Handbrake / Couplers / Car # / Job # | HUD Car 1/2/3 — **PASS** |
+| 4 | Point at a car **not** on a usable loco train — `Car XX`; top bar red/null | HUD after uncouple — **PASS** |
+| 5 | Point at a car **on** a usable loco train — Car # from loco; top bar can show that train’s totals | HUD — **PASS** |
+| 6 | Stand on a car — second bar stays on **feet** car even if looking elsewhere | HUD — **PASS** |
+| 7 | Look away — second bar gone; top bar stays | HUD — **PASS** |
+
 ### Later stories (retro requirements)
 
 | Story | Planned `T2` topic (when implemented) |
 |-------|----------------------------------------|
-| **CMD-01d** look-at | `T2 look-at …` — second HUD bar appear/disappear; Car # (`XX` if not on train); Job #; integrity fragment for looked-at car |
 | **CMD-01c** tight/loose | `T2 coupler …` — tight vs loose when it changes |
 | **CMD-02 / 03** | Same pattern: discrete lines for that monitor’s sign-off fields |
-
-**CMD-01d (product):** Point at a car → a **second HUD bar** appears directly under the main top-left strip (same height as the main bar; width fits its text). It shows that car’s Pipe / Handbrake / Couplers, Car # (front→back from engine, or `XX` if not on the train), and Job #. Stop pointing → that second bar disappears (main HUD stays).
 
 ---
 
