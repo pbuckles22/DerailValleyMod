@@ -17,6 +17,10 @@ public class CouplingDisplayTests
     [InlineData(CouplerLinkStatus.Linked, CouplerLinkStatus.Open, "Couplers F+ R-")]
     [InlineData(CouplerLinkStatus.Open, CouplerLinkStatus.Linked, "Couplers F- R+")]
     [InlineData(CouplerLinkStatus.Open, CouplerLinkStatus.Open, "Couplers F- R-")]
+    [InlineData(CouplerLinkStatus.Loose, CouplerLinkStatus.Open, "Couplers F* R-")]
+    [InlineData(CouplerLinkStatus.Open, CouplerLinkStatus.Loose, "Couplers F- R*")]
+    [InlineData(CouplerLinkStatus.Loose, CouplerLinkStatus.Loose, "Couplers F* R*")]
+    [InlineData(CouplerLinkStatus.Linked, CouplerLinkStatus.Loose, "Couplers F+ R*")]
     [InlineData(CouplerLinkStatus.MuWarning, CouplerLinkStatus.Linked, "Couplers F* R+")]
     [InlineData(CouplerLinkStatus.Linked, CouplerLinkStatus.MuWarning, "Couplers F+ R*")]
     public void Format_plain_marks(CouplerLinkStatus front, CouplerLinkStatus rear, string expected)

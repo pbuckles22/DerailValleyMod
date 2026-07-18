@@ -112,9 +112,9 @@ When shipping: update **PM_PLAN**, **doc/PROJECT_STATUS.md**, and **Current stat
 
 - **Project:** DerailValleyMod — *Yard Master Suite* (UMM / Harmony / net48).
 - **Plan:** v3.0 + CMD backlog — Phase 0 done; MVP = Diagnostic HUD (CMD-01…03).
-- **Shipped on `main`:** Phase 0; E1-S1 speed; E1-S2 grade/tonnage; **CMD-01a**; **CMD-01b** dual HUD; **CMD-01d** look-at second bar (`1208de1`, v0.4.3) — shared `TryGetTargetCar` (standing wins); `T2 look-at`; HUD `v…` chip; Core inlined into mod DLL. MU yellow 2-loco smoke deferred.
+- **Shipped on `main`:** Phase 0; E1-S1 speed; E1-S2 grade/tonnage; **CMD-01** complete (01a–01d) — **CMD-01c** tight/loose (v0.4.5): plain `*` = loose chain, yellow `*` = MU; `T2 coupler`; look-at second bar; dual HUD; Core inlined into mod DLL. MU yellow 2-loco smoke deferred.
 - **Build / deploy:** `dotnet test YardMasterSuite.sln`; `dotnet build YardMasterSuite.sln -c Release`; `package.ps1 -NoArchive -OutputDirectory "...\Mods"`.
-- **Next:** **CMD-01c** tight/loose display → CMD-02 / finish CMD-03.
+- **Next:** CMD-02 Power Monitor / finish CMD-03; MU 2-loco smoke when second loco available.
 
 ## Run and test
 
@@ -138,7 +138,7 @@ Keep in sync with [TEST_PLAN.md](TEST_PLAN.md).
 ## Conventions
 
 - Prefer pure functions for business logic where possible.
-- **Version:** Bump `info.json` (+ `repository.json`) patch (`0.4.x`) on every deployable fix/feature so UMM and the HUD `v…` chip prove the new DLL loaded. Minor bump for story closes; keep in sync with Player.log `Version '…'. Loading.`
+- **Version:** See [RELEASE.md](RELEASE.md) → *Versioning*. Bump `info.json` (+ `repository.json`) patch on every deployable DLL change; confirm HUD `v…` chip after deploy before Tier 2 sign-off.
 - **Docs:** Use the **techwriter** skill when editing README, AGENT_HANDOFF, or internal docs.
 - **Tests:** Black-box; run your project test command after logic or test changes; keep the suite green (see .cursor/skills/tester/SKILL.md). Prefer writing a failing test before new production code (TDD) where applicable.
 

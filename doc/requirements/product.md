@@ -30,7 +30,7 @@ A **Fleet Operator** utility suite for *Derail Valley*: automate the tedium, pre
 |------|----------------|-----------------|
 | Pipe | `Pipe 2.0 bar` | `— Pipe` |
 | Handbrake | `Handbrake 1` (this car: 1 on / 0 off) | `— Handbrake` |
-| Couplers | `F+` usable; `F-` open; yellow `F*` = loco↔loco usable but blue MU open (your call to connect) | `— Couplers` |
+| Couplers | `F+` usable; plain `F*` = coupled but chain loose; `F-` open / incomplete; yellow `F*` = loco↔loco usable but blue MU open | `— Couplers` |
 | Car | `Car 3` (freight from loco); `Car N/A` on loco; `Car XX` if not on a usable train | `Car XX` |
 | Job | `Job FH-12` | `— Job` |
 
@@ -38,7 +38,6 @@ A **Fleet Operator** utility suite for *Derail Valley*: automate the tedium, pre
 
 | Story | Segments (use the same naming rule) |
 |-------|-------------------------------------|
-| CMD-01c | Coupler tight vs loose (chain tightened) |
 | CMD-02 | Ammeter / Traction motor health |
 | CMD-03 | Speed-limit alerts (grade already shipped) |
 

@@ -30,6 +30,9 @@ public static class CouplingDisplay
         {
             case CouplerLinkStatus.Linked:
                 return $"{letter}+";
+            case CouplerLinkStatus.Loose:
+                // Same glyph as MU warning; HUD yellow = MU, plain = loose chain.
+                return $"{letter}*";
             case CouplerLinkStatus.MuWarning:
                 var mark = $"{letter}*";
                 return richText ? $"<color={MuWarningColor}>{mark}</color>" : mark;

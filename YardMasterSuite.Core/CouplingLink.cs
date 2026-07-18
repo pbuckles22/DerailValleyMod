@@ -21,6 +21,16 @@ public static class CouplingLink
         bool muCablePresent,
         bool muCableConnected)
     {
+        if (!mechanicallyCoupled)
+        {
+            return CouplerLinkStatus.Open;
+        }
+
+        if (!tightened)
+        {
+            return CouplerLinkStatus.Loose;
+        }
+
         if (!IsUsableLink(mechanicallyCoupled, tightened, airHoseConnected, cocksOpenBothSides))
         {
             return CouplerLinkStatus.Open;

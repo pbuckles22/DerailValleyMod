@@ -332,6 +332,19 @@ internal static class TelemetryReader
         return SnapshotForCar(TryGetLookAtCar());
     }
 
+    /// <summary>Target-car coupler marks (standing wins over look-at).</summary>
+    internal static CouplerDebugSnapshot CurrentCouplerDebugSnapshot()
+    {
+        if (TryGetTargetCar() == null)
+        {
+            return new CouplerDebugSnapshot(visible: false, coupling: "— Couplers");
+        }
+
+        return new CouplerDebugSnapshot(
+            visible: true,
+            CouplingDisplay.Format(TryGetFrontLinkStatus(), TryGetRearLinkStatus()));
+    }
+
     private static LocalCarDebugSnapshot SnapshotForCar(TrainCar? car)
     {
         if (car == null)

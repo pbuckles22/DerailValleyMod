@@ -25,6 +25,20 @@ public class CouplingLinkTests
         Assert.Equal(
             CouplerLinkStatus.Open,
             CouplingLink.Resolve(true, true, false, true, muCablePresent: true, muCableConnected: false));
+        Assert.Equal(
+            CouplerLinkStatus.Open,
+            CouplingLink.Resolve(false, false, false, false, muCablePresent: false, muCableConnected: false));
+    }
+
+    [Fact]
+    public void Resolve_loose_when_coupled_but_chain_not_tight()
+    {
+        Assert.Equal(
+            CouplerLinkStatus.Loose,
+            CouplingLink.Resolve(true, false, true, true, muCablePresent: false, muCableConnected: false));
+        Assert.Equal(
+            CouplerLinkStatus.Loose,
+            CouplingLink.Resolve(true, false, false, false, muCablePresent: false, muCableConnected: false));
     }
 
     [Fact]
@@ -52,5 +66,6 @@ public class CouplingLinkTests
         Assert.True(CouplingLink.IsUsable(CouplerLinkStatus.Linked));
         Assert.True(CouplingLink.IsUsable(CouplerLinkStatus.MuWarning));
         Assert.False(CouplingLink.IsUsable(CouplerLinkStatus.Open));
+        Assert.False(CouplingLink.IsUsable(CouplerLinkStatus.Loose));
     }
 }

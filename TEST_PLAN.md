@@ -119,11 +119,37 @@ Filter: `[YardMasterSuite]` · chip `v0.4.3`
 | 6 | Stand on a car — second bar stays on **feet** car even if looking elsewhere | HUD — **PASS** |
 | 7 | Look away — second bar gone; top bar stays | HUD — **PASS** |
 
+### CMD-01c — coupler tight/loose (`T2 coupler`)
+
+**Layout:** same Couplers segment on the second bar. Marks: `+` usable, plain `*` coupled + chain loose, `-` open/incomplete, yellow `*` MU warning.
+
+**Log file:** `%USERPROFILE%\AppData\LocalLow\Altfuture\Derail Valley\Player.log`  
+Filter: `[YardMasterSuite]` · chip `v0.4.5`
+
+#### Expected `T2 coupler` lines
+
+| When you… | Expect in Player.log |
+|-----------|----------------------|
+| First sample, no target car | `T2 coupler init (hidden)` |
+| Target appears (stand or look-at) | `T2 coupler appear: Couplers F±/* R±/*` (or `init:` on first visible) |
+| Lose target | `T2 coupler hide` |
+| Tighten / loosen / couple / uncouple changes marks | `T2 coupler change: Couplers …` |
+
+#### Sign-off checklist
+
+| # | Check (plain English) | Evidence |
+|---|------------------------|----------|
+| 1 | Mod loads; Active; no mod errors | Lifecycle + HUD chip — **PASS** at **v0.4.4**; **v0.4.5** = glyph-only (`~`→plain `*`), re-smoke waived |
+| 2 | Uncoupled end shows `-` | HUD — **PASS** |
+| 3 | Mechanically coupled, chain **loose** shows distinct mark | HUD — **PASS** (`~` at 0.4.4; plain `*` at 0.4.5) |
+| 4 | Fully linked (tight + hose + cocks) shows `+` | HUD — **PASS** |
+| 5 | Standing or look-at target drives the marks (standing wins) | HUD — **PASS** |
+| 6 | Mod Off → On; no YardMasterSuite exceptions | Lifecycle — **PASS** |
+
 ### Later stories (retro requirements)
 
 | Story | Planned `T2` topic (when implemented) |
 |-------|----------------------------------------|
-| **CMD-01c** tight/loose | `T2 coupler …` — tight vs loose when it changes |
 | **CMD-02 / 03** | Same pattern: discrete lines for that monitor’s sign-off fields |
 
 ---
