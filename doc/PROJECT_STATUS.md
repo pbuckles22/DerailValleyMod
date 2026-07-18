@@ -16,7 +16,7 @@
 
 | Branch | Role |
 |--------|------|
-| **`main`** | Integration — CMD-01d look-at shipped (v0.4.3) |
+| **`main`** | Integration — CMD-01d look-at shipped (`1208de1`, v0.4.3) |
 
 ---
 
