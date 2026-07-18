@@ -43,10 +43,10 @@ Cab summary first, then ground inspect; coupler tight/loose last.
 
 | ID | Story | Done when | Status |
 |----|-------|-----------|--------|
-| CMD-01a | Car integrity readout | Brake pipe (bar), HB **applied** count on consist, F/R **coupled** (`+/-`) for car under player; **`T2 integrity` Player.log lines** for foot/car/change (see TEST_PLAN) | **In progress** — Tier 1 + T2 debug logging; redeploy then finish log sign-off |
-| CMD-01b | Consist integrity summary | From loco/consist: **car count**, HB **on/off** (or on/total), **hose** connected vs open between coupled ends; **`T2 consist` discrete Player.log** (retro Tier 2 logging) | Next after 01a |
+| CMD-01a | Car integrity readout | Single HUD: brake pipe (bar), **handbrake 0/1 for car under player**, F/R **coupled** (`+/-`) for car under player; **`T2 integrity` Player.log**; HUD width uses draw style (no Couplers clip) | **Done** — Tier 1 green; load/toggle + foot/on-car smoke OK. Dual-HUD / train-wide / look-at validation deferred to 01b/01d |
+| CMD-01b | Train + local-car HUD | Top bar = loco-anchored train (Cars N, Handbrakes total, …); second bar = current vehicle; no loco → red-border null train bar; **`T2 consist` / `T2 local-car` logs** | Next |
 | CMD-01c | Coupler tight/loose | Show chain **tightened** vs loose when coupled (car and/or look-at); **`T2 coupler` logs** | After 01b/01d |
-| CMD-01d | Look-at inspect | Cursor on a car → **second HUD bar** directly under the main strip (same height, width fits content) with that car’s pipe / HB / cpl, **Car #** (front→back from loco; `XX` if not on the train), and **Job #**; bar gone when not looking; **`T2 look-at` logs** | After 01b |
+| CMD-01d | Look-at inspect | On foot: look-at fills second bar like standing on that car; standing on a car always wins over look-at; bar gone when no target; **`T2 look-at` logs** | After 01b |
 
 **Build order:** 01a → 01b → 01d → 01c.
 

@@ -18,15 +18,15 @@ A **Fleet Operator** utility suite for *Derail Valley*: automate the tedium, pre
 | Grade | `Grade +1.2 %` | `— Grade` |
 | Mass | `Mass 240 t` | `— Mass` |
 | Pipe | `Pipe 2.0 bar` | `— Pipe` |
-| Handbrake | `Handbrake 1` (applied count on consist) | `— Handbrake` |
+| Handbrake | `Handbrake 1` (car under feet: 1 on / 0 off; consist count is CMD-01b) | `— Handbrake` |
 | Couplers | `Couplers F- R+` | `— Couplers` |
 
 **Planned (not on HUD yet):**
 
 | Story | Segments (use the same naming rule) |
 |-------|-------------------------------------|
-| CMD-01b | Consist car count; Handbrake on/off (or on/total); Hose connected/open |
-| CMD-01d | **Second HUD bar** under the main strip: looked-at car Pipe / Handbrake / Couplers, Car # (`XX` if not on train), Job # |
+| CMD-01b | **Top train bar** (loco-anchored): Cars N, Handbrakes total, …; red border + nulls if no loco. **Second bar**: current vehicle Pipe / Handbrake 0–1 / Couplers / Car # / Job # |
+| CMD-01d | On foot, look-at fills second bar like standing on that car; standing on a car always wins |
 | CMD-01c | Coupler tight vs loose |
 | CMD-02 | Ammeter / Traction motor health |
 | CMD-03 | Speed-limit alerts (grade already shipped) |

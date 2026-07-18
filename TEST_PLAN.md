@@ -64,14 +64,16 @@ Prefix: `T2 integrity`
 
 ---
 
+**CMD-01a closed:** Dual-HUD / train-wide / look-at checks are **deferred to CMD-01b / CMD-01d** (will retest when those ship). Remaining checklist is for the **current single strip** only.
+
 **CMD-01a sign-off checklist (stand on the car; pointing is CMD-01d later):**
 
 | # | Check (plain English) | Evidence |
 |---|------------------------|----------|
 | 1 | Mod loads; listed Active; no mod errors on boot | **Player.log** / UMM Logs |
 | 2 | Stand on the ground — dashes for Pipe / Handbrake / Couplers | **Player.log** `T2 integrity init` / `on-foot` + HUD |
-| 3 | Climb onto a car — live Pipe, Handbrake count, Couplers for **car under feet** | **Player.log** `T2 integrity on-car: …` + HUD |
-| 4 | Uncouple/couple → Couplers change; handbrake → Handbrake count changes; charge brakes → Pipe moves | **Player.log** `T2 integrity change: …` + HUD |
+| 3 | Climb onto a car — live Pipe, Handbrake (1/0 for **this car**), Couplers (`F± R±`) for **car under feet** | **Player.log** `T2 integrity on-car: …` + HUD |
+| 4 | Uncouple/couple → `F`/`R` marks flip; this car's handbrake → Handbrake 1/0; charge brakes → Pipe moves | **Player.log** `T2 integrity change: …` + HUD |
 | 5 | Mod Off → HUD gone; On → HUD back; no red errors | **Player.log** `disabled` / `enabled` + HUD |
 | 6 | No YardMasterSuite exceptions for the session | **Player.log** |
 
