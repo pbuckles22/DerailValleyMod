@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using DV.Logic.Job;
+using DV.ThingTypes;
 using UnityEngine;
 using YardMasterSuite.Core;
 
@@ -12,18 +13,15 @@ namespace YardMasterSuite.Monitor;
 /// </summary>
 internal static class TelemetryReader
 {
-    private const float LookAtMaxDistanceMeters = 80f;
-
     private static int _trainLookMask = -1;
 
     /// <summary>
-    /// Car under inspection: standing on it wins; else the car under the crosshair (CMD-01d).
+    /// Car under inspection: look-at wins; standing is the fallback when not looking at a car.
     /// </summary>
     public static TrainCar? TryGetTargetCar()
     {
         var standing = TryGetStandingCar();
-        // Skip raycast when standing — selection policy still goes through TargetCarSelection.
-        var lookAt = standing == null ? TryGetLookAtCar() : null;
+        var lookAt = TryGetLookAtCar();
         return TargetCarSelection.Resolve(standing != null, lookAt != null) switch
         {
             TargetCarSource.Standing => standing,
@@ -46,6 +44,7 @@ internal static class TelemetryReader
 
     /// <summary>
     /// Car under the center of the active camera (train collider layers). Null if none / fail-closed.
+    /// QOL-06: spherecast out to <see cref="LookAtTargeting.MaxDistanceMeters"/>.
     /// </summary>
     public static TrainCar? TryGetLookAtCar()
     {
@@ -58,7 +57,12 @@ internal static class TelemetryReader
             }
 
             var ray = cam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
-            if (!Physics.Raycast(ray, out var hit, LookAtMaxDistanceMeters, TrainLookMask()))
+            if (!Physics.SphereCast(
+                    ray,
+                    LookAtTargeting.SphereRadiusMeters,
+                    out var hit,
+                    LookAtTargeting.MaxDistanceMeters,
+                    TrainLookMask()))
             {
                 return null;
             }
@@ -300,7 +304,9 @@ internal static class TelemetryReader
             HandbrakeDisplay.FormatCount(TryGetHandbrakeAppliedCount()),
             CouplingDisplay.FormatHud(TryGetFrontLinkStatus(), TryGetRearLinkStatus()),
             FormatCarNumber(car),
-            JobDisplay.Format(TryGetJobId()));
+            JobDisplay.Format(TryGetJobId()),
+            TryGetCargoLabel(car),
+            TryGetLocoTypeLabel(car));
     }
 
     public static string CurrentHudLine() =>
@@ -317,22 +323,33 @@ internal static class TelemetryReader
             HandbrakeDisplay.FormatTotal(usable ? TryGetConsistHandbrakeAppliedCount() : null));
     }
 
-    /// <summary>Standing-on-car second bar only (not look-at).</summary>
-    internal static LocalCarDebugSnapshot CurrentLocalCarDebugSnapshot() =>
-        SnapshotForCar(TryGetStandingCar());
-
-    /// <summary>Look-at second bar only when standing does not win.</summary>
-    internal static LocalCarDebugSnapshot CurrentLookAtDebugSnapshot()
+    /// <summary>Standing fallback second bar (hidden when look-at wins).</summary>
+    internal static LocalCarDebugSnapshot CurrentLocalCarDebugSnapshot()
     {
-        if (TryGetStandingCar() != null)
+        var standing = TryGetStandingCar();
+        var lookAt = TryGetLookAtCar();
+        if (TargetCarSelection.Resolve(standing != null, lookAt != null) != TargetCarSource.Standing)
         {
             return HiddenLocalCarSnapshot();
         }
 
-        return SnapshotForCar(TryGetLookAtCar());
+        return SnapshotForCar(standing);
     }
 
-    /// <summary>Target-car coupler marks (standing wins over look-at).</summary>
+    /// <summary>Look-at second bar when it is the active target (wins over standing).</summary>
+    internal static LocalCarDebugSnapshot CurrentLookAtDebugSnapshot()
+    {
+        var standing = TryGetStandingCar();
+        var lookAt = TryGetLookAtCar();
+        if (TargetCarSelection.Resolve(standing != null, lookAt != null) != TargetCarSource.LookAt)
+        {
+            return HiddenLocalCarSnapshot();
+        }
+
+        return SnapshotForCar(lookAt);
+    }
+
+    /// <summary>Target-car coupler marks (look-at wins over standing).</summary>
     internal static CouplerDebugSnapshot CurrentCouplerDebugSnapshot()
     {
         if (TryGetTargetCar() == null)
@@ -352,15 +369,16 @@ internal static class TelemetryReader
             return HiddenLocalCarSnapshot();
         }
 
-        // Callers only pass the active target (standing, or look-at when not standing),
-        // so TryGet* helpers that read TryGetTargetCar() match this car.
+        // Callers only pass the active target, so TryGet* helpers that read TryGetTargetCar() match.
         return new LocalCarDebugSnapshot(
             visible: true,
             BrakePipeDisplay.FormatBar(TryGetBrakePipePressureBar()),
             HandbrakeDisplay.FormatCount(TryGetHandbrakeAppliedCount()),
             CouplingDisplay.Format(TryGetFrontLinkStatus(), TryGetRearLinkStatus()),
             FormatCarNumber(car),
-            JobDisplay.Format(TryGetJobId()));
+            JobDisplay.Format(TryGetJobId()),
+            TryGetCargoLabel(car),
+            TryGetLocoTypeLabel(car));
     }
 
     private static LocalCarDebugSnapshot HiddenLocalCarSnapshot() =>
@@ -380,6 +398,38 @@ internal static class TelemetryReader
             BrakePipeDisplay.FormatBar(TryGetBrakePipePressureBar()),
             HandbrakeDisplay.FormatCount(TryGetHandbrakeAppliedCount()),
             CouplingDisplay.Format(TryGetFrontLinkStatus(), TryGetRearLinkStatus()));
+    }
+
+    private static string? TryGetCargoLabel(TrainCar car)
+    {
+        try
+        {
+            var cargo = car.LoadedCargo;
+            var name = cargo == CargoType.None ? null : cargo.ToString();
+            return CargoDisplay.Format(car.IsLoco, name);
+        }
+        catch
+        {
+            return CargoDisplay.Format(car.IsLoco, null);
+        }
+    }
+
+    private static string? TryGetLocoTypeLabel(TrainCar car)
+    {
+        try
+        {
+            if (!car.IsLoco)
+            {
+                return null;
+            }
+
+            var id = car.carLivery?.parentType?.id ?? car.carLivery?.id;
+            return LocoTypeDisplay.Format(id);
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private static string FormatCarNumber(TrainCar car)

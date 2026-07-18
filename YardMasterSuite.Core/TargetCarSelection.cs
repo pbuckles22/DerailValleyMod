@@ -11,20 +11,21 @@ public enum TargetCarSource
 }
 
 /// <summary>
-/// Standing on a car always wins over look-at (CMD-01d).
+/// Look-at wins over standing so you can inspect yard cars from a car roof.
+/// Standing is the fallback when the crosshair is not on a car.
 /// </summary>
 public static class TargetCarSelection
 {
     public static TargetCarSource Resolve(bool hasStandingCar, bool hasLookAtCar)
     {
-        if (hasStandingCar)
-        {
-            return TargetCarSource.Standing;
-        }
-
         if (hasLookAtCar)
         {
             return TargetCarSource.LookAt;
+        }
+
+        if (hasStandingCar)
+        {
+            return TargetCarSource.Standing;
         }
 
         return TargetCarSource.None;

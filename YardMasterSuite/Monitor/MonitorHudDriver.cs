@@ -5,7 +5,7 @@ namespace YardMasterSuite.Monitor;
 
 /// <summary>
 /// In-world IMGUI overlay for Monitor Mode telemetry.
-/// Top bar = usable loco-train totals (red null when not usable); second bar = standing or look-at target.
+/// Top bar = usable loco-train totals (red null when not usable); second bar = look-at preferred, standing fallback.
 /// </summary>
 public sealed class MonitorHudDriver : MonoBehaviour
 {
@@ -41,6 +41,8 @@ public sealed class MonitorHudDriver : MonoBehaviour
     private string _lastCoupling = "";
     private string _lastCarNumber = "";
     private string _lastJob = "";
+    private string? _lastCargo;
+    private string? _lastLocoType;
 
     private bool _hasLookAtDebug;
     private bool _lastLookAtVisible;
@@ -49,6 +51,8 @@ public sealed class MonitorHudDriver : MonoBehaviour
     private string _lastLookAtCoupling = "";
     private string _lastLookAtCarNumber = "";
     private string _lastLookAtJob = "";
+    private string? _lastLookAtCargo;
+    private string? _lastLookAtLocoType;
 
     private bool _hasCouplerDebug;
     private bool _lastCouplerVisible;
@@ -114,7 +118,9 @@ public sealed class MonitorHudDriver : MonoBehaviour
                 _lastHandbrake,
                 _lastCoupling,
                 _lastCarNumber,
-                _lastJob);
+                _lastJob,
+                _lastCargo,
+                _lastLocoType);
         }
 
         var line = Tier2LocalCarDebug.NextLogMessage(previous, snap);
@@ -124,6 +130,8 @@ public sealed class MonitorHudDriver : MonoBehaviour
         _lastCoupling = snap.Coupling;
         _lastCarNumber = snap.CarNumber;
         _lastJob = snap.Job;
+        _lastCargo = snap.Cargo;
+        _lastLocoType = snap.LocoType;
         _hasLocalDebug = true;
         if (line != null)
         {
@@ -143,7 +151,9 @@ public sealed class MonitorHudDriver : MonoBehaviour
                 _lastLookAtHandbrake,
                 _lastLookAtCoupling,
                 _lastLookAtCarNumber,
-                _lastLookAtJob);
+                _lastLookAtJob,
+                _lastLookAtCargo,
+                _lastLookAtLocoType);
         }
 
         var line = Tier2LookAtDebug.NextLogMessage(previous, snap);
@@ -153,6 +163,8 @@ public sealed class MonitorHudDriver : MonoBehaviour
         _lastLookAtCoupling = snap.Coupling;
         _lastLookAtCarNumber = snap.CarNumber;
         _lastLookAtJob = snap.Job;
+        _lastLookAtCargo = snap.Cargo;
+        _lastLookAtLocoType = snap.LocoType;
         _hasLookAtDebug = true;
         if (line != null)
         {

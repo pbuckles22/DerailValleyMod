@@ -90,34 +90,37 @@ Filter: `[YardMasterSuite]`
 
 Recovery: [modding.md](doc/requirements/modding.md).
 
-### CMD-01d — look-at second bar (`T2 look-at`) — **signed off**
+### CMD-01d — look-at second bar (`T2 look-at`) — **priority flip v0.4.6**
 
-**Layout:** same second bar as standing-on-car. On foot, look-at fills it; standing on a car always wins (look-at ignored). Shared target car also drives usable-train top bar.
+**Layout:** same second bar as standing-on-car. **Look-at wins** over standing (inspect yard cars from a car roof). Standing is the fallback when the crosshair is not on a car. Shared target car also drives usable-train top bar. Locos append `Loco DE6`-style type; freight omits that segment.
 
 **Log file:** `%USERPROFILE%\AppData\LocalLow\Altfuture\Derail Valley\Player.log`  
-Filter: `[YardMasterSuite]` · chip `v0.4.3`
+Filter: `[YardMasterSuite]` · chip `v0.4.7`  
+**QOL-06:** look-at uses spherecast (**0.15 m** radius) out to **250 m** (was thin raycast ~80 m). Accept: good enough for yard scouting; slight sky-stickiness OK.
 
 #### Expected `T2 look-at` lines
 
 | When you… | Expect in Player.log |
 |-----------|----------------------|
 | First sample on foot, not pointing at a car | `T2 look-at init (hidden)` |
-| On foot, point at a car | `T2 look-at appear: Pipe …  \|  Handbrake N  \|  Couplers F± R±  \|  Car #  \|  Job …` |
-| Stop pointing / look away | `T2 look-at hide` |
+| Point at a car (on foot or standing on another) | `T2 look-at appear: Pipe …  \|  Handbrake N  \|  Couplers F± R±  \|  Car #  \|  Job …` (+ `\|  Loco …` if loco) |
+| Stop pointing / look away (on foot) | `T2 look-at hide` |
 | Look-at car fields change | `T2 look-at change: …` |
-| Climb onto a car while looking | `T2 local-car appear: …` then `T2 look-at hide` (emit order; standing wins) |
+| Standing on a car, look away from cars | `T2 look-at hide` then `T2 local-car appear: …` (standing fallback) |
 
 #### Sign-off checklist
 
 | # | Check (plain English) | Evidence |
 |---|------------------------|----------|
-| 1 | Mod loads at **v0.4.3**; Active; no mod errors | Lifecycle + HUD chip — **PASS** |
-| 2 | On foot, not looking at a car — **no second bar** | HUD — **PASS** |
-| 3 | On foot, point at a car — second bar shows that car’s Pipe / Handbrake / Couplers / Car # / Job # | HUD Car 1/2/3 — **PASS** |
+| 1 | Mod loads at **v0.4.7**; Active; no mod errors | Lifecycle + HUD chip |
+| 2 | On foot, not looking at a car — **no second bar** | HUD — **PASS** (prior) |
+| 3 | Point at a car — second bar shows that car’s Pipe / Handbrake / Couplers / Car # / Job # | HUD — **PASS** (Job e.g. `SM-SU-46`) |
 | 4 | Point at a car **not** on a usable loco train — `Car XX`; top bar red/null | HUD after uncouple — **PASS** |
 | 5 | Point at a car **on** a usable loco train — Car # from loco; top bar can show that train’s totals | HUD — **PASS** |
-| 6 | Stand on a car — second bar stays on **feet** car even if looking elsewhere | HUD — **PASS** |
-| 7 | Look away — second bar gone; top bar stays | HUD — **PASS** |
+| 6 | Stand on car A, look at car B — second bar shows **B**; look at sky — second bar shows **A** | HUD — **PASS** at v0.4.6 |
+| 7 | Point at a loco — second bar includes `Loco DE6` (or type); freight omits Loco segment | HUD — re-smoke |
+| 8 | Distant car (only top visible, ~80–250 m) resolves as look-at target | HUD — **PASS*** at v0.4.10 (0.15 m; slight sky-stickiness OK) |
+| 9 | Freight second bar shows `Cargo Steel Rails` (etc.); empty = `Empty Cargo`; loco omits Cargo | HUD — cargo load **PASS** at v0.4.11; `Empty Cargo` wording at v0.4.12 (deferred smoke) |
 
 ### CMD-01c — coupler tight/loose (`T2 coupler`)
 
@@ -143,7 +146,7 @@ Filter: `[YardMasterSuite]` · chip `v0.4.5`
 | 2 | Uncoupled end shows `-` | HUD — **PASS** |
 | 3 | Mechanically coupled, chain **loose** shows distinct mark | HUD — **PASS** (`~` at 0.4.4; plain `*` at 0.4.5) |
 | 4 | Fully linked (tight + hose + cocks) shows `+` | HUD — **PASS** |
-| 5 | Standing or look-at target drives the marks (standing wins) | HUD — **PASS** |
+| 5 | Standing or look-at target drives the marks (look-at wins) | HUD — **PASS** (priority flip v0.4.6) |
 | 6 | Mod Off → On; no YardMasterSuite exceptions | Lifecycle — **PASS** |
 
 ### Later stories (retro requirements)
