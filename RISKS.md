@@ -1,17 +1,29 @@
-## Risk register (top 5)
+# Risk register (top 5)
 
-This file is intentionally short. Keep only the highest leverage, current risks.
+Keep only the highest-leverage **current** risks. Short on purpose.
 
-- **Risk**: Merge-ready gates drift from reality (agents think “green” without running the real gate)  
-  **Impact**: High  
-  **Likelihood**: Med  
-  **Trigger**: PRs merge without the documented Tier 1 command; flaky CI ignored  
-  **Mitigation**: keep `AGENT_HANDOFF.md` + `TEST_PLAN.md` aligned; enforce handoff checklist  
-  **Rollback**: revert the merge; restore last known-good tag/commit
+---
 
-- **Risk**: Context bloat causes agent drift / incorrect assumptions  
-  **Impact**: Med  
-  **Likelihood**: High  
-  **Trigger**: handoff notes exceed ~500 words; repeated long logs in chat; conflicting “truth” sources  
-  **Mitigation**: use session-summarizer; keep durable truth in tracked docs; bootstrap with minimal context  
-  **Rollback**: create a compressed handoff note; re-establish source-of-truth docs; re-scope work
+### 1 — Merge-ready drift
+
+| | |
+|--|--|
+| **Risk** | Agents treat work as “green” without running the real gate |
+| **Impact** | High |
+| **Likelihood** | Med |
+| **Trigger** | Merge without documented Tier 1; flaky CI ignored |
+| **Mitigation** | Keep `AGENT_HANDOFF` + `TEST_PLAN` aligned; enforce handoff checklist |
+| **Rollback** | Revert the merge; restore last known-good commit |
+
+---
+
+### 2 — Context bloat / conflicting truth
+
+| | |
+|--|--|
+| **Risk** | Agent drift from bloated chat or competing “sources of truth” |
+| **Impact** | Med |
+| **Likelihood** | High |
+| **Trigger** | Handoff notes ≫ 500 words; long logs in chat; docs disagree |
+| **Mitigation** | session-summarizer; durable truth in tracked docs; minimal bootstrap |
+| **Rollback** | Compressed handoff; re-establish PM_PLAN / PROJECT_STATUS; re-scope |

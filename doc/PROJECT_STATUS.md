@@ -1,43 +1,64 @@
 # Project status
 
-**Human-readable current state.** Keep in sync with [AGENT_HANDOFF.md](../AGENT_HANDOFF.md) → *Current state* when milestones ship.
+Human-readable **snapshot**. Keep in sync with [AGENT_HANDOFF.md](../AGENT_HANDOFF.md) → *Current state* and checkbox truth in [PM_PLAN.md](../PM_PLAN.md).
 
-**Last updated:** 2026-07-18
+**Last updated:** 2026-07-19
 
 ---
 
 ## Summary
 
-**DerailValleyMod** — *Yard Master Suite*: Fleet Operator utilities for Derail Valley. Stack: Unity / C# `net48` / UMM / Harmony. MVP: Diagnostic HUD (situational awareness), then Governors, then Yard Master teleport helpers.
+**Yard Master Suite** — Fleet Operator utilities for *Derail Valley*  
+Stack: Unity / C# `net48` / UMM / Harmony  
+
+| | |
+|--|--|
+| **Journey** | Stage 1 — Apprentice (“don’t blow up”) |
+| **MVP** | Epic 1 System Monitor HUD |
+| **Version (`main`)** | **0.4.15** |
 
 ---
 
-## Active branch
+## Active work
 
 | Branch | Role |
 |--------|------|
-| **`main`** | Integration — look-at priority + loco/cargo + QOL-06/07 (v0.4.12) |
+| **`main`** | Integration — through **4.3** + **1.7** (v0.4.15) |
 
 ---
 
-## Completed
+## Progress (official IDs)
 
-- Phase 0 Safe Boot (UMM load + toggle)
-- E1-S1 speed HUD (km/h); E1-S2 grade % + consist tonnes (L→R); Tier 1 + Tier 2 green
-- CMD backlog adopted (CMD-01…06); Switch Path Tracer / Startup Assist parked
-- **CMD-01a–d** integrity / dual HUD / look-at / coupler tight-loose
-- **Look-at priority flip** (look-at wins; standing fallback) + **`Loco …`** type
-- **QOL-06** 250 m / 0.15 m spherecast — **PASS*** (slight sky-stickiness OK)
-- **QOL-07** `Cargo …` / `Empty Cargo` on second bar — load **PASS**; Empty Cargo wording smoke deferred
+### Epics
+
+- [x] **Epic 0** — Foundation & Safe Boot *(0.4 scaffold remaining)*
+- [ ] **Epic 1** — Diagnostic HUD *(Stage 1)*
+- [ ] **Epic 2** — Governor Mode
+- [ ] **Epic 3** — Yard Master / Dispatcher
+- [ ] **Epic 4** — HUD quality *(4.1–4.3 done)*
+- [ ] **Epic 5** — Digital Catalog
+
+### Next (Stage 1)
+
+- [ ] **1.8** Motor status (cab TM light → HUD)
+- [ ] **1.9** Fluid monitor
+- [ ] Re-smoke **1.7** yellow/red Load bands when a hard pull is available
+- [ ] **1.10** Speed-limit alerts
+
+### Deferred smokes
+
+- [ ] Yellow MU `F*` / `R*` with two locos
+- [ ] `Empty Cargo` wording (**4.2**)
+- [ ] Load ≥80% / ≥95% colors (**1.7**)
 
 ---
 
-## Next up
+## Recently completed
 
-- CMD-02 Power Monitor
-- Finish CMD-03 speed-limit alerts
-- Tier 2: yellow MU warning with two locos (deferred)
-- Smoke `Empty Cargo` next game session
+- [x] **4.3** Hide loco gadget top bar — **PASS**
+- [x] **1.7** Load % — **PASS\*** (live %; color bands deferred)
+- [x] **1.1–1.6** Speed, grade/mass, integrity, couplers, look-at
+- [x] **4.1–4.2** Spherecast + cargo
 
 ---
 
@@ -45,5 +66,5 @@
 
 1. [CONTRIBUTING.md](../CONTRIBUTING.md)
 2. This file
-3. [requirements/product.md](requirements/product.md)
-4. [PM_PLAN.md](../PM_PLAN.md)
+3. [PM_PLAN.md](../PM_PLAN.md) — official backlog
+4. [requirements/product.md](requirements/product.md) — labels

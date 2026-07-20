@@ -43,6 +43,10 @@ coverage/
 doc/handoff/HANDOFF-*.md
 doc/handoff/*-HANDOFF-*.md
 
+# Gemini conversation bridge — local scratch only (keep placeholder README)
+doc/GeminiDocs/*
+!doc/GeminiDocs/README.md
+
 # Build output folders
 bin/
 obj/

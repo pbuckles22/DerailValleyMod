@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using DV.Logic.Job;
 using DV.ThingTypes;
+using LocoSim.Implementations;
 using UnityEngine;
 using YardMasterSuite.Core;
 
@@ -15,31 +17,85 @@ internal static class TelemetryReader
 {
     private static int _trainLookMask = -1;
 
+    // Per HUD refresh: cache standing / look-at / target / loco so one tick does not re-spherecast.
+    private static bool _tickActive;
+    private static bool _standingResolved;
+    private static TrainCar? _standingCar;
+    private static bool _lookAtResolved;
+    private static TrainCar? _lookAtCar;
+    private static bool _targetResolved;
+    private static TrainCar? _targetCar;
+    private static bool _usableLocoResolved;
+    private static TrainCar? _usableLoco;
+
+    /// <summary>Call once at the start of each Monitor HUD refresh.</summary>
+    public static void BeginHudTick()
+    {
+        _tickActive = true;
+        _standingResolved = false;
+        _lookAtResolved = false;
+        _targetResolved = false;
+        _usableLocoResolved = false;
+        _standingCar = null;
+        _lookAtCar = null;
+        _targetCar = null;
+        _usableLoco = null;
+    }
+
+    public static void EndHudTick() => _tickActive = false;
+
     /// <summary>
     /// Car under inspection: look-at wins; standing is the fallback when not looking at a car.
     /// </summary>
     public static TrainCar? TryGetTargetCar()
     {
+        if (_tickActive && _targetResolved)
+        {
+            return _targetCar;
+        }
+
         var standing = TryGetStandingCar();
         var lookAt = TryGetLookAtCar();
-        return TargetCarSelection.Resolve(standing != null, lookAt != null) switch
+        var resolved = TargetCarSelection.Resolve(standing != null, lookAt != null) switch
         {
             TargetCarSource.Standing => standing,
             TargetCarSource.LookAt => lookAt,
             _ => null,
         };
+
+        if (_tickActive)
+        {
+            _targetCar = resolved;
+            _targetResolved = true;
+        }
+
+        return resolved;
     }
 
     public static TrainCar? TryGetStandingCar()
     {
+        if (_tickActive && _standingResolved)
+        {
+            return _standingCar;
+        }
+
+        TrainCar? car = null;
         try
         {
-            return PlayerManager.Car;
+            car = PlayerManager.Car;
         }
         catch
         {
-            return null;
+            car = null;
         }
+
+        if (_tickActive)
+        {
+            _standingCar = car;
+            _standingResolved = true;
+        }
+
+        return car;
     }
 
     /// <summary>
@@ -48,31 +104,41 @@ internal static class TelemetryReader
     /// </summary>
     public static TrainCar? TryGetLookAtCar()
     {
+        if (_tickActive && _lookAtResolved)
+        {
+            return _lookAtCar;
+        }
+
+        TrainCar? car = null;
         try
         {
             var cam = PlayerManager.ActiveCamera;
-            if (cam == null)
+            if (cam != null)
             {
-                return null;
+                var ray = cam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+                if (Physics.SphereCast(
+                        ray,
+                        LookAtTargeting.SphereRadiusMeters,
+                        out var hit,
+                        LookAtTargeting.MaxDistanceMeters,
+                        TrainLookMask()))
+                {
+                    car = TrainCar.Resolve(hit.collider.transform);
+                }
             }
-
-            var ray = cam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
-            if (!Physics.SphereCast(
-                    ray,
-                    LookAtTargeting.SphereRadiusMeters,
-                    out var hit,
-                    LookAtTargeting.MaxDistanceMeters,
-                    TrainLookMask()))
-            {
-                return null;
-            }
-
-            return TrainCar.Resolve(hit.collider.transform);
         }
         catch
         {
-            return null;
+            car = null;
         }
+
+        if (_tickActive)
+        {
+            _lookAtCar = car;
+            _lookAtResolved = true;
+        }
+
+        return car;
     }
 
     private static int TrainLookMask()
@@ -276,11 +342,14 @@ internal static class TelemetryReader
         }
     }
 
-    public static string CurrentTrainHudLine()
+    /// <summary>
+    /// Usable loco-train gadget bar, or null when hidden (no red dash wall — story 4.3).
+    /// </summary>
+    public static string? CurrentTrainHudLineOrNull()
     {
         if (!HasUsableLocoTrain())
         {
-            return TrainHudLine.NullLine();
+            return null;
         }
 
         return TrainHudLine.Format(
@@ -288,7 +357,26 @@ internal static class TelemetryReader
             GradeDisplay.FormatPercent(TryGetGradePercent()),
             TonnageDisplay.FormatFromKilograms(TryGetConsistMassKilograms()),
             CarsDisplay.Format(TryGetConsistCarCount()),
-            HandbrakeDisplay.FormatTotal(TryGetConsistHandbrakeAppliedCount()));
+            HandbrakeDisplay.FormatTotal(TryGetConsistHandbrakeAppliedCount()),
+            LoadDisplay.FormatHud(TryGetLoadPercent()));
+    }
+
+    /// <summary>Legacy join helper — empty when top bar is hidden.</summary>
+    public static string CurrentTrainHudLine() =>
+        CurrentTrainHudLineOrNull() ?? string.Empty;
+
+    /// <summary>Lead usable loco traction load as percent of max amps (null if unavailable).</summary>
+    public static float? TryGetLoadPercent()
+    {
+        try
+        {
+            var flow = TryGetUsableLoco()?.SimController?.SimulationFlow;
+            return flow == null ? null : ReadLoadPercent(flow);
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     public static string? CurrentLocalCarHudLineOrNull()
@@ -309,10 +397,17 @@ internal static class TelemetryReader
             TryGetLocoTypeLabel(car));
     }
 
-    public static string CurrentHudLine() =>
-        CurrentLocalCarHudLineOrNull() is { } local
-            ? MonitorHudLine.Join(new[] { CurrentTrainHudLine(), local })
-            : CurrentTrainHudLine();
+    public static string CurrentHudLine()
+    {
+        var train = CurrentTrainHudLineOrNull();
+        var local = CurrentLocalCarHudLineOrNull();
+        if (train != null && local != null)
+        {
+            return MonitorHudLine.Join(new[] { train, local });
+        }
+
+        return train ?? local ?? string.Empty;
+    }
 
     internal static ConsistDebugSnapshot CurrentConsistDebugSnapshot()
     {
@@ -321,6 +416,14 @@ internal static class TelemetryReader
             usable,
             CarsDisplay.Format(usable ? TryGetConsistCarCount() : null),
             HandbrakeDisplay.FormatTotal(usable ? TryGetConsistHandbrakeAppliedCount() : null));
+    }
+
+    internal static PowerDebugSnapshot CurrentPowerDebugSnapshot()
+    {
+        var usable = HasUsableLocoTrain();
+        return new PowerDebugSnapshot(
+            usable,
+            usable ? LoadDisplay.Format(TryGetLoadPercent()) : LoadDisplay.Format(null));
     }
 
     /// <summary>Standing fallback second bar (hidden when look-at wins).</summary>
@@ -521,39 +624,242 @@ internal static class TelemetryReader
     /// <summary>Nearest loco in the usable component (stable for multi-loco consists).</summary>
     private static TrainCar? TryGetUsableLoco()
     {
-        var target = TryGetTargetCar();
-        var usable = TryGetUsableConsist();
-        if (target == null || usable == null)
+        if (_tickActive && _usableLocoResolved)
         {
-            return null;
+            return _usableLoco;
         }
 
         TrainCar? best = null;
-        var bestDist = int.MaxValue;
-        foreach (var c in usable)
+        try
         {
-            if (c == null || !c.IsLoco)
+            var target = TryGetTargetCar();
+            var usable = TryGetUsableConsist();
+            if (target != null && usable != null)
             {
-                continue;
-            }
+                var bestDist = int.MaxValue;
+                foreach (var c in usable)
+                {
+                    if (c == null || !c.IsLoco)
+                    {
+                        continue;
+                    }
 
-            var dist = c.indexInTrainset - target.indexInTrainset;
-            if (dist < 0)
-            {
-                dist = -dist;
-            }
+                    var dist = c.indexInTrainset - target.indexInTrainset;
+                    if (dist < 0)
+                    {
+                        dist = -dist;
+                    }
 
-            if (best == null
-                || dist < bestDist
-                || (dist == bestDist && c.indexInTrainset < best.indexInTrainset))
-            {
-                bestDist = dist;
-                best = c;
+                    if (best == null
+                        || dist < bestDist
+                        || (dist == bestDist && c.indexInTrainset < best.indexInTrainset))
+                    {
+                        bestDist = dist;
+                        best = c;
+                    }
+                }
             }
+        }
+        catch
+        {
+            best = null;
+        }
+
+        if (_tickActive)
+        {
+            _usableLoco = best;
+            _usableLocoResolved = true;
         }
 
         return best;
     }
+
+    /// <summary>
+    /// DE2/DE6 expose amps on TractionMotor, TractionMotorSet, and/or TractionGenerator.
+    /// PortDefinition.ID strings are asset-defined and unreliable — match CLR field names instead.
+    /// </summary>
+    private static float? ReadLoadPercent(SimulationFlow flow)
+    {
+        if (flow?.OrderedSimComps == null)
+        {
+            return null;
+        }
+
+        foreach (var comp in flow.OrderedSimComps)
+        {
+            if (comp == null)
+            {
+                continue;
+            }
+
+            var fromComp = ReadLoadPercentFromComponent(comp);
+            if (fromComp != null)
+            {
+                return fromComp;
+            }
+        }
+
+        return null;
+    }
+
+    private static float? ReadLoadPercentFromComponent(SimComponent comp)
+    {
+        if (comp is TractionMotor tm)
+        {
+            var normalized = SafePortValue(tm.ampsNormalizedReadOut);
+            if (normalized != null)
+            {
+                return LoadDisplay.PercentFromNormalized(normalized);
+            }
+
+            var fromAmps = LoadDisplay.PercentFromAmps(
+                SafePortValue(tm.ampsReadOut),
+                SafePortValue(tm.maxAmpsReadOut));
+            if (fromAmps != null)
+            {
+                return fromAmps;
+            }
+
+            return LoadDisplay.PercentFromNormalized(SafePortValue(tm.loadOnGeneratorReadOut));
+        }
+
+        float? ampsNormalized = null;
+        float? amps = null;
+        float? maxAmps = null;
+        float? ampsPerTm = null;
+        float? maxPerTm = null;
+        float? totalAmps = null;
+        float? working = null;
+        float? loadOnGenerator = null;
+        float? maxAmpsConst = null;
+
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+        foreach (var field in comp.GetType().GetFields(flags))
+        {
+            try
+            {
+                var name = field.Name;
+                if (field.FieldType == typeof(Port))
+                {
+                    var value = SafePortValue((Port?)field.GetValue(comp));
+                    if (value is null)
+                    {
+                        continue;
+                    }
+
+                    if (NameHas(name, "ampsNormalized"))
+                    {
+                        ampsNormalized = value;
+                    }
+                    else if (NameHas(name, "loadOnGenerator"))
+                    {
+                        loadOnGenerator = value;
+                    }
+                    else if (NameHas(name, "maxAmpsPerTM") || NameHas(name, "maxAmpsPerTm"))
+                    {
+                        maxPerTm = value;
+                    }
+                    else if (NameHas(name, "ampsPerTM") || NameHas(name, "ampsPerTm"))
+                    {
+                        ampsPerTm = value;
+                    }
+                    else if (NameHas(name, "maxAmpsReadOut") || name.Equals("maxAmps", StringComparison.Ordinal))
+                    {
+                        maxAmps = value;
+                    }
+                    else if (NameHas(name, "totalAmps") || name.Equals("ampsReadOut", StringComparison.Ordinal))
+                    {
+                        if (name.Equals("ampsReadOut", StringComparison.Ordinal))
+                        {
+                            amps = value;
+                        }
+                        else
+                        {
+                            totalAmps = value;
+                        }
+                    }
+                    else if (NameHas(name, "workingTractionMotors"))
+                    {
+                        working = value;
+                    }
+                }
+                else if (field.FieldType == typeof(PortReference))
+                {
+                    var pref = (PortReference?)field.GetValue(comp);
+                    if (pref == null || !pref.IsConnected)
+                    {
+                        continue;
+                    }
+
+                    var value = SafeFloat(pref.Value);
+                    if (value is null)
+                    {
+                        continue;
+                    }
+
+                    if (NameHas(name, "totalAmps"))
+                    {
+                        totalAmps = value;
+                    }
+                }
+                else if (field.FieldType == typeof(float) && name.Equals("maxAmps", StringComparison.Ordinal))
+                {
+                    maxAmpsConst = SafeFloat((float)field.GetValue(comp)!);
+                }
+            }
+            catch
+            {
+                // fail-closed per field
+            }
+        }
+
+        if (ampsNormalized != null)
+        {
+            return LoadDisplay.PercentFromNormalized(ampsNormalized);
+        }
+
+        var perTm = LoadDisplay.PercentFromAmps(ampsPerTm, maxPerTm);
+        if (perTm != null)
+        {
+            return perTm;
+        }
+
+        var direct = LoadDisplay.PercentFromAmps(amps ?? totalAmps, maxAmps ?? maxAmpsConst);
+        if (direct != null)
+        {
+            return direct;
+        }
+
+        if (totalAmps != null && maxPerTm != null && working is > 0f)
+        {
+            return LoadDisplay.PercentFromAmps(totalAmps, maxPerTm.Value * working.Value);
+        }
+
+        return LoadDisplay.PercentFromNormalized(loadOnGenerator);
+    }
+
+    private static bool NameHas(string name, string token) =>
+        name.IndexOf(token, StringComparison.OrdinalIgnoreCase) >= 0;
+
+    private static float? SafePortValue(Port? port)
+    {
+        if (port == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            return SafeFloat(port.Value);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static float? SafeFloat(float value) =>
+        float.IsNaN(value) || float.IsInfinity(value) ? null : value;
 
     private static HashSet<TrainCar> CollectFullyLinkedComponent(TrainCar start)
     {
