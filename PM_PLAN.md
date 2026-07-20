@@ -103,8 +103,8 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
   - [x] **1.7 Load monitor** *(was CMD-02a)* — Top-bar `Load %` (amps / max); yellow ≥80%, red ≥95%; `T2 power`. **Done** — Tier 1; Tier 2 **PASS\*** (live % on DE2; color bands deferred until hard pull)
     > As an engineer, I want load % on the HUD so I know how close I am to blowing the traction motor fuses.
 
-  - [x] **1.8 Motor status** *(was CMD-02b)* — Top-bar `Motors` OK (green) / Hot (yellow) / Dead (red); `T2 power`. **Done** — Tier 1 + Tier 2 **PASS** (Hot dwell too short to be useful — **follow-up:** early Hot entry / hysteresis, or drop yellow)
-    > As an engineer, I want TM temperature status on the HUD so I can throttle down before the motors overheat.
+  - [x] **1.8 Motor status** *(was CMD-02b)* — Top-bar `Motors` OK (green) / Hot (yellow) / Dead (red); `T2 power`. **Done / shipped** — Tier 1 + Tier 2 **PASS**. HUD is **current-state only** (OK = below threshold; Hot = above `overheatingTemperatureThreshold` while fuse alive; Dead = TMS trip / working &lt; total). **Cut:** early Hot / hysteresis / predictive dwell on the HUD — thermal mitigation belongs in **Epic 2**.
+    > As an engineer, I want TM temperature status on the HUD so I can see if motors are currently overheating or already tripped.
 
   - [ ] **1.9 Fluid monitor** *(was CMD-02c)* — Top-bar `Fuel %` + `Oil %`; yellow if either &lt; 20%; `T2 power`.
     > As an engineer, I want Fuel/Oil % on the HUD so I know when to return for service before a stall.
@@ -112,16 +112,16 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
   - [~] **1.10 Terrain monitor** *(was CMD-03)* — Grade already in **1.2**; **remaining:** speed-limit alerts.
     > As a driver, I want speed-limit alerts so I do not overspeed a board I missed.
 
-  **Build order (Stage 1 open work):** **1.8 Hot dwell fix** (early entry / hysteresis **or** green-red only) → **1.9** → **1.10** alerts; re-smoke Load yellow/red when practical.
+  **Build order (Stage 1 open work):** **1.9** → **1.10** alerts; re-smoke Load yellow/red when practical. *(Do not reopen **1.8** HUD thermal prediction.)*
 
 ---
 
-- [ ] **Epic 2 — Governor Mode** *(MEDIUM)* — Gated soft writes via Three-Gate + safety gates. Prefix/Postfix only. *After Stage 1 HUD is playable.*
+- [ ] **Epic 2 — Governor Mode** *(MEDIUM)* — Gated soft writes via Three-Gate + safety gates. Prefix/Postfix only. *Active thermal management lives here — not on the Monitor HUD.*
 
-  - [ ] **2.1 Three-Gate helper** *(was E2-S1)* — Shared Integrity → State Registry → Soft Write path; fail closed. *Prerequisite for 2.2 / 2.3.*
+  - [ ] **2.1 Three-Gate helper** *(was E2-S1)* — Shared Integrity → State Registry → Soft Write path; fail closed. *Core foundation / prerequisite for 2.2 / 2.3.*
     > As a maintainer, I want one write path so every governor aborts the same safe way.
 
-  - [ ] **2.2 Thermal governor** *(was CMD-04)* — Dynamic throttle-cap to prevent TM Offline; abort if unsafe.
+  - [ ] **2.2 Thermal governor** *(was CMD-04)* — Soft-scale / cap throttle when **1.8** Motor status is Hot (current over-temp); abort if unsafe. *Prediction / protection — not a HUD rewrite.*
     > As an engineer, I want the mod to soft-cap throttle when motors overheat so I avoid TM Offline events.
 
   - [ ] **2.3 Auto-brake governor** *(was CMD-05)* — Engine-toggle linked brake release when safe; abort otherwise.

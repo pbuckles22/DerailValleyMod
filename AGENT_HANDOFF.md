@@ -123,13 +123,13 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 **Shipped on `main`**
 
 - [x] **Epic 0** Safe Boot *(0.4 scaffold)*
-- [x] **1.1–1.8** Speed, grade/mass, integrity, couplers, look-at, **Load %**, **Motors** (Tier 2 **PASS**; Hot dwell follow-up)
+- [x] **1.1–1.8** Speed, grade/mass, integrity, couplers, look-at, **Load %**, **Motors** (Tier 2 **PASS**; HUD current-state only — Hot dwell **cut**)
 - [x] **4.1–4.3** Spherecast, cargo, hide loco top bar (**PASS**)
 
-**Next (Stage 1)**
+**Next**
 
-- [ ] **1.8 Hot dwell** — early Hot entry + hysteresis **or** drop yellow (green/red only); yellow must be long enough to correct or it is cut
-- [ ] **1.9** Fluids → **1.10** speed-limit alerts
+- [ ] **1.9** Fluids → **1.10** speed-limit alerts *(Stage 1 remaining)*
+- [ ] **2.1** Three-Gate → **2.2** Thermal governor *(active protection; do not reopen **1.8** HUD prediction)*
 - [ ] Re-smoke Load yellow/red when practical
 - [ ] Later: dispatcher **3.x** · Digital Catalog **5.1**
 

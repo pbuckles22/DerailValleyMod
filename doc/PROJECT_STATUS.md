@@ -2,7 +2,7 @@
 
 Human-readable **snapshot**. Keep in sync with [AGENT_HANDOFF.md](../AGENT_HANDOFF.md) → *Current state* and checkbox truth in [PM_PLAN.md](../PM_PLAN.md).
 
-**Last updated:** 2026-07-19
+**Last updated:** 2026-07-20
 
 ---
 
@@ -40,10 +40,14 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 ### Next (Stage 1)
 
-- [ ] **1.8 Hot dwell** — make yellow actionable (early entry + hysteresis) **or** green/red only
 - [ ] **1.9** Fluid monitor
 - [ ] Re-smoke **1.7** yellow/red Load when practical
 - [ ] **1.10** Speed-limit alerts
+
+### Next (Epic 2 prep)
+
+- [ ] **2.1** Three-Gate helper (core foundation for soft writes)
+- [ ] **2.2** Thermal governor — scale throttle when Motors Hot *(uses shipped **1.8** current-state)*
 
 ### Deferred smokes
 
@@ -51,11 +55,15 @@ Stack: Unity / C# `net48` / UMM / Harmony
 - [ ] `Empty Cargo` wording (**4.2**)
 - [ ] Load ≥80% / ≥95% colors (**1.7**)
 
+### Cut / moved
+
+- [x] **1.8 Hot dwell / predictive HUD** — **cut**. Monitor stays current-state; thermal management → **Epic 2**.
+
 ---
 
 ## Recently completed
 
-- [x] **1.8** Motors OK / Hot / Dead — Tier 1 + Tier 2 **PASS** (Hot too brief; dwell fix next)
+- [x] **1.8** Motors OK / Hot / Dead — Tier 1 + Tier 2 **PASS**; shipped as current-state indicator
 - [x] **4.3** Hide loco gadget top bar — **PASS**
 - [x] **1.7** Load % — **PASS\*** (live %; color bands deferred)
 - [x] **1.1–1.6** Speed, grade/mass, integrity, couplers, look-at
