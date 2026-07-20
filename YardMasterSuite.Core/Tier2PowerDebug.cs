@@ -5,21 +5,29 @@ namespace YardMasterSuite.Core;
 /// </summary>
 public readonly struct PowerDebugSnapshot
 {
-    public PowerDebugSnapshot(bool hasLoco, string load, string motors)
+    public PowerDebugSnapshot(bool hasLoco, string load, string motors, string fuel, string oil)
     {
         HasLoco = hasLoco;
         Load = load;
         Motors = motors;
+        Fuel = fuel;
+        Oil = oil;
     }
 
     public bool HasLoco { get; }
     public string Load { get; }
     public string Motors { get; }
+    public string Fuel { get; }
+    public string Oil { get; }
 
-    public string FormatFragment() => $"{Load}  |  {Motors}";
+    public string FormatFragment() => $"{Load}  |  {Motors}  |  {Fuel}  |  {Oil}";
 
     public bool SameAs(PowerDebugSnapshot other) =>
-        HasLoco == other.HasLoco && Load == other.Load && Motors == other.Motors;
+        HasLoco == other.HasLoco
+        && Load == other.Load
+        && Motors == other.Motors
+        && Fuel == other.Fuel
+        && Oil == other.Oil;
 }
 
 /// <summary>

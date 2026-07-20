@@ -58,6 +58,8 @@ public sealed class MonitorHudDriver : MonoBehaviour
     private bool _lastPowerHasLoco;
     private string _lastPowerLoad = "";
     private string _lastPowerMotors = "";
+    private string _lastPowerFuel = "";
+    private string _lastPowerOil = "";
 
     private void OnEnable()
     {
@@ -101,13 +103,20 @@ public sealed class MonitorHudDriver : MonoBehaviour
         PowerDebugSnapshot? previous = null;
         if (_hasPowerDebug)
         {
-            previous = new PowerDebugSnapshot(_lastPowerHasLoco, _lastPowerLoad, _lastPowerMotors);
+            previous = new PowerDebugSnapshot(
+                _lastPowerHasLoco,
+                _lastPowerLoad,
+                _lastPowerMotors,
+                _lastPowerFuel,
+                _lastPowerOil);
         }
 
         var line = Tier2PowerDebug.NextLogMessage(previous, snap);
         _lastPowerHasLoco = snap.HasLoco;
         _lastPowerLoad = snap.Load;
         _lastPowerMotors = snap.Motors;
+        _lastPowerFuel = snap.Fuel;
+        _lastPowerOil = snap.Oil;
         _hasPowerDebug = true;
         if (line != null)
         {

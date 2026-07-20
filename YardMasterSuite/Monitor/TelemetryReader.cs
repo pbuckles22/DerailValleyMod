@@ -4,6 +4,7 @@ using System.Reflection;
 using DV.Logic.Job;
 using DV.ThingTypes;
 using LocoSim.Implementations;
+using LocoSim.Resources;
 using UnityEngine;
 using YardMasterSuite.Core;
 
@@ -358,6 +359,8 @@ internal static class TelemetryReader
             return null;
         }
 
+        var fuel = TryGetFuelPercent();
+        var oil = TryGetOilPercent();
         return TrainHudLine.Format(
             SpeedDisplay.FormatFromMetersPerSecond(TryGetAbsSpeedMetersPerSecond()),
             GradeDisplay.FormatPercent(TryGetGradePercent()),
@@ -365,7 +368,9 @@ internal static class TelemetryReader
             CarsDisplay.Format(TryGetConsistCarCount()),
             HandbrakeDisplay.FormatTotal(TryGetConsistHandbrakeAppliedCount()),
             LoadDisplay.FormatHud(TryGetLoadPercent()),
-            MotorDisplay.FormatHud(TryGetMotorStatus()));
+            MotorDisplay.FormatHud(TryGetMotorStatus()),
+            FluidDisplay.FormatFuelHud(fuel, oil),
+            FluidDisplay.FormatOilHud(fuel, oil));
     }
 
     /// <summary>Legacy join helper — empty when top bar is hidden.</summary>
@@ -393,6 +398,34 @@ internal static class TelemetryReader
         {
             var flow = TryGetUsableLoco()?.SimController?.SimulationFlow;
             return flow == null ? null : ReadMotorStatus(flow);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>Lead usable loco fuel container percent (null if unavailable).</summary>
+    public static float? TryGetFuelPercent()
+    {
+        try
+        {
+            var flow = TryGetUsableLoco()?.SimController?.SimulationFlow;
+            return flow == null ? null : ReadFluidPercent(flow, ResourceContainerType.FUEL);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>Lead usable loco oil container percent (null if unavailable).</summary>
+    public static float? TryGetOilPercent()
+    {
+        try
+        {
+            var flow = TryGetUsableLoco()?.SimController?.SimulationFlow;
+            return flow == null ? null : ReadFluidPercent(flow, ResourceContainerType.OIL);
         }
         catch
         {
@@ -445,7 +478,9 @@ internal static class TelemetryReader
         return new PowerDebugSnapshot(
             usable,
             usable ? LoadDisplay.Format(TryGetLoadPercent()) : LoadDisplay.Format(null),
-            usable ? MotorDisplay.Format(TryGetMotorStatus()) : MotorDisplay.Format(null));
+            usable ? MotorDisplay.Format(TryGetMotorStatus()) : MotorDisplay.Format(null),
+            usable ? FluidDisplay.FormatFuel(TryGetFuelPercent()) : FluidDisplay.FormatFuel(null),
+            usable ? FluidDisplay.FormatOil(TryGetOilPercent()) : FluidDisplay.FormatOil(null));
     }
 
     /// <summary>Standing fallback second bar (hidden when look-at wins).</summary>
@@ -742,6 +777,42 @@ internal static class TelemetryReader
             if (fromComp != null)
             {
                 return fromComp;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Fuel/Oil (and other resources) share <see cref="ResourceContainer"/>;
+    /// match <see cref="ResourceContainer.resourceType"/> then prefer normalized readout.
+    /// </summary>
+    private static float? ReadFluidPercent(SimulationFlow flow, ResourceContainerType resourceType)
+    {
+        if (flow?.OrderedSimComps == null)
+        {
+            return null;
+        }
+
+        foreach (var comp in flow.OrderedSimComps)
+        {
+            if (comp is not ResourceContainer container || container.resourceType != resourceType)
+            {
+                continue;
+            }
+
+            var normalized = SafePortValue(container.normalizedReadOutPort);
+            if (normalized != null)
+            {
+                return FluidDisplay.PercentFromNormalized(normalized);
+            }
+
+            var fromAmount = FluidDisplay.PercentFromAmount(
+                SafePortValue(container.amountReadOut),
+                SafePortValue(container.capacityReadOutPort) ?? SafeFloat(container.capacity));
+            if (fromAmount != null)
+            {
+                return fromAmount;
             }
         }
 
