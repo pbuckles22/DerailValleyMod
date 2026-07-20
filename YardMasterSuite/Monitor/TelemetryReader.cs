@@ -28,6 +28,12 @@ internal static class TelemetryReader
     private static bool _usableLocoResolved;
     private static TrainCar? _usableLoco;
 
+    /// <summary>Cached amp/load field map per <see cref="SimComponent"/> CLR type.</summary>
+    private static readonly Dictionary<Type, LoadFieldMap> LoadFieldCache = new();
+
+    /// <summary>Cached motor-status fields for private <see cref="TractionMotorSet"/> members.</summary>
+    private static MotorSetFieldMap? _motorSetFields;
+
     /// <summary>Call once at the start of each Monitor HUD refresh.</summary>
     public static void BeginHudTick()
     {
@@ -358,7 +364,8 @@ internal static class TelemetryReader
             TonnageDisplay.FormatFromKilograms(TryGetConsistMassKilograms()),
             CarsDisplay.Format(TryGetConsistCarCount()),
             HandbrakeDisplay.FormatTotal(TryGetConsistHandbrakeAppliedCount()),
-            LoadDisplay.FormatHud(TryGetLoadPercent()));
+            LoadDisplay.FormatHud(TryGetLoadPercent()),
+            MotorDisplay.FormatHud(TryGetMotorStatus()));
     }
 
     /// <summary>Legacy join helper — empty when top bar is hidden.</summary>
@@ -372,6 +379,20 @@ internal static class TelemetryReader
         {
             var flow = TryGetUsableLoco()?.SimController?.SimulationFlow;
             return flow == null ? null : ReadLoadPercent(flow);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>Lead usable loco TM cab status (null if unavailable).</summary>
+    public static MotorStatus? TryGetMotorStatus()
+    {
+        try
+        {
+            var flow = TryGetUsableLoco()?.SimController?.SimulationFlow;
+            return flow == null ? null : ReadMotorStatus(flow);
         }
         catch
         {
@@ -423,7 +444,8 @@ internal static class TelemetryReader
         var usable = HasUsableLocoTrain();
         return new PowerDebugSnapshot(
             usable,
-            usable ? LoadDisplay.Format(TryGetLoadPercent()) : LoadDisplay.Format(null));
+            usable ? LoadDisplay.Format(TryGetLoadPercent()) : LoadDisplay.Format(null),
+            usable ? MotorDisplay.Format(TryGetMotorStatus()) : MotorDisplay.Format(null));
     }
 
     /// <summary>Standing fallback second bar (hidden when look-at wins).</summary>
@@ -702,6 +724,133 @@ internal static class TelemetryReader
         return null;
     }
 
+    private static MotorStatus? ReadMotorStatus(SimulationFlow flow)
+    {
+        if (flow?.OrderedSimComps == null)
+        {
+            return null;
+        }
+
+        foreach (var comp in flow.OrderedSimComps)
+        {
+            if (comp == null)
+            {
+                continue;
+            }
+
+            var fromComp = ReadMotorStatusFromComponent(comp);
+            if (fromComp != null)
+            {
+                return fromComp;
+            }
+        }
+
+        return null;
+    }
+
+    private static MotorStatus? ReadMotorStatusFromComponent(SimComponent comp)
+    {
+        if (comp is TractionMotor tm)
+        {
+            return MotorDisplay.StatusFromSignals(
+                SafePortValue(tm.tmsStateReadOut),
+                SafePortReferenceValue(tm.temperature),
+                SafeFloat(tm.overheatingTemperatureThreshold),
+                SafePortValue(tm.workingTractionMotorsReadOut),
+                tm.numberOfTractionMotors);
+        }
+
+        if (comp is TractionMotorSet set)
+        {
+            return ReadMotorStatusFromMotorSet(set);
+        }
+
+        return null;
+    }
+
+    private static MotorStatus? ReadMotorStatusFromMotorSet(TractionMotorSet set)
+    {
+        var map = GetMotorSetFieldMap();
+        if (map is null)
+        {
+            return null;
+        }
+
+        return MotorDisplay.StatusFromSignals(
+            ReadPortField(set, map.Value.TmsState),
+            ReadPortReferenceField(set, map.Value.Temp),
+            ReadFloatField(set, map.Value.OverheatThreshold),
+            ReadPortField(set, map.Value.Working),
+            ReadIntAsFloatField(set, map.Value.NumberOfMotors));
+    }
+
+    private static MotorSetFieldMap? GetMotorSetFieldMap()
+    {
+        if (_motorSetFields is not null)
+        {
+            return _motorSetFields;
+        }
+
+        var type = typeof(TractionMotorSet);
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+        var map = new MotorSetFieldMap(
+            type.GetField("tmsStateReadOut", flags),
+            type.GetField("tmTempReader", flags),
+            type.GetField("overheatingTemperatureThreshold", flags),
+            type.GetField("workingTractionMotorsReadOut", flags),
+            type.GetField("numberOfTractionMotors", flags));
+        if (!map.HasRequired)
+        {
+            return null;
+        }
+
+        _motorSetFields = map;
+        return map;
+    }
+
+    private static float? ReadIntAsFloatField(SimComponent comp, FieldInfo? field)
+    {
+        if (field == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            return field.GetValue(comp) is int n ? n : null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private readonly struct MotorSetFieldMap
+    {
+        public MotorSetFieldMap(
+            FieldInfo? tmsState,
+            FieldInfo? temp,
+            FieldInfo? overheatThreshold,
+            FieldInfo? working,
+            FieldInfo? numberOfMotors)
+        {
+            TmsState = tmsState;
+            Temp = temp;
+            OverheatThreshold = overheatThreshold;
+            Working = working;
+            NumberOfMotors = numberOfMotors;
+        }
+
+        public FieldInfo? TmsState { get; }
+        public FieldInfo? Temp { get; }
+        public FieldInfo? OverheatThreshold { get; }
+        public FieldInfo? Working { get; }
+        public FieldInfo? NumberOfMotors { get; }
+
+        public bool HasRequired =>
+            TmsState != null && Temp != null && OverheatThreshold != null;
+    }
+
     private static float? ReadLoadPercentFromComponent(SimComponent comp)
     {
         if (comp is TractionMotor tm)
@@ -723,95 +872,21 @@ internal static class TelemetryReader
             return LoadDisplay.PercentFromNormalized(SafePortValue(tm.loadOnGeneratorReadOut));
         }
 
-        float? ampsNormalized = null;
-        float? amps = null;
-        float? maxAmps = null;
-        float? ampsPerTm = null;
-        float? maxPerTm = null;
-        float? totalAmps = null;
-        float? working = null;
-        float? loadOnGenerator = null;
-        float? maxAmpsConst = null;
-
-        const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
-        foreach (var field in comp.GetType().GetFields(flags))
+        var map = GetOrBuildLoadFieldMap(comp.GetType());
+        if (!map.HasAny)
         {
-            try
-            {
-                var name = field.Name;
-                if (field.FieldType == typeof(Port))
-                {
-                    var value = SafePortValue((Port?)field.GetValue(comp));
-                    if (value is null)
-                    {
-                        continue;
-                    }
-
-                    if (NameHas(name, "ampsNormalized"))
-                    {
-                        ampsNormalized = value;
-                    }
-                    else if (NameHas(name, "loadOnGenerator"))
-                    {
-                        loadOnGenerator = value;
-                    }
-                    else if (NameHas(name, "maxAmpsPerTM") || NameHas(name, "maxAmpsPerTm"))
-                    {
-                        maxPerTm = value;
-                    }
-                    else if (NameHas(name, "ampsPerTM") || NameHas(name, "ampsPerTm"))
-                    {
-                        ampsPerTm = value;
-                    }
-                    else if (NameHas(name, "maxAmpsReadOut") || name.Equals("maxAmps", StringComparison.Ordinal))
-                    {
-                        maxAmps = value;
-                    }
-                    else if (NameHas(name, "totalAmps") || name.Equals("ampsReadOut", StringComparison.Ordinal))
-                    {
-                        if (name.Equals("ampsReadOut", StringComparison.Ordinal))
-                        {
-                            amps = value;
-                        }
-                        else
-                        {
-                            totalAmps = value;
-                        }
-                    }
-                    else if (NameHas(name, "workingTractionMotors"))
-                    {
-                        working = value;
-                    }
-                }
-                else if (field.FieldType == typeof(PortReference))
-                {
-                    var pref = (PortReference?)field.GetValue(comp);
-                    if (pref == null || !pref.IsConnected)
-                    {
-                        continue;
-                    }
-
-                    var value = SafeFloat(pref.Value);
-                    if (value is null)
-                    {
-                        continue;
-                    }
-
-                    if (NameHas(name, "totalAmps"))
-                    {
-                        totalAmps = value;
-                    }
-                }
-                else if (field.FieldType == typeof(float) && name.Equals("maxAmps", StringComparison.Ordinal))
-                {
-                    maxAmpsConst = SafeFloat((float)field.GetValue(comp)!);
-                }
-            }
-            catch
-            {
-                // fail-closed per field
-            }
+            return null;
         }
+
+        float? ampsNormalized = ReadPortField(comp, map.AmpsNormalized);
+        float? amps = ReadPortField(comp, map.Amps);
+        float? maxAmps = ReadPortField(comp, map.MaxAmps);
+        float? ampsPerTm = ReadPortField(comp, map.AmpsPerTm);
+        float? maxPerTm = ReadPortField(comp, map.MaxPerTm);
+        float? totalAmps = ReadPortField(comp, map.TotalAmps) ?? ReadPortReferenceField(comp, map.TotalAmpsRef);
+        float? working = ReadPortField(comp, map.Working);
+        float? loadOnGenerator = ReadPortField(comp, map.LoadOnGenerator);
+        float? maxAmpsConst = ReadFloatField(comp, map.MaxAmpsConst);
 
         if (ampsNormalized != null)
         {
@@ -838,6 +913,189 @@ internal static class TelemetryReader
         return LoadDisplay.PercentFromNormalized(loadOnGenerator);
     }
 
+    private static LoadFieldMap GetOrBuildLoadFieldMap(Type type)
+    {
+        if (LoadFieldCache.TryGetValue(type, out var cached))
+        {
+            return cached;
+        }
+
+        FieldInfo? ampsNormalized = null;
+        FieldInfo? amps = null;
+        FieldInfo? maxAmps = null;
+        FieldInfo? ampsPerTm = null;
+        FieldInfo? maxPerTm = null;
+        FieldInfo? totalAmps = null;
+        FieldInfo? totalAmpsRef = null;
+        FieldInfo? working = null;
+        FieldInfo? loadOnGenerator = null;
+        FieldInfo? maxAmpsConst = null;
+
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+        foreach (var field in type.GetFields(flags))
+        {
+            var name = field.Name;
+            if (field.FieldType == typeof(Port))
+            {
+                if (NameHas(name, "ampsNormalized"))
+                {
+                    ampsNormalized = field;
+                }
+                else if (NameHas(name, "loadOnGenerator"))
+                {
+                    loadOnGenerator = field;
+                }
+                else if (NameHas(name, "maxAmpsPerTM") || NameHas(name, "maxAmpsPerTm"))
+                {
+                    maxPerTm = field;
+                }
+                else if (NameHas(name, "ampsPerTM") || NameHas(name, "ampsPerTm"))
+                {
+                    ampsPerTm = field;
+                }
+                else if (NameHas(name, "maxAmpsReadOut") || name.Equals("maxAmps", StringComparison.Ordinal))
+                {
+                    maxAmps = field;
+                }
+                else if (name.Equals("ampsReadOut", StringComparison.Ordinal))
+                {
+                    amps = field;
+                }
+                else if (NameHas(name, "totalAmps"))
+                {
+                    totalAmps = field;
+                }
+                else if (NameHas(name, "workingTractionMotors"))
+                {
+                    working = field;
+                }
+            }
+            else if (field.FieldType == typeof(PortReference) && NameHas(name, "totalAmps"))
+            {
+                totalAmpsRef = field;
+            }
+            else if (field.FieldType == typeof(float) && name.Equals("maxAmps", StringComparison.Ordinal))
+            {
+                maxAmpsConst = field;
+            }
+        }
+
+        var map = new LoadFieldMap(
+            ampsNormalized,
+            amps,
+            maxAmps,
+            ampsPerTm,
+            maxPerTm,
+            totalAmps,
+            totalAmpsRef,
+            working,
+            loadOnGenerator,
+            maxAmpsConst);
+        LoadFieldCache[type] = map;
+        return map;
+    }
+
+    private static float? ReadPortField(SimComponent comp, FieldInfo? field)
+    {
+        if (field == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            return SafePortValue((Port?)field.GetValue(comp));
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static float? ReadPortReferenceField(SimComponent comp, FieldInfo? field)
+    {
+        if (field == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            return SafePortReferenceValue((PortReference?)field.GetValue(comp));
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static float? ReadFloatField(SimComponent comp, FieldInfo? field)
+    {
+        if (field == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            return SafeFloat((float)field.GetValue(comp)!);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private readonly struct LoadFieldMap
+    {
+        public LoadFieldMap(
+            FieldInfo? ampsNormalized,
+            FieldInfo? amps,
+            FieldInfo? maxAmps,
+            FieldInfo? ampsPerTm,
+            FieldInfo? maxPerTm,
+            FieldInfo? totalAmps,
+            FieldInfo? totalAmpsRef,
+            FieldInfo? working,
+            FieldInfo? loadOnGenerator,
+            FieldInfo? maxAmpsConst)
+        {
+            AmpsNormalized = ampsNormalized;
+            Amps = amps;
+            MaxAmps = maxAmps;
+            AmpsPerTm = ampsPerTm;
+            MaxPerTm = maxPerTm;
+            TotalAmps = totalAmps;
+            TotalAmpsRef = totalAmpsRef;
+            Working = working;
+            LoadOnGenerator = loadOnGenerator;
+            MaxAmpsConst = maxAmpsConst;
+        }
+
+        public FieldInfo? AmpsNormalized { get; }
+        public FieldInfo? Amps { get; }
+        public FieldInfo? MaxAmps { get; }
+        public FieldInfo? AmpsPerTm { get; }
+        public FieldInfo? MaxPerTm { get; }
+        public FieldInfo? TotalAmps { get; }
+        public FieldInfo? TotalAmpsRef { get; }
+        public FieldInfo? Working { get; }
+        public FieldInfo? LoadOnGenerator { get; }
+        public FieldInfo? MaxAmpsConst { get; }
+
+        public bool HasAny =>
+            AmpsNormalized != null
+            || Amps != null
+            || MaxAmps != null
+            || AmpsPerTm != null
+            || MaxPerTm != null
+            || TotalAmps != null
+            || TotalAmpsRef != null
+            || Working != null
+            || LoadOnGenerator != null
+            || MaxAmpsConst != null;
+    }
+
     private static bool NameHas(string name, string token) =>
         name.IndexOf(token, StringComparison.OrdinalIgnoreCase) >= 0;
 
@@ -851,6 +1109,23 @@ internal static class TelemetryReader
         try
         {
             return SafeFloat(port.Value);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static float? SafePortReferenceValue(PortReference? pref)
+    {
+        if (pref == null || !pref.IsConnected)
+        {
+            return null;
+        }
+
+        try
+        {
+            return SafeFloat(pref.Value);
         }
         catch
         {

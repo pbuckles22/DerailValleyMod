@@ -103,7 +103,7 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
   - [x] **1.7 Load monitor** *(was CMD-02a)* — Top-bar `Load %` (amps / max); yellow ≥80%, red ≥95%; `T2 power`. **Done** — Tier 1; Tier 2 **PASS\*** (live % on DE2; color bands deferred until hard pull)
     > As an engineer, I want load % on the HUD so I know how close I am to blowing the traction motor fuses.
 
-  - [ ] **1.8 Motor status** *(was CMD-02b)* — Top-bar `Motors` OK (green) / Hot (yellow) / Dead (red); `T2 power`.
+  - [x] **1.8 Motor status** *(was CMD-02b)* — Top-bar `Motors` OK (green) / Hot (yellow) / Dead (red); `T2 power`. **Done** — Tier 1; Tier 2 pending in-game blink/dead smoke
     > As an engineer, I want TM temperature status on the HUD so I can throttle down before the motors overheat.
 
   - [ ] **1.9 Fluid monitor** *(was CMD-02c)* — Top-bar `Fuel %` + `Oil %`; yellow if either &lt; 20%; `T2 power`.
@@ -112,7 +112,7 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
   - [~] **1.10 Terrain monitor** *(was CMD-03)* — Grade already in **1.2**; **remaining:** speed-limit alerts.
     > As a driver, I want speed-limit alerts so I do not overspeed a board I missed.
 
-  **Build order (Stage 1 open work):** **1.8** → **1.9** → **1.10** alerts; re-smoke Load yellow/red when practical.
+  **Build order (Stage 1 open work):** **1.9** → **1.10** alerts; re-smoke Load yellow/red + Motors Hot/Dead when practical.
 
 ---
 

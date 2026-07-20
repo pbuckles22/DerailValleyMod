@@ -15,7 +15,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 |--|--|
 | **Journey** | Stage 1 — Apprentice (“don’t blow up”) |
 | **MVP** | Epic 1 System Monitor HUD |
-| **Version (`main`)** | **0.4.15** |
+| **Version (`main`)** | **0.4.16** |
 
 ---
 
@@ -23,7 +23,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 | Branch | Role |
 |--------|------|
-| **`main`** | Integration — through **4.3** + **1.7** (v0.4.15) |
+| **`main`** | Integration — through **1.8** (v0.4.16) |
 
 ---
 
@@ -40,9 +40,8 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 ### Next (Stage 1)
 
-- [ ] **1.8** Motor status (cab TM light → HUD)
 - [ ] **1.9** Fluid monitor
-- [ ] Re-smoke **1.7** yellow/red Load bands when a hard pull is available
+- [ ] Re-smoke **1.7** yellow/red Load + **1.8** Motors Hot/Dead when practical
 - [ ] **1.10** Speed-limit alerts
 
 ### Deferred smokes
@@ -50,11 +49,13 @@ Stack: Unity / C# `net48` / UMM / Harmony
 - [ ] Yellow MU `F*` / `R*` with two locos
 - [ ] `Empty Cargo` wording (**4.2**)
 - [ ] Load ≥80% / ≥95% colors (**1.7**)
+- [ ] Motors Hot (blink) / Dead (fuse off) (**1.8**)
 
 ---
 
 ## Recently completed
 
+- [x] **1.8** Motors OK / Hot / Dead — Tier 1; Tier 2 smoke pending
 - [x] **4.3** Hide loco gadget top bar — **PASS**
 - [x] **1.7** Load % — **PASS\*** (live %; color bands deferred)
 - [x] **1.1–1.6** Speed, grade/mass, integrity, couplers, look-at
