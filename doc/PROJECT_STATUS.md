@@ -40,8 +40,9 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 ### Next (Stage 1)
 
+- [ ] **1.8 Hot dwell** — make yellow actionable (early entry + hysteresis) **or** green/red only
 - [ ] **1.9** Fluid monitor
-- [ ] Re-smoke **1.7** yellow/red Load + **1.8** Motors Hot/Dead when practical
+- [ ] Re-smoke **1.7** yellow/red Load when practical
 - [ ] **1.10** Speed-limit alerts
 
 ### Deferred smokes
@@ -49,13 +50,12 @@ Stack: Unity / C# `net48` / UMM / Harmony
 - [ ] Yellow MU `F*` / `R*` with two locos
 - [ ] `Empty Cargo` wording (**4.2**)
 - [ ] Load ≥80% / ≥95% colors (**1.7**)
-- [ ] Motors Hot (blink) / Dead (fuse off) (**1.8**)
 
 ---
 
 ## Recently completed
 
-- [x] **1.8** Motors OK / Hot / Dead — Tier 1; Tier 2 smoke pending
+- [x] **1.8** Motors OK / Hot / Dead — Tier 1 + Tier 2 **PASS** (Hot too brief; dwell fix next)
 - [x] **4.3** Hide loco gadget top bar — **PASS**
 - [x] **1.7** Load % — **PASS\*** (live %; color bands deferred)
 - [x] **1.1–1.6** Speed, grade/mass, integrity, couplers, look-at

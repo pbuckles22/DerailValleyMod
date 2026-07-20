@@ -123,13 +123,14 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 **Shipped on `main`**
 
 - [x] **Epic 0** Safe Boot *(0.4 scaffold)*
-- [x] **1.1–1.8** Speed, grade/mass, integrity, couplers, look-at, **Load %**, **Motors** (Hot/Dead smoke pending)
+- [x] **1.1–1.8** Speed, grade/mass, integrity, couplers, look-at, **Load %**, **Motors** (Tier 2 **PASS**; Hot dwell follow-up)
 - [x] **4.1–4.3** Spherecast, cargo, hide loco top bar (**PASS**)
 
 **Next (Stage 1)**
 
+- [ ] **1.8 Hot dwell** — early Hot entry + hysteresis **or** drop yellow (green/red only); yellow must be long enough to correct or it is cut
 - [ ] **1.9** Fluids → **1.10** speed-limit alerts
-- [ ] Re-smoke Load yellow/red + Motors Hot/Dead when practical
+- [ ] Re-smoke Load yellow/red when practical
 - [ ] Later: dispatcher **3.x** · Digital Catalog **5.1**
 
 **Merge-ready:** `dotnet test YardMasterSuite.sln` · `dotnet build YardMasterSuite.sln -c Release` · deploy via `package.ps1`

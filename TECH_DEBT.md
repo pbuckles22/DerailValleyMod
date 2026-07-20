@@ -22,7 +22,8 @@ High ROI; frequent pain; not blocking.
 - [ ] **Coupler plain `*` vs yellow `*`** — loose and MU share the glyph; HUD color distinguishes, but plain `T2 coupler` / Format strings cannot. Revisit with MU smoke — distinct debug labels or marks.
 - [x] **Cache Load amp reflection by type** — landed with **1.8** (`LoadFieldCache` + `MotorSetFieldMap`).
 - [ ] **Re-smoke Load yellow/red** — **1.7** live `%` **PASS\***; ≥80% / ≥95% color bands not exercised in-game yet.
-- [ ] **Re-smoke Motors Hot/Dead** — **1.8** Tier 1 done; need blinking TM light (Hot) and fuse-off / dead TM (Dead).
+- [x] **Re-smoke Motors Hot/Dead** — **1.8** Tier 2 **PASS** (OK / brief Hot / Dead).
+- [ ] **Motors Hot dwell** — yellow flashes too briefly to correct throttle; next: early Hot entry + hysteresis **or** cut Hot (green/red only).
 
 ---
 
