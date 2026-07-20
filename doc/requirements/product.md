@@ -45,7 +45,7 @@ Modern readout of instruments you’d only see in/around a loco: Speed · Grade 
 | Cars | `Cars 5` | freight only; loco not counted — **1.4** |
 | Handbrakes | `Handbrakes 3` | usable-consist applied count — **1.4** |
 | Load | `Load 42 %` | amps / max; yellow ≥80%, red ≥95% — **1.7** **Done** (live % **PASS\***; color bands deferred) |
-| Motors | `Motors OK` / `Hot` / `Dead` | green / yellow / red — **1.8** **Done** (Tier 2 **PASS**; Hot dwell too short — follow-up: early Hot / hysteresis or drop yellow) |
+| Motors | `Motors OK` / `Hot` / `Dead` | green / yellow / red — **1.8** **Done / shipped** (current-state: OK below threshold, Hot above threshold while fuse alive, Dead = trip / dead TM). Predictive Hot dwell **cut** → **Epic 2** Thermal governor |
 | Fuel | `Fuel 67 %` | yellow if Fuel or Oil &lt; 20% — **1.9** |
 | Oil | `Oil 55 %` | yellow if Fuel or Oil &lt; 20% — **1.9** |
 
@@ -80,8 +80,8 @@ Look-at wins; standing fallback when crosshair is not on a car. Hidden when no t
 
 1. **Teleportation is the last resort** — Never delete. Teleport only after verification.
 2. **Governor vs Monitor**
-   - **Monitors (read-only):** Epic 1 HUD — integrity **1.3–1.6**, power **1.7–1.9**, terrain **1.10**
-   - **Governors (active):** Epic 2 — thermal / auto-brake via gated soft writes
+   - **Monitors (read-only):** Epic 1 HUD — integrity **1.3–1.6**, power **1.7–1.9**, terrain **1.10**. Motors (**1.8**) reports **current** thermal/fuse state only — not a driver-prediction tool.
+   - **Governors (active):** Epic 2 — thermal / auto-brake via gated soft writes. **2.2** soft-scales throttle when Motors is Hot; do not push prediction into the HUD.
 3. **Stability first** — Epic 0 Safe Boot before UI or logic manipulation
 
 ---

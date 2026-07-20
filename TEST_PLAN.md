@@ -167,13 +167,13 @@ Top bar `Motors OK` / `Hot` / `Dead` after Load (green / yellow / red). Dead = f
 - [x] Mod loads; Active; chip matches deploy (`v0.4.16`)
 - [x] No usable loco — top bar **hidden**; no Motors
 - [x] Diesel/electric cool — green `Motors OK`
-- [x] Over-temp — yellow `Motors Hot` (**PASS** — seen; dwell ~split-second, not useful as a warning)
+- [x] Over-temp — yellow `Motors Hot` (**PASS** — current-state; brief dwell accepted)
 - [x] Fuse off or dead TM — red `Motors Dead` (cab TM OFFLINE)
 - [ ] Steam / no TM — `— Motors` (fail-closed) when top bar visible
 - [ ] `T2 power` includes Motors fragment *(not explicitly confirmed)*
 - [ ] Mod Off → On; no exceptions *(not explicitly confirmed)*
 
-**Follow-up (not blocking 1.8 Done):** change Hot entry (early threshold + hysteresis) so yellow lasts long enough to correct, **or** drop yellow (green/red only).
+**Shipped decision (2026-07-20):** no HUD Hot-entry / hysteresis follow-up. Thermal protection → **Epic 2.2** governor.
 
 ### Later *(open)*
 

@@ -23,7 +23,7 @@ High ROI; frequent pain; not blocking.
 - [x] **Cache Load amp reflection by type** — landed with **1.8** (`LoadFieldCache` + `MotorSetFieldMap`).
 - [ ] **Re-smoke Load yellow/red** — **1.7** live `%` **PASS\***; ≥80% / ≥95% color bands not exercised in-game yet.
 - [x] **Re-smoke Motors Hot/Dead** — **1.8** Tier 2 **PASS** (OK / brief Hot / Dead).
-- [ ] **Motors Hot dwell** — yellow flashes too briefly to correct throttle; next: early Hot entry + hysteresis **or** cut Hot (green/red only).
+- [x] **Motors Hot dwell (HUD)** — **cut** (2026-07-20). Monitor stays current-state; thermal mitigation → **Epic 2.2** governor.
 
 ---
 
