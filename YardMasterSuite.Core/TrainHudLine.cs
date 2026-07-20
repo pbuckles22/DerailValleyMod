@@ -10,8 +10,9 @@ public static class TrainHudLine
         string grade,
         string mass,
         string cars,
-        string handbrakes) =>
-        MonitorHudLine.Join(new[] { speed, grade, mass, cars, handbrakes });
+        string handbrakes,
+        string load) =>
+        MonitorHudLine.Join(new[] { speed, grade, mass, cars, handbrakes, load });
 
     public static string NullLine() =>
         Format(
@@ -19,5 +20,6 @@ public static class TrainHudLine
             GradeDisplay.FormatPercent(null),
             TonnageDisplay.FormatFromKilograms(null),
             CarsDisplay.Format(null),
-            HandbrakeDisplay.FormatTotal(null));
+            HandbrakeDisplay.FormatTotal(null),
+            LoadDisplay.Format(null));
 }

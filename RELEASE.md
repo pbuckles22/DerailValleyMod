@@ -1,31 +1,37 @@
-## Release / merge discipline (lightweight)
+# Release / merge discipline
 
-Keep releases/merges boring and reversible.
+Keep releases boring and reversible.
 
-### Versioning (required — do not skip)
+---
+
+## Versioning *(required)*
 
 SemVer on `info.json` + matching `repository.json`:
 
 | Bump | When |
 |------|------|
-| **PATCH** (`0.4.x`) | Every deployable fix or feature (so UMM + HUD `v…` chip prove the new DLL) |
+| **PATCH** `0.4.x` | Every deployable fix or feature (UMM + HUD `v…` chip prove the new DLL) |
 | **MINOR** | Story / slice close when you want a clearer milestone label |
 
-Also keep Player.log `Version '…'. Loading.` in sync (reads `info.json`). After deploy: confirm the HUD chip matches before Tier 2 sign-off — a stale chip means the old DLL is still loaded (toggle mod or restart).
+Player.log `Version '…'. Loading.` reads `info.json`. After deploy: confirm HUD chip matches before Tier 2 — a stale chip means the old DLL is still loaded (toggle mod or restart).
 
-Same rule is summarized in [AGENT_HANDOFF.md](AGENT_HANDOFF.md) → *Conventions*.
+Also summarized in [AGENT_HANDOFF.md](AGENT_HANDOFF.md) → *Conventions*.
 
-### Merge-ready (minimum)
+---
 
-Document your real gate in `AGENT_HANDOFF.md` and `TEST_PLAN.md`, then treat it as mandatory:
+## Merge-ready (minimum)
 
-- Tier 1 is green (fast feedback)
-- Tier 2 is run when behavior demands integration/E2E validation
-- Version bumped per the table above when the DLL changes
-- Tracked docs updated when workflow/expectations change
-- Rollback path is clear (a revert commit is usually sufficient)
+Documented gate in `AGENT_HANDOFF.md` + `TEST_PLAN.md` — treat as mandatory:
 
-### Rollback
+- [ ] Tier 1 green (`dotnet test` + Release build)
+- [ ] Tier 2 run when the story needs in-game sign-off
+- [ ] Version bumped when the DLL changes
+- [ ] Tracked docs updated (`PM_PLAN` checkbox + PROJECT_STATUS + Current state)
+- [ ] Rollback path clear (usually one revert commit)
+
+---
+
+## Rollback
 
 - Prefer a single revert commit per change
-- If a change affects your “stable” line, revert immediately and re-run the required validation tier(s)
+- If it hits a “stable” line: revert immediately and re-run the required tier(s)

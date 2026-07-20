@@ -1,0 +1,53 @@
+namespace YardMasterSuite.Core;
+
+/// <summary>
+/// Discrete Player.log lines for Tier 2 power-monitor checks (Load / Motors / Fuel / Oil).
+/// </summary>
+public readonly struct PowerDebugSnapshot
+{
+    public PowerDebugSnapshot(bool hasLoco, string load)
+    {
+        HasLoco = hasLoco;
+        Load = load;
+    }
+
+    public bool HasLoco { get; }
+    public string Load { get; }
+
+    public string FormatFragment() => Load;
+
+    public bool SameAs(PowerDebugSnapshot other) =>
+        HasLoco == other.HasLoco && Load == other.Load;
+}
+
+/// <summary>
+/// Decides when to emit a Tier 2 power debug line for Player.log.
+/// </summary>
+public static class Tier2PowerDebug
+{
+    public const string Prefix = "T2 power";
+
+    public static string? NextLogMessage(PowerDebugSnapshot? previous, PowerDebugSnapshot current)
+    {
+        if (previous is null)
+        {
+            return $"{Prefix} init ({Where(current)}): {current.FormatFragment()}";
+        }
+
+        var prior = previous.Value;
+        if (prior.HasLoco != current.HasLoco)
+        {
+            return $"{Prefix} {Where(current)}: {current.FormatFragment()}";
+        }
+
+        if (!prior.SameAs(current))
+        {
+            return $"{Prefix} change: {current.FormatFragment()}";
+        }
+
+        return null;
+    }
+
+    private static string Where(PowerDebugSnapshot snap) =>
+        snap.HasLoco ? "loco" : "no-loco";
+}

@@ -5,7 +5,7 @@ namespace YardMasterSuite.Monitor;
 
 /// <summary>
 /// In-world IMGUI overlay for Monitor Mode telemetry.
-/// Top bar = usable loco-train totals (red null when not usable); second bar = look-at preferred, standing fallback.
+/// Top bar = usable loco-train totals (hidden when not usable — 4.3); second bar = look-at preferred, standing fallback.
 /// </summary>
 public sealed class MonitorHudDriver : MonoBehaviour
 {
@@ -15,19 +15,15 @@ public sealed class MonitorHudDriver : MonoBehaviour
     private const float Gap = 4f;
 
     private static readonly Color BarBackground = new(0.12f, 0.12f, 0.12f, 0.82f);
-    private static readonly Color NullBarBackground = new(0.55f, 0.08f, 0.08f, 0.85f);
 
     private float _elapsed;
-    private string _trainLabel = TrainHudLine.NullLine();
+    private string? _trainLabel;
     private string? _localLabel;
-    private bool _usableTrain;
     private GUIStyle? _trainStyle;
     private GUIStyle? _localStyle;
-    private GUIStyle? _nullTrainStyle;
     private GUIStyle? _versionStyle;
     private Texture2D? _trainTex;
     private Texture2D? _localTex;
-    private Texture2D? _nullTex;
 
     private bool _hasConsistDebug;
     private bool _lastHasLoco;
@@ -58,6 +54,10 @@ public sealed class MonitorHudDriver : MonoBehaviour
     private bool _lastCouplerVisible;
     private string _lastCouplerLine = "";
 
+    private bool _hasPowerDebug;
+    private bool _lastPowerHasLoco;
+    private string _lastPowerLoad = "";
+
     private void OnEnable()
     {
         RebuildStyles();
@@ -77,13 +77,40 @@ public sealed class MonitorHudDriver : MonoBehaviour
         }
 
         _elapsed = 0f;
-        _usableTrain = TelemetryReader.HasUsableLocoTrain();
-        _trainLabel = TelemetryReader.CurrentTrainHudLine();
-        _localLabel = TelemetryReader.CurrentLocalCarHudLineOrNull();
-        EmitConsistDebugIfNeeded();
-        EmitLocalCarDebugIfNeeded();
-        EmitLookAtDebugIfNeeded();
-        EmitCouplerDebugIfNeeded();
+        TelemetryReader.BeginHudTick();
+        try
+        {
+            _trainLabel = TelemetryReader.CurrentTrainHudLineOrNull();
+            _localLabel = TelemetryReader.CurrentLocalCarHudLineOrNull();
+            EmitConsistDebugIfNeeded();
+            EmitLocalCarDebugIfNeeded();
+            EmitLookAtDebugIfNeeded();
+            EmitCouplerDebugIfNeeded();
+            EmitPowerDebugIfNeeded();
+        }
+        finally
+        {
+            TelemetryReader.EndHudTick();
+        }
+    }
+
+    private void EmitPowerDebugIfNeeded()
+    {
+        var snap = TelemetryReader.CurrentPowerDebugSnapshot();
+        PowerDebugSnapshot? previous = null;
+        if (_hasPowerDebug)
+        {
+            previous = new PowerDebugSnapshot(_lastPowerHasLoco, _lastPowerLoad);
+        }
+
+        var line = Tier2PowerDebug.NextLogMessage(previous, snap);
+        _lastPowerHasLoco = snap.HasLoco;
+        _lastPowerLoad = snap.Load;
+        _hasPowerDebug = true;
+        if (line != null)
+        {
+            Main.Log(line);
+        }
     }
 
     private void EmitConsistDebugIfNeeded()
@@ -194,27 +221,39 @@ public sealed class MonitorHudDriver : MonoBehaviour
     private void OnGUI()
     {
         EnsureStyles();
-        var trainStyle = _usableTrain ? _trainStyle! : _nullTrainStyle!;
-        var trainWidth = Mathf.Max(520f, trainStyle.CalcSize(new GUIContent(_trainLabel)).x + 12f);
-        GUI.Label(new Rect(Pad, Pad, trainWidth, Height), _trainLabel, trainStyle);
 
-        // Compact version chip — confirms which DLL is loaded after a deploy.
+        // Compact version chip — always visible so deploys are confirmable without a loco bar.
         var version = $"v{Main.ModVersion}";
         var versionSize = _versionStyle!.CalcSize(new GUIContent(version));
-        GUI.Label(
-            new Rect(Pad + trainWidth + 6f, Pad + 4f, versionSize.x + 8f, Height - 8f),
-            version,
-            _versionStyle);
+        var topBottom = Pad;
+
+        if (_trainLabel != null)
+        {
+            // Rich-text color tags (Load warn/crit) inflate CalcSize; measure plain text.
+            var trainMeasure = StripRichText(_trainLabel);
+            var trainWidth = Mathf.Max(520f, _trainStyle!.CalcSize(new GUIContent(trainMeasure)).x + 12f);
+            GUI.Label(new Rect(Pad, Pad, trainWidth, Height), _trainLabel, _trainStyle);
+            GUI.Label(
+                new Rect(Pad + trainWidth + 6f, Pad + 4f, versionSize.x + 8f, Height - 8f),
+                version,
+                _versionStyle);
+            topBottom = Pad + Height + Gap;
+        }
+        else
+        {
+            GUI.Label(new Rect(Pad, Pad + 4f, versionSize.x + 8f, Height - 8f), version, _versionStyle);
+            // Keep second bar under the chip row when the loco gadget bar is hidden (4.3).
+            topBottom = Pad + Height + Gap;
+        }
 
         if (_localLabel == null)
         {
             return;
         }
 
-        // Rich-text color tags inflate CalcSize; measure the visible plain text.
         var measure = StripRichText(_localLabel);
         var localWidth = Mathf.Max(520f, _localStyle!.CalcSize(new GUIContent(measure)).x + 12f);
-        GUI.Label(new Rect(Pad, Pad + Height + Gap, localWidth, Height), _localLabel, _localStyle);
+        GUI.Label(new Rect(Pad, topBottom, localWidth, Height), _localLabel, _localStyle);
     }
 
     private static string StripRichText(string text)
@@ -250,8 +289,6 @@ public sealed class MonitorHudDriver : MonoBehaviour
             && _trainStyle.normal.background != null
             && _localStyle != null
             && _localStyle.normal.background != null
-            && _nullTrainStyle != null
-            && _nullTrainStyle.normal.background != null
             && _versionStyle != null)
         {
             return;
@@ -265,10 +302,8 @@ public sealed class MonitorHudDriver : MonoBehaviour
         DestroyStyles();
         _trainTex = CreateTexture(BarBackground);
         _localTex = CreateTexture(BarBackground);
-        _nullTex = CreateTexture(NullBarBackground);
         _trainStyle = CreateBarStyle(_trainTex);
         _localStyle = CreateBarStyle(_localTex);
-        _nullTrainStyle = CreateBarStyle(_nullTex);
         _versionStyle = new GUIStyle(GUI.skin.label)
         {
             alignment = TextAnchor.MiddleLeft,
@@ -282,10 +317,8 @@ public sealed class MonitorHudDriver : MonoBehaviour
     {
         DestroyTexture(ref _trainTex);
         DestroyTexture(ref _localTex);
-        DestroyTexture(ref _nullTex);
         _trainStyle = null;
         _localStyle = null;
-        _nullTrainStyle = null;
         _versionStyle = null;
     }
 

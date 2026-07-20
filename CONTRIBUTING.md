@@ -6,7 +6,7 @@ Thank you for contributing. This project uses **tracked documentation** as the s
 
 1. [README.md](README.md) — what this project provides
 2. **[doc/PROJECT_STATUS.md](doc/PROJECT_STATUS.md)** — current state, active branch, what's next
-3. [PM_PLAN.md](PM_PLAN.md) — phased checklist (customize for your product)
+3. [PM_PLAN.md](PM_PLAN.md) — official backlog (`Epic N` / `N.M` checkboxes)
 4. [AGENT_HANDOFF.md](AGENT_HANDOFF.md) — run/test commands, merge-ready gate, conventions
 5. [TEST_PLAN.md](TEST_PLAN.md) — test tiers
 6. [doc/requirements/](doc/requirements/) — product specs (add as needed)
@@ -17,7 +17,7 @@ Thank you for contributing. This project uses **tracked documentation** as the s
 |----------|------------|---------|
 | `doc/PROJECT_STATUS.md` | **Yes** | Human-readable current state — **update when milestones ship** |
 | `AGENT_HANDOFF.md` → Current state | **Yes** | Maintainer + agent snapshot — keep in sync |
-| `PM_PLAN.md` | **Yes** | Phase checklists |
+| `PM_PLAN.md` | **Yes** | Official backlog — cross off stories here |
 | `.cursor/handoff/*-handoff-*.md` | **No** (gitignored) | Optional local session diary |
 | `doc/handoff/*-HANDOFF-*.md` | **No** (gitignored by default) | Same — promote decisions to tracked docs |
 

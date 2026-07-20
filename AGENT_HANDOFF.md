@@ -110,11 +110,29 @@ When shipping: update **PM_PLAN**, **doc/PROJECT_STATUS.md**, and **Current stat
 
 ## Current state
 
-- **Project:** DerailValleyMod — *Yard Master Suite* (UMM / Harmony / net48).
-- **Plan:** v3.0 + CMD backlog — Phase 0 done; MVP = Diagnostic HUD (CMD-01…03).
-- **Shipped on `main`:** Phase 0; E1-S1 speed; E1-S2 grade/tonnage; **CMD-01** complete (01a–01d). Look-at priority flip; `Loco …` / `Cargo …` / `Empty Cargo`; **QOL-06** spherecast 250 m / 0.15 m (**PASS***); **QOL-07** cargo (**PASS**, Empty Cargo smoke deferred). Version **0.4.12** (`0188e88`). MU yellow 2-loco smoke deferred.
-- **Build / deploy:** `dotnet test YardMasterSuite.sln`; `dotnet build YardMasterSuite.sln -c Release`; `package.ps1 -NoArchive -OutputDirectory "...\Mods"`.
-- **Next:** CMD-02 Power Monitor; finish CMD-03 speed-limit alerts; MU 2-loco when available; Empty Cargo smoke next session.
+Official IDs: [PM_PLAN.md](PM_PLAN.md) (`Epic N` / `N.M`). Snapshot: [doc/PROJECT_STATUS.md](doc/PROJECT_STATUS.md).  
+Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_PLAN.
+
+| | |
+|--|--|
+| **Project** | *Yard Master Suite* (UMM / Harmony / net48) |
+| **MVP** | **Epic 1** System Monitor HUD |
+| **Version (`main`)** | **0.4.15** |
+| **Active branch** | `main` |
+
+**Shipped on `main`**
+
+- [x] **Epic 0** Safe Boot *(0.4 scaffold)*
+- [x] **1.1–1.7** Speed, grade/mass, integrity, couplers, look-at, **Load %** (**PASS\*** — color bands deferred)
+- [x] **4.1–4.3** Spherecast, cargo, hide loco top bar (**PASS**)
+
+**Next (Stage 1)**
+
+- [ ] **1.8** Motors → **1.9** Fluids → **1.10** speed-limit alerts
+- [ ] Re-smoke Load yellow/red when a hard pull is available
+- [ ] Later: dispatcher **3.x** · Digital Catalog **5.1**
+
+**Merge-ready:** `dotnet test YardMasterSuite.sln` · `dotnet build YardMasterSuite.sln -c Release` · deploy via `package.ps1`
 
 ## Run and test
 
