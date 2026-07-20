@@ -175,11 +175,25 @@ Top bar `Motors OK` / `Hot` / `Dead` after Load (green / yellow / red). Dead = f
 
 **Shipped decision (2026-07-20):** no HUD Hot-entry / hysteresis follow-up. Thermal protection → **Epic 2.2** governor.
 
+### 1.9 Fluid monitor *(was CMD-02c)* — `T2 power` — Tier 1 green v0.4.17 *(Tier 2 pending)*
+
+Top bar `Fuel N %` / `Oil N %` after Motors. Yellow (paired) if either &lt; 20%. Reads `ResourceContainer` FUEL/OIL normalized ports.
+
+**Sign-off**
+
+- [ ] Mod loads; Active; chip matches deploy (`v0.4.17`)
+- [ ] No usable loco — top bar **hidden**; no Fuel/Oil
+- [ ] Diesel with tanks — live Fuel and Oil % (match cab/service)
+- [ ] Either &lt; 20% — both Fuel and Oil yellow
+- [ ] Both ≥ 20% — plain (no yellow)
+- [ ] Steam / electric / no tank — `— Fuel` / `— Oil` fail-closed when top bar visible
+- [ ] `T2 power` fragment includes Fuel and Oil
+- [ ] Mod Off → On; no exceptions
+
 ### Later *(open)*
 
 | Story | Planned `T2` |
 |-------|----------------|
-| **1.9** | Extend `T2 power` (Fuel / Oil) |
 | **1.10** | Speed-limit topic (grade already shipped) |
 
 Recovery: [modding.md](doc/requirements/modding.md).

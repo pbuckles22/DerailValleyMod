@@ -15,7 +15,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 |--|--|
 | **Journey** | Stage 1 — Apprentice (“don’t blow up”) |
 | **MVP** | Epic 1 System Monitor HUD |
-| **Version (`main`)** | **0.4.16** |
+| **Version (`main`)** | **0.4.17** |
 
 ---
 
@@ -23,7 +23,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 | Branch | Role |
 |--------|------|
-| **`main`** | Integration — through **1.8** (v0.4.16) |
+| **`main`** | Integration — **1.9** fluids Tier 1 (v0.4.17); Tier 2 smoke next |
 
 ---
 
@@ -40,7 +40,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 ### Next (Stage 1)
 
-- [ ] **1.9** Fluid monitor
+- [~] **1.9** Fluid monitor — Tier 1 green; **Tier 2 smoke pending**
 - [ ] Re-smoke **1.7** yellow/red Load when practical
 - [ ] **1.10** Speed-limit alerts
 

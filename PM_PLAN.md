@@ -106,7 +106,7 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
   - [x] **1.8 Motor status** *(was CMD-02b)* — Top-bar `Motors` OK (green) / Hot (yellow) / Dead (red); `T2 power`. **Done / shipped** — Tier 1 + Tier 2 **PASS**. HUD is **current-state only** (OK = below threshold; Hot = above `overheatingTemperatureThreshold` while fuse alive; Dead = TMS trip / working &lt; total). **Cut:** early Hot / hysteresis / predictive dwell on the HUD — thermal mitigation belongs in **Epic 2**.
     > As an engineer, I want TM temperature status on the HUD so I can see if motors are currently overheating or already tripped.
 
-  - [ ] **1.9 Fluid monitor** *(was CMD-02c)* — Top-bar `Fuel %` + `Oil %`; yellow if either &lt; 20%; `T2 power`.
+  - [~] **1.9 Fluid monitor** *(was CMD-02c)* — Top-bar `Fuel %` + `Oil %`; yellow if either &lt; 20%; `T2 power`. **Tier 1 green** (v0.4.17) — awaits in-game Tier 2 smoke.
     > As an engineer, I want Fuel/Oil % on the HUD so I know when to return for service before a stall.
 
   - [~] **1.10 Terrain monitor** *(was CMD-03)* — Grade already in **1.2**; **remaining:** speed-limit alerts.
