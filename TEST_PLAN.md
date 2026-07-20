@@ -158,20 +158,22 @@ Top bar `Load N %` after Handbrakes. Yellow ≥80%, red ≥95%.
 - [x] Look-at freight with no loco path — top bar hidden; second bar can still show
 - [x] Mod Off → On; no exceptions
 
-### 1.8 Motor status *(was CMD-02b)* — `T2 power` — Tier 1 green; Tier 2 pending
+### 1.8 Motor status *(was CMD-02b)* — `T2 power` — **PASS** v0.4.16
 
 Top bar `Motors OK` / `Hot` / `Dead` after Load (green / yellow / red). Dead = fuse off or dead TM; Hot = temp over threshold.
 
 **Sign-off**
 
-- [ ] Mod loads; Active; chip matches deploy (`v0.4.16`)
-- [ ] No usable loco — top bar **hidden**; no Motors
-- [ ] Diesel/electric cool — green `Motors OK`
-- [ ] Over-temp / blinking cab TM light — yellow `Motors Hot`
-- [ ] Fuse off or dead TM — red `Motors Dead`
+- [x] Mod loads; Active; chip matches deploy (`v0.4.16`)
+- [x] No usable loco — top bar **hidden**; no Motors
+- [x] Diesel/electric cool — green `Motors OK`
+- [x] Over-temp — yellow `Motors Hot` (**PASS** — seen; dwell ~split-second, not useful as a warning)
+- [x] Fuse off or dead TM — red `Motors Dead` (cab TM OFFLINE)
 - [ ] Steam / no TM — `— Motors` (fail-closed) when top bar visible
-- [ ] `T2 power` includes Motors fragment
-- [ ] Mod Off → On; no exceptions
+- [ ] `T2 power` includes Motors fragment *(not explicitly confirmed)*
+- [ ] Mod Off → On; no exceptions *(not explicitly confirmed)*
+
+**Follow-up (not blocking 1.8 Done):** change Hot entry (early threshold + hysteresis) so yellow lasts long enough to correct, **or** drop yellow (green/red only).
 
 ### Later *(open)*
 

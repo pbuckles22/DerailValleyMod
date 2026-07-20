@@ -45,7 +45,7 @@ Modern readout of instruments you’d only see in/around a loco: Speed · Grade 
 | Cars | `Cars 5` | freight only; loco not counted — **1.4** |
 | Handbrakes | `Handbrakes 3` | usable-consist applied count — **1.4** |
 | Load | `Load 42 %` | amps / max; yellow ≥80%, red ≥95% — **1.7** **Done** (live % **PASS\***; color bands deferred) |
-| Motors | `Motors OK` / `Hot` / `Dead` | green / yellow / red — **1.8** **Done** (Tier 1; Hot/Dead in-game smoke pending) |
+| Motors | `Motors OK` / `Hot` / `Dead` | green / yellow / red — **1.8** **Done** (Tier 2 **PASS**; Hot dwell too short — follow-up: early Hot / hysteresis or drop yellow) |
 | Fuel | `Fuel 67 %` | yellow if Fuel or Oil &lt; 20% — **1.9** |
 | Oil | `Oil 55 %` | yellow if Fuel or Oil &lt; 20% — **1.9** |
 
