@@ -45,7 +45,7 @@ Modern readout of instruments you’d only see in/around a loco: Speed · Grade 
 | Cars | `Cars 5` | freight only; loco not counted — **1.4** |
 | Handbrakes | `Handbrakes 3` | usable-consist applied count — **1.4** |
 | Load | `Load 42 %` | amps / max; yellow ≥80%, red ≥95% — **1.7** **Done** (live % **PASS\***; color bands deferred) |
-| Motors | `Motors OK` / `Hot` / `Dead` | green / yellow / red — **1.8** |
+| Motors | `Motors OK` / `Hot` / `Dead` | green / yellow / red — **1.8** **Done** (Tier 1; Hot/Dead in-game smoke pending) |
 | Fuel | `Fuel 67 %` | yellow if Fuel or Oil &lt; 20% — **1.9** |
 | Oil | `Oil 55 %` | yellow if Fuel or Oil &lt; 20% — **1.9** |
 
@@ -63,7 +63,7 @@ Look-at wins; standing fallback when crosshair is not on a car. Hidden when no t
 | Cargo | `Cargo Steel Rails` | `Empty Cargo` — **4.2** |
 | Loco | `Loco DE6` | *(omit if not a loco)* — **1.6** |
 
-**Build order (power):** **1.7** → **1.8** → **1.9**, then **1.10** speed-limit alerts (grade already in **1.2**).
+**Build order (power):** **1.7**/**1.8** done → **1.9**, then **1.10** speed-limit alerts (grade already in **1.2**).
 
 ---
 

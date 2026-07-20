@@ -158,11 +158,26 @@ Top bar `Load N %` after Handbrakes. Yellow ≥80%, red ≥95%.
 - [x] Look-at freight with no loco path — top bar hidden; second bar can still show
 - [x] Mod Off → On; no exceptions
 
+### 1.8 Motor status *(was CMD-02b)* — `T2 power` — Tier 1 green; Tier 2 pending
+
+Top bar `Motors OK` / `Hot` / `Dead` after Load (green / yellow / red). Dead = fuse off or dead TM; Hot = temp over threshold.
+
+**Sign-off**
+
+- [ ] Mod loads; Active; chip matches deploy (`v0.4.16`)
+- [ ] No usable loco — top bar **hidden**; no Motors
+- [ ] Diesel/electric cool — green `Motors OK`
+- [ ] Over-temp / blinking cab TM light — yellow `Motors Hot`
+- [ ] Fuse off or dead TM — red `Motors Dead`
+- [ ] Steam / no TM — `— Motors` (fail-closed) when top bar visible
+- [ ] `T2 power` includes Motors fragment
+- [ ] Mod Off → On; no exceptions
+
 ### Later *(open)*
 
 | Story | Planned `T2` |
 |-------|----------------|
-| **1.8 / 1.9** | Extend `T2 power` (Motors / Fuel / Oil) |
+| **1.9** | Extend `T2 power` (Fuel / Oil) |
 | **1.10** | Speed-limit topic (grade already shipped) |
 
 Recovery: [modding.md](doc/requirements/modding.md).

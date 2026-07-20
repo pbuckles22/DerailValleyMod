@@ -117,19 +117,19 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 |--|--|
 | **Project** | *Yard Master Suite* (UMM / Harmony / net48) |
 | **MVP** | **Epic 1** System Monitor HUD |
-| **Version (`main`)** | **0.4.15** |
+| **Version (`main`)** | **0.4.16** |
 | **Active branch** | `main` |
 
 **Shipped on `main`**
 
 - [x] **Epic 0** Safe Boot *(0.4 scaffold)*
-- [x] **1.1–1.7** Speed, grade/mass, integrity, couplers, look-at, **Load %** (**PASS\*** — color bands deferred)
+- [x] **1.1–1.8** Speed, grade/mass, integrity, couplers, look-at, **Load %**, **Motors** (Hot/Dead smoke pending)
 - [x] **4.1–4.3** Spherecast, cargo, hide loco top bar (**PASS**)
 
 **Next (Stage 1)**
 
-- [ ] **1.8** Motors → **1.9** Fluids → **1.10** speed-limit alerts
-- [ ] Re-smoke Load yellow/red when a hard pull is available
+- [ ] **1.9** Fluids → **1.10** speed-limit alerts
+- [ ] Re-smoke Load yellow/red + Motors Hot/Dead when practical
 - [ ] Later: dispatcher **3.x** · Digital Catalog **5.1**
 
 **Merge-ready:** `dotnet test YardMasterSuite.sln` · `dotnet build YardMasterSuite.sln -c Release` · deploy via `package.ps1`

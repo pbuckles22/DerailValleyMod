@@ -57,6 +57,7 @@ public sealed class MonitorHudDriver : MonoBehaviour
     private bool _hasPowerDebug;
     private bool _lastPowerHasLoco;
     private string _lastPowerLoad = "";
+    private string _lastPowerMotors = "";
 
     private void OnEnable()
     {
@@ -100,12 +101,13 @@ public sealed class MonitorHudDriver : MonoBehaviour
         PowerDebugSnapshot? previous = null;
         if (_hasPowerDebug)
         {
-            previous = new PowerDebugSnapshot(_lastPowerHasLoco, _lastPowerLoad);
+            previous = new PowerDebugSnapshot(_lastPowerHasLoco, _lastPowerLoad, _lastPowerMotors);
         }
 
         var line = Tier2PowerDebug.NextLogMessage(previous, snap);
         _lastPowerHasLoco = snap.HasLoco;
         _lastPowerLoad = snap.Load;
+        _lastPowerMotors = snap.Motors;
         _hasPowerDebug = true;
         if (line != null)
         {
@@ -229,7 +231,7 @@ public sealed class MonitorHudDriver : MonoBehaviour
 
         if (_trainLabel != null)
         {
-            // Rich-text color tags (Load warn/crit) inflate CalcSize; measure plain text.
+            // Rich-text color tags (Load / Motors) inflate CalcSize; measure plain text.
             var trainMeasure = StripRichText(_trainLabel);
             var trainWidth = Mathf.Max(520f, _trainStyle!.CalcSize(new GUIContent(trainMeasure)).x + 12f);
             GUI.Label(new Rect(Pad, Pad, trainWidth, Height), _trainLabel, _trainStyle);

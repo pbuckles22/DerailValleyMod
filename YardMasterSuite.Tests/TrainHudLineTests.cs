@@ -13,9 +13,10 @@ public class TrainHudLineTests
             "Mass 240 t",
             "Cars 8",
             "Handbrakes 3",
-            "Load 42 %");
+            "Load 42 %",
+            "Motors OK");
         Assert.Equal(
-            "Speed 36 km/h  |  Grade +1.2 %  |  Mass 240 t  |  Cars 8  |  Handbrakes 3  |  Load 42 %",
+            "Speed 36 km/h  |  Grade +1.2 %  |  Mass 240 t  |  Cars 8  |  Handbrakes 3  |  Load 42 %  |  Motors OK",
             line);
     }
 
@@ -23,7 +24,7 @@ public class TrainHudLineTests
     public void NullLine_is_all_placeholders()
     {
         Assert.Equal(
-            "— Speed  |  — Grade  |  — Mass  |  — Cars  |  — Handbrakes  |  — Load",
+            "— Speed  |  — Grade  |  — Mass  |  — Cars  |  — Handbrakes  |  — Load  |  — Motors",
             TrainHudLine.NullLine());
     }
 }
