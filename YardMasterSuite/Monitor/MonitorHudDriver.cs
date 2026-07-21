@@ -61,13 +61,9 @@ public sealed class MonitorHudDriver : MonoBehaviour
     private string _lastPowerFuel = "";
     private string _lastPowerOil = "";
 
-    private void OnEnable()
-    {
-        RebuildStyles();
-    }
-
     private void OnDisable()
     {
+        // Styles touch GUI.skin — only build them from OnGUI (EnsureStyles).
         DestroyStyles();
     }
 

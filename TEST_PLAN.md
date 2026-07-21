@@ -175,20 +175,22 @@ Top bar `Motors OK` / `Hot` / `Dead` after Load (green / yellow / red). Dead = f
 
 **Shipped decision (2026-07-20):** no HUD Hot-entry / hysteresis follow-up. Thermal protection → **Epic 2.2** governor.
 
-### 1.9 Fluid monitor *(was CMD-02c)* — `T2 power` — Tier 1 green v0.4.17 *(Tier 2 pending)*
+### 1.9 Fluid monitor *(was CMD-02c)* — `T2 power` — **PASS** v0.4.18
 
-Top bar `Fuel N %` / `Oil N %` after Motors. Yellow (paired) if either &lt; 20%. Reads `ResourceContainer` FUEL/OIL normalized ports.
+Top bar `Fuel N %` / `Oil N %` after Motors. Yellow (paired) if either &lt; 20%; red (paired) if either &lt; 5%. Reads `ResourceContainer` FUEL/OIL normalized ports.
 
 **Sign-off**
 
-- [ ] Mod loads; Active; chip matches deploy (`v0.4.17`)
-- [ ] No usable loco — top bar **hidden**; no Fuel/Oil
-- [ ] Diesel with tanks — live Fuel and Oil % (match cab/service)
-- [ ] Either &lt; 20% — both Fuel and Oil yellow
-- [ ] Both ≥ 20% — plain (no yellow)
-- [ ] Steam / electric / no tank — `— Fuel` / `— Oil` fail-closed when top bar visible
-- [ ] `T2 power` fragment includes Fuel and Oil
-- [ ] Mod Off → On; no exceptions
+- [x] Mod loads; Active; chip matches deploy (`v0.4.18`)
+- [x] No usable loco — top bar **hidden**; no Fuel/Oil
+- [x] Diesel with tanks — live Fuel and Oil % (match cab/service)
+- [x] Either &lt; 20% — both Fuel and Oil yellow (forced 19% / 5% smoke)
+- [x] Both ≥ 20% — plain (forced 20% + live high %)
+- [x] Either &lt; 5% — both Fuel and Oil red (forced 4% smoke)
+- [ ] Steam / electric / no tank — `— Fuel` / `— Oil` fail-closed when top bar visible *(deferred)*
+- [x] `T2 power` fragment includes Fuel and Oil
+- [x] Mod Off → On; no exceptions
+- [x] Load-time `GUI.skin` ArgumentException fixed (styles built only in `OnGUI`)
 
 ### Later *(open)*
 

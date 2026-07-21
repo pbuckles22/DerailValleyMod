@@ -4,14 +4,18 @@ namespace YardMasterSuite.Core;
 
 /// <summary>
 /// Pure fuel/oil formatting for the train HUD bar (container amount / capacity).
-/// Yellow when either fluid is below the warning threshold (paired cue).
+/// Yellow / red when either fluid is below its threshold (paired cue).
 /// </summary>
 public static class FluidDisplay
 {
     public const float WarningThresholdPercent = 20f;
+    public const float CriticalThresholdPercent = 5f;
 
     /// <summary>Yellow — matches MU warning tone / Load warning.</summary>
     public const string WarningColor = "#FFD400";
+
+    /// <summary>Red — matches Load critical tone.</summary>
+    public const string CriticalColor = "#FF5555";
 
     public static float? PercentFromAmount(float? amount, float? capacity)
     {
@@ -33,6 +37,17 @@ public static class FluidDisplay
         return ClampPercent(normalized01.Value * 100f);
     }
 
+    public static bool IsCritical(float? percent)
+    {
+        if (percent is null)
+        {
+            return false;
+        }
+
+        var whole = (int)Math.Round(percent.Value, MidpointRounding.AwayFromZero);
+        return whole < CriticalThresholdPercent;
+    }
+
     public static bool IsLow(float? percent)
     {
         if (percent is null)
@@ -45,18 +60,33 @@ public static class FluidDisplay
     }
 
     public static string FormatFuel(float? fuelPercent) =>
-        FormatCore("Fuel", fuelPercent, richText: false, warn: false);
+        FormatCore("Fuel", fuelPercent, richText: false, severity: FluidSeverity.None);
 
     public static string FormatOil(float? oilPercent) =>
-        FormatCore("Oil", oilPercent, richText: false, warn: false);
+        FormatCore("Oil", oilPercent, richText: false, severity: FluidSeverity.None);
 
     public static string FormatFuelHud(float? fuelPercent, float? oilPercent) =>
-        FormatCore("Fuel", fuelPercent, richText: true, warn: IsLow(fuelPercent) || IsLow(oilPercent));
+        FormatCore("Fuel", fuelPercent, richText: true, severity: PairSeverity(fuelPercent, oilPercent));
 
     public static string FormatOilHud(float? fuelPercent, float? oilPercent) =>
-        FormatCore("Oil", oilPercent, richText: true, warn: IsLow(fuelPercent) || IsLow(oilPercent));
+        FormatCore("Oil", oilPercent, richText: true, severity: PairSeverity(fuelPercent, oilPercent));
 
-    private static string FormatCore(string label, float? percent, bool richText, bool warn)
+    private static FluidSeverity PairSeverity(float? fuelPercent, float? oilPercent)
+    {
+        if (IsCritical(fuelPercent) || IsCritical(oilPercent))
+        {
+            return FluidSeverity.Critical;
+        }
+
+        if (IsLow(fuelPercent) || IsLow(oilPercent))
+        {
+            return FluidSeverity.Warning;
+        }
+
+        return FluidSeverity.None;
+    }
+
+    private static string FormatCore(string label, float? percent, bool richText, FluidSeverity severity)
     {
         if (percent is null)
         {
@@ -65,12 +95,13 @@ public static class FluidDisplay
 
         var whole = (int)Math.Round(percent.Value, MidpointRounding.AwayFromZero);
         var text = $"{label} {whole} %";
-        if (!richText || !warn)
+        if (!richText || severity == FluidSeverity.None)
         {
             return text;
         }
 
-        return $"<color={WarningColor}>{text}</color>";
+        var color = severity == FluidSeverity.Critical ? CriticalColor : WarningColor;
+        return $"<color={color}>{text}</color>";
     }
 
     private static float ClampPercent(float value)
@@ -86,5 +117,12 @@ public static class FluidDisplay
         }
 
         return value;
+    }
+
+    private enum FluidSeverity
+    {
+        None,
+        Warning,
+        Critical,
     }
 }

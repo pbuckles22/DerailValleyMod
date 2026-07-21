@@ -76,6 +76,31 @@ public class FluidDisplayTests
     }
 
     [Fact]
+    public void FormatHud_red_when_either_fluid_below_5()
+    {
+        Assert.Equal(
+            $"<color={FluidDisplay.WarningColor}>Fuel 5 %</color>",
+            FluidDisplay.FormatFuelHud(5f, 50f));
+        Assert.Equal(
+            $"<color={FluidDisplay.WarningColor}>Oil 50 %</color>",
+            FluidDisplay.FormatOilHud(5f, 50f));
+
+        Assert.Equal(
+            $"<color={FluidDisplay.CriticalColor}>Fuel 4 %</color>",
+            FluidDisplay.FormatFuelHud(4f, 50f));
+        Assert.Equal(
+            $"<color={FluidDisplay.CriticalColor}>Oil 50 %</color>",
+            FluidDisplay.FormatOilHud(4f, 50f));
+
+        Assert.Equal(
+            $"<color={FluidDisplay.CriticalColor}>Fuel 67 %</color>",
+            FluidDisplay.FormatFuelHud(67f, 3f));
+        Assert.Equal(
+            $"<color={FluidDisplay.CriticalColor}>Oil 3 %</color>",
+            FluidDisplay.FormatOilHud(67f, 3f));
+    }
+
+    [Fact]
     public void FormatHud_placeholder_stays_plain_even_when_peer_low()
     {
         Assert.Equal("— Oil", FluidDisplay.FormatOilHud(10f, null));
@@ -85,10 +110,14 @@ public class FluidDisplayTests
     }
 
     [Fact]
-    public void IsLow_false_for_null_and_at_or_above_20()
+    public void IsLow_and_IsCritical_use_whole_percent_bands()
     {
         Assert.False(FluidDisplay.IsLow(null));
+        Assert.False(FluidDisplay.IsCritical(null));
         Assert.False(FluidDisplay.IsLow(20f));
         Assert.True(FluidDisplay.IsLow(19.4f));
+        Assert.False(FluidDisplay.IsCritical(5f));
+        Assert.True(FluidDisplay.IsCritical(4.4f));
+        Assert.True(FluidDisplay.IsLow(4f));
     }
 }

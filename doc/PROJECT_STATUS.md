@@ -15,7 +15,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 |--|--|
 | **Journey** | Stage 1 — Apprentice (“don’t blow up”) |
 | **MVP** | Epic 1 System Monitor HUD |
-| **Version (`main`)** | **0.4.17** |
+| **Version (`main`)** | **0.4.18** |
 
 ---
 
@@ -23,7 +23,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 | Branch | Role |
 |--------|------|
-| **`main`** | Integration — **1.9** fluids Tier 1 (v0.4.17); Tier 2 smoke next |
+| **`main`** | Integration — through **1.9** fluids (v0.4.18) |
 
 ---
 
@@ -40,9 +40,8 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 ### Next (Stage 1)
 
-- [~] **1.9** Fluid monitor — Tier 1 green; **Tier 2 smoke pending**
-- [ ] Re-smoke **1.7** yellow/red Load when practical
 - [ ] **1.10** Speed-limit alerts
+- [ ] Re-smoke **1.7** yellow/red Load when practical
 
 ### Next (Epic 2 prep)
 
@@ -63,6 +62,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 ## Recently completed
 
+- [x] **1.9** Fuel/Oil % — Tier 1 + Tier 2 **PASS** (yellow &lt;20%, red &lt;5% paired); GUI load fix (v0.4.18)
 - [x] **1.8** Motors OK / Hot / Dead — Tier 1 + Tier 2 **PASS**; shipped as current-state indicator
 - [x] **4.3** Hide loco gadget top bar — **PASS**
 - [x] **1.7** Load % — **PASS\*** (live %; color bands deferred)
