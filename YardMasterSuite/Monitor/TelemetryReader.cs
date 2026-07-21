@@ -2,11 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using DV.Logic.Job;
+using DV.Signs;
 using DV.ThingTypes;
 using LocoSim.Implementations;
 using LocoSim.Resources;
 using UnityEngine;
 using YardMasterSuite.Core;
+using Arc = BezierArcApproximation.Arc;
+using Object = UnityEngine.Object;
 
 namespace YardMasterSuite.Monitor;
 
@@ -34,6 +37,20 @@ internal static class TelemetryReader
 
     /// <summary>Cached motor-status fields for private <see cref="TractionMotorSet"/> members.</summary>
     private static MotorSetFieldMap? _motorSetFields;
+
+    /// <summary>Per-track geometry speed limit (km/h), same ladder as SignPlacer / DVRouteManager.</summary>
+    private static readonly Dictionary<int, float?> TrackSpeedLimitCache = new();
+
+    private static readonly List<Arc> ArcScratch = new();
+
+    /// <summary>Refresh loaded <see cref="SignDebug"/> boards periodically (streaming scenes).</summary>
+    private const float SignDebugRefreshSeconds = 1.5f;
+
+    /// <summary>How far behind the loco (m) to look for the governing posted board.</summary>
+    private const float BoardLookbackMeters = 300f;
+
+    private static SignDebug[] _signDebugCache = Array.Empty<SignDebug>();
+    private static float _signDebugCacheAt = -999f;
 
     /// <summary>Call once at the start of each Monitor HUD refresh.</summary>
     public static void BeginHudTick()
@@ -189,6 +206,126 @@ internal static class TelemetryReader
         {
             return null;
         }
+    }
+
+    /// <summary>
+    /// Governing speed limit (km/h): last posted board behind the loco when available;
+    /// otherwise current-track geometry (SignPlacer ladder).
+    /// </summary>
+    public static float? TryGetSpeedLimitKmh()
+    {
+        try
+        {
+            var loco = TryGetUsableLoco();
+            if (loco == null)
+            {
+                return null;
+            }
+
+            var fromBoard = TryGetPostedBoardSpeedLimitKmh(loco);
+            if (fromBoard != null)
+            {
+                return fromBoard;
+            }
+
+            var bogie = loco.FrontBogie ?? loco.RearBogie;
+            var track = bogie?.track;
+            return track == null ? null : GetOrComputeTrackSpeedLimitKmh(track);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Most recent speed board behind the loco (travel direction), within lookback.
+    /// Uses streamed <see cref="SignDebug"/> text (digit × 10), same convention as dv-hud.
+    /// </summary>
+    private static float? TryGetPostedBoardSpeedLimitKmh(TrainCar loco)
+    {
+        RefreshSignDebugCacheIfNeeded();
+        if (_signDebugCache.Length == 0)
+        {
+            return null;
+        }
+
+        var pos = loco.transform.position;
+        var fwd = TravelForward(loco);
+        SignDebug? best = null;
+        var bestAlong = float.NegativeInfinity;
+
+        foreach (var sign in _signDebugCache)
+        {
+            if (sign == null)
+            {
+                continue;
+            }
+
+            var delta = sign.transform.position - pos;
+            if (delta.sqrMagnitude > BoardLookbackMeters * BoardLookbackMeters)
+            {
+                continue;
+            }
+
+            var along = Vector3.Dot(delta, fwd);
+            // Behind the loco in travel direction (just passed).
+            if (along >= 0f || along < -BoardLookbackMeters)
+            {
+                continue;
+            }
+
+            if (along <= bestAlong)
+            {
+                continue;
+            }
+
+            if (SpeedLimitBoardParser.ParseKmh(sign.text) == null)
+            {
+                continue;
+            }
+
+            bestAlong = along;
+            best = sign;
+        }
+
+        return best == null ? null : SpeedLimitBoardParser.ParseKmh(best.text);
+    }
+
+    private static void RefreshSignDebugCacheIfNeeded()
+    {
+        if (Time.unscaledTime - _signDebugCacheAt < SignDebugRefreshSeconds)
+        {
+            return;
+        }
+
+        _signDebugCacheAt = Time.unscaledTime;
+        try
+        {
+            _signDebugCache = Object.FindObjectsOfType<SignDebug>() ?? Array.Empty<SignDebug>();
+        }
+        catch
+        {
+            _signDebugCache = Array.Empty<SignDebug>();
+        }
+    }
+
+    private static Vector3 TravelForward(TrainCar loco)
+    {
+        var fwd = loco.transform.forward;
+        try
+        {
+            if (loco.GetForwardSpeed() < 0f)
+            {
+                fwd = -fwd;
+            }
+        }
+        catch
+        {
+            // keep transform forward
+        }
+
+        return fwd;
     }
 
     public static float? TryGetGradePercent()
@@ -361,8 +498,14 @@ internal static class TelemetryReader
 
         var fuel = TryGetFuelPercent();
         var oil = TryGetOilPercent();
+        var speedMps = TryGetAbsSpeedMetersPerSecond();
+        var speedKmh = speedMps is null
+            ? (float?)null
+            : SpeedDisplay.ToKilometersPerHour(speedMps.Value);
+        var limitKmh = TryGetSpeedLimitKmh();
         return TrainHudLine.Format(
-            SpeedDisplay.FormatFromMetersPerSecond(TryGetAbsSpeedMetersPerSecond()),
+            SpeedDisplay.FormatFromMetersPerSecond(speedMps),
+            SpeedLimitDisplay.FormatHud(speedKmh, limitKmh),
             GradeDisplay.FormatPercent(TryGetGradePercent()),
             TonnageDisplay.FormatFromKilograms(TryGetConsistMassKilograms()),
             CarsDisplay.Format(TryGetConsistCarCount()),
@@ -481,6 +624,60 @@ internal static class TelemetryReader
             usable ? MotorDisplay.Format(TryGetMotorStatus()) : MotorDisplay.Format(null),
             usable ? FluidDisplay.FormatFuel(TryGetFuelPercent()) : FluidDisplay.FormatFuel(null),
             usable ? FluidDisplay.FormatOil(TryGetOilPercent()) : FluidDisplay.FormatOil(null));
+    }
+
+    internal static SpeedLimitDebugSnapshot CurrentSpeedLimitDebugSnapshot()
+    {
+        var usable = HasUsableLocoTrain();
+        return new SpeedLimitDebugSnapshot(
+            usable,
+            usable
+                ? SpeedDisplay.FormatFromMetersPerSecond(TryGetAbsSpeedMetersPerSecond())
+                : SpeedDisplay.FormatFromMetersPerSecond(null),
+            usable ? SpeedLimitDisplay.Format(TryGetSpeedLimitKmh()) : SpeedLimitDisplay.Format(null));
+    }
+
+    private static float? GetOrComputeTrackSpeedLimitKmh(RailTrack track)
+    {
+        var id = track.GetInstanceID();
+        if (TrackSpeedLimitCache.TryGetValue(id, out var cached))
+        {
+            return cached;
+        }
+
+        var limit = ComputeTrackSpeedLimitKmh(track);
+        TrackSpeedLimitCache[id] = limit;
+        return limit;
+    }
+
+    /// <summary>
+    /// Same approach as DVRouteManager: BezierArcApproximation min radius → SignPlacer table.
+    /// </summary>
+    private static float? ComputeTrackSpeedLimitKmh(RailTrack track)
+    {
+        var curve = track.curve;
+        if (curve == null)
+        {
+            return null;
+        }
+
+        ArcScratch.Clear();
+        BezierArcApproximation.CalculateArcs(curve, 0.5f, ArcScratch);
+        if (ArcScratch.Count == 0)
+        {
+            return 120f;
+        }
+
+        var minRadius = float.PositiveInfinity;
+        foreach (var arc in ArcScratch)
+        {
+            if (arc.r > 0f && arc.r < minRadius)
+            {
+                minRadius = arc.r;
+            }
+        }
+
+        return SpeedLimitGeometry.MaxSpeedForMinRadius(minRadius);
     }
 
     /// <summary>Standing fallback second bar (hidden when look-at wins).</summary>

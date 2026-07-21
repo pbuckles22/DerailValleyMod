@@ -61,6 +61,11 @@ public sealed class MonitorHudDriver : MonoBehaviour
     private string _lastPowerFuel = "";
     private string _lastPowerOil = "";
 
+    private bool _hasLimitDebug;
+    private bool _lastLimitHasLoco;
+    private string _lastLimitSpeed = "";
+    private string _lastLimit = "";
+
     private void OnDisable()
     {
         // Styles touch GUI.skin — only build them from OnGUI (EnsureStyles).
@@ -86,10 +91,31 @@ public sealed class MonitorHudDriver : MonoBehaviour
             EmitLookAtDebugIfNeeded();
             EmitCouplerDebugIfNeeded();
             EmitPowerDebugIfNeeded();
+            EmitSpeedLimitDebugIfNeeded();
         }
         finally
         {
             TelemetryReader.EndHudTick();
+        }
+    }
+
+    private void EmitSpeedLimitDebugIfNeeded()
+    {
+        var snap = TelemetryReader.CurrentSpeedLimitDebugSnapshot();
+        SpeedLimitDebugSnapshot? previous = null;
+        if (_hasLimitDebug)
+        {
+            previous = new SpeedLimitDebugSnapshot(_lastLimitHasLoco, _lastLimitSpeed, _lastLimit);
+        }
+
+        var line = Tier2SpeedLimitDebug.NextLogMessage(previous, snap);
+        _lastLimitHasLoco = snap.HasLoco;
+        _lastLimitSpeed = snap.Speed;
+        _lastLimit = snap.Limit;
+        _hasLimitDebug = true;
+        if (line != null)
+        {
+            Main.Log(line);
         }
     }
 

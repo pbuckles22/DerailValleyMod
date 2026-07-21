@@ -11,7 +11,10 @@
   <!-- Derail Valley — resolved via Directory.Build.targets (local, gitignored) -->
   <ItemGroup>
     <Reference Include="Assembly-CSharp" />
+    <Reference Include="BezierCurves" />
     <Reference Include="DV.BrakeSystem" />
+    <Reference Include="DV.RailTrack" />
+    <Reference Include="DV.SignPlacer" />
     <Reference Include="DV.Simulation" />
     <Reference Include="DV.ThingTypes" />
     <Reference Include="DV.Utils" />

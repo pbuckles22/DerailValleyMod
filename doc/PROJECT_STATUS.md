@@ -15,7 +15,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 |--|--|
 | **Journey** | Stage 1 — Apprentice (“don’t blow up”) |
 | **MVP** | Epic 1 System Monitor HUD |
-| **Version (`main`)** | **0.4.18** |
+| **Version (`main`)** | **0.4.20** |
 
 ---
 
@@ -23,7 +23,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 | Branch | Role |
 |--------|------|
-| **`main`** | Integration — through **1.9** fluids (v0.4.18) |
+| **`main`** | Integration — through **1.10** Limit (v0.4.20) |
 
 ---
 
@@ -40,7 +40,8 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 ### Next (Stage 1)
 
-- [ ] **1.10** Speed-limit alerts
+- [ ] **1.11** Speed limit — next / ↑↓
+- [ ] **4.4** Next station distance *(scheduled under Epic 4; after Limit stories)*
 - [ ] Re-smoke **1.7** yellow/red Load when practical
 
 ### Next (Epic 2 prep)
@@ -62,6 +63,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 ## Recently completed
 
+- [x] **1.10** Speed Limit — boards + geometry fallback; GYR; quiet `T2 limit` (v0.4.20)
 - [x] **1.9** Fuel/Oil % — Tier 1 + Tier 2 **PASS** (yellow &lt;20%, red &lt;5% paired); GUI load fix (v0.4.18)
 - [x] **1.8** Motors OK / Hot / Dead — Tier 1 + Tier 2 **PASS**; shipped as current-state indicator
 - [x] **4.3** Hide loco gadget top bar — **PASS**

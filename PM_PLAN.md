@@ -48,7 +48,7 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
 | **1.1–1.2** | E1-S1 / E1-S2 | Speed / grade+mass baseline |
 | **1.3–1.6** | CMD-01a–d | Integrity monitor |
 | **1.7–1.9** | CMD-02a–c | Power monitor |
-| **1.10** | CMD-03 | Terrain / speed limits |
+| **1.10–1.11** | CMD-03 | Terrain / speed limits (current → next) |
 | **2.x** | E2-S1, CMD-04/05 | Governor Mode |
 | **3.1** | CMD-06 | Consist teleport |
 | **3.3–3.5** | *(new / was parking-lot path tracer)* | Dispatcher: remote switch → manual path check → auto-route |
@@ -109,10 +109,13 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
   - [x] **1.9 Fluid monitor** *(was CMD-02c)* — Top-bar `Fuel %` + `Oil %`; yellow if either &lt; 20%; red if either &lt; 5% (paired); `T2 power`. **Done / shipped** — Tier 1 + Tier 2 **PASS** (v0.4.18). Steam/electric placeholders deferred.
     > As an engineer, I want Fuel/Oil % on the HUD so I know when to return for service before a stall.
 
-  - [~] **1.10 Terrain monitor** *(was CMD-03)* — Grade already in **1.2**; **remaining:** speed-limit alerts.
-    > As a driver, I want speed-limit alerts so I do not overspeed a board I missed.
+  - [x] **1.10 Speed limit — current** *(was CMD-03)* — Top-bar single `Limit N` after Speed; yellow within 5 km/h of limit; red when over; `T2 limit` (Limit/loco changes only). **Authority:** posted `SignDebug` boards (digit × 10); geometry / SignPlacer ladder as fallback. Grade already in **1.2**. **Done / shipped** — Tier 1 + Tier 2 **PASS** (v0.4.20).
+    > As a driver, I want the current governing speed limit on the HUD so I do not overspeed the board I’m under right now.
 
-  **Build order (Stage 1 open work):** **1.10** alerts; re-smoke Load yellow/red when practical. *(Do not reopen **1.8** HUD thermal prediction.)*
+  - [ ] **1.11 Speed limit — next / trend** — Same single `Limit` badge (no second km/h chip): show **next** lower/higher limit along the path with a clear ↑ (green) / ↓ (red or yellow) cue; lookahead so the cue appears before the board/curve. Builds on **1.10** board+fallback authority.
+    > As a driver, I want an up/down cue for the next speed limit so I can brake or accelerate before I miss the change.
+
+  **Build order (Stage 1 open work):** **1.11** next/↑↓ → then Epic 2; re-smoke Load yellow/red when practical. *(Do not reopen **1.8** HUD thermal prediction. Do not reorder the full top-bar strip here — that is parking-lot / Epic 4 IA.)*
 
 ---
 
@@ -155,8 +158,11 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
   - [x] **4.2 Cargo on second bar** *(was QOL-07)* — Freight `Cargo …` / `Empty Cargo`. *Empty Cargo smoke deferred.*
     > As a yard scout, I want cargo named on the second bar so I know what a car is carrying.
 
-  - [x] **4.3 Hide loco gadget top bar** *(was QOL-08)* — Show Speed/Grade/Mass/Cars/Handbrakes/Load/Motors/Fuel/Oil **only** on a usable loco train; otherwise **hide** (no red dash wall). Reuse usable-train + look-at target. Supersedes **1.4** red-null UI. **Done** — Tier 1 + Tier 2 **PASS** (v0.4.14+)
+  - [x] **4.3 Hide loco gadget top bar** *(was QOL-08)* — Show Speed/Limit/Grade/Mass/Cars/Handbrakes/Load/Motors/Fuel/Oil **only** on a usable loco train; otherwise **hide** (no red dash wall). Reuse usable-train + look-at target. Supersedes **1.4** red-null UI. **Done** — Tier 1 + Tier 2 **PASS** (v0.4.14+)
     > As a player, I want loco gadget readouts only when a loco is relevant — like cab instruments — not a wall of dashes in the yard.
+
+  - [ ] **4.4 Next station distance** *(linear nav)* — When Fuel/Oil are in warn/critical, optional `Next: … [N km]` using live station data (not a static mileage table); fail-closed if path/station unknown. *No GPS minimap.*
+    > As an engineer, I want distance to the next station when fluids are low so I know whether I can make it without a map overlay.
 
 ---
 
@@ -177,6 +183,7 @@ Not scheduled — discuss when Journey stage friction demands it:
 - [ ] Manual Transmission Override
 - [ ] Mounting Suite / precision mounting
 - [ ] Engine Temp Soft Governor *(if distinct from **2.2**)*
+- [ ] **HUD strip IA reorder** — center-out / “immediate → tactical → strategic” reshuffle of the top bar (Speed·Limit·Load vs Fuel/Oil). Defer until Stage 1 Limit stories (**1.10**/**1.11**) are stable; do not dual-number Limit chips.
 
 ---
 
@@ -194,5 +201,6 @@ net48 + UMM + Harmony against live game DLLs — treat game updates as hostile:
 
 - **`TrainCar` / player / look-at path** — signature or layer changes break target resolution and most of **Epic 1** (standing, look-at, usable-train walk).
 - **`SimController` / `LocoSim` ports** (`TractionMotor*`, fuel/oil containers) — renames or port-id churn break **1.7–1.9** power readouts (and later **Epic 2** governors that soft-write the same surface).
+- **`RailTrack` / bogie / speed boards (`SignDebug` / SignPlacer)** — break **1.10**/**1.11** Limit authority and lookahead.
 - **Coupler / brake / MU APIs** — break **1.3–1.5** marks and the usable-train yard rule (top bar visibility for **4.3**).
 - **After any DV patch:** re-run Tier 1, redeploy, confirm HUD `v…` chip, then smoke the active Epic 1 checklist in [TEST_PLAN.md](TEST_PLAN.md). Prefer fail-closed (log + self-disable) over crashing the session.
