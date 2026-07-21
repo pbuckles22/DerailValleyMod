@@ -117,22 +117,18 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 |--|--|
 | **Project** | *Yard Master Suite* (UMM / Harmony / net48) |
 | **MVP** | **Epic 1** System Monitor HUD |
-| **Version (`main`)** | **0.4.17** |
+| **Version (`main`)** | **0.4.18** |
 | **Active branch** | `main` |
 
 **Shipped on `main`**
 
 - [x] **Epic 0** Safe Boot *(0.4 scaffold)*
-- [x] **1.1–1.8** Speed, grade/mass, integrity, couplers, look-at, **Load %**, **Motors** (Tier 2 **PASS**; HUD current-state only — Hot dwell **cut**)
+- [x] **1.1–1.9** Speed, grade/mass, integrity, couplers, look-at, **Load %**, **Motors**, **Fuel/Oil** (Tier 2 **PASS**; Motors current-state only — Hot dwell **cut**)
 - [x] **4.1–4.3** Spherecast, cargo, hide loco top bar (**PASS**)
-
-**In progress**
-
-- [~] **1.9** Fluids (`Fuel %` / `Oil %`) — Tier 1 green (v0.4.17); **Tier 2 smoke pending**
 
 **Next**
 
-- [ ] Finish **1.9** Tier 2 → **1.10** speed-limit alerts *(Stage 1 remaining)*
+- [ ] **1.10** speed-limit alerts *(Stage 1 remaining)*
 - [ ] **2.1** Three-Gate → **2.2** Thermal governor *(active protection; do not reopen **1.8** HUD prediction)*
 - [ ] Re-smoke Load yellow/red when practical
 - [ ] Later: dispatcher **3.x** · Digital Catalog **5.1**

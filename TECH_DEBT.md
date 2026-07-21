@@ -35,7 +35,7 @@ Isolated + workaround + revisit trigger.
 - [ ] **Dead integrity Tier-2 helpers** — `CurrentIntegrityDebugSnapshot` / `Tier2IntegrityDebug` superseded by `T2 consist` / `local-car` / `look-at` / `coupler`. Delete on a cleanup pass.
 - [x] **Per-tick target cache** — standing / look-at / target / loco cached per HUD refresh *(landed with **1.7** WIP)*. Re-open only if profiling shows leftover cost.
 - [ ] **Private TractionMotorSet reflection** — `MotorSetFieldMap` reads private field names; pin typed/public ports after more loco smoke or if a DV patch breaks them.
-- [ ] **Extract Load/Motors readers from TelemetryReader** — file grew with **1.7**/**1.8**; split when **1.9** lands or editing becomes painful.
+- [ ] **Extract Load/Motors/fluids readers from TelemetryReader** — file grew with **1.7**–**1.9**; split when editing becomes painful.
 
 ---
 

@@ -46,8 +46,8 @@ Modern readout of instruments you’d only see in/around a loco: Speed · Grade 
 | Handbrakes | `Handbrakes 3` | usable-consist applied count — **1.4** |
 | Load | `Load 42 %` | amps / max; yellow ≥80%, red ≥95% — **1.7** **Done** (live % **PASS\***; color bands deferred) |
 | Motors | `Motors OK` / `Hot` / `Dead` | green / yellow / red — **1.8** **Done / shipped** (current-state: OK below threshold, Hot above threshold while fuse alive, Dead = trip / dead TM). Predictive Hot dwell **cut** → **Epic 2** Thermal governor |
-| Fuel | `Fuel 67 %` | yellow if Fuel or Oil &lt; 20% — **1.9** |
-| Oil | `Oil 55 %` | yellow if Fuel or Oil &lt; 20% — **1.9** |
+| Fuel | `Fuel 67 %` | yellow if Fuel or Oil &lt; 20%; red if either &lt; 5% — **1.9** |
+| Oil | `Oil 55 %` | yellow if Fuel or Oil &lt; 20%; red if either &lt; 5% — **1.9** |
 
 ### Second bar — that car only
 
