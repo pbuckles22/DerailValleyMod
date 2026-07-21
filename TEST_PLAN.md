@@ -192,10 +192,22 @@ Top bar `Fuel N %` / `Oil N %` after Motors. Yellow (paired) if either &lt; 20%;
 - [x] Mod Off → On; no exceptions
 - [x] Load-time `GUI.skin` ArgumentException fixed (styles built only in `OnGUI`)
 
-### Later *(open)*
+### 1.10 Speed limit — current *(was CMD-03)* — `T2 limit` — **PASS** v0.4.20
 
-| Story | Planned `T2` |
-|-------|----------------|
-| **1.10** | Speed-limit topic (grade already shipped) |
+Top bar single `Limit N` after Speed. Yellow within 5 km/h of limit; red when over. **Authority:** posted `SignDebug` boards first (digit × 10); geometry fallback.
+
+**Sign-off**
+
+- [x] Mod loads; Active; chip matches deploy (`v0.4.20`)
+- [x] No usable loco — top bar **hidden**; no Limit
+- [x] Pass board `8` → `Limit 80` (then `6` → `60`, etc.)
+- [x] Near limit — yellow `Limit`
+- [x] Over limit — red `Limit`
+- [x] `T2 limit` changes on Limit/loco only (not every km/h)
+- [x] No YardMaster exceptions in Player.log *(Off→On accepted with session toggles)*
+
+### 1.11 Speed limit — next / ↑↓ — planned
+
+Same badge; ↑ green / ↓ warn for next limit; lookahead before board/curve. No second km/h chip.
 
 Recovery: [modding.md](doc/requirements/modding.md).

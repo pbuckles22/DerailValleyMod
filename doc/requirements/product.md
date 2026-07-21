@@ -40,6 +40,7 @@ Modern readout of instruments you’d only see in/around a loco: Speed · Grade 
 | Word | Example live | Notes |
 |------|----------------|-------|
 | Speed | `Speed 36 km/h` | **1.1** |
+| Limit | `Limit 60` | **one** badge: boards when known, else geometry fallback; yellow within 5 of limit; red over — **1.10**. Next/↑↓ cue — **1.11** (no second km/h chip) |
 | Grade | `Grade +1.2 %` | **1.2** |
 | Mass | `Mass 240 t` | **1.2** |
 | Cars | `Cars 5` | freight only; loco not counted — **1.4** |
@@ -63,7 +64,9 @@ Look-at wins; standing fallback when crosshair is not on a car. Hidden when no t
 | Cargo | `Cargo Steel Rails` | `Empty Cargo` — **4.2** |
 | Loco | `Loco DE6` | *(omit if not a loco)* — **1.6** |
 
-**Build order (power):** **1.7**/**1.8** done → **1.9**, then **1.10** speed-limit alerts (grade already in **1.2**).
+**Build order (power):** **1.7**–**1.9** done → **1.10** speed-limit alerts (grade already in **1.2**).
+
+**1.10 / 1.11 notes:** Single `Limit` badge (never two limit numbers). **1.10** = current governing limit — prefer posted boards (digit × 10); geometry / SignPlacer ladder is fallback only. Yellow within 5 km/h of limit (including at limit); red when over. **1.11** = next limit along the path with ↑ (green) / ↓ (warn) on that same badge — no GPS strip reorder. Hidden with the top bar (**4.3**).
 
 ---
 

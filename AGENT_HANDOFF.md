@@ -117,21 +117,21 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 |--|--|
 | **Project** | *Yard Master Suite* (UMM / Harmony / net48) |
 | **MVP** | **Epic 1** System Monitor HUD |
-| **Version (`main`)** | **0.4.18** |
+| **Version (`main`)** | **0.4.20** |
 | **Active branch** | `main` |
 
 **Shipped on `main`**
 
 - [x] **Epic 0** Safe Boot *(0.4 scaffold)*
-- [x] **1.1–1.9** Speed, grade/mass, integrity, couplers, look-at, **Load %**, **Motors**, **Fuel/Oil** (Tier 2 **PASS**; Motors current-state only — Hot dwell **cut**)
+- [x] **1.1–1.10** Speed, grade/mass, integrity, couplers, look-at, **Load %**, **Motors**, **Fuel/Oil**, **Limit** (boards + GYR; Motors current-state only — Hot dwell **cut**)
 - [x] **4.1–4.3** Spherecast, cargo, hide loco top bar (**PASS**)
 
 **Next**
 
-- [ ] **1.10** speed-limit alerts *(Stage 1 remaining)*
-- [ ] **2.1** Three-Gate → **2.2** Thermal governor *(active protection; do not reopen **1.8** HUD prediction)*
+- [ ] **1.11** next Limit ↑/↓ lookahead *(same badge; no second number)*
+- [ ] **2.1** Three-Gate → **2.2** Thermal governor *(after 1.11 or if governor prep is prioritized)*
 - [ ] Re-smoke Load yellow/red when practical
-- [ ] Later: dispatcher **3.x** · Digital Catalog **5.1**
+- [ ] Later: **4.4** next-station distance · dispatcher **3.x** · Digital Catalog **5.1**
 
 **Merge-ready:** `dotnet test YardMasterSuite.sln` · `dotnet build YardMasterSuite.sln -c Release` · deploy via `package.ps1`
 
