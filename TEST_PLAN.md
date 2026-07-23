@@ -282,14 +282,14 @@ When Fuel or Oil is yellow/red on a usable loco: optional `Next: … [N.N km]` o
 - [ ] On mainline with no resolvable start station — Next omitted (fail-closed)
 - [ ] `T2 next-station` on appear/change
 
-### 4.6 Station waypoint (foot) — `T2 station` — pending smoke v0.4.26
+### 4.6 Station waypoint (foot) — `T2 station` — pending smoke · Bundle **B.2** v0.4.32 drops coords
 
-Always-on: in job-generation zone show `Station {YardID} {bearing} {m}m · x, z` (or `here`). Omit outside zones.
+Always-on: in job-generation zone show `Station {YardID} {bearing} {m}m` (or `here`). **No** map coords. Omit outside zones.
 
 **Sign-off**
 
 - [ ] Outside station zone — Station chip absent
-- [ ] Enter station/city zone — Station chip with yard id, bearing/distance, coords
+- [x] Enter station/city zone — Station chip with yard id + bearing/distance (**no** `· x, z`) — `v0.4.32`
 - [ ] Walk toward station center — meters drop; near center → `here`
 - [ ] `T2 station` on enter/leave / bearing change
 
