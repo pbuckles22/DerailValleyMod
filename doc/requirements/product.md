@@ -78,7 +78,7 @@ Look-at wins; standing fallback when crosshair is not on a car. Hidden when no t
 | Couplers | `F+` usable · plain `F*` loose · `F-` open · yellow `F*` MU open | `— Couplers` |
 | Car | `Car 3` · `Car N/A` on loco · `Car XX` if not usable train | — |
 | Job | `Job FH-12` | `— Job` |
-| Track | `Track SM-O6I` | `— Track` — **4.4** |
+| Track | `Track SM-O6I` | omit when unknown/mainline — **4.4** / Bundle **B.3** |
 | Cargo | `Cargo Steel Rails` | `Empty Cargo` — **4.2** |
 | Loco | `Loco DE6` | *(omit if not a loco)* — **1.6** |
 
@@ -92,7 +92,7 @@ Look-at wins; standing fallback when crosshair is not on a car. Hidden when no t
 
 **1.14 notes:** `Home` sets/updates session mark at player XZ; `Shift+Home` clears (cleared on mod disable/unload). Chip = 16-point bearing toward mark + integer meters (`Marked NE 84m`), or `Marked here` within 1 m. Not persisted.
 
-**4.4 notes:** Second-bar `Track SM-O6I` from `logicCar.CurrentTrack.ID.FullDisplayID`; `— Track` when unknown / generic mainline.
+**4.4 notes:** Second-bar `Track SM-O6I` from `logicCar.CurrentTrack.ID.FullDisplayID`. **Bundle B.3:** omit the segment when unknown / generic mainline (no `— Track`).
 
 **4.5 notes:** When Fuel or Oil is in yellow/red, optional loco-bar `Next: Name [N.N km]` using `JobPaymentCalculator.GetDistanceBetweenStations` from current zone/yard station to nearest other. Omit when fluids OK or path/station unknown.
 

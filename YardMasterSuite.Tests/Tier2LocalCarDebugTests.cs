@@ -12,7 +12,7 @@ public class Tier2LocalCarDebugTests
             coupling: "— Couplers",
             carNumber: "Car XX",
             job: "— Job",
-            track: "— Track");
+            track: null);
 
     private static LocalCarDebugSnapshot Visible(
         string pipe = "Pipe 2.0 bar",

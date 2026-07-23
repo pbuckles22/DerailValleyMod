@@ -12,7 +12,7 @@ public readonly struct LocalCarDebugSnapshot
         string coupling,
         string carNumber,
         string job,
-        string track,
+        string? track,
         string? cargo = null,
         string? locoType = null)
     {
@@ -33,7 +33,7 @@ public readonly struct LocalCarDebugSnapshot
     public string Coupling { get; }
     public string CarNumber { get; }
     public string Job { get; }
-    public string Track { get; }
+    public string? Track { get; }
     public string? Cargo { get; }
     public string? LocoType { get; }
 

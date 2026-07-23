@@ -1110,7 +1110,7 @@ internal static class TelemetryReader
             coupling: "— Couplers",
             carNumber: CarNumberDisplay.NotOnTrainLabel,
             job: "— Job",
-            track: "— Track");
+            track: null);
 
     internal static IntegrityDebugSnapshot CurrentIntegrityDebugSnapshot()
     {
