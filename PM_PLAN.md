@@ -32,7 +32,7 @@ Legacy IDs (`CMD-01a`, `QOL-08`, …) stay in parentheses so older notes still r
 
 | Stage | Player focus | Mod focus | Stories |
 |-------|----------------|-----------|---------|
-| **1 — Apprentice** | Throttle, brakes, sander, don’t blow the fuse | Situational Awareness HUD | **Epic 1** + **4.3** + **4.7** *(current)* |
+| **1 — Apprentice** | Throttle, brakes, sander, don’t blow the fuse | Situational Awareness HUD | **Epic 1** *(done)* + **4.3** + **4.7**; next **4.6** / Epic 2 |
 | **2 — Junior Yardman** | Switches, yard paths, consist moves | Remote switch / path integrity | **3.3–3.4** |
 | **3 — Yard Master** | Multi-stop efficiency | Auto dispatch + workbench | **3.5**, **5.1**, **3.1** |
 
@@ -85,7 +85,7 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
 
 ---
 
-- [ ] **Epic 1 — Diagnostic HUD** *(HIGH · Journey Stage 1)* — Read-only situational awareness; HUD left → right; **no game-state writes**.  
+- [x] **Epic 1 — Diagnostic HUD** *(HIGH · Journey Stage 1)* — Read-only situational awareness; HUD left → right; **no game-state writes**. **Status: complete — 2026-07-23**
   *Tier 2:* each in-game story ships discrete `T2 …` Player.log lines (no per-frame spam).  
   *Why now:* Apprentice “don’t blow up” — ammeter / TM / fluids before deep yard tools.
 
@@ -128,10 +128,10 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
   - [x] **1.13 Player coordinates** — Always-on flat-map `Pos x, z` (no height) on the nav bar. Quiet `T2 pos` (≥50 unit move). **Done** — Tier 1 + Tier 2 **PASS** (v0.4.23).
     > As a yard worker, I want exact coordinates beside the compass so I can find myself on a map in large yards.
 
-  - [x] **1.14 Park / return mark** — `Home` sets/updates session park mark at player XZ; `Shift+Home` clears. Always-on nav chip `Park NE 84m` (16-point bearing + meters back to mark) or `Park here` within 1 m; omitted when unmarked. Quiet `T2 park` on set/clear / bearing change. Distinct from live `Heading` / `Pos`. **Done** — Tier 1; Tier 2 smoke pending (v0.4.24).
+  - [x] **1.14 Park / return mark** — `Home` sets/updates session mark at player XZ; `Shift+Home` clears. Always-on nav chip `Marked NE 84m` (16-point bearing + meters back) or `Marked here` within 1 m; omitted when unmarked. Quiet `T2 mark` on set/clear / bearing change. Distinct from live `Heading` / `Pos`. **Done** — Tier 1 + Tier 2 **PASS** (v0.4.25).
     > As a yard worker, I want to mark where I left the loco so when I’m running around I always know which way and how far to get back.
 
-  **Build order (Stage 1 open work):** **1.14** Tier 2 smoke → mark **Epic 1** complete → then **4.6** / Epic 2; re-smoke Load yellow/red when practical. *(Do not reopen **1.8** HUD thermal prediction.)*
+  **Build order (Stage 1 open work):** **Epic 1** complete → **4.6** / Epic 2; re-smoke Load yellow/red when practical. *(Do not reopen **1.8** HUD thermal prediction.)*
 
 ---
 

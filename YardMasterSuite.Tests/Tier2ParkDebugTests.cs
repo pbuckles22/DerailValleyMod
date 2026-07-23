@@ -8,7 +8,7 @@ public class Tier2ParkDebugTests
     public void NextLogMessage_init_set()
     {
         var msg = Tier2ParkDebug.NextLogMessage(null, new ParkDebugSnapshot(true, "NE"));
-        Assert.Equal("T2 park init: Park NE", msg);
+        Assert.Equal("T2 mark init: Marked NE", msg);
     }
 
     [Fact]
@@ -24,7 +24,7 @@ public class Tier2ParkDebugTests
         var msg = Tier2ParkDebug.NextLogMessage(
             new ParkDebugSnapshot(true, "NE"),
             new ParkDebugSnapshot(false, null));
-        Assert.Equal("T2 park change: — Park", msg);
+        Assert.Equal("T2 mark change: — Marked", msg);
     }
 
     [Fact]
@@ -33,7 +33,7 @@ public class Tier2ParkDebugTests
         var msg = Tier2ParkDebug.NextLogMessage(
             new ParkDebugSnapshot(true, "NE"),
             new ParkDebugSnapshot(true, "E"));
-        Assert.Equal("T2 park change: Park E", msg);
+        Assert.Equal("T2 mark change: Marked E", msg);
     }
 
     [Fact]
@@ -42,6 +42,6 @@ public class Tier2ParkDebugTests
         var msg = Tier2ParkDebug.NextLogMessage(
             new ParkDebugSnapshot(true, "N"),
             new ParkDebugSnapshot(true, "here"));
-        Assert.Equal("T2 park change: Park here", msg);
+        Assert.Equal("T2 mark change: Marked here", msg);
     }
 }

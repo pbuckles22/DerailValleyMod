@@ -13,33 +13,33 @@ public class ParkMarkDisplayTests
     [Fact]
     public void FormatReturn_mark_without_player_is_placeholder()
     {
-        Assert.Equal("— Park", ParkMarkDisplay.FormatReturn(10f, 20f, null, null));
+        Assert.Equal("— Marked", ParkMarkDisplay.FormatReturn(10f, 20f, null, null));
     }
 
     [Fact]
     public void FormatReturn_east_of_mark_shows_west_bearing()
     {
         // Player at (100, 0), mark at (0, 0) → return direction is −X = west.
-        Assert.Equal("Park W 100m", ParkMarkDisplay.FormatReturn(0f, 0f, 100f, 0f));
+        Assert.Equal("Marked W 100m", ParkMarkDisplay.FormatReturn(0f, 0f, 100f, 0f));
     }
 
     [Fact]
     public void FormatReturn_north_of_mark_shows_south_bearing()
     {
         // Player at (0, 50), mark at (0, 0) → return is −Z = south.
-        Assert.Equal("Park S 50m", ParkMarkDisplay.FormatReturn(0f, 0f, 0f, 50f));
+        Assert.Equal("Marked S 50m", ParkMarkDisplay.FormatReturn(0f, 0f, 0f, 50f));
     }
 
     [Fact]
     public void FormatReturn_at_mark_shows_here()
     {
-        Assert.Equal("Park here", ParkMarkDisplay.FormatReturn(10.2f, 20.4f, 10.4f, 20.1f));
+        Assert.Equal("Marked here", ParkMarkDisplay.FormatReturn(10.2f, 20.4f, 10.4f, 20.1f));
     }
 
     [Fact]
     public void FormatCoords_rounds_xz()
     {
-        Assert.Equal("Park 10, 200", ParkMarkDisplay.FormatCoords(10.4f, 200.1f));
+        Assert.Equal("Marked 10, 200", ParkMarkDisplay.FormatCoords(10.4f, 200.1f));
     }
 
     [Fact]
