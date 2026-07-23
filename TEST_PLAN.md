@@ -206,8 +206,52 @@ Top bar single `Limit N` after Speed. Yellow within 5 km/h of limit; red when ov
 - [x] `T2 limit` changes on Limit/loco only (not every km/h)
 - [x] No YardMaster exceptions in Player.log *(Off→On accepted with session toggles)*
 
-### 1.11 Speed limit — next / ↑↓ — planned
+### 1.11 Speed limit — next / ↑↓ — `T2 limit` — **PASS** v0.4.23
 
-Same badge; ↑ green / ↓ warn for next limit; lookahead before board/curve. No second km/h chip.
+Same `Limit N` badge; green `^` if next board higher; yellow `v` if next lower; lookahead ≈ max(500 m, speed×6). No second km/h chip.
+
+**Sign-off**
+
+- [x] Chip `v0.4.23`; Active
+- [x] Approach a lower board — `Limit … v` before you pass it
+- [x] Approach a higher board — `Limit … ^` before you pass it
+- [x] After passing — arrow clears; new current Limit
+- [x] GYR vs **current** still works (yellow near / red over)
+- [x] `T2 limit` includes `^`/`v` when trending; no Speed spam
+
+### 1.12 Personal heading — `T2 heading` — **PASS** v0.4.23
+
+Always-on nav bar: `Heading NE` (16-point). Independent of loco top bar.
+
+**Sign-off**
+
+- [x] Mod loads; Active; chip `v0.4.23`
+- [x] On foot / no train HUD — Heading on always-on bar
+- [x] Turn in place — label steps through N / NNE / NE / ENE / … (not `°`)
+- [x] Face roughly +Z world — `Heading N` *(Unity north)*
+- [x] `T2 heading` on point change
+- [x] No YardMaster exceptions in Player.log
+
+### 1.13 Player coordinates — `T2 pos` — **PASS** v0.4.23
+
+Always-on nav bar includes flat `Pos x, z` (no height).
+
+**Sign-off**
+
+- [x] `Pos` shows two numbers only
+- [x] Walk ~50+ units — `T2 pos change` (not every meter)
+- [x] No YardMaster exceptions
+
+### 4.7 HUD strip IA — **PASS** v0.4.23
+
+All rows centered. Stack: loco → look-at → always-on bar (same chrome).
+
+**Sign-off**
+
+- [x] Usable train — loco bar centered; Speed/Limit mid-string
+- [x] Look-at bar centered under loco
+- [x] Always-on bar centered under the lowest other bar (or alone when others hidden)
+- [x] Always-on readable (dark bar background)
+- [x] Chip `v0.4.23`
 
 Recovery: [modding.md](doc/requirements/modding.md).

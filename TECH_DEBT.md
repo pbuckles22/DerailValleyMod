@@ -21,9 +21,11 @@ High ROI; frequent pain; not blocking.
 - [ ] **MU yellow smoke (2-loco)** — `F*` / `R*` yellow implemented; in-game smoke deferred until a second loco is available. *(pairs with **1.5**)*
 - [ ] **Coupler plain `*` vs yellow `*`** — loose and MU share the glyph; HUD color distinguishes, but plain `T2 coupler` / Format strings cannot. Revisit with MU smoke — distinct debug labels or marks.
 - [x] **Cache Load amp reflection by type** — landed with **1.8** (`LoadFieldCache` + `MotorSetFieldMap`).
-- [ ] **Re-smoke Load yellow/red** — **1.7** live `%` **PASS\***; ≥80% / ≥95% color bands not exercised in-game yet.
+- [ ] **Re-smoke Load yellow/red** — **1.7** live `%` **PASS\***; ≥80% / ≥95% color bands not exercised in-game yet. *(Debug fluid-force path removed — no documented override for forced low tanks.)*
 - [x] **Re-smoke Motors Hot/Dead** — **1.8** Tier 2 **PASS** (OK / brief Hot / Dead).
 - [x] **Motors Hot dwell (HUD)** — **cut** (2026-07-20). Monitor stays current-state; thermal mitigation → **Epic 2.2** governor.
+- [ ] **Cache speed-limit state per HUD tick** — `TryGetSpeedLimitState` / board scan can run twice per refresh (train bar + `T2 limit`). Cache in `BeginHudTick` like standing/loco.
+- [x] **`package.ps1` stale `build/` deploy** — script now rebuilds before pack; Release PostBuild passes `-Configuration Release` (v0.4.23).
 
 ---
 
@@ -35,7 +37,8 @@ Isolated + workaround + revisit trigger.
 - [ ] **Dead integrity Tier-2 helpers** — `CurrentIntegrityDebugSnapshot` / `Tier2IntegrityDebug` superseded by `T2 consist` / `local-car` / `look-at` / `coupler`. Delete on a cleanup pass.
 - [x] **Per-tick target cache** — standing / look-at / target / loco cached per HUD refresh *(landed with **1.7** WIP)*. Re-open only if profiling shows leftover cost.
 - [ ] **Private TractionMotorSet reflection** — `MotorSetFieldMap` reads private field names; pin typed/public ports after more loco smoke or if a DV patch breaks them.
-- [ ] **Extract Load/Motors/fluids readers from TelemetryReader** — file grew with **1.7**–**1.9**; split when editing becomes painful.
+- [ ] **Extract TelemetryReader subsystems** — file grew with **1.7**–**1.13** (fluids, limit board scan, heading, pos); split when editing becomes painful (limit scan first).
+- [ ] **MonitorHudDriver Tier 2 emit boilerplate** — many near-identical `Emit*DebugIfNeeded` blocks; revisit when adding **1.14** / **4.6**.
 
 ---
 

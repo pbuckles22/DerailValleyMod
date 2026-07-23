@@ -2,7 +2,7 @@
 
 Human-readable **snapshot**. Keep in sync with [AGENT_HANDOFF.md](../AGENT_HANDOFF.md) → *Current state* and checkbox truth in [PM_PLAN.md](../PM_PLAN.md).
 
-**Last updated:** 2026-07-21
+**Last updated:** 2026-07-23
 
 ---
 
@@ -15,7 +15,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 |--|--|
 | **Journey** | Stage 1 — Apprentice (“don’t blow up”) |
 | **MVP** | Epic 1 System Monitor HUD |
-| **Version (`main`)** | **0.4.20** |
+| **Version (`main`)** | **0.4.23** |
 
 ---
 
@@ -23,7 +23,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 | Branch | Role |
 |--------|------|
-| **`main`** | Integration — through **1.10** Limit (v0.4.20) |
+| **`main`** | Integration — through **1.11–1.13** + **4.7** (v0.4.23) |
 
 ---
 
@@ -35,19 +35,20 @@ Stack: Unity / C# `net48` / UMM / Harmony
 - [ ] **Epic 1** — Diagnostic HUD *(Stage 1)*
 - [ ] **Epic 2** — Governor Mode
 - [ ] **Epic 3** — Yard Master / Dispatcher
-- [ ] **Epic 4** — HUD quality *(4.1–4.3 done)*
+- [ ] **Epic 4** — HUD quality *(4.1–4.3 done; 4.7 in progress)*
 - [ ] **Epic 5** — Digital Catalog
 
 ### Next (Stage 1)
 
-- [ ] **1.11** Speed limit — next / ↑↓
-- [ ] **4.4** Next station distance *(scheduled under Epic 4; after Limit stories)*
+- [ ] **1.14** Park / return mark
+- [ ] **4.6** In-zone station coords (+ foot waypoint)
+- [ ] **4.4–4.5** Track ID / next station (fluids)
 - [ ] Re-smoke **1.7** yellow/red Load when practical
 
 ### Next (Epic 2 prep)
 
-- [ ] **2.1** Three-Gate helper (core foundation for soft writes)
-- [ ] **2.2** Thermal governor — scale throttle when Motors Hot *(uses shipped **1.8** current-state)*
+- [ ] **2.1** Three-Gate helper
+- [ ] **2.2** Thermal governor
 
 ### Deferred smokes
 
@@ -63,11 +64,12 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 ## Recently completed
 
+- [x] **4.7** + **1.11–1.13** — centered stacked HUD; Limit `^`/`v`; Heading; Pos XZ (v0.4.23)
 - [x] **1.10** Speed Limit — boards + geometry fallback; GYR; quiet `T2 limit` (v0.4.20)
-- [x] **1.9** Fuel/Oil % — Tier 1 + Tier 2 **PASS** (yellow &lt;20%, red &lt;5% paired); GUI load fix (v0.4.18)
-- [x] **1.8** Motors OK / Hot / Dead — Tier 1 + Tier 2 **PASS**; shipped as current-state indicator
+- [x] **1.9** Fuel/Oil % — Tier 1 + Tier 2 **PASS** (v0.4.18)
+- [x] **1.8** Motors OK / Hot / Dead — Tier 1 + Tier 2 **PASS**
 - [x] **4.3** Hide loco gadget top bar — **PASS**
-- [x] **1.7** Load % — **PASS\*** (live %; color bands deferred)
+- [x] **1.7** Load % — **PASS\***
 - [x] **1.1–1.6** Speed, grade/mass, integrity, couplers, look-at
 - [x] **4.1–4.2** Spherecast + cargo
 
@@ -78,4 +80,4 @@ Stack: Unity / C# `net48` / UMM / Harmony
 1. [CONTRIBUTING.md](../CONTRIBUTING.md)
 2. This file
 3. [PM_PLAN.md](../PM_PLAN.md) — official backlog
-4. [requirements/product.md](requirements/product.md) — labels
+4. [AGENT_HANDOFF.md](../AGENT_HANDOFF.md)

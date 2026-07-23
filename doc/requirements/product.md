@@ -29,26 +29,40 @@ Loco↔freight does not require MU. Incomplete link = not “drivable” for HUD
 
 ### Top bar — loco cab gadgets
 
-Modern readout of instruments you’d only see in/around a loco: Speed · Grade · Mass · Cars · Handbrakes · Load · Motors · Fuel · Oil.
+Center-weighted IA (**4.7**): bar is **horizontally centered**; mid-string = Speed · Limit.
+
+`Fuel · Oil · Mass · Grade · Load · Speed · Limit · Motors · Handbrakes · Cars`
 
 | | |
 |--|--|
 | **Show when** | Target is on a **usable loco train** (in/on it, looking at the loco, or looking at a car linked to one) |
 | **Hide when** | Sky, ground, freight-only / no loco path — **no** red dash wall |
-| **Story** | **4.3** **Done** (hidden when not usable) |
+| **Story** | **4.3** hide + **4.7** IA |
 
 | Word | Example live | Notes |
 |------|----------------|-------|
-| Speed | `Speed 36 km/h` | **1.1** |
-| Limit | `Limit 60` | **one** badge: boards when known, else geometry fallback; yellow within 5 of limit; red over — **1.10**. Next/↑↓ cue — **1.11** (no second km/h chip) |
-| Grade | `Grade +1.2 %` | **1.2** |
-| Mass | `Mass 240 t` | **1.2** |
-| Cars | `Cars 5` | freight only; loco not counted — **1.4** |
-| Handbrakes | `Handbrakes 3` | usable-consist applied count — **1.4** |
-| Load | `Load 42 %` | amps / max; yellow ≥80%, red ≥95% — **1.7** **Done** (live % **PASS\***; color bands deferred) |
-| Motors | `Motors OK` / `Hot` / `Dead` | green / yellow / red — **1.8** **Done / shipped** (current-state: OK below threshold, Hot above threshold while fuse alive, Dead = trip / dead TM). Predictive Hot dwell **cut** → **Epic 2** Thermal governor |
 | Fuel | `Fuel 67 %` | yellow if Fuel or Oil &lt; 20%; red if either &lt; 5% — **1.9** |
 | Oil | `Oil 55 %` | yellow if Fuel or Oil &lt; 20%; red if either &lt; 5% — **1.9** |
+| Mass | `Mass 240 t` | **1.2** |
+| Grade | `Grade +1.2 %` | **1.2** |
+| Load | `Load 42 %` | amps / max; yellow ≥80%, red ≥95% — **1.7** |
+| Speed | `Speed 36 km/h` | **1.1** — visual center with Limit |
+| Limit | `Limit 60` | **one** badge — **1.10**; ↑↓ — **1.11** |
+| Motors | `Motors OK` / `Hot` / `Dead` | **1.8** current-state only |
+| Handbrakes | `Handbrakes 3` | **1.4** |
+| Cars | `Cars 5` | freight only — **1.4** |
+
+### Always-on chips (not loco gadgets)
+
+Top-left; independent of **4.3**.
+
+| Word | Example live | Notes |
+|------|----------------|-------|
+| Version | `v0.4.23` | Deploy confirm |
+| Heading | `Heading NE` / `Heading ENE` | **1.12** — 16-point rose; no degrees |
+| Pos | `Pos 120, -340` | **1.13** — flat map X,Z (no height) |
+
+Always-on is a full HUD bar (same chrome as loco/look-at), **centered**, stacked **under** the lowest other bar (or alone at top when those are hidden).
 
 ### Second bar — that car only
 
@@ -67,6 +81,16 @@ Look-at wins; standing fallback when crosshair is not on a car. Hidden when no t
 **Build order (power):** **1.7**–**1.9** done → **1.10** speed-limit alerts (grade already in **1.2**).
 
 **1.10 / 1.11 notes:** Single `Limit` badge (never two limit numbers). **1.10** = current governing limit — prefer posted boards (digit × 10); geometry / SignPlacer ladder is fallback only. Yellow within 5 km/h of limit (including at limit); red when over. **1.11** = next limit along the path with ↑ (green) / ↓ (warn) on that same badge — no GPS strip reorder. Hidden with the top bar (**4.3**).
+
+**1.12 notes:** Personal compass only — not part of `TrainHudLine`. Always visible beside version. Source = look direction (`ActiveCamera`, else `PlayerTransform`); Unity world +Z = N. Display = 16-point abbreviations only (`N`, `NNE`, `NE`, `ENE`, …) — never degrees.
+
+**1.13 notes:** `Pos x, z` from `PlayerTransform.position` (Y dropped for map use).
+
+**1.14 (backlog):** Park/return mark — freeze map position; show bearing + distance back while walking.
+
+**4.6 (backlog):** In city/station zone — show that station’s map coords + bearing/distance (foot nav).
+
+**4.7 notes:** All HUD rows centered. Stack: loco (if any) → look-at (if any) → always-on nav. Chip order on loco bar as above.
 
 ---
 
