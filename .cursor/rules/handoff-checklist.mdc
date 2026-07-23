@@ -1,40 +1,40 @@
 ---
-description: Before any handoff — run code review, tech debt evaluation, tests/coverage, and optional project readiness; record in handoff note
+description: Before any handoff ? run code review, tech debt, tests; no self-grades or partials
 globs: "**/.cursor/handoff/*.md,**/doc/handoff/*.md,AGENT_HANDOFF.md"
 alwaysApply: false
 ---
 
 # Handoff checklist (mandatory before handoff)
 
-Also required as the **quality-gate half of epic close** � see [.cursor/rules/epic-close.mdc](epic-close.mdc). When an epic finishes, run this checklist first, then finish epic status docs (do not wait for the user to ask).
+Also required as the **quality-gate half of epic close** ? see [.cursor/rules/epic-close.mdc](epic-close.mdc). When an epic finishes, run this checklist first, then finish epic status docs (do not wait for the user to ask).
 
-When the user wants a handoff, or when you are writing or updating a handoff note (e.g. **`doc/handoff/*-HANDOFF-*.md`** / **`doc/handoff/HANDOFF-*.md`** or **`.cursor/handoff/*-handoff-*.md`** / **`.cursor/handoff/handoff-*.md`** — often **gitignored**, not on **`main`**) or **AGENT_HANDOFF** "Current state":
+When the user wants a handoff, or when you are writing or updating a handoff note (e.g. **`doc/handoff/*-HANDOFF-*.md`** / **`doc/handoff/HANDOFF-*.md`** or **`.cursor/handoff/*-handoff-*.md`** / **`.cursor/handoff/handoff-*.md`** ? often **gitignored**, not on **`main`**) or **AGENT_HANDOFF** "Current state":
 
 ## When to create a handoff (timing)
 
 - **Right time:** You are at a real stopping point: scope is done **or** you are intentionally handing off **mid-flight** with a clear label (e.g. **WIP**, **blocked**, **needs decision**).
-- **Wrong time:** Do **not** write a handoff that reads "ship complete" if delivery is not actually finished (e.g. commits on `main` that were never pushed, CI not run, or known follow-ups omitted). If work is incomplete, **say so explicitly** in **Ship status** or a **Not done** section at the top — not only in **Next up**.
+- **Wrong time:** Do **not** write a handoff that reads "ship complete" if delivery is not actually finished (e.g. commits on `main` that were never pushed, CI not run, or known follow-ups omitted). If work is incomplete, **say so explicitly** in **Ship status** or a **Not done** section at the top ? not only in **Next up**.
 - **Push:** When your merge-ready command is green and you committed to **`main`**, run **`git push origin main`** before ending unless the user asked you not to push, or push failed (then record the failure and that **`main` is ahead of origin**).
 
-**You must run all four and record results in the handoff note. Do not skip any.**
+**You must run all required gates and record results in the handoff note. Do not skip any.** Self-grading without reading/running the skills is a **partial handoff** and is forbidden (same bar as epic close).
 
-1. **Code review** — Use the **code-reviewer** skill (`.cursor/skills/code-reviewer/SKILL.md`). Review the changed or relevant code since last handoff (or main branch). Output PASS/WARN/FAIL and a short summary. Put the summary in the handoff note under **Code review**.
-2. **Tech debt evaluation** — Use the **tech-debt-evaluator** skill (`.cursor/skills/tech-debt-evaluator/SKILL.md`). Assess current debt; produce prioritized list. Put the short summary or "Do first" items in the handoff note under **Tech debt**.
-   - If a “Do first” item persists across handoffs or blocks progress, promote it into `TECH_DEBT.md` (ranked).
-3. **Tests / coverage** — Run the **merge-ready** command documented in **AGENT_HANDOFF.md** / **TEST_PLAN.md** (e.g. `npm run ci` if that is your gate). Note whether Tier 1 is green and, if useful, a one-line summary. Put in the handoff note under **Code coverage** (or **Tests**).
-4. **Project readiness (optional)** — If you maintain a readiness checklist or skill for this product, use it and put the summary under **Project readiness**. Otherwise note "N/A" or skip that section.
-5. **Security review (when relevant)** — If the work touched credentials, logging, remote access, networking, firewall, or installed software, run a lightweight **security-reviewer** pass and record PASS/WARN/FAIL.
+1. **Code review** ? Use the **code-reviewer** skill (`.cursor/skills/code-reviewer/SKILL.md`). Review the changed or relevant code since last handoff (or main branch). Output PASS/WARN/FAIL and a short summary. Put the summary in the handoff note under **Code review**.
+2. **Tech debt evaluation** ? Use the **tech-debt-evaluator** skill (`.cursor/skills/tech-debt-evaluator/SKILL.md`). Assess current debt; produce prioritized list. Put the short summary or "Do first" items in the handoff note under **Tech debt**.
+   - If a ?Do first? item persists across handoffs or blocks progress, promote it into `TECH_DEBT.md` (ranked).
+3. **Tests / coverage** ? Run the **merge-ready** command documented in **AGENT_HANDOFF.md** / **TEST_PLAN.md**. Note whether Tier 1 is green and, if useful, a one-line summary. Put in the handoff note under **Code coverage** (or **Tests**).
+4. **Project readiness (optional)** ? If you maintain a readiness checklist or skill for this product, use it and put the summary under **Project readiness**. Otherwise note "N/A" or skip that section.
+5. **Security review (when relevant)** ? If the work touched credentials, logging, remote access, networking, firewall, or installed software, run a lightweight **security-reviewer** pass and record PASS/WARN/FAIL.
 
-6. **Tier 2 (integration / E2E) if needed** — If you added or changed behavior that requires integration or E2E validation, run the Tier 2 command from TEST_PLAN.md. Note in the handoff whether Tier 2 was run and the result. See `.cursor/rules/testing.mdc` and TEST_PLAN.md.
+6. **Tier 2 (integration / E2E) if needed** ? If you added or changed behavior that requires integration or E2E validation, run the Tier 2 command from TEST_PLAN.md. Note in the handoff whether Tier 2 was run and the result. See `.cursor/rules/testing.mdc` and TEST_PLAN.md.
 
-7. **Git commit + push** — If the first checks passed: stage the changes and run `git commit` with a short message. **`git push origin main`** (or merge your branch into `main` then push) after the merge-ready command is green — see **AGENT_HANDOFF.md** → *Git workflow*. Treat "committed but not pushed" as **unfinished** unless the user asked to stop before push.
+7. **Git commit + push** ? Only after gates pass **and** (for deployable DLL/HUD ships) user smoke PASS or waive ? see [deploy-before-smoke.mdc](deploy-before-smoke.mdc). Then stage, commit, **`git push origin main`**. Treat "committed but not pushed" as **unfinished** unless the user asked to stop before push.
 
 Then complete the rest of the handoff:
 
 - Update **PM_PLAN** when scope changed
-- Update **[doc/PROJECT_STATUS.md](../../doc/PROJECT_STATUS.md)** and **AGENT_HANDOFF.md** → *Current state* (required — contributor-visible truth on GitHub)
-- Optional local note: **`doc/handoff/`** or `.cursor/handoff/` (gitignored — promote decisions to tracked docs)
+- Update **[doc/PROJECT_STATUS.md](../../doc/PROJECT_STATUS.md)** and **AGENT_HANDOFF.md** ? *Current state* (required ? contributor-visible truth on GitHub)
+- Optional local note: **`doc/handoff/`** or `.cursor/handoff/` (gitignored ? promote decisions to tracked docs)
 
-When you summarize **Done this session** for humans, use the **two-audience** approach (see **techwriter** skill → *Dual-audience blurbs*).
+When you summarize **Done this session** for humans, use the **two-audience** approach (see **techwriter** skill ? *Dual-audience blurbs*).
 
-**Filename and timestamp:** Prefer **`doc/handoff/NNNN-HANDOFF-YYYY-MM-DD_HHmm.md`** (monotonic `NNNN`, date, 24h time — Windows-safe) so multiple handoffs per day get unique files. Add a **`Recorded:`** line under the H1 (ISO-8601 or local offset). See **AGENT_HANDOFF.md** → handoff protocol.
+**Filename and timestamp:** Prefer **`doc/handoff/NNNN-HANDOFF-YYYY-MM-DD_HHmm.md`** (monotonic `NNNN`, date, 24h time ? Windows-safe) so multiple handoffs per day get unique files. Add a **`Recorded:`** line under the H1 (ISO-8601 or local offset). See **AGENT_HANDOFF.md** ? handoff protocol.

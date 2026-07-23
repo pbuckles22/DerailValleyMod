@@ -189,5 +189,5 @@ When ending a session:
 
 ## Epic close (automatic)
 
-When an epic's in-scope work is done, **do not wait for the user to ask**. Run [.cursor/rules/epic-close.mdc](.cursor/rules/epic-close.mdc) / pm-governance *Epic close*: **handoff checklist first**, then mark the epic complete in plan/status docs, close note, commit/push, summarize. See [.cursor/skills/pm-governance/SKILL.md](.cursor/skills/pm-governance/SKILL.md).
+When an epic's in-scope work is done, **do not wait for the user to ask**. Run [.cursor/rules/epic-close.mdc](.cursor/rules/epic-close.mdc) / pm-governance *Epic close* **in full** — no docs-only or self-graded partials. Order: handoff-checklist skills (code-reviewer, tech-debt-evaluator) → merge-ready this pass → Tier 2 evidence → status docs → close note → commit/push **after** smoke PASS for deployable ships. See [.cursor/skills/pm-governance/SKILL.md](.cursor/skills/pm-governance/SKILL.md) and [.cursor/rules/deploy-before-smoke.mdc](.cursor/rules/deploy-before-smoke.mdc).
 Anything the team must see on GitHub belongs in **PROJECT_STATUS**, **PM_PLAN**, **README**, or the **PR** — not only gitignored handoff files.
