@@ -1,0 +1,27 @@
+---
+description: Deploy mod to game Mods before asking for Tier 2 smoke
+alwaysApply: true
+---
+
+# Deploy before smoke (mandatory)
+
+`dotnet build -c Release` only updates repo `build/` and `dist/*.zip`. It does **not** update the game. UMM reads `…\Derail Valley\Mods\YardMasterSuite\`.
+
+## Before asking the user for Tier 2 / in-game smoke
+
+1. **Deploy** (do not only paste the command):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File package.ps1 -NoArchive -Configuration Release -OutputDirectory "C:\Program Files (x86)\Steam\steamapps\common\Derail Valley\Mods"
+```
+
+2. **Verify** `Mods\YardMasterSuite\info.json` → `Version` matches shipped `info.json` (and DLL timestamp is fresh).
+3. **Then** ask for smoke; tell the user to confirm the HUD `v…` chip matches.
+
+## Do not
+
+- Ask for smoke while Mods still shows an older version.
+- Treat `dist/YardMasterSuite_v*.zip` alone as “installed.”
+- Skip deploy because Release PostBuild already ran (that only packs the zip).
+
+Paths and merge-ready gate: [AGENT_HANDOFF.md](../../AGENT_HANDOFF.md) → *Run and test*.

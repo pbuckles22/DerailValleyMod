@@ -45,6 +45,7 @@ Treat these as satisfied **before** `git commit` on anything beyond trivial doc 
 2. **Lint + format** — covered by your merge-ready command (linter, Prettier/formatter check).
 3. **Full merge-ready** — your project's merge-ready command green (tests, build, E2E if applicable).
 4. **Quality** — For non-trivial edits, use [code-quality-gate](../code-quality-gate/SKILL.md) as appropriate (readability, complexity, obvious foot-guns).
+5. **Mods deploy before Tier 2 smoke** — For deployable DLL changes, run `package.ps1 -NoArchive` into the game Mods folder and verify `info.json` version **before** asking the user to smoke ([deploy-before-smoke](../../rules/deploy-before-smoke.mdc)). Release zip alone is not installed.
 
 When 1–4 are green: **commit** (and **push** when integrating to `main` per AGENT_HANDOFF). That is the **done** state — not "waiting for the user to open a PR."
 

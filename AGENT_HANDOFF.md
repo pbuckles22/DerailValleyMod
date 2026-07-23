@@ -134,7 +134,7 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 - [ ] Re-smoke Load yellow/red when practical
 - [ ] Later: **4.4–4.5** · dispatcher **3.x** · Digital Catalog **5.1**
 
-**Merge-ready:** `dotnet test YardMasterSuite.sln` · `dotnet build YardMasterSuite.sln -c Release` · deploy via `package.ps1`
+**Merge-ready:** `dotnet test YardMasterSuite.sln` · `dotnet build YardMasterSuite.sln -c Release` · **deploy to Mods** via `package.ps1 -NoArchive` (required before Tier 2 smoke — see [.cursor/rules/deploy-before-smoke.mdc](.cursor/rules/deploy-before-smoke.mdc))
 
 ## Run and test
 
@@ -147,13 +147,14 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 
 dotnet test YardMasterSuite.sln
 dotnet build YardMasterSuite.sln -c Debug
-dotnet build YardMasterSuite.sln -c Release   # merge-ready + package.ps1 → dist/
+dotnet build YardMasterSuite.sln -c Release   # merge-ready + package.ps1 → dist/ only
 
-# Deploy (UMM must already create Mods\):
-powershell -ExecutionPolicy Bypass -File package.ps1 -NoArchive -OutputDirectory "C:\Program Files (x86)\Steam\steamapps\common\Derail Valley\Mods"
+# Deploy into the game (mandatory before asking for Tier 2 smoke):
+powershell -ExecutionPolicy Bypass -File package.ps1 -NoArchive -Configuration Release -OutputDirectory "C:\Program Files (x86)\Steam\steamapps\common\Derail Valley\Mods"
+# Then verify Mods\YardMasterSuite\info.json Version matches repo info.json
 ```
 
-Keep in sync with [TEST_PLAN.md](TEST_PLAN.md).
+Release zip ≠ installed. Agents must run the Mods deploy (and verify version) before requesting in-game smoke. Keep in sync with [TEST_PLAN.md](TEST_PLAN.md).
 
 ## Conventions
 
