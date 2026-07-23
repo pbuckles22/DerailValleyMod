@@ -118,7 +118,7 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 | **Project** | *Yard Master Suite* (UMM / Harmony / net48) |
 | **MVP** | **Epic 1** System Monitor HUD |
 | **Version (`main`)** | **0.4.24** |
-| **Active branch** | `feature/1.14-park-mark` → merge to `main` |
+| **Active branch** | `main` |
 
 **Shipped on `main`**
 
