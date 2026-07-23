@@ -15,6 +15,8 @@ SemVer on `info.json` + matching `repository.json`:
 
 Player.log `Version '…'. Loading.` reads `info.json`. After deploy: confirm HUD chip matches before Tier 2 — a stale chip means the old DLL is still loaded (toggle mod or restart).
 
+**Agents:** Release build → `dist/*.zip` only. Before asking for smoke, run Mods deploy and verify version ([.cursor/rules/deploy-before-smoke.mdc](.cursor/rules/deploy-before-smoke.mdc)).
+
 Also summarized in [AGENT_HANDOFF.md](AGENT_HANDOFF.md) → *Conventions*.
 
 ---
@@ -24,6 +26,7 @@ Also summarized in [AGENT_HANDOFF.md](AGENT_HANDOFF.md) → *Conventions*.
 Documented gate in `AGENT_HANDOFF.md` + `TEST_PLAN.md` — treat as mandatory:
 
 - [ ] Tier 1 green (`dotnet test` + Release build)
+- [ ] **Mods deploy** (`package.ps1 -NoArchive` into game Mods) + `info.json` version verified — before requesting Tier 2 smoke
 - [ ] Tier 2 run when the story needs in-game sign-off
 - [ ] Version bumped when the DLL changes
 - [ ] Tracked docs updated (`PM_PLAN` checkbox + PROJECT_STATUS + Current state)
