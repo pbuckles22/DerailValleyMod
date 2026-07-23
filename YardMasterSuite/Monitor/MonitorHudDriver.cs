@@ -6,7 +6,8 @@ namespace YardMasterSuite.Monitor;
 /// <summary>
 /// In-world IMGUI overlay for Monitor Mode telemetry.
 /// Top bar = usable loco-train totals (hidden when not usable — 4.3); second bar = look-at preferred, standing fallback.
-/// Always-on: version + Heading (1.12) + Pos (1.13) + Marked (1.14) + Station zone (4.6).
+/// Always-on: version + Heading (1.12) + Marked (1.14) + Station zone (4.6).
+/// Bundle B.1: Pos (1.13) removed from the always-on bar.
 /// Active Job bar (4.8) when jobs are taken. Loco bar centered IA (4.7).
 /// </summary>
 public sealed class MonitorHudDriver : MonoBehaviour
@@ -26,7 +27,6 @@ public sealed class MonitorHudDriver : MonoBehaviour
     private string? _localLabel;
     private string? _jobLabel;
     private string _headingLabel = "— Heading";
-    private string _positionLabel = "— Pos";
     private string? _parkLabel;
     private string? _stationLabel;
     private string _alwaysOnLabel = "—";
@@ -132,17 +132,13 @@ public sealed class MonitorHudDriver : MonoBehaviour
             _localLabel = TelemetryReader.CurrentLocalCarHudLineOrNull();
             _jobLabel = TelemetryReader.CurrentActiveJobHudLineOrNull();
             _headingLabel = TelemetryReader.CurrentHeadingLabel();
-            _positionLabel = TelemetryReader.CurrentPositionLabel();
             _parkLabel = TelemetryReader.CurrentParkLabel();
             _stationLabel = TelemetryReader.CurrentStationWaypointLabel();
-            _alwaysOnLabel = MonitorHudLine.Join(new[]
-            {
+            _alwaysOnLabel = AlwaysOnHudLine.Format(
                 $"v{Main.ModVersion}",
                 _headingLabel,
-                _positionLabel,
-                _parkLabel ?? "",
-                _stationLabel ?? "",
-            });
+                _parkLabel,
+                _stationLabel);
             EmitConsistDebugIfNeeded();
             EmitLocalCarDebugIfNeeded();
             EmitLookAtDebugIfNeeded();
@@ -485,7 +481,9 @@ public sealed class MonitorHudDriver : MonoBehaviour
     private float DrawCenteredBar(string label, GUIStyle style, float y)
     {
         var measure = StripRichText(label);
-        var width = Mathf.Max(280f, style.CalcSize(new GUIContent(measure)).x + 12f);
+        // Grow from content only (DESIGN_SYSTEM). Style padding is already in CalcSize —
+        // do not floor to a wide min (showed empty right pad after Pos was removed).
+        var width = Mathf.Ceil(style.CalcSize(new GUIContent(measure)).x);
         var x = Mathf.Max(Pad, (Screen.width - width) * 0.5f);
         GUI.Label(new Rect(x, y, width, Height), label, style);
         return y + Height;

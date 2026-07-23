@@ -62,7 +62,7 @@ Top-left; independent of **4.3**.
 |------|----------------|-------|
 | Version | `v0.4.25` | Deploy confirm |
 | Heading | `Heading NE` / `Heading ENE` | **1.12** — 16-point rose; no degrees |
-| Pos | `Pos 120, -340` | **1.13** — flat map X,Z (no height) |
+| Pos | *(removed from always-on — Bundle B.1)* | Was **1.13**; coords still available via `T2 pos` debug |
 | Marked | `Marked NE 84m` / `Marked here` | **1.14** — return bearing + distance; omit when unmarked |
 
 Always-on is a full HUD bar (same chrome as loco/look-at), **centered**, stacked **under** the lowest other bar (or alone at top when those are hidden).
@@ -88,7 +88,7 @@ Look-at wins; standing fallback when crosshair is not on a car. Hidden when no t
 
 **1.12 notes:** Personal compass only — not part of `TrainHudLine`. Always visible beside version. Source = look direction (`ActiveCamera`, else `PlayerTransform`); Unity world +Z = N. Display = 16-point abbreviations only (`N`, `NNE`, `NE`, `ENE`, …) — never degrees.
 
-**1.13 notes:** `Pos x, z` from `PlayerTransform.position` (Y dropped for map use).
+**1.13 notes:** Was always-on `Pos x, z`. **Bundle B.1** removes Pos from the HUD; `T2 pos` debug remains.
 
 **1.14 notes:** `Home` sets/updates session mark at player XZ; `Shift+Home` clears (cleared on mod disable/unload). Chip = 16-point bearing toward mark + integer meters (`Marked NE 84m`), or `Marked here` within 1 m. Not persisted.
 

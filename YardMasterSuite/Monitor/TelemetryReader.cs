@@ -236,7 +236,7 @@ internal static class TelemetryReader
     internal static HeadingDebugSnapshot CurrentHeadingDebugSnapshot() =>
         new(HeadingDisplay.ToCompassPoint(TryGetHeadingDegrees()));
 
-    /// <summary>Player world position for the always-on Pos chip (1.13).</summary>
+    /// <summary>Player world position (XZ used by Marked / Station / AR / T2 pos).</summary>
     public static bool TryGetPlayerPosition(out float x, out float y, out float z)
     {
         x = y = z = 0f;
@@ -258,16 +258,6 @@ internal static class TelemetryReader
         {
             return false;
         }
-    }
-
-    public static string CurrentPositionLabel()
-    {
-        if (!TryGetPlayerPosition(out var x, out _, out var z))
-        {
-            return PositionDisplay.Format(null, null);
-        }
-
-        return PositionDisplay.Format(x, z);
     }
 
     internal static PositionDebugSnapshot CurrentPositionDebugSnapshot()

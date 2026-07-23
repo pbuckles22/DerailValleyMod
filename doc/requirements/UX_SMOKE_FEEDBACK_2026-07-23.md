@@ -88,15 +88,18 @@ Screenshots live in [`ux-smoke-2026-07-23/`](ux-smoke-2026-07-23/).
 
 ### Bundle B — Always-on / yard clutter diet  
 **Stories:** 1.13 / 4.4 / 4.6 presentation  
-**Problem:** Info overload; mainland still shows yard placeholders.
+**Problem:** Info overload; mainland still shows yard placeholders.  
+**Ship rule:** one step per branch; smoke PASS before the next step.
 
-**Do (one ship):**
-1. **Remove `Pos`** from always-on bar (keep Heading for now unless sticky AR makes it redundant later).
-2. **Station text chip:** only while in a station zone (already intended) — keep **yard id + short distance**; drop map coords from the chip (`520, 754`).
-3. **Track:** omit segment entirely when unknown / mainline / generic — **do not** show `— Track`.
-4. Audit other “yard-only” empties the same way (prefer omit over `— Word` when the whole concept doesn’t apply).
+**Steps (separate ships):**
+1. **B.1 Remove `Pos`** — always-on bar drops Pos (keep Heading). Also hug bar width to content (no 280px floor). Version **v0.4.31**.
+2. **B.2 Station coords** — keep yard id + short distance; drop map coords (`520, 754`).
+3. **B.3 Track omit** — omit Track segment when unknown / mainline / generic (no `— Track`).
+4. **B.4 Audit** — other yard-only empties: prefer omit over `— Word`.
 
-**Out of scope:** changing Heading removal until Bundle A feels good in play.
+**Out of scope:** Heading removal until Bundle A feels good in play.
+
+**B.1 smoke (v0.4.31):** always-on shows `v… | Heading …` (+ Marked/Station if any) and **never** a `Pos` chip; bar width hugs text (no empty right pad).
 
 ---
 

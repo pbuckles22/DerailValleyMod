@@ -232,15 +232,21 @@ Always-on nav bar: `Heading NE` (16-point). Independent of loco top bar.
 - [x] `T2 heading` on point change
 - [x] No YardMaster exceptions in Player.log
 
-### 1.13 Player coordinates — `T2 pos` — **PASS** v0.4.23
+### 1.13 Player coordinates — `T2 pos` — **PASS** v0.4.23 · HUD chip removed Bundle **B.1** v0.4.31
 
-Always-on nav bar includes flat `Pos x, z` (no height).
+Originally: always-on nav included flat `Pos x, z` (no height). **B.1:** Pos chip removed from always-on; quiet `T2 pos` debug may remain. Bars hug content width (no fixed min that left empty right pad).
 
-**Sign-off**
+**Sign-off (original chip)**
 
 - [x] `Pos` shows two numbers only
 - [x] Walk ~50+ units — `T2 pos change` (not every meter)
 - [x] No YardMaster exceptions
+
+**B.1 smoke**
+
+- [x] Always-on has **no** `Pos` chip
+- [x] Heading (and Marked/Station when present) still show
+- [x] Bar width hugs text (no empty right pad) — `v0.4.31`
 
 ### 1.14 Park / return mark — `T2 mark` — **PASS** v0.4.25
 
