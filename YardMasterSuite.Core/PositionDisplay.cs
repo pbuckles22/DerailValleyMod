@@ -3,8 +3,8 @@ using System;
 namespace YardMasterSuite.Core;
 
 /// <summary>
-/// Pure map-position formatting for the always-on personal nav chip (1.13).
-/// Flat X/Z only (no height) for 2D map use.
+/// Pure map-position formatting (1.13). Flat X/Z only (no height).
+/// Bundle B.1: no longer shown on the always-on HUD; kept for Tier 2 pos debug.
 /// </summary>
 public static class PositionDisplay
 {
