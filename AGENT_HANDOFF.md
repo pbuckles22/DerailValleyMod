@@ -130,7 +130,8 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 **Next**
 
 - [x] **Bundle B.1** remove Pos + hug bar width — **v0.4.31** (smoke PASS)
-- [ ] **Bundle B.2–B.4** then **A → C → D** per [UX_SMOKE_FEEDBACK_2026-07-23.md](doc/requirements/UX_SMOKE_FEEDBACK_2026-07-23.md)
+- [x] **Bundle B.2** Station chip drop coords — **v0.4.32** (smoke PASS)
+- [ ] **Bundle B.3–B.4** then **A → C → D** per [UX_SMOKE_FEEDBACK_2026-07-23.md](doc/requirements/UX_SMOKE_FEEDBACK_2026-07-23.md)
 - [ ] **2.1** Three-Gate → **2.2** Thermal governor (after Epic 4 fix bundles settle)
 - [ ] Re-smoke Load yellow/red when practical
 

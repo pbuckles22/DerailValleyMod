@@ -31,11 +31,11 @@ public class StationWaypointDisplayTests
     }
 
     [Fact]
-    public void Format_in_zone_shows_bearing_distance_and_coords()
+    public void Format_in_zone_shows_bearing_and_distance_without_coords()
     {
         // Player east of station → walk west back to station.
         Assert.Equal(
-            "Station SM W 100m · 10, 20",
+            "Station SM W 100m",
             StationWaypointDisplay.Format(
                 inZone: true,
                 yardId: "SM",
@@ -46,10 +46,10 @@ public class StationWaypointDisplayTests
     }
 
     [Fact]
-    public void Format_at_station_center_shows_here()
+    public void Format_at_station_center_shows_here_without_coords()
     {
         Assert.Equal(
-            "Station HB here · 50, 60",
+            "Station HB here",
             StationWaypointDisplay.Format(
                 inZone: true,
                 yardId: "HB",
@@ -63,7 +63,7 @@ public class StationWaypointDisplayTests
     public void Format_missing_yard_uses_placeholder_id()
     {
         Assert.Equal(
-            "Station — here · 1, 2",
+            "Station — here",
             StationWaypointDisplay.Format(
                 inZone: true,
                 yardId: null,

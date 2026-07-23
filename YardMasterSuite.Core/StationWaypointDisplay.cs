@@ -4,7 +4,8 @@ namespace YardMasterSuite.Core;
 
 /// <summary>
 /// Pure in-zone station waypoint formatting for the always-on nav chip (4.6).
-/// Bearing/distance are flat-map from the player to the station center.
+/// Bearing/distance are flat-map from the player to the station office.
+/// Bundle B.2: map coords dropped from the chip (id + distance / here only).
 /// </summary>
 public static class StationWaypointDisplay
 {
@@ -43,16 +44,15 @@ public static class StationWaypointDisplay
             return "— Station";
         }
 
-        var coords = $"{Round(stationX.Value)}, {Round(stationZ.Value)}";
         if (point == "here")
         {
-            return $"Station {label} here · {coords}";
+            return $"Station {label} here";
         }
 
         var dx = stationX.Value - playerX.Value;
         var dz = stationZ.Value - playerZ.Value;
         var meters = (int)Math.Round(Math.Sqrt(dx * dx + dz * dz), MidpointRounding.AwayFromZero);
-        return $"Station {label} {point} {meters}m · {coords}";
+        return $"Station {label} {point} {meters}m";
     }
 
     /// <summary>16-point walk bearing toward station, <c>here</c>, or null.</summary>
@@ -68,7 +68,4 @@ public static class StationWaypointDisplay
 
         return HeadingDisplay.ToCompassPoint(HeadingDisplay.FromForward(dx, dz));
     }
-
-    private static int Round(float value) =>
-        (int)Math.Round(value, MidpointRounding.AwayFromZero);
 }

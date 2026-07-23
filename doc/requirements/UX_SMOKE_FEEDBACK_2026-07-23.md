@@ -93,13 +93,14 @@ Screenshots live in [`ux-smoke-2026-07-23/`](ux-smoke-2026-07-23/).
 
 **Steps (separate ships):**
 1. **B.1 Remove `Pos`** — always-on bar drops Pos (keep Heading). Also hug bar width to content (no 280px floor). Version **v0.4.31**.
-2. **B.2 Station coords** — keep yard id + short distance; drop map coords (`520, 754`).
+2. **B.2 Station coords** — keep yard id + short distance; drop map coords (`520, 754`). Version **v0.4.32**.
 3. **B.3 Track omit** — omit Track segment when unknown / mainline / generic (no `— Track`).
 4. **B.4 Audit** — other yard-only empties: prefer omit over `— Word`.
 
 **Out of scope:** Heading removal until Bundle A feels good in play.
 
-**B.1 smoke (v0.4.31):** always-on shows `v… | Heading …` (+ Marked/Station if any) and **never** a `Pos` chip; bar width hugs text (no empty right pad).
+**B.1 smoke (v0.4.31):** always-on shows `v… | Heading …` (+ Marked/Station if any) and **never** a `Pos` chip; bar width hugs text (no empty right pad).  
+**B.2 smoke (v0.4.32):** in-zone Station chip is `Station SM NE 84m` / `Station SM here` — **no** raw map coords.
 
 ---
 
