@@ -32,7 +32,7 @@ Legacy IDs (`CMD-01a`, `QOL-08`, …) stay in parentheses so older notes still r
 
 | Stage | Player focus | Mod focus | Stories |
 |-------|----------------|-----------|---------|
-| **1 — Apprentice** | Throttle, brakes, sander, don’t blow the fuse | Situational Awareness HUD | **Epic 1** + **4.3** *(current)* |
+| **1 — Apprentice** | Throttle, brakes, sander, don’t blow the fuse | Situational Awareness HUD | **Epic 1** + **4.3** + **4.7** *(current)* |
 | **2 — Junior Yardman** | Switches, yard paths, consist moves | Remote switch / path integrity | **3.3–3.4** |
 | **3 — Yard Master** | Multi-stop efficiency | Auto dispatch + workbench | **3.5**, **5.1**, **3.1** |
 
@@ -49,10 +49,17 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
 | **1.3–1.6** | CMD-01a–d | Integrity monitor |
 | **1.7–1.9** | CMD-02a–c | Power monitor |
 | **1.10–1.11** | CMD-03 | Terrain / speed limits (current → next) |
+| **1.12** | *(new)* | Personal heading / compass (always-on) |
+| **1.13** | *(new)* | Player map coordinates (always-on) |
+| **1.14** | *(new)* | Park / return mark (freeze “you parked here”) |
 | **2.x** | E2-S1, CMD-04/05 | Governor Mode |
-| **3.1** | CMD-06 | Consist teleport |
+| **3.1** | CMD-06 | Consist teleport + Station Snap & Return |
+| **3.2** | *(new)* | Comms Radio Overlay (helper UI) |
 | **3.3–3.5** | *(new / was parking-lot path tracer)* | Dispatcher: remote switch → manual path check → auto-route |
-| **4.x** | QOL-06–08 | HUD quality |
+| **4.4** | *(new)* | Look-at Track ID |
+| **4.5** | *(was 4.4)* | Next station distance (fluids) |
+| **4.6** | *(was Project Plan 3.2)* | Station waypoint (foot) + in-zone station coords |
+| **4.7** | *(was parking-lot HUD IA)* | Center-weighted / stacked HUD IA |
 | **5.1** | *(new)* | Digital Catalog |
 
 ---
@@ -112,10 +119,19 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
   - [x] **1.10 Speed limit — current** *(was CMD-03)* — Top-bar single `Limit N` after Speed; yellow within 5 km/h of limit; red when over; `T2 limit` (Limit/loco changes only). **Authority:** posted `SignDebug` boards (digit × 10); geometry / SignPlacer ladder as fallback. Grade already in **1.2**. **Done / shipped** — Tier 1 + Tier 2 **PASS** (v0.4.20).
     > As a driver, I want the current governing speed limit on the HUD so I do not overspeed the board I’m under right now.
 
-  - [ ] **1.11 Speed limit — next / trend** — Same single `Limit` badge (no second km/h chip): show **next** lower/higher limit along the path with a clear ↑ (green) / ↓ (red or yellow) cue; lookahead so the cue appears before the board/curve. Builds on **1.10** board+fallback authority.
+  - [x] **1.11 Speed limit — next / trend** — Same single `Limit` badge (no second km/h chip): `^` green / `v` yellow for next different board ahead (lookahead ≈ max(500 m, speed×6)). Builds on **1.10** board+fallback authority. **Done** — Tier 1 + Tier 2 **PASS** (v0.4.23).
     > As a driver, I want an up/down cue for the next speed limit so I can brake or accelerate before I miss the change.
 
-  **Build order (Stage 1 open work):** **1.11** next/↑↓ → then Epic 2; re-smoke Load yellow/red when practical. *(Do not reopen **1.8** HUD thermal prediction. Do not reorder the full top-bar strip here — that is parking-lot / Epic 4 IA.)*
+  - [x] **1.12 Personal heading** — Always-on nav bar `Heading NE` (16-point; no degrees). Player/camera facing; Unity +Z = north. Quiet `T2 heading` on point change. **Done** — Tier 1 + Tier 2 **PASS** (v0.4.23).
+    > As a yard worker, I want a personal compass so I can orient myself to a map even when no train HUD is shown.
+
+  - [x] **1.13 Player coordinates** — Always-on flat-map `Pos x, z` (no height) on the nav bar. Quiet `T2 pos` (≥50 unit move). **Done** — Tier 1 + Tier 2 **PASS** (v0.4.23).
+    > As a yard worker, I want exact coordinates beside the compass so I can find myself on a map in large yards.
+
+  - [ ] **1.14 Park / return mark** — Hotkey (or UI) to **freeze** current map position as “parked here”; while walking, always-on nav shows bearing (16-point) + distance back to that mark (and/or frozen `Park x, z`). Clear/re-mark. Session-only unless we later add prefs. Distinct from live `Heading` / `Pos`.
+    > As a yard worker, I want to mark where I left the loco so when I’m running around I always know which way and how far to get back.
+
+  **Build order (Stage 1 open work):** ship **4.7** / Epic 1 nav on `main` → **1.14** park mark when yard friction demands → then Epic 2; re-smoke Load yellow/red when practical. *(Do not reopen **1.8** HUD thermal prediction.)*
 
 ---
 
@@ -134,8 +150,11 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
 
 - [ ] **Epic 3 — Yard Master / Dispatcher** *(Journey Stages 2–3)* — Yard efficiency after HUD (+ governor abort patterns for anything that writes). Never delete cars.
 
-  - [ ] **3.1 Manual consist management** *(was CMD-06)* — Teleport via native organizers; abort on hazmat / jobs / coupler / speed / unknowns; fail closed.
-    > As a yard master, I want verified teleport helpers so I can reorganize consists without deleting cars or jobs.
+  - [ ] **3.1 Manual consist management & teleport** *(was CMD-06)* — Teleport via native organizers and/or helper UI; abort on hazmat / jobs / coupler / speed / unknowns; fail closed. Includes **Station Snap & Return**.
+    > As a yard master, I want verified teleport helpers and station snap/return so I can reorganize consists and handle paperwork without long walks.
+
+  - [ ] **3.2 Comms Radio Overlay** — Auxiliary HUD panel with helper actions for consist ops / teleport (keeps tools off physical item clutter).
+    > As a yard master, I want a Comms-style helper panel so teleport and yard tools stay one click away.
 
   - [ ] **3.3 Manual switch / turntable remote** — Flip switches and turntables from the HUD / look-at so you don’t walk back and forth. *Stage 2.*
     > As a shunter, I want to flip switches and turntables from my HUD so I don’t have to walk kilometres between throws.
@@ -146,7 +165,7 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
   - [ ] **3.5 Path tracer: automated dispatching** — “Align Route” after a verified path; throws switches automatically. *Stage 3 — needs stable **3.4** + write-safety patterns.*
     > As a yard master, I want an Align Route control that fixes switches automatically once the path is verified.
 
-  **Build order (dispatcher):** **3.3** → **3.4** → **3.5** ( **3.1** when teleport pain dominates).
+  **Build order (dispatcher):** **3.3** → **3.4** → **3.5** ( **3.1** / **3.2** when teleport / UI pain dominates).
 
 ---
 
@@ -158,11 +177,20 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
   - [x] **4.2 Cargo on second bar** *(was QOL-07)* — Freight `Cargo …` / `Empty Cargo`. *Empty Cargo smoke deferred.*
     > As a yard scout, I want cargo named on the second bar so I know what a car is carrying.
 
-  - [x] **4.3 Hide loco gadget top bar** *(was QOL-08)* — Show Speed/Limit/Grade/Mass/Cars/Handbrakes/Load/Motors/Fuel/Oil **only** on a usable loco train; otherwise **hide** (no red dash wall). Reuse usable-train + look-at target. Supersedes **1.4** red-null UI. **Done** — Tier 1 + Tier 2 **PASS** (v0.4.14+)
+  - [x] **4.3 Hide loco gadget top bar** *(was QOL-08)* — Show loco chips **only** on a usable loco train; otherwise **hide** (no red dash wall). Reuse usable-train + look-at target. Supersedes **1.4** red-null UI. **Done** — Tier 1 + Tier 2 **PASS** (v0.4.14+)
     > As a player, I want loco gadget readouts only when a loco is relevant — like cab instruments — not a wall of dashes in the yard.
 
-  - [ ] **4.4 Next station distance** *(linear nav)* — When Fuel/Oil are in warn/critical, optional `Next: … [N km]` using live station data (not a static mileage table); fail-closed if path/station unknown. *No GPS minimap.*
+  - [ ] **4.4 Extended car inspection — Track ID** — Add current Track ID (e.g. `SM-O6I`) on look-at inspector. Job already ships on the second bar.
+    > As a yard master, I want a car’s Track ID when looking at it so I can identify lost consists.
+
+  - [ ] **4.5 Next station distance** *(linear nav)* — When Fuel/Oil are in warn/critical, optional `Next: … [N km]` using live station data (not a static mileage table); fail-closed if path/station unknown. *No GPS minimap.*
     > As an engineer, I want distance to the next station when fluids are low so I know whether I can make it without a map overlay.
+
+  - [ ] **4.6 Station waypoint (foot) + in-zone station coords** — When the player is inside a city/station **zone**, show that station’s map coords (and distance + 16-point bearing to it) on the always-on / nav strip for job-board walks. Fail-closed outside zones / if station unknown. Distinct from **4.5** (loco fluid-gated). *No minimap.*
+    > As a yard master, I want the local station’s coordinates and which way to walk when I’m in a city zone so I don’t get lost finding the job board.
+
+  - [x] **4.7 HUD strip IA reorder** — Horizontally **center** every HUD row; stack loco → look-at → always-on nav bar (same chrome as loco/look-at). Loco chip order: `Fuel · Oil · Mass · Grade · Load · Speed · Limit · Motors · Handbrakes · Cars`. **Done** — Tier 1 + Tier 2 **PASS** (v0.4.23).
+    > As a driver, I want Speed and Limit in the visual center of the loco bar so I glance there first.
 
 ---
 
@@ -183,7 +211,7 @@ Not scheduled — discuss when Journey stage friction demands it:
 - [ ] Manual Transmission Override
 - [ ] Mounting Suite / precision mounting
 - [ ] Engine Temp Soft Governor *(if distinct from **2.2**)*
-- [ ] **HUD strip IA reorder** — center-out / “immediate → tactical → strategic” reshuffle of the top bar (Speed·Limit·Load vs Fuel/Oil). Defer until Stage 1 Limit stories (**1.10**/**1.11**) are stable; do not dual-number Limit chips.
+- [ ] Speed-limit auto-throttle governor *(soft-cap to % of Limit — same pattern as **2.2**; candidate **2.4**)*
 
 ---
 

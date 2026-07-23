@@ -5,29 +5,29 @@ namespace YardMasterSuite.Tests;
 public class TrainHudLineTests
 {
     [Fact]
-    public void Format_joins_train_total_segments()
+    public void Format_joins_center_weighted_ia_order()
     {
         var line = TrainHudLine.Format(
+            "Fuel 67 %",
+            "Oil 55 %",
+            "Mass 240 t",
+            "Grade +1.2 %",
+            "Load 42 %",
             "Speed 36 km/h",
             "Limit 60",
-            "Grade +1.2 %",
-            "Mass 240 t",
-            "Cars 8",
-            "Handbrakes 3",
-            "Load 42 %",
             "Motors OK",
-            "Fuel 67 %",
-            "Oil 55 %");
+            "Handbrakes 3",
+            "Cars 8");
         Assert.Equal(
-            "Speed 36 km/h  |  Limit 60  |  Grade +1.2 %  |  Mass 240 t  |  Cars 8  |  Handbrakes 3  |  Load 42 %  |  Motors OK  |  Fuel 67 %  |  Oil 55 %",
+            "Fuel 67 %  |  Oil 55 %  |  Mass 240 t  |  Grade +1.2 %  |  Load 42 %  |  Speed 36 km/h  |  Limit 60  |  Motors OK  |  Handbrakes 3  |  Cars 8",
             line);
     }
 
     [Fact]
-    public void NullLine_is_all_placeholders()
+    public void NullLine_is_all_placeholders_in_ia_order()
     {
         Assert.Equal(
-            "— Speed  |  — Limit  |  — Grade  |  — Mass  |  — Cars  |  — Handbrakes  |  — Load  |  — Motors  |  — Fuel  |  — Oil",
+            "— Fuel  |  — Oil  |  — Mass  |  — Grade  |  — Load  |  — Speed  |  — Limit  |  — Motors  |  — Handbrakes  |  — Cars",
             TrainHudLine.NullLine());
     }
 }

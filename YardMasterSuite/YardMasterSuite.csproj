@@ -57,7 +57,7 @@
     <!-- Drop stale sibling Core if a previous build left it in build/ -->
     <Delete Files="../build/YardMasterSuite.Core.dll" ContinueOnError="true" />
 
-    <Exec Condition="'$(Configuration)' == 'Release' And '$(OS)' == 'Windows_NT'" Command="&quot;$(windir)\System32\WindowsPowerShell\v1.0\powershell.exe&quot; -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)..\package.ps1&quot;" />
-    <Exec Condition="'$(Configuration)' == 'Release' And '$(OS)' != 'Windows_NT'" Command="pwsh -NoProfile -File &quot;$(MSBuildThisFileDirectory)../package.ps1&quot;" />
+    <Exec Condition="'$(Configuration)' == 'Release' And '$(OS)' == 'Windows_NT'" Command="&quot;$(windir)\System32\WindowsPowerShell\v1.0\powershell.exe&quot; -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)..\package.ps1&quot; -Configuration Release -SkipBuild" />
+    <Exec Condition="'$(Configuration)' == 'Release' And '$(OS)' != 'Windows_NT'" Command="pwsh -NoProfile -File &quot;$(MSBuildThisFileDirectory)../package.ps1&quot; -Configuration Release -SkipBuild" />
   </Target>
 </Project>

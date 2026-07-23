@@ -1,9 +1,23 @@
 param (
     [switch]$NoArchive,
-    [string]$OutputDirectory = $PSScriptRoot
+    [string]$OutputDirectory = $PSScriptRoot,
+    [ValidateSet("Debug", "Release")]
+    [string]$Configuration = "Debug",
+    # Set when invoked from csproj PostBuild (already compiled into build/).
+    [switch]$SkipBuild
 )
 
 Set-Location "$PSScriptRoot"
+
+# Rebuild into build/ unless PostBuild already did (avoids Release ↔ package.ps1 recursion).
+# Tests alone can leave build/ stale (Core is linked into YardMasterSuite.dll).
+if (-not $SkipBuild) {
+    & dotnet build "YardMasterSuite/YardMasterSuite.csproj" -c $Configuration
+    if ($LASTEXITCODE -ne 0) {
+        throw "dotnet build failed (exit $LASTEXITCODE); not packaging stale build/YardMasterSuite.dll"
+    }
+}
+
 $FilesToInclude = "info.json", "build/YardMasterSuite.dll"
 
 $modInfo = Get-Content -Raw -Path "info.json" | ConvertFrom-Json
