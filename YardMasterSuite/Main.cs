@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Reflection;
 using HarmonyLib;
 using UnityEngine;
@@ -22,6 +23,16 @@ public static class Main
 
     /// <summary>UMM <c>info.json</c> version — shown on HUD so a new DLL is obvious in-game.</summary>
     internal static string ModVersion => _modEntry?.Info.Version ?? "?";
+
+    /// <summary>Mods/YardMasterSuite/Icons — AR waypoint PNGs.</summary>
+    internal static string? IconsPath
+    {
+        get
+        {
+            var root = _modEntry?.Path;
+            return string.IsNullOrEmpty(root) ? null : Path.Combine(root, "Icons");
+        }
+    }
 
     // https://wiki.nexusmods.com/index.php/Category:Unity_Mod_Manager
     private static bool Load(UnityModManager.ModEntry modEntry)
@@ -91,6 +102,7 @@ public static class Main
             _hudRoot = new GameObject("YardMasterSuite_MonitorHud");
             UnityEngine.Object.DontDestroyOnLoad(_hudRoot);
             _hudRoot.AddComponent<MonitorHudDriver>();
+            _hudRoot.AddComponent<ArWaypointOverlay>();
         }
         catch (Exception ex)
         {

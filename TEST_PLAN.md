@@ -254,6 +254,64 @@ Always-on nav: `Home` sets mark; `Shift+Home` clears. Chip `Marked NE Nm` / `Mar
 - [x] `Shift+Home` — Marked chip gone
 - [x] No YardMaster exceptions in Player.log *(assumed with clean smoke)*
 
+### 4.4 Track ID on second bar — `T2 local-car` / `T2 look-at` — pending smoke v0.4.26
+
+Second bar includes `Track SM-O6I` (or `— Track` on mainline / unknown).
+
+**Sign-off**
+
+- [ ] Chip `v0.4.26`
+- [ ] Look-at / stand on yard car — `Track …` matches a nearby Track ID sign
+- [ ] Mainline / no yard ID — `— Track`
+- [ ] `T2 local-car` / `T2 look-at` fragments include Track
+
+### 4.5 Next station (fluids) — `T2 next-station` — pending smoke v0.4.26
+
+When Fuel or Oil is yellow/red on a usable loco: optional `Next: … [N.N km]` on loco bar. Omit when fluids OK or start/dest station unknown.
+
+**Sign-off**
+
+- [ ] Fluids OK — no Next chip
+- [ ] Fluids low while in a station zone (or on that yard’s track) — Next shows another station + km
+- [ ] On mainline with no resolvable start station — Next omitted (fail-closed)
+- [ ] `T2 next-station` on appear/change
+
+### 4.6 Station waypoint (foot) — `T2 station` — pending smoke v0.4.26
+
+Always-on: in job-generation zone show `Station {YardID} {bearing} {m}m · x, z` (or `here`). Omit outside zones.
+
+**Sign-off**
+
+- [ ] Outside station zone — Station chip absent
+- [ ] Enter station/city zone — Station chip with yard id, bearing/distance, coords
+- [ ] Walk toward station center — meters drop; near center → `here`
+- [ ] `T2 station` on enter/leave / bearing change
+
+### 4.8 Active Job HUD + preview-prep edge — `T2 job` — retarget after Bundle D
+
+Taken: `Job … · Bonus …` only. Preview prep: `Preview …m` to Regular destroy edge when available jobs and none taken. Cancelled on Abandoned/Expired.
+
+**Sign-off**
+
+- [ ] No taken / no preview risk — job bar absent (or Preview omitted)
+- [ ] Take a job — bar shows Job id + Bonus; **no** Zone/Keep meters
+- [ ] Abandon / expire taken job — bar shows red **Cancelled**
+- [ ] Hold/stage unvalidated jobs (no taken) — Preview meters track tight Regular edge; near edge warn; past → `OUT`
+- [ ] `T2 job` on appear/hide / bonus minute / preview edge change
+
+### 4.9 AR wayfinding markers — `T2 ar` — pending smoke v0.4.29
+
+Screen markers: loco / office / pin **PNG icons** (shape primary). Edge clamp when behind. Office = paperwork area (not yard center).
+
+**Sign-off**
+
+- [ ] Chip `v0.4.29`
+- [ ] After using a loco — train icon + meters toward that loco
+- [ ] Enter station zone — house icon at **office/validator**, not mid-yard cargo
+- [ ] `Home` — pin icon; `Shift+Home` clears
+- [ ] Turn away — marker clamps to screen edge
+- [ ] `T2 ar` shows loco / office / pin set changes
+
 ### 4.7 HUD strip IA — **PASS** v0.4.23
 
 All rows centered. Stack: loco → look-at → always-on bar (same chrome).

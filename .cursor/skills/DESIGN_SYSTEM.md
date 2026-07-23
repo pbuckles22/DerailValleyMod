@@ -4,8 +4,9 @@ Monitor HUD (IMGUI) rules for *Yard Master Suite*. Product inventory and naming:
 
 ## HUD layout
 
-- **Main strip:** one top-left bar; segments join left → right with `  |  `.
-- **Second bar:** look-at preferred; standing fallback when crosshair is not on a car — same height, width fits its text; gone when no target.
+- **Main strip:** centered bars; segments join with `  |  `.
+- **Second bar:** look-at preferred; standing fallback — same chrome; gone when no target.
+- **AR markers (4.9):** screen-space glyphs over world anchors (loco / office / pin); edge-clamped when behind. Shape primary, color secondary.
 - Grow bar width from content (`GUI.skin.box.CalcSize`); do not clip labels.
 
 ## HUD label wording

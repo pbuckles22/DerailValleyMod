@@ -117,7 +117,7 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 |--|--|
 | **Project** | *Yard Master Suite* (UMM / Harmony / net48) |
 | **MVP** | **Epic 1** System Monitor HUD |
-| **Version (`main`)** | **0.4.25** |
+| **Version (`main`)** | **0.4.29** *(Epic 4 baseline; UX fix bundles B→A→C→D pending)* |
 | **Active branch** | `main` |
 
 **Shipped on `main`**
@@ -125,13 +125,13 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 - [x] **Epic 0** Safe Boot *(0.4 scaffold)*
 - [x] **Epic 1** Diagnostic HUD — **1.1–1.14** complete (Motors current-state only — Hot dwell **cut**)
 - [x] **4.1–4.3**, **4.7** Spherecast, cargo, hide loco bar, centered stacked HUD IA
+- [ ] **4.4–4.9** code on `main` @ **v0.4.29** — Tier 1 green; Tier 2 partial (known FAILs → UX bundles)
 
 **Next**
 
-- [ ] **4.6** in-zone station coords *(backlog)*
-- [ ] **2.1** Three-Gate → **2.2** Thermal governor
+- [ ] **Bundle B** clutter diet — then **A → C → D** per [UX_SMOKE_FEEDBACK_2026-07-23.md](doc/requirements/UX_SMOKE_FEEDBACK_2026-07-23.md)
+- [ ] **2.1** Three-Gate → **2.2** Thermal governor (after Epic 4 fix bundles settle)
 - [ ] Re-smoke Load yellow/red when practical
-- [ ] Later: **4.4–4.5** · dispatcher **3.x** · Digital Catalog **5.1**
 
 **Merge-ready:** `dotnet test YardMasterSuite.sln` · `dotnet build YardMasterSuite.sln -c Release` · **deploy to Mods** via `package.ps1 -NoArchive` (required before Tier 2 smoke — see [.cursor/rules/deploy-before-smoke.mdc](.cursor/rules/deploy-before-smoke.mdc))
 
@@ -166,10 +166,12 @@ Release zip ≠ installed. Agents must run the Mods deploy (and verify version) 
 
 ## Git workflow (how work lands on `main`)
 
+**One story, one ship (hard):** one PM_PLAN story (or one agreed ship) per branch/commit cycle. Do **not** start the next story while the current one is uncommitted — including while waiting on Tier 2 smoke. If stacking seems necessary, ask first. Rule: [.cursor/rules/one-story-one-ship.mdc](.cursor/rules/one-story-one-ship.mdc).
+
 Document **your** team rules here and keep them in sync with what you run locally.
 
 1. **Integration branch:** Usually **`main`**. All shipped product state (PM_PLAN, roadmap checkboxes) should reflect what is merged here.
-2. **Optional short-lived branches:** For larger slices, use `feature/<topic>` or `fix/<topic>`, then merge or rebase into `main`. Agents should follow [.cursor/skills/github-feature-workflow/SKILL.md](.cursor/skills/github-feature-workflow/SKILL.md) when branching or pushing.
+2. **Short-lived branches:** One story per branch (`feature/<story-id>-topic`); merge into `main` before starting the next. Agents follow [.cursor/skills/github-feature-workflow/SKILL.md](.cursor/skills/github-feature-workflow/SKILL.md) and [.cursor/rules/one-story-one-ship.mdc](.cursor/rules/one-story-one-ship.mdc).
 3. **Before push / merge-ready:** Run your **full gate** (document it in the **Run and test** section above — e.g. tests + build + integration/E2E). Same checks should run in CI if you use GitHub Actions (or equivalent).
 4. **After push — verify CI:** Agents do not get GitHub failure emails. When Actions exist, run `gh run watch --repo OWNER/REPO` (or `gh run list` + `gh run view --log-failed`) before declaring work done on `main`. See [.cursor/skills/github-feature-workflow/SKILL.md](.cursor/skills/github-feature-workflow/SKILL.md).
 5. **Pull requests:** **Optional** for DerailValleyMod — set `Required` or `Optional` for your org. If optional, direct push to `main` after green CI is still valid; if required, open a PR and use the same test plan text you ran locally.

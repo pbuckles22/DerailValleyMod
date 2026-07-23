@@ -18,7 +18,9 @@ description: >-
 - **Do** treat **green merge-ready command** plus project test discipline ([tester](../tester/SKILL.md), [TEST_TDD.md](../TEST_TDD.md), [code-quality-gate](../code-quality-gate/SKILL.md) when relevant) as **merge-ready / commit-ready**.
 - **If** the user says they want a PR, GitHub review, or external reviewers: then describe or open the PR as they asked.
 
-**Completion mental model:** one branch ≈ one purpose → merge-ready green → **commit** → **push** → merge to `main` (locally or via GitHub **only if the user uses that path**) → delete the feature branch. No roundabout "please open a PR" unless they chose that path.
+**Completion mental model:** one branch ≈ **one PM story / one ship** → merge-ready green → smoke PASS when deployable → **commit** → **push** → merge to `main` (locally or via GitHub **only if the user uses that path**) → delete the feature branch → **only then** start the next story. No roundabout "please open a PR" unless they chose that path.
+
+**Hard rule:** [one-story-one-ship.mdc](../../rules/one-story-one-ship.mdc) — never stack the next feature on uncommitted WIP (including while waiting on smoke). If stacking seems necessary, **ask the user first**.
 
 ## When to apply
 
@@ -28,13 +30,15 @@ description: >-
 
 ## Branch naming
 
-- Prefer: `feature/<short-kebab-topic>` (e.g. `feature/epic-10-3-pause-keys`) or `fix/<issue-or-topic>`.
-- Avoid ultra-long names; include epic/story id if it helps **PM_PLAN** / roadmap traceability.
+- Prefer: `feature/<story-id>-short-topic` (e.g. `feature/4-4-track-id`, `feature/bundle-b-clutter-diet`) or `fix/<issue-or-topic>`.
+- Include the **PM story id** when one exists. Avoid epic-wide dumping grounds (e.g. `feature/epic-4-hud-qol`) that invite multi-story WIP.
+- Avoid ultra-long names.
 
 ## Branch-first rule (agents)
 
 - **Do not** stack substantial implementation on **`main`** and only then create a feature branch to "check in." That bypasses a proper branch history and the CI-before-commit discipline.
-- **Do** start each non-trivial slice on a **new branch**: `git fetch origin`, `git checkout main`, `git pull`, `git checkout -b feature/<topic>`, then implement, run merge-ready, commit, push, merge to `main` per [Standard sequence](#standard-sequence) (no default PR step).
+- **Do** start each non-trivial **story** on a **new branch**: `git fetch origin`, `git checkout main`, `git pull`, `git checkout -b feature/<story-id>-topic`, then implement **that story only**, run merge-ready, (smoke if deployable), commit, push, merge to `main` per [Standard sequence](#standard-sequence) (no default PR step).
+- **Do not** start the next story until the current one is **committed** (clean tree / merged). Waiting on Tier 2 smoke is a **stop**, not a reason to keep coding.
 - If work already landed on **`main`** without a branch, recover discipline going forward; optionally **`git checkout -b feature/<topic>`** from **`main`** before the _next_ slice so new commits are branch-first.
 
 ## Exit criteria before commit (ship bar)

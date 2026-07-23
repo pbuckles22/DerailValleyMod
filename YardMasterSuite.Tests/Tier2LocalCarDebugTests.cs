@@ -11,22 +11,24 @@ public class Tier2LocalCarDebugTests
             handbrake: "— Handbrake",
             coupling: "— Couplers",
             carNumber: "Car XX",
-            job: "— Job");
+            job: "— Job",
+            track: "— Track");
 
     private static LocalCarDebugSnapshot Visible(
         string pipe = "Pipe 2.0 bar",
         string handbrake = "Handbrake 1",
         string coupling = "Couplers F+ R-",
         string carNumber = "Car 3",
-        string job = "Job FH-12") =>
-        new(visible: true, pipe, handbrake, coupling, carNumber, job);
+        string job = "Job FH-12",
+        string track = "Track SM-O6I") =>
+        new(visible: true, pipe, handbrake, coupling, carNumber, job, track);
 
     [Fact]
     public void NextLogMessage_logs_init_when_first_visible()
     {
         var msg = Tier2LocalCarDebug.NextLogMessage(null, Visible());
         Assert.Equal(
-            "T2 local-car init: Pipe 2.0 bar  |  Handbrake 1  |  Couplers F+ R-  |  Car 3  |  Job FH-12",
+            "T2 local-car init: Pipe 2.0 bar  |  Handbrake 1  |  Couplers F+ R-  |  Car 3  |  Job FH-12  |  Track SM-O6I",
             msg);
     }
 
@@ -34,7 +36,7 @@ public class Tier2LocalCarDebugTests
     public void NextLogMessage_logs_appear_and_hide()
     {
         Assert.Equal(
-            "T2 local-car appear: Pipe 2.0 bar  |  Handbrake 1  |  Couplers F+ R-  |  Car 3  |  Job FH-12",
+            "T2 local-car appear: Pipe 2.0 bar  |  Handbrake 1  |  Couplers F+ R-  |  Car 3  |  Job FH-12  |  Track SM-O6I",
             Tier2LocalCarDebug.NextLogMessage(Hidden(), Visible()));
         Assert.Equal(
             "T2 local-car hide",
@@ -48,7 +50,7 @@ public class Tier2LocalCarDebugTests
         var after = Visible(coupling: "Couplers F+ R+");
         var msg = Tier2LocalCarDebug.NextLogMessage(before, after);
         Assert.Equal(
-            "T2 local-car change: Pipe 2.0 bar  |  Handbrake 1  |  Couplers F+ R+  |  Car 3  |  Job FH-12",
+            "T2 local-car change: Pipe 2.0 bar  |  Handbrake 1  |  Couplers F+ R+  |  Car 3  |  Job FH-12  |  Track SM-O6I",
             msg);
     }
 

@@ -12,9 +12,10 @@ public class LocalCarHudLineTests
             "Handbrake 1",
             "Couplers F+ R-",
             "Car 3",
-            "Job FH-12");
+            "Job FH-12",
+            "Track SM-O6I");
         Assert.Equal(
-            "Pipe 2.0 bar  |  Handbrake 1  |  Couplers F+ R-  |  Car 3  |  Job FH-12",
+            "Pipe 2.0 bar  |  Handbrake 1  |  Couplers F+ R-  |  Car 3  |  Job FH-12  |  Track SM-O6I",
             line);
     }
 
@@ -27,9 +28,10 @@ public class LocalCarHudLineTests
             "Couplers F+ R+",
             "Car XX",
             "Job SM-SU-46",
+            "Track C-06S",
             cargo: "Cargo Steel Rails");
         Assert.Equal(
-            "Pipe 1.0 bar  |  Handbrake 0  |  Couplers F+ R+  |  Car XX  |  Job SM-SU-46  |  Cargo Steel Rails",
+            "Pipe 1.0 bar  |  Handbrake 0  |  Couplers F+ R+  |  Car XX  |  Job SM-SU-46  |  Track C-06S  |  Cargo Steel Rails",
             freight);
 
         var loco = LocalCarHudLine.Format(
@@ -38,10 +40,11 @@ public class LocalCarHudLineTests
             "Couplers F- R-",
             "Car N/A",
             "— Job",
+            "— Track",
             cargo: null,
             locoType: "Loco DE6");
         Assert.Equal(
-            "Pipe 5.0 bar  |  Handbrake 0  |  Couplers F- R-  |  Car N/A  |  — Job  |  Loco DE6",
+            "Pipe 5.0 bar  |  Handbrake 0  |  Couplers F- R-  |  Car N/A  |  — Job  |  — Track  |  Loco DE6",
             loco);
     }
 }

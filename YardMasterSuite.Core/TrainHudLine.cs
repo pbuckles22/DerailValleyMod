@@ -1,8 +1,11 @@
+using System.Collections.Generic;
+
 namespace YardMasterSuite.Core;
 
 /// <summary>
 /// Loco-anchored train summary bar (totals as if standing in the locomotive).
 /// Chip order is center-weighted IA (4.7): peripherals outside, Speed/Limit at mid-string.
+/// Optional fluid-gated <paramref name="nextStation"/> appends at the end (4.5).
 /// </summary>
 public static class TrainHudLine
 {
@@ -16,11 +19,20 @@ public static class TrainHudLine
         string limit,
         string motors,
         string handbrakes,
-        string cars) =>
-        MonitorHudLine.Join(new[]
+        string cars,
+        string? nextStation = null)
+    {
+        var parts = new List<string>
         {
             fuel, oil, mass, grade, load, speed, limit, motors, handbrakes, cars,
-        });
+        };
+        if (!string.IsNullOrEmpty(nextStation))
+        {
+            parts.Add(nextStation!);
+        }
+
+        return MonitorHudLine.Join(parts);
+    }
 
     public static string NullLine() =>
         Format(
