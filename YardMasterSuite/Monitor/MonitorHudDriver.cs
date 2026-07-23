@@ -6,10 +6,13 @@ namespace YardMasterSuite.Monitor;
 /// <summary>
 /// In-world IMGUI overlay for Monitor Mode telemetry.
 /// Top bar = usable loco-train totals (hidden when not usable — 4.3); second bar = look-at preferred, standing fallback.
-/// Always-on: version + Heading (1.12) + Pos (1.13). Loco bar centered IA (4.7). Second bar = look-at.
+/// Always-on: version + Heading (1.12) + Pos (1.13) + Park return (1.14). Loco bar centered IA (4.7).
 /// </summary>
 public sealed class MonitorHudDriver : MonoBehaviour
 {
+    /// <summary>Home = set/update park mark; Shift+Home = clear. Session-only.</summary>
+    private const KeyCode ParkMarkKey = KeyCode.Home;
+
     private const float RefreshSeconds = 0.1f;
     private const float Pad = 12f;
     private const float Height = 28f;
@@ -22,6 +25,7 @@ public sealed class MonitorHudDriver : MonoBehaviour
     private string? _localLabel;
     private string _headingLabel = "— Heading";
     private string _positionLabel = "— Pos";
+    private string? _parkLabel;
     private string _alwaysOnLabel = "—";
     private GUIStyle? _trainStyle;
     private GUIStyle? _localStyle;
@@ -78,6 +82,10 @@ public sealed class MonitorHudDriver : MonoBehaviour
     private int? _lastPosX;
     private int? _lastPosZ;
 
+    private bool _hasParkDebug;
+    private bool _lastParkHasMark;
+    private string? _lastParkReturnPoint;
+
     private void OnDisable()
     {
         // Styles touch GUI.skin — only build them from OnGUI (EnsureStyles).
@@ -86,6 +94,8 @@ public sealed class MonitorHudDriver : MonoBehaviour
 
     private void Update()
     {
+        PollParkMarkHotkey();
+
         _elapsed += Time.unscaledDeltaTime;
         if (_elapsed < RefreshSeconds)
         {
@@ -100,11 +110,13 @@ public sealed class MonitorHudDriver : MonoBehaviour
             _localLabel = TelemetryReader.CurrentLocalCarHudLineOrNull();
             _headingLabel = TelemetryReader.CurrentHeadingLabel();
             _positionLabel = TelemetryReader.CurrentPositionLabel();
+            _parkLabel = TelemetryReader.CurrentParkLabel();
             _alwaysOnLabel = MonitorHudLine.Join(new[]
             {
                 $"v{Main.ModVersion}",
                 _headingLabel,
                 _positionLabel,
+                _parkLabel ?? "",
             });
             EmitConsistDebugIfNeeded();
             EmitLocalCarDebugIfNeeded();
@@ -114,11 +126,28 @@ public sealed class MonitorHudDriver : MonoBehaviour
             EmitSpeedLimitDebugIfNeeded();
             EmitHeadingDebugIfNeeded();
             EmitPositionDebugIfNeeded();
+            EmitParkDebugIfNeeded();
         }
         finally
         {
             TelemetryReader.EndHudTick();
         }
+    }
+
+    private void PollParkMarkHotkey()
+    {
+        if (!Input.GetKeyDown(ParkMarkKey))
+        {
+            return;
+        }
+
+        if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
+        {
+            TelemetryReader.ClearParkMark();
+            return;
+        }
+
+        TelemetryReader.TrySetParkMarkAtPlayer();
     }
 
     private void EmitSpeedLimitDebugIfNeeded()
@@ -172,6 +201,25 @@ public sealed class MonitorHudDriver : MonoBehaviour
         _lastPosX = snap.X;
         _lastPosZ = snap.Z;
         _hasPositionDebug = true;
+        if (line != null)
+        {
+            Main.Log(line);
+        }
+    }
+
+    private void EmitParkDebugIfNeeded()
+    {
+        var snap = TelemetryReader.CurrentParkDebugSnapshot();
+        ParkDebugSnapshot? previous = null;
+        if (_hasParkDebug)
+        {
+            previous = new ParkDebugSnapshot(_lastParkHasMark, _lastParkReturnPoint);
+        }
+
+        var line = Tier2ParkDebug.NextLogMessage(previous, snap);
+        _lastParkHasMark = snap.HasMark;
+        _lastParkReturnPoint = snap.ReturnPoint;
+        _hasParkDebug = true;
         if (line != null)
         {
             Main.Log(line);

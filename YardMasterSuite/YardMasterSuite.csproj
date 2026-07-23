@@ -26,6 +26,7 @@
     <Reference Include="UnityEngine.CoreModule" />
     <Reference Include="UnityEngine.PhysicsModule" />
     <Reference Include="UnityEngine.IMGUIModule" />
+    <Reference Include="UnityEngine.InputLegacyModule" />
     <Reference Include="UnityEngine.TextRenderingModule" />
   </ItemGroup>
 

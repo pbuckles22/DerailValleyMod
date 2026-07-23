@@ -128,10 +128,10 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
   - [x] **1.13 Player coordinates** — Always-on flat-map `Pos x, z` (no height) on the nav bar. Quiet `T2 pos` (≥50 unit move). **Done** — Tier 1 + Tier 2 **PASS** (v0.4.23).
     > As a yard worker, I want exact coordinates beside the compass so I can find myself on a map in large yards.
 
-  - [ ] **1.14 Park / return mark** — Hotkey (or UI) to **freeze** current map position as “parked here”; while walking, always-on nav shows bearing (16-point) + distance back to that mark (and/or frozen `Park x, z`). Clear/re-mark. Session-only unless we later add prefs. Distinct from live `Heading` / `Pos`.
+  - [x] **1.14 Park / return mark** — `Home` sets/updates session park mark at player XZ; `Shift+Home` clears. Always-on nav chip `Park NE 84m` (16-point bearing + meters back to mark) or `Park here` within 1 m; omitted when unmarked. Quiet `T2 park` on set/clear / bearing change. Distinct from live `Heading` / `Pos`. **Done** — Tier 1; Tier 2 smoke pending (v0.4.24).
     > As a yard worker, I want to mark where I left the loco so when I’m running around I always know which way and how far to get back.
 
-  **Build order (Stage 1 open work):** ship **4.7** / Epic 1 nav on `main` → **1.14** park mark when yard friction demands → then Epic 2; re-smoke Load yellow/red when practical. *(Do not reopen **1.8** HUD thermal prediction.)*
+  **Build order (Stage 1 open work):** **1.14** Tier 2 smoke → mark **Epic 1** complete → then **4.6** / Epic 2; re-smoke Load yellow/red when practical. *(Do not reopen **1.8** HUD thermal prediction.)*
 
 ---
 

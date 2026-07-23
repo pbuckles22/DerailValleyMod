@@ -58,9 +58,10 @@ Top-left; independent of **4.3**.
 
 | Word | Example live | Notes |
 |------|----------------|-------|
-| Version | `v0.4.23` | Deploy confirm |
+| Version | `v0.4.24` | Deploy confirm |
 | Heading | `Heading NE` / `Heading ENE` | **1.12** — 16-point rose; no degrees |
 | Pos | `Pos 120, -340` | **1.13** — flat map X,Z (no height) |
+| Park | `Park NE 84m` / `Park here` | **1.14** — return bearing + distance; omit when unmarked |
 
 Always-on is a full HUD bar (same chrome as loco/look-at), **centered**, stacked **under** the lowest other bar (or alone at top when those are hidden).
 
@@ -86,7 +87,7 @@ Look-at wins; standing fallback when crosshair is not on a car. Hidden when no t
 
 **1.13 notes:** `Pos x, z` from `PlayerTransform.position` (Y dropped for map use).
 
-**1.14 (backlog):** Park/return mark — freeze map position; show bearing + distance back while walking.
+**1.14 notes:** `Home` sets/updates session mark at player XZ; `Shift+Home` clears (cleared on mod disable/unload). Chip = 16-point bearing toward mark + integer meters (`Park NE 84m`), or `Park here` within 1 m. Not persisted.
 
 **4.6 (backlog):** In city/station zone — show that station’s map coords + bearing/distance (foot nav).
 

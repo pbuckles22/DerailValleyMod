@@ -282,6 +282,51 @@ internal static class TelemetryReader
             (int)System.Math.Round(z, System.MidpointRounding.AwayFromZero));
     }
 
+    /// <summary>Always-on park/return chip (1.14). Null when unmarked (omit from HUD).</summary>
+    public static string? CurrentParkLabel()
+    {
+        if (!ParkMarkSession.TryGet(out var markX, out var markZ))
+        {
+            return ParkMarkDisplay.FormatReturn(null, null, null, null);
+        }
+
+        if (!TryGetPlayerPosition(out var x, out _, out var z))
+        {
+            return ParkMarkDisplay.FormatReturn(markX, markZ, null, null);
+        }
+
+        return ParkMarkDisplay.FormatReturn(markX, markZ, x, z);
+    }
+
+    internal static ParkDebugSnapshot CurrentParkDebugSnapshot()
+    {
+        if (!ParkMarkSession.TryGet(out var markX, out var markZ))
+        {
+            return new ParkDebugSnapshot(false, null);
+        }
+
+        if (!TryGetPlayerPosition(out var x, out _, out var z))
+        {
+            return new ParkDebugSnapshot(true, null);
+        }
+
+        return new ParkDebugSnapshot(true, ParkMarkDisplay.TryGetReturnPoint(markX, markZ, x, z));
+    }
+
+    public static bool TrySetParkMarkAtPlayer()
+    {
+        if (!TryGetPlayerPosition(out var x, out _, out var z))
+        {
+            return false;
+        }
+
+        ParkMarkSession.Set(x, z);
+        return true;
+    }
+
+    public static void ClearParkMark() => ParkMarkSession.Clear();
+
+
     public static float? TryGetAbsSpeedMetersPerSecond()
     {
         try
