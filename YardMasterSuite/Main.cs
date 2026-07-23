@@ -3,6 +3,7 @@ using System.Reflection;
 using HarmonyLib;
 using UnityEngine;
 using UnityModManagerNet;
+using YardMasterSuite.Core;
 using YardMasterSuite.Monitor;
 
 namespace YardMasterSuite;
@@ -61,6 +62,7 @@ public static class Main
         else
         {
             DestroyHud();
+            ParkMarkSession.Clear();
             modEntry.Logger.Log("Yard Master Suite disabled.");
         }
 
@@ -70,6 +72,7 @@ public static class Main
     private static bool OnUnload(UnityModManager.ModEntry modEntry)
     {
         DestroyHud();
+        ParkMarkSession.Clear();
         _harmony?.UnpatchAll(modEntry.Info.Id);
         _harmony = null;
         _modEntry = null;

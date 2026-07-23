@@ -242,6 +242,21 @@ Always-on nav bar includes flat `Pos x, z` (no height).
 - [x] Walk ~50+ units — `T2 pos change` (not every meter)
 - [x] No YardMaster exceptions
 
+### 1.14 Park / return mark — `T2 park` — **pending smoke** v0.4.24
+
+Always-on nav: `Home` sets mark; `Shift+Home` clears. Chip `Park NE Nm` / `Park here`; omit when unmarked.
+
+**Sign-off**
+
+- [ ] Mod loads; Active; chip `v0.4.24`
+- [ ] No mark — Park chip absent from always-on bar
+- [ ] Press `Home` at loco — `Park here` (or near-zero); `T2 park` set/init
+- [ ] Walk away — chip shows 16-point bearing + meters back toward mark
+- [ ] Turn while walking — bearing updates; `T2 park` on point change (not every meter)
+- [ ] `Shift+Home` — Park chip gone; `T2 park change: — Park`
+- [ ] `Home` again elsewhere — re-marks
+- [ ] No YardMaster exceptions in Player.log
+
 ### 4.7 HUD strip IA — **PASS** v0.4.23
 
 All rows centered. Stack: loco → look-at → always-on bar (same chrome).

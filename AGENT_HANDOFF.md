@@ -117,18 +117,19 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 |--|--|
 | **Project** | *Yard Master Suite* (UMM / Harmony / net48) |
 | **MVP** | **Epic 1** System Monitor HUD |
-| **Version (`main`)** | **0.4.23** |
-| **Active branch** | `main` |
+| **Version (`main`)** | **0.4.24** |
+| **Active branch** | `feature/1.14-park-mark` → merge to `main` |
 
 **Shipped on `main`**
 
 - [x] **Epic 0** Safe Boot *(0.4 scaffold)*
-- [x] **1.1–1.13** Speed through Limit ↑↓, Heading, Pos (Motors current-state only — Hot dwell **cut**)
+- [x] **1.1–1.14** Speed through Park return mark (Motors current-state only — Hot dwell **cut**) — **1.14** Tier 2 smoke pending
 - [x] **4.1–4.3**, **4.7** Spherecast, cargo, hide loco bar, centered stacked HUD IA
 
 **Next**
 
-- [ ] **1.14** park / return mark · **4.6** in-zone station coords *(backlog)*
+- [ ] Tier 2 smoke **1.14** → close **Epic 1**
+- [ ] **4.6** in-zone station coords *(backlog)*
 - [ ] **2.1** Three-Gate → **2.2** Thermal governor
 - [ ] Re-smoke Load yellow/red when practical
 - [ ] Later: **4.4–4.5** · dispatcher **3.x** · Digital Catalog **5.1**

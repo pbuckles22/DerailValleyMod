@@ -15,7 +15,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 |--|--|
 | **Journey** | Stage 1 — Apprentice (“don’t blow up”) |
 | **MVP** | Epic 1 System Monitor HUD |
-| **Version (`main`)** | **0.4.23** |
+| **Version (`main`)** | **0.4.24** |
 
 ---
 
@@ -23,7 +23,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 | Branch | Role |
 |--------|------|
-| **`main`** | Integration — through **1.11–1.13** + **4.7** (v0.4.23) |
+| **`feature/1.14-park-mark`** | **1.14** park/return — Tier 1 green; Tier 2 smoke next |
 
 ---
 
@@ -32,15 +32,15 @@ Stack: Unity / C# `net48` / UMM / Harmony
 ### Epics
 
 - [x] **Epic 0** — Foundation & Safe Boot *(0.4 scaffold remaining)*
-- [ ] **Epic 1** — Diagnostic HUD *(Stage 1)*
+- [ ] **Epic 1** — Diagnostic HUD *(Stage 1 — 1.14 Tier 2 smoke to close)*
 - [ ] **Epic 2** — Governor Mode
 - [ ] **Epic 3** — Yard Master / Dispatcher
-- [ ] **Epic 4** — HUD quality *(4.1–4.3 done; 4.7 in progress)*
+- [ ] **Epic 4** — HUD quality *(4.1–4.3 + 4.7 done)*
 - [ ] **Epic 5** — Digital Catalog
 
 ### Next (Stage 1)
 
-- [ ] **1.14** Park / return mark
+- [ ] Tier 2 smoke **1.14** → close Epic 1
 - [ ] **4.6** In-zone station coords (+ foot waypoint)
 - [ ] **4.4–4.5** Track ID / next station (fluids)
 - [ ] Re-smoke **1.7** yellow/red Load when practical
@@ -64,6 +64,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 ## Recently completed
 
+- [x] **1.14** Park / return mark — `Home` / `Shift+Home`; `Park NE Nm` chip; `T2 park` (v0.4.24, Tier 2 smoke pending)
 - [x] **4.7** + **1.11–1.13** — centered stacked HUD; Limit `^`/`v`; Heading; Pos XZ (v0.4.23)
 - [x] **1.10** Speed Limit — boards + geometry fallback; GYR; quiet `T2 limit` (v0.4.20)
 - [x] **1.9** Fuel/Oil % — Tier 1 + Tier 2 **PASS** (v0.4.18)
