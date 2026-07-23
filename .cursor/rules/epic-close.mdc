@@ -1,29 +1,44 @@
 ---
-description: When an epic’s in-scope work is done, run epic close automatically — do not wait for the user to ask
-globs: "PM_PLAN.md,doc/PROJECT_STATUS.md,AGENT_HANDOFF.md,doc/requirements/**/*.md"
+description: When an epic’s in-scope work is done, run full epic close — never partial
 alwaysApply: true
 ---
 
-# Epic close (automatic)
+# Epic close (automatic — full only)
 
 **Do not wait for the user to ask.** When the last in-scope feature of an epic meets acceptance (Tier 1 green + applicable Tier 2 / manual smoke; cuts already recorded), run **epic close** in the same session (or at the start of the next turn if the ship commit already landed).
 
+## Forbidden — partial close
+
+Do **not** mark an epic complete, write a “Epic closed” handoff, or tell the user the epic is closed unless **every** item below is done in this close pass.
+
+Partial close examples that are **not allowed**:
+
+- Updating `PM_PLAN` / status docs only (docs-only “close”)
+- Self-grading code review or tech debt without reading/running the skills
+- Skipping merge-ready tests “because they were green earlier”
+- Committing the close before Tier 2 / user smoke is confirmed for the closing ship
+- Writing a close note that invents PASS without evidence
+
+If interrupted mid-close: leave epic checkbox open **or** label the note **WIP epic close — gates incomplete**; list missing gates. Never claim complete.
+
 ## Quality gates (required — reuse handoff checklist)
 
-Epic close **includes** [.cursor/rules/handoff-checklist.mdc](handoff-checklist.mdc). Run those steps first and record results in the close note:
+Epic close **includes** [.cursor/rules/handoff-checklist.mdc](handoff-checklist.mdc). Run those steps **first** (before or as you finalize status docs) and record results in the close note:
 
-1. Code review (code-reviewer)
-2. Tech debt evaluation (tech-debt-evaluator) → update `TECH_DEBT.md` as needed
-3. Tests / coverage (merge-ready command from `AGENT_HANDOFF.md` / `TEST_PLAN.md`)
-4. Project readiness (optional / N/A)
-5. Security review when relevant (security-reviewer)
-6. Tier 2 when the epic’s behavior requires it
+1. **Code review** — Read and follow [.cursor/skills/code-reviewer/SKILL.md](../skills/code-reviewer/SKILL.md) (or launch code-reviewer subagent). Verdict PASS/WARN/FAIL + summary in the note.
+2. **Tech debt** — Read and follow [.cursor/skills/tech-debt-evaluator/SKILL.md](../skills/tech-debt-evaluator/SKILL.md). Update `TECH_DEBT.md` when sticky items change. Summary in the note.
+3. **Tests / coverage** — Run the **merge-ready** command from `AGENT_HANDOFF.md` / `TEST_PLAN.md` in this close pass. Record result.
+4. **Project readiness** — optional / N/A if no checklist.
+5. **Security** — when relevant (credentials, networking, installers); else N/A.
+6. **Tier 2** — when the epic’s behavior requires it; user smoke counts; record PASS/FAIL.
 
 Do **not** treat epic close as docs-only and skip review, debt, or tests.
 
 ## Then status close
 
-Follow [.cursor/skills/pm-governance/SKILL.md](../skills/pm-governance/SKILL.md) → *Epic close*: mark the epic/phase complete in `PM_PLAN` / product plan, sync `doc/PROJECT_STATUS.md` + `AGENT_HANDOFF.md` → *Current state*, write the close/handoff note, commit/push per github-feature-workflow, summarize for the user.
+Follow [.cursor/skills/pm-governance/SKILL.md](../skills/pm-governance/SKILL.md) → *Epic close*: mark the epic/phase complete in `PM_PLAN` / product plan, sync `doc/PROJECT_STATUS.md` + `AGENT_HANDOFF.md` → *Current state*, write the close/handoff note, commit/push per github-feature-workflow **only after** gates + applicable smoke are done, summarize for the user.
+
+Also: [.cursor/rules/deploy-before-smoke.mdc](deploy-before-smoke.mdc) — Mods deploy before asking for smoke; **no ship commit** of deployable HUD/DLL changes until the user confirms smoke (or explicitly waives).
 
 ## Do not auto-do on close
 

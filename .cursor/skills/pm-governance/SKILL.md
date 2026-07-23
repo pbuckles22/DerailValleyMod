@@ -49,16 +49,18 @@ Use this skill when doing sprint planning, scope tradeoffs, quality gates, risk 
 - Merge-ready gate from `AGENT_HANDOFF.md` was green for the closing work.
 - Applicable Tier 2 checklist items for that epic are checked (or N/A / cut).
 
-### Procedure (do all)
+### Procedure (do all — no partials)
 
-1. **Handoff-checklist gates** — Run [.cursor/rules/handoff-checklist.mdc](../../rules/handoff-checklist.mdc) for the epic’s shipped surface: code review, tech debt, tests/coverage, security when relevant, Tier 2 if needed. Record PASS/WARN/FAIL and results in the close note. **Do not skip.**
+**Incomplete close is not a close.** Do not mark the epic `[x]` / tell the user “Epic N closed” until every numbered step below is finished (or explicitly N/A with reason in the close note). If blocked mid-close, leave a **WIP** note listing missing gates.
+
+1. **Handoff-checklist gates** — Run [.cursor/rules/handoff-checklist.mdc](../../rules/handoff-checklist.mdc) for the epic’s shipped surface: **code-reviewer skill** (not a self-grade), **tech-debt-evaluator skill**, merge-ready tests this pass, security when relevant, Tier 2 if needed. Record PASS/WARN/FAIL and results in the close note. **Do not skip.**
 2. **PM_PLAN** — Mark the phase/epic **Status: complete** (date). Move leftover non-epic items to the next phase or backlog.
 3. **Product / epics doc** — One-line epic status (`**Status:** complete — YYYY-MM-DD`) when you maintain that file.
 4. **doc/PROJECT_STATUS.md** + **AGENT_HANDOFF.md** ? *Current state* — epic closed; **Next** = next phase only (do not invent work).
 5. **TEST_PLAN / TECH_DEBT / RISKS** — Align with closed scope; promote persistent debt into `TECH_DEBT.md`.
 6. **README** — One-line product state if the public blurb is stale.
-7. **Local handoff / close note** — required; include review, debt, tests, close results (same sections as handoff).
-8. **Commit + push** per github-feature-workflow / `AGENT_HANDOFF.md`.
+7. **Local handoff / close note** — required; include review, debt, tests, close results (same sections as handoff). Prefer a **new** monotonic `NNNN` note if a prior close note was partial.
+8. **Commit + push** — only after gates + applicable user smoke PASS (see [deploy-before-smoke](../../rules/deploy-before-smoke.mdc)). Per github-feature-workflow / `AGENT_HANDOFF.md`.
 9. **Summarize for the user** — dual-audience close results. Do **not** start the next epic’s implementation unless the user already asked.
 
 ### Do not auto-do on close
