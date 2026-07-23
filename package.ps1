@@ -18,7 +18,8 @@ if (-not $SkipBuild) {
     }
 }
 
-$FilesToInclude = "info.json", "build/YardMasterSuite.dll"
+$FilesToInclude = @("info.json", "build/YardMasterSuite.dll")
+$IconDir = "YardMasterSuite/Icons"
 
 $modInfo = Get-Content -Raw -Path "info.json" | ConvertFrom-Json
 $modId = $modInfo.Id
@@ -37,6 +38,11 @@ Get-ChildItem -Path $ZipOutDir -Filter "*.cache" -ErrorAction SilentlyContinue |
 # Remove stale sibling Core from older deploys (logic is now inside YardMasterSuite.dll).
 Remove-Item -Force -ErrorAction SilentlyContinue "$ZipOutDir/YardMasterSuite.Core.dll"
 Copy-Item -Force -Path $FilesToInclude -Destination "$ZipOutDir"
+if (Test-Path $IconDir) {
+    $iconsOut = "$ZipOutDir/Icons"
+    New-Item "$iconsOut" -ItemType Directory -Force | Out-Null
+    Copy-Item -Force -Path "$IconDir/*.png" -Destination $iconsOut
+}
 
 if (!$NoArchive) {
     $FILE_NAME = "$DistDir/${modId}_v$modVersion.zip"

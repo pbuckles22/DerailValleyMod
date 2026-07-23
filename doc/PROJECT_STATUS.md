@@ -15,7 +15,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 |--|--|
 | **Journey** | Stage 1 — Apprentice (“don’t blow up”) |
 | **MVP** | Epic 1 System Monitor HUD |
-| **Version (`main`)** | **0.4.25** |
+| **Version (`main`)** | **0.4.29** *(Epic 4 baseline; fix bundles pending)* |
 
 ---
 
@@ -23,7 +23,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 | Branch | Role |
 |--------|------|
-| **`main`** | Integration — **Epic 1** complete (v0.4.25) |
+| **`main`** | Integration — Epic 1 complete; **Epic 4 baseline v0.4.29** (UX bundles B→A→C→D next) |
 
 ---
 
@@ -35,7 +35,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 - [x] **Epic 1** — Diagnostic HUD *(Stage 1 — complete 2026-07-23)*
 - [ ] **Epic 2** — Governor Mode
 - [ ] **Epic 3** — Yard Master / Dispatcher
-- [ ] **Epic 4** — HUD quality *(4.1–4.3 + 4.7 done; 4.4–4.6 open)*
+- [ ] **Epic 4** — HUD quality *(4.1–4.3 + 4.7 on `main`; **4.4–4.9** implemented uncommitted — fix bundles next)*
 - [ ] **Epic 5** — Digital Catalog
 
 ### Next (Stage 1 leftovers / Stage 2)

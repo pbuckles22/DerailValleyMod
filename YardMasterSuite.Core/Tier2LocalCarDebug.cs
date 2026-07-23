@@ -12,6 +12,7 @@ public readonly struct LocalCarDebugSnapshot
         string coupling,
         string carNumber,
         string job,
+        string track,
         string? cargo = null,
         string? locoType = null)
     {
@@ -21,6 +22,7 @@ public readonly struct LocalCarDebugSnapshot
         Coupling = coupling;
         CarNumber = carNumber;
         Job = job;
+        Track = track;
         Cargo = cargo;
         LocoType = locoType;
     }
@@ -31,11 +33,12 @@ public readonly struct LocalCarDebugSnapshot
     public string Coupling { get; }
     public string CarNumber { get; }
     public string Job { get; }
+    public string Track { get; }
     public string? Cargo { get; }
     public string? LocoType { get; }
 
     public string FormatFragment() =>
-        LocalCarHudLine.Format(Pipe, Handbrake, Coupling, CarNumber, Job, Cargo, LocoType);
+        LocalCarHudLine.Format(Pipe, Handbrake, Coupling, CarNumber, Job, Track, Cargo, LocoType);
 
     public bool SameAs(LocalCarDebugSnapshot other) =>
         Visible == other.Visible
@@ -44,6 +47,7 @@ public readonly struct LocalCarDebugSnapshot
         && Coupling == other.Coupling
         && CarNumber == other.CarNumber
         && Job == other.Job
+        && Track == other.Track
         && Cargo == other.Cargo
         && LocoType == other.LocoType;
 }

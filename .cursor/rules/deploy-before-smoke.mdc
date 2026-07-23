@@ -25,6 +25,7 @@ For **deployable** DLL/HUD changes (including label-only drops):
 - **Wait** for the user to confirm Tier 2 / smoke **PASS** (or an explicit waive).
 - **Do not** `git commit` / merge to `main` / declare epic closed on that ship until they confirm.
 - Docs-only / rule-only commits that do not change the game DLL are exempt.
+- **Do not** start the next PM story while this ship is still uncommitted. Waiting on smoke is a pause, not a green light to stack features ([one-story-one-ship.mdc](one-story-one-ship.mdc)).
 
 ## Do not
 
@@ -32,5 +33,6 @@ For **deployable** DLL/HUD changes (including label-only drops):
 - Treat `dist/YardMasterSuite_v*.zip` alone as “installed.”
 - Skip deploy because Release PostBuild already ran (that only packs the zip).
 - Commit the ship “so they can test from main” — deploy locally; commit after PASS.
+- Pile story N+1 onto dirty WIP “because we’re blocked on smoke for N.”
 
 Paths and merge-ready gate: [AGENT_HANDOFF.md](../../AGENT_HANDOFF.md) → *Run and test*.

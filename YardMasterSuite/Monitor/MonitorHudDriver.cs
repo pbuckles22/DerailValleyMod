@@ -6,7 +6,8 @@ namespace YardMasterSuite.Monitor;
 /// <summary>
 /// In-world IMGUI overlay for Monitor Mode telemetry.
 /// Top bar = usable loco-train totals (hidden when not usable — 4.3); second bar = look-at preferred, standing fallback.
-/// Always-on: version + Heading (1.12) + Pos (1.13) + Marked return (1.14). Loco bar centered IA (4.7).
+/// Always-on: version + Heading (1.12) + Pos (1.13) + Marked (1.14) + Station zone (4.6).
+/// Active Job bar (4.8) when jobs are taken. Loco bar centered IA (4.7).
 /// </summary>
 public sealed class MonitorHudDriver : MonoBehaviour
 {
@@ -23,15 +24,19 @@ public sealed class MonitorHudDriver : MonoBehaviour
     private float _elapsed;
     private string? _trainLabel;
     private string? _localLabel;
+    private string? _jobLabel;
     private string _headingLabel = "— Heading";
     private string _positionLabel = "— Pos";
     private string? _parkLabel;
+    private string? _stationLabel;
     private string _alwaysOnLabel = "—";
     private GUIStyle? _trainStyle;
     private GUIStyle? _localStyle;
+    private GUIStyle? _jobStyle;
     private GUIStyle? _alwaysOnStyle;
     private Texture2D? _trainTex;
     private Texture2D? _localTex;
+    private Texture2D? _jobTex;
     private Texture2D? _alwaysOnTex;
 
     private bool _hasConsistDebug;
@@ -46,6 +51,7 @@ public sealed class MonitorHudDriver : MonoBehaviour
     private string _lastCoupling = "";
     private string _lastCarNumber = "";
     private string _lastJob = "";
+    private string _lastTrack = "";
     private string? _lastCargo;
     private string? _lastLocoType;
 
@@ -56,6 +62,7 @@ public sealed class MonitorHudDriver : MonoBehaviour
     private string _lastLookAtCoupling = "";
     private string _lastLookAtCarNumber = "";
     private string _lastLookAtJob = "";
+    private string _lastLookAtTrack = "";
     private string? _lastLookAtCargo;
     private string? _lastLookAtLocoType;
 
@@ -86,6 +93,21 @@ public sealed class MonitorHudDriver : MonoBehaviour
     private bool _lastParkHasMark;
     private string? _lastParkReturnPoint;
 
+    private bool _hasStationDebug;
+    private bool _lastStationInZone;
+    private string? _lastStationYardId;
+    private string? _lastStationWalkPoint;
+
+    private bool _hasNextStationDebug;
+    private bool _lastNextStationVisible;
+    private string? _lastNextStationLabel;
+
+    private bool _hasActiveJobDebug;
+    private bool _lastActiveJobVisible;
+    private string? _lastActiveJobId;
+    private string? _lastActiveJobBonus;
+    private string? _lastActiveJobZone;
+
     private void OnDisable()
     {
         // Styles touch GUI.skin — only build them from OnGUI (EnsureStyles).
@@ -108,15 +130,18 @@ public sealed class MonitorHudDriver : MonoBehaviour
         {
             _trainLabel = TelemetryReader.CurrentTrainHudLineOrNull();
             _localLabel = TelemetryReader.CurrentLocalCarHudLineOrNull();
+            _jobLabel = TelemetryReader.CurrentActiveJobHudLineOrNull();
             _headingLabel = TelemetryReader.CurrentHeadingLabel();
             _positionLabel = TelemetryReader.CurrentPositionLabel();
             _parkLabel = TelemetryReader.CurrentParkLabel();
+            _stationLabel = TelemetryReader.CurrentStationWaypointLabel();
             _alwaysOnLabel = MonitorHudLine.Join(new[]
             {
                 $"v{Main.ModVersion}",
                 _headingLabel,
                 _positionLabel,
                 _parkLabel ?? "",
+                _stationLabel ?? "",
             });
             EmitConsistDebugIfNeeded();
             EmitLocalCarDebugIfNeeded();
@@ -127,6 +152,9 @@ public sealed class MonitorHudDriver : MonoBehaviour
             EmitHeadingDebugIfNeeded();
             EmitPositionDebugIfNeeded();
             EmitParkDebugIfNeeded();
+            EmitStationWaypointDebugIfNeeded();
+            EmitNextStationDebugIfNeeded();
+            EmitActiveJobDebugIfNeeded();
         }
         finally
         {
@@ -226,6 +254,73 @@ public sealed class MonitorHudDriver : MonoBehaviour
         }
     }
 
+    private void EmitStationWaypointDebugIfNeeded()
+    {
+        var snap = TelemetryReader.CurrentStationWaypointDebugSnapshot();
+        StationWaypointDebugSnapshot? previous = null;
+        if (_hasStationDebug)
+        {
+            previous = new StationWaypointDebugSnapshot(
+                _lastStationInZone,
+                _lastStationYardId,
+                _lastStationWalkPoint);
+        }
+
+        var line = Tier2StationWaypointDebug.NextLogMessage(previous, snap);
+        _lastStationInZone = snap.InZone;
+        _lastStationYardId = snap.YardId;
+        _lastStationWalkPoint = snap.WalkPoint;
+        _hasStationDebug = true;
+        if (line != null)
+        {
+            Main.Log(line);
+        }
+    }
+
+    private void EmitNextStationDebugIfNeeded()
+    {
+        var snap = TelemetryReader.CurrentNextStationDebugSnapshot();
+        NextStationDebugSnapshot? previous = null;
+        if (_hasNextStationDebug)
+        {
+            previous = new NextStationDebugSnapshot(_lastNextStationVisible, _lastNextStationLabel);
+        }
+
+        var line = Tier2NextStationDebug.NextLogMessage(previous, snap);
+        _lastNextStationVisible = snap.Visible;
+        _lastNextStationLabel = snap.Label;
+        _hasNextStationDebug = true;
+        if (line != null)
+        {
+            Main.Log(line);
+        }
+    }
+
+    private void EmitActiveJobDebugIfNeeded()
+    {
+        var snap = TelemetryReader.CurrentActiveJobDebugSnapshot();
+        ActiveJobDebugSnapshot? previous = null;
+        if (_hasActiveJobDebug)
+        {
+            previous = new ActiveJobDebugSnapshot(
+                _lastActiveJobVisible,
+                _lastActiveJobId,
+                _lastActiveJobBonus,
+                _lastActiveJobZone);
+        }
+
+        var line = Tier2ActiveJobDebug.NextLogMessage(previous, snap);
+        _lastActiveJobVisible = snap.Visible;
+        _lastActiveJobId = snap.JobId;
+        _lastActiveJobBonus = snap.BonusClock;
+        _lastActiveJobZone = snap.ZoneFragment;
+        _hasActiveJobDebug = true;
+        if (line != null)
+        {
+            Main.Log(line);
+        }
+    }
+
     private void EmitPowerDebugIfNeeded()
     {
         var snap = TelemetryReader.CurrentPowerDebugSnapshot();
@@ -286,6 +381,7 @@ public sealed class MonitorHudDriver : MonoBehaviour
                 _lastCoupling,
                 _lastCarNumber,
                 _lastJob,
+                _lastTrack,
                 _lastCargo,
                 _lastLocoType);
         }
@@ -297,6 +393,7 @@ public sealed class MonitorHudDriver : MonoBehaviour
         _lastCoupling = snap.Coupling;
         _lastCarNumber = snap.CarNumber;
         _lastJob = snap.Job;
+        _lastTrack = snap.Track;
         _lastCargo = snap.Cargo;
         _lastLocoType = snap.LocoType;
         _hasLocalDebug = true;
@@ -319,6 +416,7 @@ public sealed class MonitorHudDriver : MonoBehaviour
                 _lastLookAtCoupling,
                 _lastLookAtCarNumber,
                 _lastLookAtJob,
+                _lastLookAtTrack,
                 _lastLookAtCargo,
                 _lastLookAtLocoType);
         }
@@ -330,6 +428,7 @@ public sealed class MonitorHudDriver : MonoBehaviour
         _lastLookAtCoupling = snap.Coupling;
         _lastLookAtCarNumber = snap.CarNumber;
         _lastLookAtJob = snap.Job;
+        _lastLookAtTrack = snap.Track;
         _lastLookAtCargo = snap.Cargo;
         _lastLookAtLocoType = snap.LocoType;
         _hasLookAtDebug = true;
@@ -362,7 +461,7 @@ public sealed class MonitorHudDriver : MonoBehaviour
     {
         EnsureStyles();
 
-        // Stack top → bottom, all centered: loco (if any) → look-at (if any) → always-on nav bar.
+        // Stack top → bottom, all centered: loco → look-at → active job → always-on nav.
         var y = Pad;
 
         if (_trainLabel != null)
@@ -373,6 +472,11 @@ public sealed class MonitorHudDriver : MonoBehaviour
         if (_localLabel != null)
         {
             y = DrawCenteredBar(_localLabel, _localStyle!, y) + Gap;
+        }
+
+        if (_jobLabel != null)
+        {
+            y = DrawCenteredBar(_jobLabel, _jobStyle!, y) + Gap;
         }
 
         DrawCenteredBar(_alwaysOnLabel, _alwaysOnStyle!, y);
@@ -420,6 +524,8 @@ public sealed class MonitorHudDriver : MonoBehaviour
             && _trainStyle.normal.background != null
             && _localStyle != null
             && _localStyle.normal.background != null
+            && _jobStyle != null
+            && _jobStyle.normal.background != null
             && _alwaysOnStyle != null
             && _alwaysOnStyle.normal.background != null)
         {
@@ -434,9 +540,11 @@ public sealed class MonitorHudDriver : MonoBehaviour
         DestroyStyles();
         _trainTex = CreateTexture(BarBackground);
         _localTex = CreateTexture(BarBackground);
+        _jobTex = CreateTexture(BarBackground);
         _alwaysOnTex = CreateTexture(BarBackground);
         _trainStyle = CreateBarStyle(_trainTex);
         _localStyle = CreateBarStyle(_localTex);
+        _jobStyle = CreateBarStyle(_jobTex);
         _alwaysOnStyle = CreateBarStyle(_alwaysOnTex);
     }
 
@@ -444,9 +552,11 @@ public sealed class MonitorHudDriver : MonoBehaviour
     {
         DestroyTexture(ref _trainTex);
         DestroyTexture(ref _localTex);
+        DestroyTexture(ref _jobTex);
         DestroyTexture(ref _alwaysOnTex);
         _trainStyle = null;
         _localStyle = null;
+        _jobStyle = null;
         _alwaysOnStyle = null;
     }
 

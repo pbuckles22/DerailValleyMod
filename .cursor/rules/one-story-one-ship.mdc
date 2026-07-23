@@ -1,0 +1,32 @@
+---
+description: One PM story per branch/commit cycle — never stack the next feature on uncommitted WIP
+alwaysApply: true
+---
+
+# One story, one ship (hard rule)
+
+**Do not** implement multiple PM_PLAN stories (or unrelated features) in one uncommitted working tree.
+
+## Required cycle
+
+For each story / coherent ship (e.g. `4.4`, Bundle B):
+
+1. **Branch** for that story only (prefer `feature/<story-id>-short-topic`, not epic-wide dumping grounds).
+2. **Implement** that story only.
+3. **Gate** — merge-ready; for deployable DLL/HUD: deploy + Tier 2 smoke PASS (or user waive) per [deploy-before-smoke.mdc](deploy-before-smoke.mdc).
+4. **Commit** (and push/merge per [github-feature-workflow](../skills/github-feature-workflow/SKILL.md) / AGENT_HANDOFF).
+5. **Only then** start the next story (new branch from updated `main` / clean tree).
+
+## Forbidden
+
+- Starting story **N+1** while story **N** is still uncommitted (including “waiting on smoke”).
+- Epic- or multi-story feature branches that accumulate several ships before any commit.
+- One commit that mixes multiple distinct PM stories “because they’re related.”
+
+Waiting on smoke is **not** a reason to keep coding the next feature. Park the session, ask for smoke, commit after PASS, then continue.
+
+## Exception — ask the user first
+
+If stacking or a multi-story commit seems necessary (shared glue that cannot split, emergency hotfix on top of WIP, etc.), **stop and ask** before continuing. Do not invent an exception silently.
+
+Docs-only / rules-only commits that do not change the game DLL may land without Tier 2; they still must not mix with an unfinished deployable story’s DLL WIP unless the user agrees.

@@ -60,6 +60,8 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
 | **4.5** | *(was 4.4)* | Next station distance (fluids) |
 | **4.6** | *(was Project Plan 3.2)* | Station waypoint (foot) + in-zone station coords |
 | **4.7** | *(was parking-lot HUD IA)* | Center-weighted / stacked HUD IA |
+| **4.8** | *(new)* | Active Job HUD + preview-prep edge |
+| **4.9** | *(new)* | AR wayfinding markers (loco / station office / pin) |
 | **5.1** | *(new)* | Digital Catalog |
 
 ---
@@ -188,6 +190,12 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
 
   - [ ] **4.6 Station waypoint (foot) + in-zone station coords** — When the player is inside a city/station **zone**, show that station’s map coords (and distance + 16-point bearing to it) on the always-on / nav strip for job-board walks. Fail-closed outside zones / if station unknown. Distinct from **4.5** (loco fluid-gated). *No minimap.*
     > As a yard master, I want the local station’s coordinates and which way to walk when I’m in a city zone so I don’t get lost finding the job board.
+
+  - [ ] **4.8 Active Job HUD + preview-prep edge** — When ≥1 job is **taken**: centered bar with job id(s) + bonus remaining only (no Zone/Keep meters — distance does not cancel taken jobs). When job Abandoned/Expired → red **Cancelled**. Separately, support **prep-before-validate**: while available (unvalidated) jobs exist and none taken, show meters to the **tight Regular** destroy edge (`Preview`/`Avail`) so staging cars for bonus doesn’t silently wipe previews. Fail-closed when nothing to show. See [UX_SMOKE_FEEDBACK_2026-07-23.md](doc/requirements/UX_SMOKE_FEEDBACK_2026-07-23.md) Bundle D.
+    > As a yard master, I want my taken job + bonus clock without fake “zone death,” and a clear preview-edge warning while I stage cars before validating so I don’t lose the ticket saving bonus time.
+
+  - [ ] **4.9 AR wayfinding markers** — Screen-space icons (distinct shapes; color secondary) for (1) last/active loco, (2) in-zone **station office** (not yard center), (3) custom pin (`Home` / `Shift+Home`). `WorldToScreenPoint` + edge clamp when behind; icon + distance only. Replaces foot-nav dependence on Heading/Pos text.
+    > As a yard worker, I want floating markers for my loco, the station office, and my pin so I can run toward them without reading compass math.
 
   - [x] **4.7 HUD strip IA reorder** — Horizontally **center** every HUD row; stack loco → look-at → always-on nav bar (same chrome as loco/look-at). Loco chip order: `Fuel · Oil · Mass · Grade · Load · Speed · Limit · Motors · Handbrakes · Cars`. **Done** — Tier 1 + Tier 2 **PASS** (v0.4.23).
     > As a driver, I want Speed and Limit in the visual center of the loco bar so I glance there first.

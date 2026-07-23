@@ -2,6 +2,8 @@
 
 Label & behavior details for the Diagnostic HUD. Story checkboxes live in [PM_PLAN.md](../../PM_PLAN.md) (`Epic N` / `N.M`).
 
+**Latest foot-nav / AR smoke notes:** [UX_SMOKE_FEEDBACK_2026-07-23.md](UX_SMOKE_FEEDBACK_2026-07-23.md) (fix bundles **B → A → C → D**; screenshots in `ux-smoke-2026-07-23/`).
+
 ---
 
 ## Goal
@@ -76,6 +78,7 @@ Look-at wins; standing fallback when crosshair is not on a car. Hidden when no t
 | Couplers | `F+` usable · plain `F*` loose · `F-` open · yellow `F*` MU open | `— Couplers` |
 | Car | `Car 3` · `Car N/A` on loco · `Car XX` if not usable train | — |
 | Job | `Job FH-12` | `— Job` |
+| Track | `Track SM-O6I` | `— Track` — **4.4** |
 | Cargo | `Cargo Steel Rails` | `Empty Cargo` — **4.2** |
 | Loco | `Loco DE6` | *(omit if not a loco)* — **1.6** |
 
@@ -89,9 +92,17 @@ Look-at wins; standing fallback when crosshair is not on a car. Hidden when no t
 
 **1.14 notes:** `Home` sets/updates session mark at player XZ; `Shift+Home` clears (cleared on mod disable/unload). Chip = 16-point bearing toward mark + integer meters (`Marked NE 84m`), or `Marked here` within 1 m. Not persisted.
 
-**4.6 (backlog):** In city/station zone — show that station’s map coords + bearing/distance (foot nav).
+**4.4 notes:** Second-bar `Track SM-O6I` from `logicCar.CurrentTrack.ID.FullDisplayID`; `— Track` when unknown / generic mainline.
 
-**4.7 notes:** All HUD rows centered. Stack: loco (if any) → look-at (if any) → always-on nav. Chip order on loco bar as above.
+**4.5 notes:** When Fuel or Oil is in yellow/red, optional loco-bar `Next: Name [N.N km]` using `JobPaymentCalculator.GetDistanceBetweenStations` from current zone/yard station to nearest other. Omit when fluids OK or path/station unknown.
+
+**4.6 notes:** In job-generation zone — always-on `Station SM NE 84m · x, z` using the **station office** transform (not yard center). Omit outside zones.
+
+**4.8 notes:** Taken jobs — centered bar `Job ID · Bonus m:ss` only (no Zone meters; destroy radius does not cancel taken jobs). Abandoned/Expired → red `Cancelled`. Prep-before-validate — when available jobs exist and none taken, optional `Preview Nm` to `destroyGeneratedJobsSqrDistanceRegular` (warn near edge / `OUT`). Details: [UX_SMOKE_FEEDBACK_2026-07-23.md](UX_SMOKE_FEEDBACK_2026-07-23.md) Bundle D.
+
+**4.9 notes:** AR screen markers with PNG icons (loco / house / pin) under `Mods/.../Icons/`; tint color secondary. Edge-clamped when behind; caption = meters only. `T2 ar`.
+
+**4.7 notes:** All HUD rows centered. Stack: loco (if any) → look-at (if any) → active job (if any) → always-on nav. Chip order on loco bar as above.
 
 ---
 

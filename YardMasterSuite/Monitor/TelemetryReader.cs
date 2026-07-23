@@ -313,6 +313,80 @@ internal static class TelemetryReader
         return new ParkDebugSnapshot(true, ParkMarkDisplay.TryGetReturnPoint(markX, markZ, x, z));
     }
 
+    /// <summary>Always-on in-zone station waypoint chip (4.6). Null outside zones.</summary>
+    public static string? CurrentStationWaypointLabel()
+    {
+        if (!TryGetStationInPlayerZone(out var yardId, out var stationX, out var stationZ))
+        {
+            return StationWaypointDisplay.Format(
+                inZone: false,
+                yardId: null,
+                stationX: null,
+                stationZ: null,
+                playerX: null,
+                playerZ: null);
+        }
+
+        if (!TryGetPlayerPosition(out var x, out _, out var z))
+        {
+            return StationWaypointDisplay.Format(true, yardId, stationX, stationZ, null, null);
+        }
+
+        return StationWaypointDisplay.Format(true, yardId, stationX, stationZ, x, z);
+    }
+
+    internal static StationWaypointDebugSnapshot CurrentStationWaypointDebugSnapshot()
+    {
+        if (!TryGetStationInPlayerZone(out var yardId, out var stationX, out var stationZ))
+        {
+            return new StationWaypointDebugSnapshot(false, null, null);
+        }
+
+        if (!TryGetPlayerPosition(out var x, out _, out var z))
+        {
+            return new StationWaypointDebugSnapshot(true, yardId, null);
+        }
+
+        return new StationWaypointDebugSnapshot(
+            true,
+            yardId,
+            StationWaypointDisplay.TryGetWalkPoint(stationX, stationZ, x, z));
+    }
+
+    /// <summary>
+    /// Active Job HUD line (4.8), or null when no taken jobs (bar omitted).
+    /// </summary>
+    public static string? CurrentActiveJobHudLineOrNull()
+    {
+        if (!TryGetPrimaryActiveJob(out var job, out var extraCount) || job == null)
+        {
+            return null;
+        }
+
+        var remaining = BonusTimeDisplay.RemainingSeconds(job.TimeLimit, SafeTimeOnJob(job));
+        var zoneMeters = TryGetActiveJobZoneMetersRemaining(job);
+        return ActiveJobHudLine.Format(
+            ActiveJobHudLine.FormatJobId(job.ID, extraCount),
+            BonusTimeDisplay.Format(remaining, richText: true),
+            ZoneEdgeDisplay.Format(zoneMeters, richText: true));
+    }
+
+    internal static ActiveJobDebugSnapshot CurrentActiveJobDebugSnapshot()
+    {
+        if (!TryGetPrimaryActiveJob(out var job, out _) || job == null)
+        {
+            return new ActiveJobDebugSnapshot(false, null, null, null);
+        }
+
+        var remaining = BonusTimeDisplay.RemainingSeconds(job.TimeLimit, SafeTimeOnJob(job));
+        var zoneMeters = TryGetActiveJobZoneMetersRemaining(job);
+        return new ActiveJobDebugSnapshot(
+            true,
+            job.ID,
+            BonusTimeDisplay.Format(remaining, richText: false),
+            ZoneEdgeDisplay.Format(zoneMeters, richText: false));
+    }
+
     public static bool TrySetParkMarkAtPlayer()
     {
         if (!TryGetPlayerPosition(out var x, out _, out var z))
@@ -326,6 +400,83 @@ internal static class TelemetryReader
 
     public static void ClearParkMark() => ParkMarkSession.Clear();
 
+    /// <summary>Last/active loco world position for AR marker (4.9).</summary>
+    public static bool TryGetArLocoWorldPosition(out Vector3 world)
+    {
+        world = default;
+        try
+        {
+            var loco = PlayerManager.LastLoco;
+            if (loco == null)
+            {
+                loco = TryGetUsableLoco();
+            }
+
+            if (loco == null)
+            {
+                return false;
+            }
+
+            world = loco.transform.position;
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>In-zone station office world position (4.9 / fixed 4.6 target).</summary>
+    public static bool TryGetArStationOfficeWorldPosition(out Vector3 world)
+    {
+        world = default;
+        try
+        {
+            if (!TryGetStationControllerInPlayerZone(out var station) || station == null)
+            {
+                return false;
+            }
+
+            var range = station.GetComponent<StationJobGenerationRange>();
+            if (range == null)
+            {
+                return false;
+            }
+
+            world = range.transform.position;
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>Custom pin from park mark session (4.9 / 1.14).</summary>
+    public static bool TryGetArPinWorldPosition(out Vector3 world)
+    {
+        world = default;
+        if (!ParkMarkSession.TryGet(out var x, out var z))
+        {
+            return false;
+        }
+
+        var y = 0f;
+        try
+        {
+            if (PlayerManager.PlayerTransform != null)
+            {
+                y = PlayerManager.PlayerTransform.position.y;
+            }
+        }
+        catch
+        {
+            // keep y = 0
+        }
+
+        world = new Vector3(x, y, z);
+        return true;
+    }
 
     public static float? TryGetAbsSpeedMetersPerSecond()
     {
@@ -714,7 +865,8 @@ internal static class TelemetryReader
             ? (float?)null
             : SpeedDisplay.ToKilometersPerHour(speedMps.Value);
         var limit = TryGetSpeedLimitState();
-        // 4.7 center-weighted IA: Fuel·Oil·Mass·Grade·Load·Speed·Limit·Motors·Handbrakes·Cars
+        var nextStation = TryGetNextStationChip(fuel, oil);
+        // 4.7 center-weighted IA: Fuel·Oil·Mass·Grade·Load·Speed·Limit·Motors·Handbrakes·Cars (+ optional Next)
         return TrainHudLine.Format(
             FluidDisplay.FormatFuelHud(fuel, oil),
             FluidDisplay.FormatOilHud(fuel, oil),
@@ -725,7 +877,8 @@ internal static class TelemetryReader
             SpeedLimitDisplay.FormatHud(speedKmh, limit.CurrentKmh, limit.Trend),
             MotorDisplay.FormatHud(TryGetMotorStatus()),
             HandbrakeDisplay.FormatTotal(TryGetConsistHandbrakeAppliedCount()),
-            CarsDisplay.Format(TryGetConsistCarCount()));
+            CarsDisplay.Format(TryGetConsistCarCount()),
+            nextStation);
     }
 
     /// <summary>Legacy join helper — empty when top bar is hidden.</summary>
@@ -802,6 +955,7 @@ internal static class TelemetryReader
             CouplingDisplay.FormatHud(TryGetFrontLinkStatus(), TryGetRearLinkStatus()),
             FormatCarNumber(car),
             JobDisplay.Format(TryGetJobId()),
+            TrackDisplay.Format(TryGetTrackId()),
             TryGetCargoLabel(car),
             TryGetLocoTypeLabel(car));
     }
@@ -953,6 +1107,7 @@ internal static class TelemetryReader
             CouplingDisplay.Format(TryGetFrontLinkStatus(), TryGetRearLinkStatus()),
             FormatCarNumber(car),
             JobDisplay.Format(TryGetJobId()),
+            TrackDisplay.Format(TryGetTrackId()),
             TryGetCargoLabel(car),
             TryGetLocoTypeLabel(car));
     }
@@ -964,7 +1119,8 @@ internal static class TelemetryReader
             handbrake: "— Handbrake",
             coupling: "— Couplers",
             carNumber: CarNumberDisplay.NotOnTrainLabel,
-            job: "— Job");
+            job: "— Job",
+            track: "— Track");
 
     internal static IntegrityDebugSnapshot CurrentIntegrityDebugSnapshot()
     {
@@ -1066,6 +1222,375 @@ internal static class TelemetryReader
         catch
         {
             return null;
+        }
+    }
+
+    /// <summary>Yard Track ID display string (e.g. SM-O6I), or null when unknown / generic mainline.</summary>
+    private static string? TryGetTrackId()
+    {
+        try
+        {
+            var track = TryGetTargetCar()?.logicCar?.CurrentTrack;
+            var id = track?.ID;
+            if (id == null || id.IsGeneric())
+            {
+                return null;
+            }
+
+            var display = id.FullDisplayID?.Trim();
+            return string.IsNullOrEmpty(display) ? null : display;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static string? TryGetNextStationChip(float? fuelPercent, float? oilPercent)
+    {
+        if (!NextStationDisplay.FluidsLow(fuelPercent, oilPercent))
+        {
+            return null;
+        }
+
+        if (!TryResolveNextStation(out var label, out var meters))
+        {
+            return null;
+        }
+
+        return NextStationDisplay.Format(true, label, meters);
+    }
+
+    internal static NextStationDebugSnapshot CurrentNextStationDebugSnapshot()
+    {
+        if (!HasUsableLocoTrain())
+        {
+            return new NextStationDebugSnapshot(false, null);
+        }
+
+        var chip = TryGetNextStationChip(TryGetFuelPercent(), TryGetOilPercent());
+        return chip == null
+            ? new NextStationDebugSnapshot(false, null)
+            : new NextStationDebugSnapshot(true, chip);
+    }
+
+    private static bool TryGetStationInPlayerZone(
+        out string? yardId,
+        out float stationX,
+        out float stationZ)
+    {
+        yardId = null;
+        stationX = 0f;
+        stationZ = 0f;
+        try
+        {
+            if (!TryGetStationControllerInPlayerZone(out var station) || station == null)
+            {
+                return false;
+            }
+
+            var range = station.GetComponent<StationJobGenerationRange>();
+            if (range == null)
+            {
+                return false;
+            }
+
+            // Office / booklet area is the range component's own transform.
+            // stationCenterAnchor is the yard geometric center (wrong for foot nav to paperwork).
+            var p = range.transform.position;
+            stationX = p.x;
+            stationZ = p.z;
+            yardId = station.stationInfo?.YardID;
+            if (string.IsNullOrWhiteSpace(yardId))
+            {
+                yardId = station.stationInfo?.Name;
+            }
+
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static bool TryGetStationControllerInPlayerZone(out StationController? station)
+    {
+        station = null;
+        try
+        {
+            var stations = StationController.allStations;
+            if (stations == null || stations.Count == 0)
+            {
+                return false;
+            }
+
+            StationController? best = null;
+            var bestSqr = float.MaxValue;
+            for (var i = 0; i < stations.Count; i++)
+            {
+                var candidate = stations[i];
+                if (candidate == null || !candidate.StationInfoValid)
+                {
+                    continue;
+                }
+
+                var range = candidate.GetComponent<StationJobGenerationRange>();
+                if (range == null)
+                {
+                    continue;
+                }
+
+                var sqr = range.PlayerSqrDistanceFromStationCenter;
+                if (!range.IsPlayerInJobGenerationZone(sqr))
+                {
+                    continue;
+                }
+
+                if (sqr >= bestSqr)
+                {
+                    continue;
+                }
+
+                bestSqr = sqr;
+                best = candidate;
+            }
+
+            station = best;
+            return best != null;
+        }
+        catch
+        {
+            station = null;
+            return false;
+        }
+    }
+
+    private static bool TryResolveNextStation(out string? label, out float distanceMeters)
+    {
+        label = null;
+        distanceMeters = 0f;
+        try
+        {
+            if (!TryGetStartStationForNext(out var start) || start == null)
+            {
+                return false;
+            }
+
+            var stations = StationController.allStations;
+            if (stations == null || stations.Count == 0)
+            {
+                return false;
+            }
+
+            StationController? bestDest = null;
+            var bestDist = float.MaxValue;
+            for (var i = 0; i < stations.Count; i++)
+            {
+                var dest = stations[i];
+                if (dest == null || ReferenceEquals(dest, start) || !dest.StationInfoValid)
+                {
+                    continue;
+                }
+
+                var dist = JobPaymentCalculator.GetDistanceBetweenStations(start, dest);
+                if (dist <= 0f || float.IsNaN(dist) || float.IsInfinity(dist))
+                {
+                    continue;
+                }
+
+                if (dist >= bestDist)
+                {
+                    continue;
+                }
+
+                bestDist = dist;
+                bestDest = dest;
+            }
+
+            if (bestDest == null)
+            {
+                return false;
+            }
+
+            label = bestDest.stationInfo?.Name;
+            if (string.IsNullOrWhiteSpace(label))
+            {
+                label = bestDest.stationInfo?.YardID;
+            }
+
+            if (string.IsNullOrWhiteSpace(label))
+            {
+                return false;
+            }
+
+            distanceMeters = bestDist;
+            return true;
+        }
+        catch
+        {
+            label = null;
+            distanceMeters = 0f;
+            return false;
+        }
+    }
+
+    private static bool TryGetStartStationForNext(out StationController? start)
+    {
+        start = null;
+        if (TryGetStationControllerInPlayerZone(out start) && start != null)
+        {
+            return true;
+        }
+
+        try
+        {
+            var trackId = TryGetUsableLoco()?.logicCar?.CurrentTrack?.ID;
+            if (trackId == null || trackId.IsGeneric())
+            {
+                return false;
+            }
+
+            var yard = trackId.yardId;
+            if (string.IsNullOrWhiteSpace(yard))
+            {
+                return false;
+            }
+
+            start = StationController.GetStationByYardID(yard);
+            return start != null && start.StationInfoValid;
+        }
+        catch
+        {
+            start = null;
+            return false;
+        }
+    }
+
+    private static bool TryGetPrimaryActiveJob(out Job? job, out int extraCount)
+    {
+        job = null;
+        extraCount = 0;
+        try
+        {
+            var jobs = JobsManager.Instance?.currentJobs;
+            if (jobs == null || jobs.Count == 0)
+            {
+                return false;
+            }
+
+            Job? best = null;
+            float? bestRemaining = null;
+            for (var i = 0; i < jobs.Count; i++)
+            {
+                var candidate = jobs[i];
+                if (candidate == null)
+                {
+                    continue;
+                }
+
+                var remaining = BonusTimeDisplay.RemainingSeconds(
+                    candidate.TimeLimit,
+                    SafeTimeOnJob(candidate));
+                if (best == null)
+                {
+                    best = candidate;
+                    bestRemaining = remaining;
+                    continue;
+                }
+
+                // Prefer the job with the least bonus time remaining (most urgent).
+                if (remaining is null)
+                {
+                    continue;
+                }
+
+                if (bestRemaining is null || remaining.Value < bestRemaining.Value)
+                {
+                    best = candidate;
+                    bestRemaining = remaining;
+                }
+            }
+
+            if (best == null)
+            {
+                return false;
+            }
+
+            job = best;
+            extraCount = Math.Max(0, jobs.Count - 1);
+            return true;
+        }
+        catch
+        {
+            job = null;
+            extraCount = 0;
+            return false;
+        }
+    }
+
+    private static float? SafeTimeOnJob(Job job)
+    {
+        try
+        {
+            return job.GetTimeOnJob();
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Meters remaining to the job-keep (destroy) zone edge for the job's origin yard,
+    /// else the station the player is currently inside.
+    /// </summary>
+    private static float? TryGetActiveJobZoneMetersRemaining(Job job)
+    {
+        try
+        {
+            if (!TryResolveJobKeepStation(job, out var station) || station == null)
+            {
+                return null;
+            }
+
+            var range = station.GetComponent<StationJobGenerationRange>();
+            if (range == null)
+            {
+                return null;
+            }
+
+            var radius = ZoneEdgeDisplay.RadiusFromSqr(range.destroyGeneratedJobsSqrDistanceAnyJobTaken);
+            var playerDist = ZoneEdgeDisplay.DistanceFromSqr(range.PlayerSqrDistanceFromStationCenter);
+            return ZoneEdgeDisplay.MetersRemaining(playerDist, radius);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static bool TryResolveJobKeepStation(Job job, out StationController? station)
+    {
+        station = null;
+        try
+        {
+            var originYard = job.chainData?.chainOriginYardId;
+            if (!string.IsNullOrWhiteSpace(originYard))
+            {
+                station = StationController.GetStationByYardID(originYard);
+                if (station != null && station.StationInfoValid)
+                {
+                    return true;
+                }
+            }
+
+            return TryGetStationControllerInPlayerZone(out station) && station != null;
+        }
+        catch
+        {
+            station = null;
+            return false;
         }
     }
 

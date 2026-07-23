@@ -30,4 +30,24 @@ public class TrainHudLineTests
             "— Fuel  |  — Oil  |  — Mass  |  — Grade  |  — Load  |  — Speed  |  — Limit  |  — Motors  |  — Handbrakes  |  — Cars",
             TrainHudLine.NullLine());
     }
+
+    [Fact]
+    public void Format_appends_optional_next_station()
+    {
+        var line = TrainHudLine.Format(
+            "Fuel 10 %",
+            "Oil 55 %",
+            "Mass 240 t",
+            "Grade +1.2 %",
+            "Load 42 %",
+            "Speed 36 km/h",
+            "Limit 60",
+            "Motors OK",
+            "Handbrakes 3",
+            "Cars 8",
+            nextStation: "Next: SM [12.5 km]");
+        Assert.Equal(
+            "Fuel 10 %  |  Oil 55 %  |  Mass 240 t  |  Grade +1.2 %  |  Load 42 %  |  Speed 36 km/h  |  Limit 60  |  Motors OK  |  Handbrakes 3  |  Cars 8  |  Next: SM [12.5 km]",
+            line);
+    }
 }
