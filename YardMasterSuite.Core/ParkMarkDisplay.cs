@@ -11,7 +11,7 @@ public static class ParkMarkDisplay
     public const float HereThresholdMeters = 1f;
 
     public static string FormatCoords(float x, float z) =>
-        $"Park {Round(x)}, {Round(z)}";
+        $"Marked {Round(x)}, {Round(z)}";
 
     /// <summary>
     /// Return chip, or null when there is no mark (omit from HUD join).
@@ -25,24 +25,24 @@ public static class ParkMarkDisplay
 
         if (playerX is null || playerZ is null)
         {
-            return "— Park";
+            return "— Marked";
         }
 
         var point = TryGetReturnPoint(markX.Value, markZ.Value, playerX.Value, playerZ.Value);
         if (point is null)
         {
-            return "— Park";
+            return "— Marked";
         }
 
         if (point == "here")
         {
-            return "Park here";
+            return "Marked here";
         }
 
         var dx = markX.Value - playerX.Value;
         var dz = markZ.Value - playerZ.Value;
         var meters = (int)Math.Round(Math.Sqrt(dx * dx + dz * dz), MidpointRounding.AwayFromZero);
-        return $"Park {point} {meters}m";
+        return $"Marked {point} {meters}m";
     }
 
     /// <summary>16-point return bearing, <c>here</c>, or null.</summary>

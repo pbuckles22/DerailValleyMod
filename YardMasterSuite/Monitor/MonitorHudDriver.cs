@@ -6,7 +6,7 @@ namespace YardMasterSuite.Monitor;
 /// <summary>
 /// In-world IMGUI overlay for Monitor Mode telemetry.
 /// Top bar = usable loco-train totals (hidden when not usable — 4.3); second bar = look-at preferred, standing fallback.
-/// Always-on: version + Heading (1.12) + Pos (1.13) + Park return (1.14). Loco bar centered IA (4.7).
+/// Always-on: version + Heading (1.12) + Pos (1.13) + Marked return (1.14). Loco bar centered IA (4.7).
 /// </summary>
 public sealed class MonitorHudDriver : MonoBehaviour
 {

@@ -21,16 +21,16 @@ public readonly struct ParkDebugSnapshot
     {
         if (!HasMark)
         {
-            return "— Park";
+            return "— Marked";
         }
 
-        return ReturnPoint is null ? "— Park" : $"Park {ReturnPoint}";
+        return ReturnPoint is null ? "— Marked" : $"Marked {ReturnPoint}";
     }
 }
 
 public static class Tier2ParkDebug
 {
-    public const string Prefix = "T2 park";
+    public const string Prefix = "T2 mark";
 
     public static string? NextLogMessage(ParkDebugSnapshot? previous, ParkDebugSnapshot current)
     {
