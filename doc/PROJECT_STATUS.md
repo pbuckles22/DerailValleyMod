@@ -23,7 +23,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 | Branch | Role |
 |--------|------|
-| **`feature/1.14-park-mark`** | **1.14** park/return — Tier 1 green; Tier 2 smoke next |
+| **`main`** | Integration — **1.14** shipped (v0.4.24); Tier 2 smoke next |
 
 ---
 
