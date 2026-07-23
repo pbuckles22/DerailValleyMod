@@ -40,11 +40,28 @@ public class LocalCarHudLineTests
             "Couplers F- R-",
             "Car N/A",
             "— Job",
-            "— Track",
+            track: null,
             cargo: null,
             locoType: "Loco DE6");
         Assert.Equal(
-            "Pipe 5.0 bar  |  Handbrake 0  |  Couplers F- R-  |  Car N/A  |  — Job  |  — Track  |  Loco DE6",
+            "Pipe 5.0 bar  |  Handbrake 0  |  Couplers F- R-  |  Car N/A  |  — Job  |  Loco DE6",
             loco);
+    }
+
+    [Fact]
+    public void Format_omits_blank_track_segment()
+    {
+        var line = LocalCarHudLine.Format(
+            "Pipe 5.0 bar",
+            "Handbrake 0",
+            "Couplers F- R-",
+            "Car N/A",
+            "— Job",
+            track: null,
+            locoType: "Loco DE2");
+        Assert.Equal(
+            "Pipe 5.0 bar  |  Handbrake 0  |  Couplers F- R-  |  Car N/A  |  — Job  |  Loco DE2",
+            line);
+        Assert.DoesNotContain("Track", line);
     }
 }

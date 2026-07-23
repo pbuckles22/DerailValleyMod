@@ -260,16 +260,16 @@ Always-on nav: `Home` sets mark; `Shift+Home` clears. Chip `Marked NE Nm` / `Mar
 - [x] `Shift+Home` — Marked chip gone
 - [x] No YardMaster exceptions in Player.log *(assumed with clean smoke)*
 
-### 4.4 Track ID on second bar — `T2 local-car` / `T2 look-at` — pending smoke v0.4.26
+### 4.4 Track ID on second bar — `T2 local-car` / `T2 look-at` — Bundle **B.3** v0.4.33 omits empty
 
-Second bar includes `Track SM-O6I` (or `— Track` on mainline / unknown).
+Second bar includes `Track SM-O6I` on yard tracks. **Omit** the Track segment on mainline / unknown (no `— Track`).
 
 **Sign-off**
 
-- [ ] Chip `v0.4.26`
-- [ ] Look-at / stand on yard car — `Track …` matches a nearby Track ID sign
-- [ ] Mainline / no yard ID — `— Track`
-- [ ] `T2 local-car` / `T2 look-at` fragments include Track
+- [x] Chip `v0.4.33`
+- [x] Look-at / stand on yard car — `Track …` matches a nearby Track ID sign
+- [x] Mainline / no yard ID — **no** Track segment (not `— Track`)
+- [ ] `T2 local-car` / `T2 look-at` fragments include Track only when present
 
 ### 4.5 Next station (fluids) — `T2 next-station` — pending smoke v0.4.26
 

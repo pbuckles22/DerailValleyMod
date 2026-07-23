@@ -5,11 +5,11 @@ namespace YardMasterSuite.Tests;
 public class TrackDisplayTests
 {
     [Fact]
-    public void Format_shows_placeholder_when_missing()
+    public void Format_omits_segment_when_missing_or_blank()
     {
-        Assert.Equal("— Track", TrackDisplay.Format(null));
-        Assert.Equal("— Track", TrackDisplay.Format(""));
-        Assert.Equal("— Track", TrackDisplay.Format("   "));
+        Assert.Null(TrackDisplay.Format(null));
+        Assert.Null(TrackDisplay.Format(""));
+        Assert.Null(TrackDisplay.Format("   "));
     }
 
     [Fact]

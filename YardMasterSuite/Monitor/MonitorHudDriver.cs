@@ -51,7 +51,7 @@ public sealed class MonitorHudDriver : MonoBehaviour
     private string _lastCoupling = "";
     private string _lastCarNumber = "";
     private string _lastJob = "";
-    private string _lastTrack = "";
+    private string? _lastTrack;
     private string? _lastCargo;
     private string? _lastLocoType;
 
@@ -62,7 +62,7 @@ public sealed class MonitorHudDriver : MonoBehaviour
     private string _lastLookAtCoupling = "";
     private string _lastLookAtCarNumber = "";
     private string _lastLookAtJob = "";
-    private string _lastLookAtTrack = "";
+    private string? _lastLookAtTrack;
     private string? _lastLookAtCargo;
     private string? _lastLookAtLocoType;
 

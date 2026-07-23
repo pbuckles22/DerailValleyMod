@@ -13,14 +13,19 @@ public static class LocalCarHudLine
         string couplers,
         string carNumber,
         string job,
-        string track,
+        string? track,
         string? cargo = null,
         string? locoType = null)
     {
         var parts = new List<string>
         {
-            pipe, handbrake, couplers, carNumber, job, track,
+            pipe, handbrake, couplers, carNumber, job,
         };
+        if (!string.IsNullOrWhiteSpace(track))
+        {
+            parts.Add(track!.Trim());
+        }
+
         if (!string.IsNullOrEmpty(cargo))
         {
             parts.Add(cargo!);
