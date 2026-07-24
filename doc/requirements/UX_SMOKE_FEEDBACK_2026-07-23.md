@@ -80,7 +80,7 @@ Screenshots live in [`ux-smoke-2026-07-23/`](ux-smoke-2026-07-23/).
 **Epic link:** Bundle A is presentation/fix follow-up on shipped **4.9** AR markers (baseline already on `main`). It does **not** open new Epic 4 stories; it closes smoke FAILs against 4.9. Proximity hide for the house icon (**A.4**) shares the office “here” radius with **Bundle C** (4.6) — implement A.4 hide with a provisional radius or stub, then tune radius in C; or land A.4 hide after C if hide needs the final radius (prefer provisional ~15–25 m in A.4 so A can smoke independently).
 
 **Steps (separate ships):**
-1. **A.1 Behind-camera edge** — markers clamp to the **correct** screen edge (turn cue), never fake center. Pure math in `ArMarkerProjection` (+ tests); wire `ArWaypointOverlay`.
+1. **A.1 Behind-camera edge** — markers clamp to the **correct** screen edge (turn cue), never fake center. Pure math in `ArMarkerProjection` (+ tests); wire `ArWaypointOverlay`. **PASS @ v0.4.37.**
 2. **A.2 Sticky marker row** — horizontal compass strip under the lowest HUD bar; ahead → centered in row; aside/behind → matching row edge. Y = bottom of last visible HUD bar + gap.
 3. **A.3 On-object ghost** — if target is in frustum ahead, also draw icon at world projection (duplicate). Sticky row always on.
 4. **A.4 Proximity hide** — no loco icon while player is in that loco; no house icon while within office “here” radius (align with Bundle C; start ~15–25 m XZ if C not done).
