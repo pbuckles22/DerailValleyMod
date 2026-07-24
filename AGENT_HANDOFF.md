@@ -134,8 +134,8 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 - [x] **Bundle B.3** omit `— Track` — **v0.4.33** (smoke PASS)
 - [x] **HUD in-world only** — **v0.4.34** (smoke PASS)
 - [x] **Drop HUD version chip** — **v0.4.35** (smoke PASS; verify via Mod Manager)
-- [ ] **Bundle B.4** audit other empties; then **A → C → D**
-  per [UX_SMOKE_FEEDBACK_2026-07-23.md](doc/requirements/UX_SMOKE_FEEDBACK_2026-07-23.md)
+- [x] **Bundle B.4** omit empty Job — **v0.4.36** (smoke PASS)
+- [ ] **Bundle A → C → D** per [UX_SMOKE_FEEDBACK_2026-07-23.md](doc/requirements/UX_SMOKE_FEEDBACK_2026-07-23.md)
 - [ ] **2.1** Three-Gate → **2.2** Thermal governor (after Epic 4 fix bundles settle)
 - [ ] Re-smoke Load yellow/red when practical
 

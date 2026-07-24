@@ -11,7 +11,7 @@ public class Tier2LookAtDebugTests
             handbrake: "— Handbrake",
             coupling: "— Couplers",
             carNumber: "Car XX",
-            job: "— Job",
+            job: null,
             track: null);
 
     private static LocalCarDebugSnapshot Visible(

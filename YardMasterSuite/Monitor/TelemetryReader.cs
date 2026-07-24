@@ -1109,7 +1109,7 @@ internal static class TelemetryReader
             handbrake: "— Handbrake",
             coupling: "— Couplers",
             carNumber: CarNumberDisplay.NotOnTrainLabel,
-            job: "— Job",
+            job: null,
             track: null);
 
     internal static IntegrityDebugSnapshot CurrentIntegrityDebugSnapshot()
