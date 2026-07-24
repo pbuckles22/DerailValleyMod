@@ -1,0 +1,19 @@
+---
+description: Comprehensive GeminiDocs handoffs must attach involved source files (≤10), flat only
+alwaysApply: true
+---
+
+# Gemini comprehensive handoff
+
+When writing a **comprehensive** Gemini bridge pack under `doc/GeminiDocs/` (not a one-line note):
+
+1. Write the narrative `.md` (decisions, evidence, next steps, acceptance) **directly in** `doc/GeminiDocs/` — e.g. `A4_House_Proximity_Hide_Bounds.md`.
+2. **Attach involved source** — copy every repo file you believe is in the fix/diagnosis path into the **same flat folder** (`doc/GeminiDocs/` only).
+3. **No subfolders.** Never create pack directories or mirror repo trees under GeminiDocs. Encode the repo path in the filename instead, e.g. `A4_House_Proximity_Hide_Bounds__YardMasterSuite.Core__ArProximityHide.cs` (topic prefix + `__` + path with `/` → `__`).
+4. **Cap: 10 code files total** per pack. Prefer the smallest set that covers the bug/feature end-to-end (pure logic → Unity wire-up → consumer → tests). If more than 10 seem relevant, attach the top 10 and list the omitted paths in the narrative.
+5. In the handoff `.md`, add an **Attached code** section listing each flat snapshot filename, the real repo path, and why it is included.
+6. Update `doc/GeminiDocs/README.md` **Active packs** to link the flat handoff `.md`.
+
+Do **not** attach binaries, `bin/`/`obj/`, or huge unrelated trees. Snapshots are local scratch (gitignored except README); refresh copies if the tree moves before the next agent runs.
+
+This does **not** replace promoting decisions into tracked docs (`PM_PLAN`, `UX_SMOKE_*`, etc.).

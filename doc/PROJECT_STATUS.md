@@ -2,7 +2,7 @@
 
 Human-readable **snapshot**. Keep in sync with [AGENT_HANDOFF.md](../AGENT_HANDOFF.md) → *Current state* and checkbox truth in [PM_PLAN.md](../PM_PLAN.md).
 
-**Last updated:** 2026-07-23
+**Last updated:** 2026-07-24
 
 ---
 
@@ -15,7 +15,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 |--|--|
 | **Journey** | Stage 1 — Apprentice (“don’t blow up”) |
 | **MVP** | Epic 1 System Monitor HUD |
-| **Version (`main`)** | **0.4.29** *(Epic 4 baseline; fix bundles pending)* |
+| **Version (`main`)** | **0.4.47** *(A.4 proximity hide; house outdoor false-hide deferred)* |
 
 ---
 
@@ -23,7 +23,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 | Branch | Role |
 |--------|------|
-| **`main`** | Integration — Epic 1 complete; **Epic 4 baseline v0.4.29** (UX bundles B→A→C→D next) |
+| **`main`** | Integration — Bundle **A** done enough (A.4 house hide known issue); next **C → D** |
 
 ---
 
@@ -35,23 +35,19 @@ Stack: Unity / C# `net48` / UMM / Harmony
 - [x] **Epic 1** — Diagnostic HUD *(Stage 1 — complete 2026-07-23)*
 - [ ] **Epic 2** — Governor Mode
 - [ ] **Epic 3** — Yard Master / Dispatcher
-- [ ] **Epic 4** — HUD quality *(4.1–4.3 + 4.7 on `main`; **4.4–4.9** implemented uncommitted — fix bundles next)*
+- [ ] **Epic 4** — HUD quality *(4.4–4.9 + Bundles B + A.1–A.4 on `main`; C → D next)*
 - [ ] **Epic 5** — Digital Catalog
 
 ### Next (Stage 1 leftovers / Stage 2)
 
-- [ ] **4.6** In-zone station coords (+ foot waypoint)
-- [ ] **4.4–4.5** Track ID / next station (fluids)
+- [ ] **Bundle C** — office “here” radius / chip (may retouch A.4 house hide)
+- [ ] **Bundle D** — job bar Zone truth + preview-prep edge
 - [ ] Re-smoke **1.7** yellow/red Load when practical
 - [ ] **2.1** Three-Gate → Epic 2
 
-### Next (Epic 2 prep)
+### Deferred smokes / known issues
 
-- [ ] **2.1** Three-Gate helper
-- [ ] **2.2** Thermal governor
-
-### Deferred smokes
-
+- [ ] **A.4 house AR hide** — outdoor false-positive ~12–14 m from Station Office door (SM); loco hide PASS @ v0.4.47. See `TECH_DEBT.md`.
 - [ ] Yellow MU `F*` / `R*` with two locos
 - [ ] `Empty Cargo` wording (**4.2**)
 - [ ] Load ≥80% / ≥95% colors (**1.7**)
@@ -64,22 +60,16 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 ## Recently completed
 
+- [x] **A.4** Proximity hide — loco in-cab PASS; house hide deferred known issue (v0.4.47)
+- [x] **A.1–A.3** Behind-camera, sticky row, on-object/sticky + edge fan (through v0.4.43)
+- [x] **Bundle B** clutter diet through v0.4.36
 - [x] **1.14** Mark / return — `Home` / `Shift+Home`; `Marked NE Nm` chip; `T2 mark` (v0.4.25, Tier 2 **PASS**)
 - [x] **Epic 1** closed — Diagnostic HUD complete
-- [x] **4.7** + **1.11–1.13** — centered stacked HUD; Limit `^`/`v`; Heading; Pos XZ (v0.4.23)
-- [x] **1.10** Speed Limit — boards + geometry fallback; GYR; quiet `T2 limit` (v0.4.20)
-- [x] **1.9** Fuel/Oil % — Tier 1 + Tier 2 **PASS** (v0.4.18)
-- [x] **1.8** Motors OK / Hot / Dead — Tier 1 + Tier 2 **PASS**
-- [x] **4.3** Hide loco gadget top bar — **PASS**
-- [x] **1.7** Load % — **PASS\***
-- [x] **1.1–1.6** Speed, grade/mass, integrity, couplers, look-at
-- [x] **4.1–4.2** Spherecast + cargo
 
 ---
 
 ## Reading order
 
-1. [CONTRIBUTING.md](../CONTRIBUTING.md)
-2. This file
-3. [PM_PLAN.md](../PM_PLAN.md) — official backlog
-4. [AGENT_HANDOFF.md](../AGENT_HANDOFF.md)
+1. [AGENT_HANDOFF.md](../AGENT_HANDOFF.md)
+2. [PM_PLAN.md](../PM_PLAN.md)
+3. [doc/requirements/UX_SMOKE_FEEDBACK_2026-07-23.md](requirements/UX_SMOKE_FEEDBACK_2026-07-23.md)

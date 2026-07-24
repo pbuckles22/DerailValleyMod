@@ -90,6 +90,8 @@ Isolated + workaround + revisit trigger.
 
 - [ ] **Unused `ParkMarkDisplay.FormatCoords`** — HUD uses `FormatReturn` only; delete or wire on next mark/display edit.
 
+- [ ] **A.4 house AR hide — outdoor false-positive** — @ **v0.4.47** Lobby Box, house marker can still hide ~**12–14 m** from Station Office door while outdoors (SM). Loco in-cab hide **PASS**. True “indoors” needs DV interior triggers we don’t have. *Revisit with Bundle **C** office `here` / retarget, or a later bounds pass. Area: `StationOfficeBounds`, `TelemetryReader.TryGetArStationOfficeWorldPosition`.*
+
 
 
 ---

@@ -117,7 +117,7 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 |--|--|
 | **Project** | *Yard Master Suite* (UMM / Harmony / net48) |
 | **MVP** | **Epic 1** System Monitor HUD |
-| **Version (`main`)** | **0.4.29** *(Epic 4 baseline; UX fix bundles B→A→C→D pending)* |
+| **Version (`main`)** | **0.4.47** *(Bundle A.4 proximity hide; house outdoor false-hide deferred)* |
 | **Active branch** | `main` |
 
 **Shipped on `main`**
@@ -125,14 +125,14 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 - [x] **Epic 0** Safe Boot *(0.4 scaffold)*
 - [x] **Epic 1** Diagnostic HUD — **1.1–1.14** complete (Motors current-state only — Hot dwell **cut**)
 - [x] **4.1–4.3**, **4.7** Spherecast, cargo, hide loco bar, centered stacked HUD IA
-- [ ] **4.4–4.9** baseline on `main`; Bundle **B** through **v0.4.36**; **A.1** @ **v0.4.37**; **A.2** @ **v0.4.38**; **A.3** on-object/sticky + glide + edge fan @ **v0.4.43**; remaining → **A.4 → C → D**
+- [x] **4.4–4.9** baseline + Bundle **B** (**v0.4.36**) + Bundle **A.1–A.3** (**v0.4.43**) + **A.4** (**v0.4.47** loco hide PASS; house hide **deferred** known issue)
 
 **Next**
 
-- [ ] **Bundle A.4** proximity hide (loco-in-cab / house-near-office) — then Bundle **C → D** per [UX_SMOKE_FEEDBACK_2026-07-23.md](doc/requirements/UX_SMOKE_FEEDBACK_2026-07-23.md)
-- [ ] **Bundle C → D** after A
+- [ ] **Bundle C → D** per [UX_SMOKE_FEEDBACK_2026-07-23.md](doc/requirements/UX_SMOKE_FEEDBACK_2026-07-23.md) (C may retouch office `here` / house hide)
 - [ ] **2.1** Three-Gate → **2.2** Thermal governor (after Epic 4 fix bundles settle)
 - [ ] Re-smoke Load yellow/red when practical
+- [ ] Known issue: A.4 house outdoor false-hide (~12–14 m) — see `TECH_DEBT.md`
 
 **Merge-ready:** `dotnet test YardMasterSuite.sln` · `dotnet build YardMasterSuite.sln -c Release` · **deploy to Mods** via `package.ps1 -NoArchive` (required before Tier 2 smoke — see [.cursor/rules/deploy-before-smoke.mdc](.cursor/rules/deploy-before-smoke.mdc))
 

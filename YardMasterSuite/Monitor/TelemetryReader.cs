@@ -390,7 +390,7 @@ internal static class TelemetryReader
 
     public static void ClearParkMark() => ParkMarkSession.Clear();
 
-    /// <summary>Last/active loco world position for AR marker (4.9).</summary>
+    /// <summary>Last/active loco world position for AR marker (4.9). Hidden while player is in that loco (A.4).</summary>
     public static bool TryGetArLocoWorldPosition(out Vector3 world)
     {
         world = default;
@@ -407,6 +407,12 @@ internal static class TelemetryReader
                 return false;
             }
 
+            var playerCar = PlayerManager.Car;
+            if (ArProximityHide.ShouldHideLocoMarker(playerCar != null && ReferenceEquals(playerCar, loco)))
+            {
+                return false;
+            }
+
             world = loco.transform.position;
             return true;
         }
@@ -416,7 +422,10 @@ internal static class TelemetryReader
         }
     }
 
-    /// <summary>In-zone station office world position (4.9 / fixed 4.6 target).</summary>
+    /// <summary>
+    /// In-zone station office world position (4.9 / fixed 4.6 target).
+    /// Hidden while player is inside the office building AABB (A.4), not a sphere.
+    /// </summary>
     public static bool TryGetArStationOfficeWorldPosition(out Vector3 world)
     {
         world = default;
@@ -433,7 +442,15 @@ internal static class TelemetryReader
                 return false;
             }
 
-            world = range.transform.position;
+            var office = range.transform.position;
+            if (TryGetPlayerPosition(out var px, out _, out var pz)
+                && StationOfficeBounds.TryGetHideAabb(station, office, out var aabb)
+                && ArProximityHide.ShouldHideStationMarker(aabb, px, pz))
+            {
+                return false;
+            }
+
+            world = office;
             return true;
         }
         catch
