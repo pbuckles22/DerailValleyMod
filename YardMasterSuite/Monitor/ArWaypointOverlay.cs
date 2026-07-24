@@ -96,11 +96,25 @@ public sealed class ArWaypointOverlay : MonoBehaviour
         }
 
         var lifted = world + Vector3.up * VerticalLiftMeters;
+        var toTarget = lifted - cam.transform.position;
+        var viewForward = Vector3.Dot(toTarget, cam.transform.forward);
+        var viewRight = Vector3.Dot(toTarget, cam.transform.right);
+        var viewUp = Vector3.Dot(toTarget, cam.transform.up);
+        var behind = ArMarkerProjection.IsBehindCamera(viewForward);
+
+        // Ahead: Unity projection. Behind: discard W2SP — use view-plane atan2 → edge.
         var screen = cam.WorldToScreenPoint(lifted);
-        var behind = screen.z <= 0.05f;
         var x = screen.x;
         var y = screen.y;
-        ArMarkerProjection.ApplyBehindCameraFlip(behind, Screen.width, Screen.height, ref x, ref y);
+        ArMarkerProjection.ApplyBehindCameraEdge(
+            behind,
+            viewRight,
+            viewUp,
+            Screen.width,
+            Screen.height,
+            ArMarkerProjection.DefaultEdgeMarginPixels,
+            ref x,
+            ref y);
         var clamped = ArMarkerProjection.ClampToScreen(
             x,
             y,
