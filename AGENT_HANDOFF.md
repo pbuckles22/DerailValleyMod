@@ -125,11 +125,11 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 - [x] **Epic 0** Safe Boot *(0.4 scaffold)*
 - [x] **Epic 1** Diagnostic HUD — **1.1–1.14** complete (Motors current-state only — Hot dwell **cut**)
 - [x] **4.1–4.3**, **4.7** Spherecast, cargo, hide loco bar, centered stacked HUD IA
-- [ ] **4.4–4.9** baseline on `main`; Bundle **B** through **v0.4.36**; **A.1** @ **v0.4.37**; **A.2** sticky row @ **v0.4.38**; remaining → **A.3–A.4 → C → D**
+- [ ] **4.4–4.9** baseline on `main`; Bundle **B** through **v0.4.36**; **A.1** @ **v0.4.37**; **A.2** @ **v0.4.38**; **A.3** on-object/sticky + glide + edge fan @ **v0.4.43**; remaining → **A.4 → C → D**
 
 **Next**
 
-- [ ] **Bundle A.3** on-object ghost + behind-edge L/R hysteresis — then **A.4** per [UX_SMOKE_FEEDBACK_2026-07-23.md](doc/requirements/UX_SMOKE_FEEDBACK_2026-07-23.md)
+- [ ] **Bundle A.4** proximity hide (loco-in-cab / house-near-office) — then Bundle **C → D** per [UX_SMOKE_FEEDBACK_2026-07-23.md](doc/requirements/UX_SMOKE_FEEDBACK_2026-07-23.md)
 - [ ] **Bundle C → D** after A
 - [ ] **2.1** Three-Gate → **2.2** Thermal governor (after Epic 4 fix bundles settle)
 - [ ] Re-smoke Load yellow/red when practical

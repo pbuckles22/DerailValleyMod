@@ -25,9 +25,51 @@ public static class ArMarkerProjection
         viewForward <= epsilon;
 
     /// <summary>
+    /// Behind-state with hysteresis so glancing the camera plane does not flicker ahead/behind.
+    /// </summary>
+    public static bool IsBehindCameraHysteresis(
+        float viewForward,
+        bool wasBehind,
+        float enterBehind = 0.05f,
+        float exitAhead = 0.35f)
+    {
+        if (wasBehind)
+        {
+            return viewForward <= exitAhead;
+        }
+
+        return viewForward <= enterBehind;
+    }
+
+    /// <summary>True when a Unity screen point is inside the pixel rect (optional inflate).</summary>
+    public static bool IsOnScreen(
+        float screenX,
+        float screenY,
+        float screenWidth,
+        float screenHeight,
+        float inflatePixels = 0f) =>
+        screenX >= -inflatePixels
+        && screenX <= screenWidth + inflatePixels
+        && screenY >= -inflatePixels
+        && screenY <= screenHeight + inflatePixels;
+
+    /// <summary>Ahead + on-screen → place marker on the object (not sticky row). Mutual exclusive with sticky.</summary>
+    public static bool ShouldPlaceOnObject(
+        bool behindCamera,
+        float screenZ,
+        float screenX,
+        float screenY,
+        float screenWidth,
+        float screenHeight) =>
+        !behindCamera
+        && screenZ > 0.05f
+        && IsOnScreen(screenX, screenY, screenWidth, screenHeight);
+
+    /// <summary>
     /// When behind the camera, replace unreliable <c>WorldToScreenPoint</c> coords with a
     /// screen-edge point from atan2(viewRight, viewUp) so clamp becomes a turn cue — never fake center.
     /// When ahead, leaves <paramref name="screenX"/> / <paramref name="screenY"/> unchanged.
+    /// Prefer <see cref="ApplyBehindCameraHorizontalEdge"/> for sticky-row turn cues (no L/R stutter).
     /// </summary>
     public static void ApplyBehindCameraEdge(
         bool behindCamera,
@@ -52,6 +94,29 @@ public static class ArMarkerProjection
             edgeMargin,
             out screenX,
             out screenY);
+    }
+
+    /// <summary>
+    /// Behind-camera sticky turn cue: left or right edge only (ignores viewUp — no center yank / L-R stutter).
+    /// </summary>
+    public static void ApplyBehindCameraHorizontalEdge(
+        bool behindCamera,
+        ArHorizontalEdge side,
+        float screenWidth,
+        float screenHeight,
+        float edgeMargin,
+        ref float screenX,
+        ref float screenY)
+    {
+        if (!behindCamera)
+        {
+            return;
+        }
+
+        var minX = edgeMargin;
+        var maxX = Math.Max(edgeMargin, screenWidth - edgeMargin);
+        screenX = side == ArHorizontalEdge.Right ? maxX : minX;
+        screenY = screenHeight * 0.5f;
     }
 
     /// <summary>
