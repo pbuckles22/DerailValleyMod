@@ -1,0 +1,24 @@
+---
+description: Monitor HUD and AR draw only during an active world session — never launcher/menus.
+alwaysApply: true
+---
+
+# HUD in-world only
+
+Monitor HUD bars and AR waypoint overlays are **session UI**, not launcher chrome.
+
+## Rules
+
+- Draw **only** when an active world session has a player (`PlayerManager.PlayerTransform` present, or the project’s `HudWorldSession.IsActive` gate).
+- **Do not** show version / Heading / Marked / Station (or any Monitor bar) on the UMM launcher, main menu, or other non-world screens.
+- **`— Heading` must never appear** as menu filler. If heading is unknown, omit the chip or hide the whole HUD — do not paint a placeholder outside play.
+- Same gate for **AR overlays** (`ArWaypointOverlay`) and hotkeys that only make sense in-world (e.g. park mark).
+
+## Why
+
+Players read `v… | — Heading` on the launcher as a bug. Heading exists only while you can look around in the world.
+
+## Related
+
+- Product: [doc/requirements/product.md](../../doc/requirements/product.md) always-on chips
+- Gate: `YardMasterSuite.Core.HudWorldSession`

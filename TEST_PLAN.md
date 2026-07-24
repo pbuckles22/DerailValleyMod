@@ -219,9 +219,9 @@ Same `Limit N` badge; green `^` if next board higher; yellow `v` if next lower; 
 - [x] GYR vs **current** still works (yellow near / red over)
 - [x] `T2 limit` includes `^`/`v` when trending; no Speed spam
 
-### 1.12 Personal heading — `T2 heading` — **PASS** v0.4.23
+### 1.12 Personal heading — `T2 heading` — **PASS** v0.4.23 · in-world only **v0.4.34**
 
-Always-on nav bar: `Heading NE` (16-point). Independent of loco top bar.
+Always-on nav bar: `Heading NE` (16-point). Independent of loco top bar. **Not** drawn on launcher/menus.
 
 **Sign-off**
 
@@ -231,6 +231,8 @@ Always-on nav bar: `Heading NE` (16-point). Independent of loco top bar.
 - [x] Face roughly +Z world — `Heading N` *(Unity north)*
 - [x] `T2 heading` on point change
 - [x] No YardMaster exceptions in Player.log
+- [x] Launcher / main menu — **no** Monitor HUD / no `— Heading` (`v0.4.34`)
+- [x] In world — Heading still on always-on bar
 
 ### 1.13 Player coordinates — `T2 pos` — **PASS** v0.4.23 · HUD chip removed Bundle **B.1** v0.4.31
 

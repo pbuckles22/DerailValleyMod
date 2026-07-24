@@ -39,6 +39,12 @@ public sealed class ArWaypointOverlay : MonoBehaviour
 
     private void OnGUI()
     {
+        if (!HudWorldSession.IsActive(PlayerManager.PlayerTransform != null))
+        {
+            EmitArDebug(false, false, false);
+            return;
+        }
+
         EnsureStyles();
         EnsureIcons();
         var cam = PlayerManager.ActiveCamera;
