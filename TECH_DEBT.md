@@ -54,7 +54,7 @@ High ROI; frequent pain; not blocking.
 
 - [x] **Motors Hot dwell (HUD)** — **cut** (2026-07-20). Monitor stays current-state; thermal mitigation → **Epic 2.2** governor.
 
-- [ ] **Epic 4 uncommitted WIP** — ~~stacked on feature branch~~ **landed on `main` @ v0.4.29** (2026-07-23 stopgap). Remaining: UX fix bundles **B → A → C → D** per [UX_SMOKE_FEEDBACK_2026-07-23.md](doc/requirements/UX_SMOKE_FEEDBACK_2026-07-23.md); one-story-one-ship from here.
+- [x] **Bundle B clutter diet** — **B.1–B.4** + in-world HUD + no version chip through **v0.4.36** (smoke PASS). Remaining UX: **A → C → D**.
 
 - [ ] **Cache speed-limit state per HUD tick** — `TryGetSpeedLimitState` / board scan can run twice per refresh (train bar + `T2 limit`). Cache in `BeginHudTick` like standing/loco.
 
