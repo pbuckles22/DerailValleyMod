@@ -82,12 +82,12 @@ Screenshots live in [`ux-smoke-2026-07-23/`](ux-smoke-2026-07-23/).
 **Steps (separate ships):**
 1. **A.1 Behind-camera edge** — markers clamp to the **correct** screen edge (turn cue), never fake center. Pure math in `ArMarkerProjection` (+ tests); wire `ArWaypointOverlay`. **PASS @ v0.4.37.**
 2. **A.2 Sticky marker row** — horizontal compass strip under the lowest HUD bar; ahead → centered in row; aside/behind → matching row edge. Y = bottom of last visible HUD bar + gap. **PASS @ v0.4.38.**
-3. **A.3 On-object ghost** — if target is in frustum ahead, also draw icon at world projection (duplicate). Sticky row always on. **Also:** behind-edge **hysteresis** so looking directly away does not L/R stutter.
+3. **A.3 On-object / sticky mutual exclusive** — in frustum ahead → **one** full-bright icon on the object; off-screen/behind → sticky under HUD (edge turn cue). Smooth ~1s ease glide (frozen start). Park pin uses mark-time Y + small lift. Behind-edge **hysteresis**. **Edge fan:** same-side sticky markers offset inward ~40px by bearing (no pile-up). **PASS @ v0.4.43.**
 4. **A.4 Proximity hide** — no loco icon while player is in that loco; no house icon while within office “here” radius (align with Bundle C; start ~15–25 m XZ if C not done).
 
 **Out of scope until later:** distance fading polish, new art; Heading text removal (wait until A feels good); Bundle C office chip `here` wording (C’s ship).
 
-**A done when:** A.1–A.4 smoke PASS — behind → sticky-row edge (not center); looking at loco → centered under HUD **and** on-object ghost; in-cab / in-office hides self-marker.
+**A done when:** A.1–A.4 smoke PASS — behind → sticky-row edge (not center); looking at loco → **on-object** marker (not sticky duplicate); in-cab / in-office hides self-marker.
 
 ---
 
@@ -168,7 +168,7 @@ Each bundle = own version bump + deploy + short smoke; then commit after PASS.
 
 **B done when:** always-on has no `Pos`; mainline second bar has no Track segment; in-zone Station chip has no raw coords; no `— Job` when the car has no job. **PASS** through **v0.4.36**.
 
-**A done when:** A.1–A.4 smoke PASS — behind → sticky-row edge (not center); looking at loco → centered under HUD **and** on-object ghost; in-cab / in-office hides self-marker.
+**A done when:** A.1–A.4 smoke PASS — behind → sticky-row edge (not center); looking at loco → **on-object** marker (not sticky duplicate); in-cab / in-office hides self-marker.
 
 **C done when:** standing at Station Office door / inside lobby shows `here` (or hidden house), not 16 m.
 

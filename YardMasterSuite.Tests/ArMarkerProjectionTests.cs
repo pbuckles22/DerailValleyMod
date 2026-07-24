@@ -130,9 +130,93 @@ public class ArMarkerProjectionTests
     }
 
     [Fact]
+    public void IsBehindCameraHysteresis_holds_until_clearly_ahead()
+    {
+        Assert.True(ArMarkerProjection.IsBehindCameraHysteresis(0.2f, wasBehind: true));
+        Assert.False(ArMarkerProjection.IsBehindCameraHysteresis(0.4f, wasBehind: true));
+        Assert.False(ArMarkerProjection.IsBehindCameraHysteresis(0.2f, wasBehind: false));
+        Assert.True(ArMarkerProjection.IsBehindCameraHysteresis(0.05f, wasBehind: false));
+    }
+
+    [Fact]
+    public void ShouldPlaceOnObject_only_when_ahead_on_screen()
+    {
+        Assert.True(ArMarkerProjection.ShouldPlaceOnObject(false, 1f, 400f, 300f, W, H));
+        Assert.False(ArMarkerProjection.ShouldPlaceOnObject(true, 1f, 400f, 300f, W, H));
+        Assert.False(ArMarkerProjection.ShouldPlaceOnObject(false, -1f, 400f, 300f, W, H));
+        Assert.False(ArMarkerProjection.ShouldPlaceOnObject(false, 1f, -50f, 300f, W, H));
+    }
+
+    [Fact]
+    public void ApplyBehindCameraHorizontalEdge_uses_side()
+    {
+        float x = 400f;
+        float y = 300f;
+        ArMarkerProjection.ApplyBehindCameraHorizontalEdge(
+            true, ArHorizontalEdge.Right, W, H, Margin, ref x, ref y);
+        Assert.Equal(W - Margin, x);
+
+        x = 400f;
+        ArMarkerProjection.ApplyBehindCameraHorizontalEdge(
+            true, ArHorizontalEdge.Left, W, H, Margin, ref x, ref y);
+        Assert.Equal(Margin, x);
+
+        x = 123f;
+        y = 456f;
+        ArMarkerProjection.ApplyBehindCameraHorizontalEdge(
+            false, ArHorizontalEdge.Right, W, H, Margin, ref x, ref y);
+        Assert.Equal(123f, x);
+        Assert.Equal(456f, y);
+    }
+
+    [Fact]
     public void ToGuiY_flips_origin()
     {
         Assert.Equal(100f, ArMarkerProjection.ToGuiY(500f, 600f));
+    }
+}
+
+public class ArEdgeHysteresisTests
+{
+    [Fact]
+    public void Resolve_angular_holds_side_through_small_yaw_wobble()
+    {
+        // Looking almost directly away: viewForward ≈ -1, viewRight tiny.
+        var side = ArHorizontalEdge.Left;
+        side = ArEdgeHysteresis.Resolve(viewRight: 0.02f, viewForward: -1f, side);
+        Assert.Equal(ArHorizontalEdge.Left, side);
+        side = ArEdgeHysteresis.Resolve(viewRight: -0.02f, viewForward: -1f, side);
+        Assert.Equal(ArHorizontalEdge.Left, side);
+
+        // ~6° right of opposite → still under ~7° enter from Left hold of 3°? 
+        // hold is 0.05 rad (~3°). 0.08 rad (~4.5°) should flip.
+        side = ArEdgeHysteresis.Resolve(viewRight: 0.08f, viewForward: -1f, side);
+        Assert.Equal(ArHorizontalEdge.Right, side);
+        side = ArEdgeHysteresis.Resolve(viewRight: -0.02f, viewForward: -1f, side);
+        Assert.Equal(ArHorizontalEdge.Right, side);
+        side = ArEdgeHysteresis.Resolve(viewRight: -0.08f, viewForward: -1f, side);
+        Assert.Equal(ArHorizontalEdge.Left, side);
+    }
+
+    [Fact]
+    public void Resolve_angular_is_distance_independent()
+    {
+        // Same ~1° bearing at 5m vs 200m (viewRight = dist * sin(θ)).
+        var near = ArEdgeHysteresis.Resolve(0.087f, -5f, ArHorizontalEdge.Left); // ~1° at 5m
+        var far = ArEdgeHysteresis.Resolve(3.49f, -200f, ArHorizontalEdge.Left); // ~1° at 200m
+        Assert.Equal(near, far);
+        Assert.Equal(ArHorizontalEdge.Left, near); // under hold (~3°)
+    }
+
+    [Fact]
+    public void Resolve_dead_zone_without_memory_is_stable()
+    {
+        Assert.Equal(
+            ArHorizontalEdge.Left,
+            ArEdgeHysteresis.Resolve(0f, -1f, ArHorizontalEdge.None));
+        Assert.Equal(
+            ArHorizontalEdge.Right,
+            ArEdgeHysteresis.Resolve(0.2f, -1f, ArHorizontalEdge.None)); // ~11° > enter
     }
 }
 

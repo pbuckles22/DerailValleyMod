@@ -77,6 +77,16 @@ public class ParkMarkSessionTests
     }
 
     [Fact]
+    public void Set_with_y_preserves_stand_height()
+    {
+        ParkMarkSession.Set(12.5f, 3.2f, -40f);
+        Assert.True(ParkMarkSession.TryGet(out var x, out var y, out var z));
+        Assert.Equal(12.5f, x);
+        Assert.Equal(3.2f, y);
+        Assert.Equal(-40f, z);
+    }
+
+    [Fact]
     public void Set_replaces_previous_mark()
     {
         ParkMarkSession.Set(1f, 2f);

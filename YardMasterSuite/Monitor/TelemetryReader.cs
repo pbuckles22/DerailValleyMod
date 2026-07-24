@@ -379,12 +379,12 @@ internal static class TelemetryReader
 
     public static bool TrySetParkMarkAtPlayer()
     {
-        if (!TryGetPlayerPosition(out var x, out _, out var z))
+        if (!TryGetPlayerPosition(out var x, out var y, out var z))
         {
             return false;
         }
 
-        ParkMarkSession.Set(x, z);
+        ParkMarkSession.Set(x, y, z);
         return true;
     }
 
@@ -442,26 +442,13 @@ internal static class TelemetryReader
         }
     }
 
-    /// <summary>Custom pin from park mark session (4.9 / 1.14).</summary>
+    /// <summary>Custom pin from park mark session (4.9 / 1.14). Uses Y stored at mark time.</summary>
     public static bool TryGetArPinWorldPosition(out Vector3 world)
     {
         world = default;
-        if (!ParkMarkSession.TryGet(out var x, out var z))
+        if (!ParkMarkSession.TryGet(out var x, out var y, out var z))
         {
             return false;
-        }
-
-        var y = 0f;
-        try
-        {
-            if (PlayerManager.PlayerTransform != null)
-            {
-                y = PlayerManager.PlayerTransform.position.y;
-            }
-        }
-        catch
-        {
-            // keep y = 0
         }
 
         world = new Vector3(x, y, z);
