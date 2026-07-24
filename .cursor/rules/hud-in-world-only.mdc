@@ -10,7 +10,8 @@ Monitor HUD bars and AR waypoint overlays are **session UI**, not launcher chrom
 ## Rules
 
 - Draw **only** when an active world session has a player (`PlayerManager.PlayerTransform` present, or the project’s `HudWorldSession.IsActive` gate).
-- **Do not** show version / Heading / Marked / Station (or any Monitor bar) on the UMM launcher, main menu, or other non-world screens.
+- **Do not** show Heading / Marked / Station (or any Monitor bar) on the UMM launcher, main menu, or other non-world screens.
+- **No mod version on the HUD.** Ship # is `info.json` / Mod Manager only.
 - **`— Heading` must never appear** as menu filler. If heading is unknown, omit the chip or hide the whole HUD — do not paint a placeholder outside play.
 - Same gate for **AR overlays** (`ArWaypointOverlay`) and hotkeys that only make sense in-world (e.g. park mark).
 

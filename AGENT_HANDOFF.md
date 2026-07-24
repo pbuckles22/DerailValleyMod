@@ -133,7 +133,8 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 - [x] **Bundle B.2** Station chip drop coords — **v0.4.32** (smoke PASS)
 - [x] **Bundle B.3** omit `— Track` — **v0.4.33** (smoke PASS)
 - [x] **HUD in-world only** — **v0.4.34** (smoke PASS)
-- [ ] **Drop HUD version chip** — verify ship via Mod Manager only; then **Bundle B.4** / **A → C → D**
+- [x] **Drop HUD version chip** — **v0.4.35** (smoke PASS; verify via Mod Manager)
+- [ ] **Bundle B.4** audit other empties; then **A → C → D**
   per [UX_SMOKE_FEEDBACK_2026-07-23.md](doc/requirements/UX_SMOKE_FEEDBACK_2026-07-23.md)
 - [ ] **2.1** Three-Gate → **2.2** Thermal governor (after Epic 4 fix bundles settle)
 - [ ] Re-smoke Load yellow/red when practical
@@ -163,7 +164,7 @@ Release zip ≠ installed. Agents must run the Mods deploy (and verify version) 
 ## Conventions
 
 - Prefer pure functions for business logic where possible.
-- **Version:** See [RELEASE.md](RELEASE.md) → *Versioning*. Bump `info.json` (+ `repository.json`) patch on every deployable DLL change; confirm HUD `v…` chip after deploy before Tier 2 sign-off.
+- **Version:** See [RELEASE.md](RELEASE.md) → *Versioning*. Bump `info.json` (+ `repository.json`) patch on every deployable DLL change; confirm ship # in **UMM Mod Manager** after deploy before Tier 2 sign-off (no HUD `v…` chip).
 - **Docs:** Use the **techwriter** skill when editing README, AGENT_HANDOFF, or internal docs.
 - **Tests:** Black-box; run your project test command after logic or test changes; keep the suite green (see .cursor/skills/tester/SKILL.md). Prefer writing a failing test before new production code (TDD) where applicable.
 

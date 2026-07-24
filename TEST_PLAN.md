@@ -49,7 +49,7 @@ powershell -ExecutionPolicy Bypass -File package.ps1 -NoArchive -OutputDirectory
 
 ### Lifecycle (every session)
 
-- `[YardMasterSuite] Version '<info.json>'. Loading.` *(also HUD `v…` chip)*
+- `[YardMasterSuite] Version '<info.json>'. Loading.` *(ship # also in UMM Mod Manager — not on HUD)*
 - `… enabled (Monitor HUD).` → `Active.`
 - Off → `disabled.` → `Inactive.` · On again → `enabled` → `Active.`
 - No YardMasterSuite exceptions / stack traces
@@ -219,9 +219,9 @@ Same `Limit N` badge; green `^` if next board higher; yellow `v` if next lower; 
 - [x] GYR vs **current** still works (yellow near / red over)
 - [x] `T2 limit` includes `^`/`v` when trending; no Speed spam
 
-### 1.12 Personal heading — `T2 heading` — **PASS** v0.4.23 · in-world only **v0.4.34**
+### 1.12 Personal heading — `T2 heading` — **PASS** v0.4.23 · in-world only **v0.4.34** · no HUD version **v0.4.35**
 
-Always-on nav bar: `Heading NE` (16-point). Independent of loco top bar. **Not** drawn on launcher/menus.
+Always-on nav bar: `Heading NE` (16-point). Independent of loco top bar. **Not** drawn on launcher/menus. **No** mod `v…` chip on HUD.
 
 **Sign-off**
 
@@ -233,6 +233,7 @@ Always-on nav bar: `Heading NE` (16-point). Independent of loco top bar. **Not**
 - [x] No YardMaster exceptions in Player.log
 - [x] Launcher / main menu — **no** Monitor HUD / no `— Heading` (`v0.4.34`)
 - [x] In world — Heading still on always-on bar
+- [x] In world — always-on has **no** `v…` chip; Mod Manager shows **0.4.35**
 
 ### 1.13 Player coordinates — `T2 pos` — **PASS** v0.4.23 · HUD chip removed Bundle **B.1** v0.4.31
 

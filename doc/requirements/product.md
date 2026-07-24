@@ -60,10 +60,12 @@ Center-weighted IA (**4.7**): bar is **horizontally centered**; mid-string = Spe
 
 | Word | Example live | Notes |
 |------|----------------|-------|
-| Version | `v0.4.33` | Deploy confirm (in-world only) |
 | Heading | `Heading NE` / `Heading ENE` | **1.12** — 16-point rose; no degrees; never `— Heading` on menus |
-| Pos | *(removed from always-on — Bundle B.1)* | Was **1.13**; coords still available via `T2 pos` debug |
+| Pos | *(removed — Bundle B.1)* | Was **1.13**; `T2 pos` debug only |
 | Marked | `Marked NE 84m` / `Marked here` | **1.14** — return bearing + distance; omit when unmarked |
+| Version | *(removed from HUD)* | Confirm ship # in **UMM Mod Manager** / `info.json` only |
+
+*(No mod version chip on the always-on bar.)*
 
 Always-on is a full HUD bar (same chrome as loco/look-at).
 
@@ -86,7 +88,7 @@ Look-at wins; standing fallback when crosshair is not on a car. Hidden when no t
 
 **1.10 / 1.11 notes:** Single `Limit` badge (never two limit numbers). **1.10** = current governing limit — prefer posted boards (digit × 10); geometry / SignPlacer ladder is fallback only. Yellow within 5 km/h of limit (including at limit); red when over. **1.11** = next limit along the path with ↑ (green) / ↓ (warn) on that same badge — no GPS strip reorder. Hidden with the top bar (**4.3**).
 
-**1.12 notes:** Personal compass only — not part of `TrainHudLine`. Shown beside version **only while a world session is active** (player present). Source = look direction (`ActiveCamera`, else `PlayerTransform`); Unity world +Z = N. Display = 16-point abbreviations only (`N`, `NNE`, `NE`, `ENE`, …) — never degrees. Do not paint `— Heading` on the launcher.
+**1.12 notes:** Personal compass only — not part of `TrainHudLine`. Shown on the always-on bar **only while a world session is active** (player present). Source = look direction (`ActiveCamera`, else `PlayerTransform`); Unity world +Z = N. Display = 16-point abbreviations only (`N`, `NNE`, `NE`, `ENE`, …) — never degrees. Do not paint `— Heading` on the launcher. Mod version is not shown beside Heading — use Mod Manager.
 
 **1.13 notes:** Was always-on `Pos x, z`. **Bundle B.1** removes Pos from the HUD; `T2 pos` debug remains.
 

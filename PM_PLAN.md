@@ -239,4 +239,4 @@ net48 + UMM + Harmony against live game DLLs — treat game updates as hostile:
 - **`SimController` / `LocoSim` ports** (`TractionMotor*`, fuel/oil containers) — renames or port-id churn break **1.7–1.9** power readouts (and later **Epic 2** governors that soft-write the same surface).
 - **`RailTrack` / bogie / speed boards (`SignDebug` / SignPlacer)** — break **1.10**/**1.11** Limit authority and lookahead.
 - **Coupler / brake / MU APIs** — break **1.3–1.5** marks and the usable-train yard rule (top bar visibility for **4.3**).
-- **After any DV patch:** re-run Tier 1, redeploy, confirm HUD `v…` chip, then smoke the active Epic 1 checklist in [TEST_PLAN.md](TEST_PLAN.md). Prefer fail-closed (log + self-disable) over crashing the session.
+- **After any DV patch:** re-run Tier 1, redeploy, confirm Mod Manager Version, then smoke the active Epic 1 checklist in [TEST_PLAN.md](TEST_PLAN.md). Prefer fail-closed (log + self-disable) over crashing the session.

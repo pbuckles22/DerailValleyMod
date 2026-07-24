@@ -10,10 +10,10 @@ SemVer on `info.json` + matching `repository.json`:
 
 | Bump | When |
 |------|------|
-| **PATCH** `0.4.x` | Every deployable fix or feature (UMM + HUD `v…` chip prove the new DLL) |
+| **PATCH** `0.4.x` | Every deployable fix or feature (UMM Mod Manager Version + `info.json` prove the new DLL) |
 | **MINOR** | Story / slice close when you want a clearer milestone label |
 
-Player.log `Version '…'. Loading.` reads `info.json`. After deploy: confirm HUD chip matches before Tier 2 — a stale chip means the old DLL is still loaded (toggle mod or restart).
+Player.log `Version '…'. Loading.` reads `info.json`. After deploy: confirm **Mod Manager** Version matches before Tier 2 — a stale Mods folder means the old DLL is still loaded (toggle mod or restart). There is **no** in-HUD `v…` chip.
 
 **Agents:** Release build → `dist/*.zip` only. Before asking for smoke, run Mods deploy and verify version ([.cursor/rules/deploy-before-smoke.mdc](.cursor/rules/deploy-before-smoke.mdc)).
 
