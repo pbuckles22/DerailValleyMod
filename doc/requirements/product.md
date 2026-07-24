@@ -79,7 +79,7 @@ Look-at wins; standing fallback when crosshair is not on a car. Hidden when no t
 | Handbrake | `Handbrake 1` | `— Handbrake` |
 | Couplers | `F+` usable · plain `F*` loose · `F-` open · yellow `F*` MU open | `— Couplers` |
 | Car | `Car 3` · `Car N/A` on loco · `Car XX` if not usable train | — |
-| Job | `Job FH-12` | `— Job` |
+| Job | `Job FH-12` | omit when none — Bundle **B.4** |
 | Track | `Track SM-O6I` | omit when unknown/mainline — **4.4** / Bundle **B.3** |
 | Cargo | `Cargo Steel Rails` | `Empty Cargo` — **4.2** |
 | Loco | `Loco DE6` | *(omit if not a loco)* — **1.6** |

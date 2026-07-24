@@ -95,7 +95,7 @@ Screenshots live in [`ux-smoke-2026-07-23/`](ux-smoke-2026-07-23/).
 1. **B.1 Remove `Pos`** — always-on bar drops Pos (keep Heading). Also hug bar width to content (no 280px floor). Version **v0.4.31**.
 2. **B.2 Station coords** — keep yard id + short distance; drop map coords (`520, 754`). Version **v0.4.32**.
 3. **B.3 Track omit** — omit Track segment when unknown / mainline / generic (no `— Track`). Version **v0.4.33**.
-4. **B.4 Audit** — other yard-only empties: prefer omit over `— Word`.
+4. **B.4 Audit** — other yard-only empties: prefer omit over `— Word`. **v0.4.36:** omit `— Job` when the looked-at / standing car has no job (same class as Track). Kept: Pipe/Handbrake/Couplers (always meaningful on a car); `Empty Cargo` (real empty state); `Car N/A` on locos.
 
 **Out of scope:** Heading removal until Bundle A feels good in play.
 
@@ -103,7 +103,8 @@ Screenshots live in [`ux-smoke-2026-07-23/`](ux-smoke-2026-07-23/).
 **B.2 smoke (v0.4.32):** in-zone Station chip is `Station SM NE 84m` / `Station SM here` — **no** raw map coords.  
 **B.3 smoke (v0.4.33):** on mainline / unknown track, second bar has **no** Track segment (not `— Track`); yard ID still shows `Track SM-O6I`.  
 **In-world HUD (v0.4.34):** launcher / menus show **no** Monitor bars (no `v… | — Heading`).  
-**No HUD version (v0.4.35):** always-on has Heading (+ Marked/Station) only — **no** `v…` chip; confirm ship # in Mod Manager.
+**No HUD version (v0.4.35):** always-on has Heading (+ Marked/Station) only — **no** `v…` chip; confirm ship # in Mod Manager.  
+**B.4 smoke (v0.4.36):** second bar has **no** `— Job` when the car/loco has no job; real `Job SM-…` still shows.
 
 ---
 
@@ -160,7 +161,7 @@ Each bundle = own version bump + deploy + short smoke; then commit after PASS.
 
 ## Acceptance sketches (per bundle)
 
-**B done when:** always-on has no `Pos`; mainline second bar has no Track segment; in-zone Station chip has no raw coords.
+**B done when:** always-on has no `Pos`; mainline second bar has no Track segment; in-zone Station chip has no raw coords; no `— Job` when the car has no job. **PASS** through **v0.4.36**.
 
 **A done when:** with loco/house/pin behind you, icons sit on the sticky row edge (not center); looking at loco puts icon centered under HUD **and** on the loco; in-cab / in-office hides self-marker.
 

@@ -12,15 +12,20 @@ public static class LocalCarHudLine
         string handbrake,
         string couplers,
         string carNumber,
-        string job,
+        string? job,
         string? track,
         string? cargo = null,
         string? locoType = null)
     {
         var parts = new List<string>
         {
-            pipe, handbrake, couplers, carNumber, job,
+            pipe, handbrake, couplers, carNumber,
         };
+        if (!string.IsNullOrWhiteSpace(job))
+        {
+            parts.Add(job!.Trim());
+        }
+
         if (!string.IsNullOrWhiteSpace(track))
         {
             parts.Add(track!.Trim());
