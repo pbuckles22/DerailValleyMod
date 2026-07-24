@@ -30,7 +30,7 @@ Screenshots live in [`ux-smoke-2026-07-23/`](ux-smoke-2026-07-23/).
 | 14 | “At station / here” proximity | **PASS** — Bundle C v0.4.48 (same gate as house hide) |
 | 15 | No job bar when no jobs | **PASS** |
 | 16 | Job bar on take | **PASS** |
-| 17 | Zone meters + cancelled / preview-prep | **PASS** — Bundle D @ **v0.4.52** (Preview inventory-gated; colors/OUT/wipe; taken Job+Bonus). Follow-up: license warn on pickup. |
+| 17 | Zone meters + cancelled / preview-prep | **PASS** — Bundle D @ **v0.4.52**; license warn @ **v0.4.53** (`No license: SH` etc.) |
 | 18 | Complete delivery / clear job bar | **DEFER** |
 | 19 | No `Next:` when fluids OK | **PASS** |
 | 20–21 | Fluids-low Next station | **DEFER** (debug fluids later) |
@@ -133,7 +133,7 @@ Screenshots live in [`ux-smoke-2026-07-23/`](ux-smoke-2026-07-23/).
 
 **Shipped:** inventory-gated `Preview Nm` (Regular − 30 m buffer); colors/OUT; taken = Job+Bonus only; Cancelled on abandon. Game wipe distance unchanged.
 
-**Follow-up (new story, not D):** when picking up / holding an overview the player **cannot** validate (missing licenses), warn early — Preview alone does not mean “you can take this job.”
+**Follow-up (v0.4.53 PASS):** when picking up / holding an overview the player **cannot** validate (missing licenses), show red `No license: FH` / `SH` early — Preview alone does not mean “you can take this job.”
 
 **Defer:** delivery smoke (#18).
 

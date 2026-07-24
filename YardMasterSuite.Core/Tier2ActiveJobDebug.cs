@@ -5,12 +5,18 @@ namespace YardMasterSuite.Core;
 /// </summary>
 public readonly struct ActiveJobDebugSnapshot
 {
-    public ActiveJobDebugSnapshot(bool visible, string? jobId, string? bonusClock, string? previewFragment)
+    public ActiveJobDebugSnapshot(
+        bool visible,
+        string? jobId,
+        string? bonusClock,
+        string? previewFragment,
+        string? licenseWarnFragment = null)
     {
         Visible = visible;
         JobId = jobId;
         BonusClock = bonusClock;
         PreviewFragment = previewFragment;
+        LicenseWarnFragment = licenseWarnFragment;
     }
 
     public bool Visible { get; }
@@ -18,6 +24,8 @@ public readonly struct ActiveJobDebugSnapshot
     public string? BonusClock { get; }
     /// <summary>Preview edge chip, or null when taken job / cancelled / hidden.</summary>
     public string? PreviewFragment { get; }
+    /// <summary>Held-overview missing-license chip (plain text), or null.</summary>
+    public string? LicenseWarnFragment { get; }
 
     public string FormatFragment()
     {
@@ -26,9 +34,10 @@ public readonly struct ActiveJobDebugSnapshot
             return "— JobHud";
         }
 
-        if (!string.IsNullOrEmpty(PreviewFragment) && string.IsNullOrEmpty(JobId) && string.IsNullOrEmpty(BonusClock))
+        if (string.IsNullOrEmpty(JobId) && string.IsNullOrEmpty(BonusClock)
+            && (!string.IsNullOrEmpty(PreviewFragment) || !string.IsNullOrEmpty(LicenseWarnFragment)))
         {
-            return PreviewFragment!;
+            return ActiveJobHudLine.FormatPrep(LicenseWarnFragment, PreviewFragment) ?? "— JobHud";
         }
 
         if (BonusClock == "Cancelled" || BonusClock?.Contains("Cancelled") == true)
@@ -69,13 +78,15 @@ public static class Tier2ActiveJobDebug
         if (current.Visible
             && (prior.JobId != current.JobId
                 || prior.BonusClock != current.BonusClock
-                || prior.PreviewFragment != current.PreviewFragment))
+                || prior.PreviewFragment != current.PreviewFragment
+                || prior.LicenseWarnFragment != current.LicenseWarnFragment))
         {
-            // Bonus clock ticks often — only log when minute bucket or preview/job changes.
+            // Bonus clock ticks often — only log when minute bucket or preview/job/license changes.
             var priorBucket = MinuteBucket(prior.BonusClock);
             var currentBucket = MinuteBucket(current.BonusClock);
             if (prior.JobId == current.JobId
                 && prior.PreviewFragment == current.PreviewFragment
+                && prior.LicenseWarnFragment == current.LicenseWarnFragment
                 && priorBucket == currentBucket)
             {
                 return null;

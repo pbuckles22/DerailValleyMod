@@ -88,6 +88,17 @@ public class ActiveJobHudLineTests
     }
 
     [Fact]
+    public void FormatPrep_license_warn_alone_or_with_preview()
+    {
+        Assert.Null(ActiveJobHudLine.FormatPrep(null, null));
+        Assert.Equal("No license: FH", ActiveJobHudLine.FormatPrep("No license: FH", null));
+        Assert.Equal("Preview 180m", ActiveJobHudLine.FormatPrep(null, "Preview 180m"));
+        Assert.Equal(
+            "No license: FH  |  Preview 180m",
+            ActiveJobHudLine.FormatPrep("No license: FH", "Preview 180m"));
+    }
+
+    [Fact]
     public void FormatCancelled_red_when_rich()
     {
         Assert.Equal("Job SM-FH-12  |  Cancelled", ActiveJobHudLine.FormatCancelled("SM-FH-12"));
@@ -112,6 +123,44 @@ public class ActiveJobHudLineTests
         Assert.False(ActiveJobHudLine.IsCancelledState("Completed"));
         Assert.False(ActiveJobHudLine.IsCancelledState("Failed"));
         Assert.False(ActiveJobHudLine.IsCancelledState(null));
+    }
+}
+
+public class LicenseWarnDisplayTests
+{
+    [Fact]
+    public void Format_null_when_empty()
+    {
+        Assert.Null(LicenseWarnDisplay.Format(null));
+        Assert.Null(LicenseWarnDisplay.Format(Array.Empty<string>()));
+        Assert.Null(LicenseWarnDisplay.Format(new[] { "  ", "" }));
+    }
+
+    [Fact]
+    public void Format_single_and_multiple_codes()
+    {
+        Assert.Equal("No license: FH", LicenseWarnDisplay.Format(new[] { "FH" }));
+        Assert.Equal("No license: FH, HZ1", LicenseWarnDisplay.Format(new[] { "FH", "HZ1" }));
+        Assert.Contains(LicenseWarnDisplay.WarnColor, LicenseWarnDisplay.Format(new[] { "FH" }, richText: true)!);
+    }
+
+    [Fact]
+    public void Abbreviate_ticket_style_codes()
+    {
+        Assert.Equal("FH", LicenseWarnDisplay.Abbreviate("FreightHaul"));
+        Assert.Equal("SH", LicenseWarnDisplay.Abbreviate("Shunting"));
+        Assert.Equal("LH", LicenseWarnDisplay.Abbreviate("LogisticalHaul"));
+        Assert.Equal("HZ1", LicenseWarnDisplay.Abbreviate("Hazmat1"));
+        Assert.Equal("TL2", LicenseWarnDisplay.Abbreviate("TrainLength2"));
+        Assert.Equal("FH", LicenseWarnDisplay.Abbreviate("FH"));
+        Assert.Equal(string.Empty, LicenseWarnDisplay.Abbreviate(null));
+    }
+
+    [Fact]
+    public void NormalizeCodes_dedupes_and_abbreviates()
+    {
+        var codes = LicenseWarnDisplay.NormalizeCodes(new[] { "FreightHaul", "FH", "Hazmat1", "  " });
+        Assert.Equal(new[] { "FH", "HZ1" }, codes);
     }
 }
 
@@ -145,5 +194,10 @@ public class Tier2ActiveJobDebugTests
         Assert.Equal(
             "T2 job appear: Preview 10m",
             Tier2ActiveJobDebug.NextLogMessage(hidden, preview));
+
+        var license = new ActiveJobDebugSnapshot(true, null, null, "Preview 10m", "No license: FH");
+        Assert.Equal(
+            "T2 job appear: No license: FH  |  Preview 10m",
+            Tier2ActiveJobDebug.NextLogMessage(hidden, license));
     }
 }

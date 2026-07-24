@@ -191,7 +191,7 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
   - [x] **4.6 Station waypoint (foot) + in-zone station chip** — In job-generation zone: `Station {YardID} {bearing} {m}m` or **`here`**. Map coords **cut** (Bundle B.2). **`here`** shares office gate with house AR hide (Bundle C). Fail-closed outside zones. *No minimap.* **Done** — Tier 1 + Tier 2 **PASS** (v0.4.48).
     > As a yard master, I want the local station’s id and which way to walk when I’m in a city zone so I don’t get lost finding the job board.
 
-  - [x] **4.8 Active Job HUD + preview-prep edge** — Inventory-gated `Preview Nm` to Regular destroy (−30 m HUD buffer); taken = Job+Bonus only; Abandoned/Expired → red **Cancelled**. **Done** — Tier 1 + Tier 2 **PASS** (v0.4.52). *Follow-up: license warn when overview held but player cannot validate.*
+  - [x] **4.8 Active Job HUD + preview-prep edge** — Inventory-gated `Preview Nm` to Regular destroy (−30 m HUD buffer); taken = Job+Bonus only; Abandoned/Expired → red **Cancelled**. **Done** — Tier 1 + Tier 2 **PASS** (v0.4.52). License warn on held overview (`No license: FH`) — **Done** — Tier 1 + Tier 2 **PASS** (v0.4.53).
     > As a yard master, I want a clear preview-edge warning while I shunt job cars before validating so I don’t lose the ticket saving bonus time, and my taken job bar shows bonus without fake zone death.
 
   - [ ] **4.9 AR wayfinding markers** — Screen-space icons (distinct shapes; color secondary) for (1) last/active loco, (2) in-zone **station office** (not yard center), (3) custom pin (`Home` / `Shift+Home`). `WorldToScreenPoint` + edge clamp when behind; icon + distance only. Replaces foot-nav dependence on Heading/Pos text.

@@ -92,9 +92,9 @@ Isolated + workaround + revisit trigger.
 
 - [ ] **A.4 house AR hide — outdoor false-positive** — @ **v0.4.47** Lobby Box, house marker can still hide ~**12–14 m** from Station Office door while outdoors (SM). Loco in-cab hide **PASS**. True “indoors” needs DV interior triggers we don’t have. *Revisit with Bundle **C** office `here` / retarget, or a later bounds pass. Area: `StationOfficeBounds`, `TelemetryReader.TryGetArStationOfficeWorldPosition`.*
 
-- [ ] **License warn on held overview** — Player can hold FH (etc.) paperwork without the license, drive to Preview OUT, then fail at validator. Bundle D keeps Preview (wipe is real). Follow-up: toast/chip when inventory job’s `requiredLicenses` ⊄ player licenses. Area: `TelemetryReader` inventory scan + license API.
+- [x] **License warn on held overview** — **Done v0.4.53** (Tier 2 **PASS**): red `No license: FH` / `SH` / etc. while holding overview/booklet whose licenses are missing; joins Preview when both apply.
 
-- [ ] **Preview inventory scan cadence** — Bundle D scans inventory/equip each HUD tick for JobOverview/JobBooklet. Acceptable for now; throttle or event-driven refresh if profiling shows cost. Area: `TelemetryReader.TryCollectHeldPreviewJobs`.
+- [ ] **Preview inventory scan cadence** — Bundle D scans inventory/equip each HUD tick for JobOverview/JobBooklet (license warn reuses same scan). Acceptable for now; throttle or event-driven refresh if profiling shows cost. Area: `TelemetryReader.TryGetJobsFromPlayerInventory`.
 
 
 

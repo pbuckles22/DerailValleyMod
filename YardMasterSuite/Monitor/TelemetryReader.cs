@@ -348,8 +348,8 @@ internal static class TelemetryReader
     }
 
     /// <summary>
-    /// Active Job HUD (4.8 / Bundle D):
-    /// taken = Job+Bonus only; Cancelled flash; else Preview edge (pre-validate prep).
+    /// Active Job HUD (4.8 / license-warn):
+    /// taken = Job+Bonus only; Cancelled flash; else license warn + optional Preview edge.
     /// Null when nothing to show.
     /// </summary>
     public static string? CurrentActiveJobHudLineOrNull()
@@ -375,12 +375,14 @@ internal static class TelemetryReader
                 BonusTimeDisplay.Format(remaining, richText: true));
         }
 
+        var licenseWarn = TryFormatHeldLicenseWarn(richText: true);
+        string? previewChip = null;
         if (TryGetPreviewEdgeMetersRemaining(out var previewMeters))
         {
-            return ActiveJobHudLine.FormatPreview(PreviewEdgeDisplay.Format(previewMeters, richText: true));
+            previewChip = PreviewEdgeDisplay.Format(previewMeters, richText: true);
         }
 
-        return null;
+        return ActiveJobHudLine.FormatPrep(licenseWarn, previewChip);
     }
 
     internal static ActiveJobDebugSnapshot CurrentActiveJobDebugSnapshot()
@@ -408,13 +410,16 @@ internal static class TelemetryReader
                 null);
         }
 
+        var licenseWarnPlain = TryFormatHeldLicenseWarn(richText: false);
+        string? previewPlain = null;
         if (TryGetPreviewEdgeMetersRemaining(out var previewMeters))
         {
-            return new ActiveJobDebugSnapshot(
-                true,
-                null,
-                null,
-                PreviewEdgeDisplay.Format(previewMeters, richText: false));
+            previewPlain = PreviewEdgeDisplay.Format(previewMeters, richText: false);
+        }
+
+        if (licenseWarnPlain != null || previewPlain != null)
+        {
+            return new ActiveJobDebugSnapshot(true, null, null, previewPlain, licenseWarnPlain);
         }
 
         return new ActiveJobDebugSnapshot(false, null, null, null);
@@ -1838,6 +1843,94 @@ internal static class TelemetryReader
         catch
         {
             jobs = new List<Job>();
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Missing job licenses for held overviews/booklets (pre-validate). Fail-closed → null.
+    /// </summary>
+    private static string? TryFormatHeldLicenseWarn(bool richText)
+    {
+        try
+        {
+            if (!TryGetMissingLicenseCodesForHeldJobs(out var codes) || codes.Count == 0)
+            {
+                return null;
+            }
+
+            return LicenseWarnDisplay.Format(codes, richText);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static bool TryGetMissingLicenseCodesForHeldJobs(out List<string> codes)
+    {
+        codes = new List<string>();
+        try
+        {
+            if (!TryGetJobsFromPlayerInventory(out var jobs) || jobs.Count == 0)
+            {
+                return false;
+            }
+
+            var lm = LicenseManager.Instance;
+            if (lm == null)
+            {
+                return false;
+            }
+
+            var raw = new List<string>();
+            foreach (var job in jobs)
+            {
+                if (job == null)
+                {
+                    continue;
+                }
+
+                var required = JobLicenseType_v2.ToV2List(job.requiredLicenses);
+                if (required == null || required.Count == 0)
+                {
+                    continue;
+                }
+
+                if (lm.IsLicensedForJob(required))
+                {
+                    continue;
+                }
+
+                var missing = lm.GetMissingLicensesForJob(required);
+                if (missing == null || missing.Count == 0)
+                {
+                    continue;
+                }
+
+                foreach (var lic in missing)
+                {
+                    if (lic == null)
+                    {
+                        continue;
+                    }
+
+                    raw.Add(lic.v1.ToString());
+                }
+            }
+
+            var normalized = LicenseWarnDisplay.NormalizeCodes(raw);
+            if (normalized.Count == 0)
+            {
+                return false;
+            }
+
+            codes.AddRange(normalized);
+            return true;
+        }
+        catch
+        {
+            codes = new List<string>();
             return false;
         }
     }

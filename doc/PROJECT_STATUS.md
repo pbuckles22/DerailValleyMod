@@ -15,7 +15,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 |--|--|
 | **Journey** | Stage 1 — Apprentice (“don’t blow up”) |
 | **MVP** | Epic 1 System Monitor HUD |
-| **Version (`main`)** | **0.4.52** *(Bundle D Preview prep PASS)* |
+| **Version (`main`)** | **0.4.53** *(license warn on held overview)* |
 
 ---
 
@@ -23,7 +23,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 | Branch | Role |
 |--------|------|
-| **`main`** | Integration — Bundle D shipped; next license-warn or Bundle E deferrals |
+| **`main`** | Integration — license-warn @ 0.4.53; next Epic 4 leftovers (4.5 / Bundle E) |
 
 ---
 
@@ -35,12 +35,12 @@ Stack: Unity / C# `net48` / UMM / Harmony
 - [x] **Epic 1** — Diagnostic HUD *(Stage 1 — complete 2026-07-23)*
 - [ ] **Epic 2** — Governor Mode
 - [ ] **Epic 3** — Yard Master / Dispatcher
-- [ ] **Epic 4** — HUD quality *(4.4–4.9 + Bundles B/A/C/D on `main`; 4.5 + license-warn open)*
+- [ ] **Epic 4** — HUD quality *(4.4–4.9 + Bundles B/A/C/D + license-warn on `main`; 4.5 / Bundle E open)*
 - [ ] **Epic 5** — Digital Catalog
 
 ### Next (Stage 1 leftovers / Stage 2)
 
-- [ ] **Follow-up** — warn on overview if player lacks required licenses
+- [x] **Follow-up** — warn on overview if player lacks required licenses *(v0.4.53, Tier 2 **PASS**)*
 - [ ] Re-smoke **1.7** yellow/red Load when practical
 - [ ] **2.1** Three-Gate → Epic 2
 
@@ -59,6 +59,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 ## Recently completed
 
+- [x] **License warn** — `No license: FH` / `SH` on held overview when missing licenses (v0.4.53, Tier 2 **PASS**)
 - [x] **Bundle D** — inventory-gated Preview Regular edge; taken Job+Bonus; Cancelled (v0.4.52, Tier 2 **PASS**)
 - [x] **Bundle C** — Station `here` shares A.4 office gate (v0.4.48, Tier 2 **PASS**)
 - [x] **A.4** Proximity hide — loco in-cab PASS; house hide deferred known issue (v0.4.47)

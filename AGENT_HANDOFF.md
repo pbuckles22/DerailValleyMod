@@ -117,7 +117,7 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 |--|--|
 | **Project** | *Yard Master Suite* (UMM / Harmony / net48) |
 | **MVP** | **Epic 1** System Monitor HUD |
-| **Version (`main`)** | **0.4.52** *(Bundle D: inventory-gated Preview edge)* |
+| **Version (`main`)** | **0.4.53** *(license warn on held overview)* |
 | **Active branch** | `main` |
 
 **Shipped on `main`**
@@ -125,11 +125,11 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 - [x] **Epic 0** Safe Boot *(0.4 scaffold)*
 - [x] **Epic 1** Diagnostic HUD — **1.1–1.14** complete (Motors current-state only — Hot dwell **cut**)
 - [x] **4.1–4.3**, **4.7** Spherecast, cargo, hide loco bar, centered stacked HUD IA
-- [x] **4.4–4.9** baseline + Bundles **B** / **A** / **C** / **D** (**v0.4.52** Preview + taken Job+Bonus)
+- [x] **4.4–4.9** baseline + Bundles **B** / **A** / **C** / **D** (**v0.4.52**) + **license warn** (**v0.4.53**)
 
 **Next**
 
-- [ ] **License warn** on overview pickup when player lacks required licenses (follow-up after D)
+- [ ] **4.5** / Bundle E leftovers (fluids Next station, Load yellow/red, etc.)
 - [ ] **2.1** Three-Gate → **2.2** Thermal governor (after Epic 4 fix bundles settle)
 - [ ] Re-smoke Load yellow/red when practical
 - [ ] Known issue: A.4 house outdoor false-hide (~12–14 m) — see `TECH_DEBT.md`

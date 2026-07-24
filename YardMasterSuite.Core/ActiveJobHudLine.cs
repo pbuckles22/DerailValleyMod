@@ -15,6 +15,16 @@ public static class ActiveJobHudLine
 
     public static string FormatPreview(string previewChip) => previewChip.Trim();
 
+    /// <summary>
+    /// Pre-validate prep bar: optional license warn + optional Preview edge.
+    /// Null when both omitted.
+    /// </summary>
+    public static string? FormatPrep(string? licenseWarn, string? previewChip)
+    {
+        var joined = MonitorHudLine.Join(new[] { licenseWarn ?? "", previewChip ?? "" });
+        return string.IsNullOrEmpty(joined) ? null : joined;
+    }
+
     public static string FormatCancelled(string? jobId, bool richText = false)
     {
         var id = jobId?.Trim();

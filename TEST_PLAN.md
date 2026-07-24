@@ -356,7 +356,28 @@ Goal: assemble job-numbered cars (A, then B onto same loco) **before** validatin
 - [x] B0 — taken job drive: Job+Bonus, no Preview/Zone (screenshot)
 - [x] C — Cancelled (0.4.49)
 
-**Defer:** delivery clear (#18). **Follow-up (not Bundle D):** warn when held overview requires licenses the player lacks.
+**Defer:** delivery clear (#18). **License warn:** v0.4.53 Tier 2 **PASS**.
+
+### 4.8b License warn on held overview — `T2 job` — v0.4.53 · **PASS**
+
+**Build:** UMM **Yard Master Suite 0.4.53**.  
+**Behavior:** While holding JobOverview/JobBooklet and player lacks required job licenses → red **`No license: FH`** (comma-separated if several). Still shows **Preview** when edge applies (`No license: SH  |  Preview OUT`). Taken / Cancelled unchanged. Preview wipe distance unchanged.
+
+#### Smoke
+
+1. Mod Manager **0.4.53 Active**.
+2. Career (or save) **without** Freight Haul (or pick a job type you lack).
+3. Pick up that overview (do not validate).
+4. Expect Active Job bar: **`No license: FH`** (red). With Preview in range → both chips.
+5. Drop paperwork → warn gone. Validate a licensed job → taken Job+Bonus only (no license chip).
+
+**Sign-off — PASS @ 0.4.53 (player 2026-07-24)**
+
+- [x] UMM **0.4.53** Active
+- [x] Missing license → `No license: …` while holding overview (SH and other types exercised)
+- [x] Licensed overview / put-down → no license chip; Preview alone OK
+- [x] Preview still works alongside warn when near Regular edge
+
 
 ### 4.9 AR wayfinding markers — `T2 ar` — pending smoke v0.4.29
 
