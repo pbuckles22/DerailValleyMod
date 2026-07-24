@@ -81,8 +81,8 @@ Screenshots live in [`ux-smoke-2026-07-23/`](ux-smoke-2026-07-23/).
 
 **Steps (separate ships):**
 1. **A.1 Behind-camera edge** — markers clamp to the **correct** screen edge (turn cue), never fake center. Pure math in `ArMarkerProjection` (+ tests); wire `ArWaypointOverlay`. **PASS @ v0.4.37.**
-2. **A.2 Sticky marker row** — horizontal compass strip under the lowest HUD bar; ahead → centered in row; aside/behind → matching row edge. Y = bottom of last visible HUD bar + gap.
-3. **A.3 On-object ghost** — if target is in frustum ahead, also draw icon at world projection (duplicate). Sticky row always on.
+2. **A.2 Sticky marker row** — horizontal compass strip under the lowest HUD bar; ahead → centered in row; aside/behind → matching row edge. Y = bottom of last visible HUD bar + gap. **PASS @ v0.4.38.**
+3. **A.3 On-object ghost** — if target is in frustum ahead, also draw icon at world projection (duplicate). Sticky row always on. **Also:** behind-edge **hysteresis** so looking directly away does not L/R stutter.
 4. **A.4 Proximity hide** — no loco icon while player is in that loco; no house icon while within office “here” radius (align with Bundle C; start ~15–25 m XZ if C not done).
 
 **Out of scope until later:** distance fading polish, new art; Heading text removal (wait until A feels good); Bundle C office chip `here` wording (C’s ship).
