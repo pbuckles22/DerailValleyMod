@@ -36,7 +36,7 @@ Screenshots live in [`ux-smoke-2026-07-23/`](ux-smoke-2026-07-23/).
 | 20–21 | Fluids-low Next station | **DEFER** (debug fluids later) |
 | 22–24 | Load colors / MU / Empty Cargo | **DEFER** |
 
-**Extra product asks (this session):** remove **`Pos`**; hide house when **inside station**; hide loco icon when **inside loco**; AR markers **sticky under HUD** (with optional on-object duplicate when in sight).
+**Extra product asks (this session):** remove **`Pos`**; hide house when **inside station**; hide loco icon when **inside loco**; AR markers **sticky under HUD** (with optional on-object duplicate when in sight); **no Monitor HUD on launcher** (no `v… | — Heading` outside world session).
 
 ---
 
@@ -101,7 +101,8 @@ Screenshots live in [`ux-smoke-2026-07-23/`](ux-smoke-2026-07-23/).
 
 **B.1 smoke (v0.4.31):** always-on shows `v… | Heading …` (+ Marked/Station if any) and **never** a `Pos` chip; bar width hugs text (no empty right pad).  
 **B.2 smoke (v0.4.32):** in-zone Station chip is `Station SM NE 84m` / `Station SM here` — **no** raw map coords.  
-**B.3 smoke (v0.4.33):** on mainline / unknown track, second bar has **no** Track segment (not `— Track`); yard ID still shows `Track SM-O6I`.
+**B.3 smoke (v0.4.33):** on mainline / unknown track, second bar has **no** Track segment (not `— Track`); yard ID still shows `Track SM-O6I`.  
+**In-world HUD (v0.4.34):** launcher / menus show **no** Monitor bars (no `v… | — Heading`).
 
 ---
 

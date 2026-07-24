@@ -132,7 +132,8 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 - [x] **Bundle B.1** remove Pos + hug bar width — **v0.4.31** (smoke PASS)
 - [x] **Bundle B.2** Station chip drop coords — **v0.4.32** (smoke PASS)
 - [x] **Bundle B.3** omit `— Track` — **v0.4.33** (smoke PASS)
-- [ ] **Bundle B.4** audit other empties; **HUD in-world only** (no launcher `— Heading`); then **A → C → D**
+- [x] **HUD in-world only** — **v0.4.34** (smoke PASS)
+- [ ] **Drop HUD version chip** — verify ship via Mod Manager only; then **Bundle B.4** / **A → C → D**
   per [UX_SMOKE_FEEDBACK_2026-07-23.md](doc/requirements/UX_SMOKE_FEEDBACK_2026-07-23.md)
 - [ ] **2.1** Three-Gate → **2.2** Thermal governor (after Epic 4 fix bundles settle)
 - [ ] Re-smoke Load yellow/red when practical

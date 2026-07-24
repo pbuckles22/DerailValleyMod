@@ -116,6 +116,17 @@ public sealed class MonitorHudDriver : MonoBehaviour
 
     private void Update()
     {
+        if (!HudWorldSession.IsActive(PlayerManager.PlayerTransform != null))
+        {
+            _trainLabel = null;
+            _localLabel = null;
+            _jobLabel = null;
+            _parkLabel = null;
+            _stationLabel = null;
+            _alwaysOnLabel = "";
+            return;
+        }
+
         PollParkMarkHotkey();
 
         _elapsed += Time.unscaledDeltaTime;
@@ -455,6 +466,11 @@ public sealed class MonitorHudDriver : MonoBehaviour
 
     private void OnGUI()
     {
+        if (!HudWorldSession.IsActive(PlayerManager.PlayerTransform != null))
+        {
+            return;
+        }
+
         EnsureStyles();
 
         // Stack top → bottom, all centered: loco → look-at → active job → always-on nav.
