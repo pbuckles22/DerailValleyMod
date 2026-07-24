@@ -47,8 +47,27 @@ public class ArProximityHideTests
     public void Lobby_fallback_geometry_keeps_door_at_14m_outside()
     {
         var box = Aabb3.FromCenterExtents(0f, 1f, 0f, 8f, 6f, 8f).InflateXZ(-2f);
-        Assert.True(ArProximityHide.ShouldHideStationMarker(box, 0f, 0f));
-        Assert.False(ArProximityHide.ShouldHideStationMarker(box, 14f, 0f));
-        Assert.False(ArProximityHide.ShouldHideStationMarker(box, 8f, 0f)); // apron near door
+        Assert.True(ArProximityHide.IsAtOffice(box, 0f, 0f));
+        Assert.False(ArProximityHide.IsAtOffice(box, 14f, 0f));
+        Assert.False(ArProximityHide.IsAtOffice(box, 8f, 0f)); // apron near door
+    }
+
+    [Fact]
+    public void IsAtOffice_flat_radius_when_no_box()
+    {
+        Assert.True(ArProximityHide.IsAtOffice(0f, 0f, 15f, 0f));
+        Assert.False(ArProximityHide.IsAtOffice(0f, 0f, 21f, 0f));
+    }
+
+    [Fact]
+    public void Hide_and_IsAtOffice_share_aabb_gate()
+    {
+        var box = new Aabb3(0f, 0f, 0f, 10f, 4f, 10f);
+        Assert.Equal(
+            ArProximityHide.IsAtOffice(box, 5f, 5f),
+            ArProximityHide.ShouldHideStationMarker(box, 5f, 5f));
+        Assert.Equal(
+            ArProximityHide.IsAtOffice(box, 15f, 5f),
+            ArProximityHide.ShouldHideStationMarker(box, 15f, 5f));
     }
 }

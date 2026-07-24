@@ -1,24 +1,41 @@
 namespace YardMasterSuite.Core;
 
 /// <summary>
-/// When to omit AR self-markers (Bundle A.4).
-/// Station hide uses an AABB footprint (XZ), not a sphere.
+/// Office / loco proximity for AR hide and Station <c>here</c> (Bundle A.4 + C).
+/// Prefer an exact building AABB when available; otherwise a flat XZ radius.
 /// </summary>
 public static class ArProximityHide
 {
-    /// <summary>
-    /// Legacy flat-radius constant (pre–bounds). Kept for docs; hide path uses <see cref="Aabb3"/>.
-    /// </summary>
+    /// <summary>Flat XZ radius when no building box is available.</summary>
     public const float OfficeHideRadiusMeters = 20f;
 
     /// <summary>True when the player is on/in the AR loco (no self-marker).</summary>
     public static bool ShouldHideLocoMarker(bool playerCarIsTargetLoco) => playerCarIsTargetLoco;
 
     /// <summary>
-    /// True when player XZ is inside the office footprint (Y ignored — floors/ceilings vary).
+    /// Same gate for house AR hide and Station chip <c>here</c> (exact footprint).
+    /// Y ignored — floors/ceilings vary.
     /// </summary>
-    public static bool ShouldHideStationMarker(in Aabb3 officeBounds, float playerX, float playerZ) =>
+    public static bool IsAtOffice(in Aabb3 officeBounds, float playerX, float playerZ) =>
         officeBounds.ContainsXZ(playerX, playerZ);
+
+    /// <summary>Flat-radius fallback when no exact building box exists.</summary>
+    public static bool IsAtOffice(
+        float officeX,
+        float officeZ,
+        float playerX,
+        float playerZ,
+        float radiusMeters = OfficeHideRadiusMeters)
+    {
+        var dx = officeX - playerX;
+        var dz = officeZ - playerZ;
+        var r = radiusMeters;
+        return (dx * dx) + (dz * dz) <= r * r;
+    }
+
+    /// <summary>AR house-icon hide — identical to <see cref="IsAtOffice(in Aabb3, float, float)"/>.</summary>
+    public static bool ShouldHideStationMarker(in Aabb3 officeBounds, float playerX, float playerZ) =>
+        IsAtOffice(officeBounds, playerX, playerZ);
 }
 
 /// <summary>Axis-aligned box in world space (pure; no Unity dependency).</summary>

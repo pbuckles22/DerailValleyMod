@@ -303,7 +303,7 @@ internal static class TelemetryReader
         return new ParkDebugSnapshot(true, ParkMarkDisplay.TryGetReturnPoint(markX, markZ, x, z));
     }
 
-    /// <summary>Always-on in-zone station waypoint chip (4.6). Null outside zones.</summary>
+    /// <summary>Always-on in-zone station waypoint chip (4.6 / Bundle C). Null outside zones.</summary>
     public static string? CurrentStationWaypointLabel()
     {
         if (!TryGetStationInPlayerZone(out var yardId, out var stationX, out var stationZ))
@@ -314,15 +314,17 @@ internal static class TelemetryReader
                 stationX: null,
                 stationZ: null,
                 playerX: null,
-                playerZ: null);
+                playerZ: null,
+                atOffice: false);
         }
 
         if (!TryGetPlayerPosition(out var x, out _, out var z))
         {
-            return StationWaypointDisplay.Format(true, yardId, stationX, stationZ, null, null);
+            return StationWaypointDisplay.Format(true, yardId, stationX, stationZ, null, null, atOffice: false);
         }
 
-        return StationWaypointDisplay.Format(true, yardId, stationX, stationZ, x, z);
+        var atOffice = IsPlayerAtOffice(x, z);
+        return StationWaypointDisplay.Format(true, yardId, stationX, stationZ, x, z, atOffice);
     }
 
     internal static StationWaypointDebugSnapshot CurrentStationWaypointDebugSnapshot()
@@ -337,10 +339,11 @@ internal static class TelemetryReader
             return new StationWaypointDebugSnapshot(true, yardId, null);
         }
 
+        var atOffice = IsPlayerAtOffice(x, z);
         return new StationWaypointDebugSnapshot(
             true,
             yardId,
-            StationWaypointDisplay.TryGetWalkPoint(stationX, stationZ, x, z));
+            StationWaypointDisplay.TryGetWalkPoint(stationX, stationZ, x, z, atOffice));
     }
 
     /// <summary>
@@ -423,8 +426,8 @@ internal static class TelemetryReader
     }
 
     /// <summary>
-    /// In-zone station office world position (4.9 / fixed 4.6 target).
-    /// Hidden while player is inside the office building AABB (A.4), not a sphere.
+    /// In-zone station office world position (4.9 / Bundle C).
+    /// Hidden while <see cref="IsPlayerAtOffice"/> — same gate as Station chip <c>here</c>.
     /// </summary>
     public static bool TryGetArStationOfficeWorldPosition(out Vector3 world)
     {
@@ -443,9 +446,7 @@ internal static class TelemetryReader
             }
 
             var office = range.transform.position;
-            if (TryGetPlayerPosition(out var px, out _, out var pz)
-                && StationOfficeBounds.TryGetHideAabb(station, office, out var aabb)
-                && ArProximityHide.ShouldHideStationMarker(aabb, px, pz))
+            if (TryGetPlayerPosition(out var px, out _, out var pz) && IsPlayerAtOffice(station, office, px, pz))
             {
                 return false;
             }
@@ -457,6 +458,43 @@ internal static class TelemetryReader
         {
             return false;
         }
+    }
+
+    /// <summary>
+    /// Bundle C: one predicate for house AR hide and Station <c>here</c>.
+    /// Exact building AABB when available; else flat <see cref="ArProximityHide.OfficeHideRadiusMeters"/>.
+    /// </summary>
+    private static bool IsPlayerAtOffice(float playerX, float playerZ)
+    {
+        try
+        {
+            if (!TryGetStationControllerInPlayerZone(out var station) || station == null)
+            {
+                return false;
+            }
+
+            var range = station.GetComponent<StationJobGenerationRange>();
+            if (range == null)
+            {
+                return false;
+            }
+
+            return IsPlayerAtOffice(station, range.transform.position, playerX, playerZ);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static bool IsPlayerAtOffice(StationController station, Vector3 office, float playerX, float playerZ)
+    {
+        if (StationOfficeBounds.TryGetHideAabb(station, office, out var aabb))
+        {
+            return ArProximityHide.IsAtOffice(aabb, playerX, playerZ);
+        }
+
+        return ArProximityHide.IsAtOffice(office.x, office.z, playerX, playerZ);
     }
 
     /// <summary>Custom pin from park mark session (4.9 / 1.14). Uses Y stored at mark time.</summary>

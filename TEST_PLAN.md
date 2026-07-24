@@ -285,15 +285,15 @@ When Fuel or Oil is yellow/red on a usable loco: optional `Next: … [N.N km]` o
 - [ ] On mainline with no resolvable start station — Next omitted (fail-closed)
 - [ ] `T2 next-station` on appear/change
 
-### 4.6 Station waypoint (foot) — `T2 station` — pending smoke · Bundle **B.2** v0.4.32 drops coords
+### 4.6 Station waypoint (foot) — `T2 station` — Bundle **C** **PASS** v0.4.48
 
-Always-on: in job-generation zone show `Station {YardID} {bearing} {m}m` (or `here`). **No** map coords. Omit outside zones.
+Always-on: in job-generation zone show `Station {YardID} {bearing} {m}m` (or `here`). **No** map coords. Omit outside zones. **`here`** = same office gate as house AR hide (AABB / 20 m fallback).
 
 **Sign-off**
 
 - [ ] Outside station zone — Station chip absent
 - [x] Enter station/city zone — Station chip with yard id + bearing/distance (**no** `· x, z`) — `v0.4.32`
-- [ ] Walk toward station center — meters drop; near center → `here`
+- [x] Walk to office — house icon hides **and** chip flips to `Station … here` at the same moment (v0.4.48)
 - [ ] `T2 station` on enter/leave / bearing change
 
 ### 4.8 Active Job HUD + preview-prep edge — `T2 job` — retarget after Bundle D

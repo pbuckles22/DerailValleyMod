@@ -15,7 +15,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 |--|--|
 | **Journey** | Stage 1 — Apprentice (“don’t blow up”) |
 | **MVP** | Epic 1 System Monitor HUD |
-| **Version (`main`)** | **0.4.47** *(A.4 proximity hide; house outdoor false-hide deferred)* |
+| **Version (`main`)** | **0.4.48** *(Bundle C: Station `here` = house-hide gate)* |
 
 ---
 
@@ -23,7 +23,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 | Branch | Role |
 |--------|------|
-| **`main`** | Integration — Bundle **A** done enough (A.4 house hide known issue); next **C → D** |
+| **`main`** | Integration — next **Bundle D** |
 
 ---
 
@@ -35,12 +35,11 @@ Stack: Unity / C# `net48` / UMM / Harmony
 - [x] **Epic 1** — Diagnostic HUD *(Stage 1 — complete 2026-07-23)*
 - [ ] **Epic 2** — Governor Mode
 - [ ] **Epic 3** — Yard Master / Dispatcher
-- [ ] **Epic 4** — HUD quality *(4.4–4.9 + Bundles B + A.1–A.4 on `main`; C → D next)*
+- [ ] **Epic 4** — HUD quality *(4.4–4.9 + Bundles B + A + C on `main`; D next)*
 - [ ] **Epic 5** — Digital Catalog
 
 ### Next (Stage 1 leftovers / Stage 2)
 
-- [ ] **Bundle C** — office “here” radius / chip (may retouch A.4 house hide)
 - [ ] **Bundle D** — job bar Zone truth + preview-prep edge
 - [ ] Re-smoke **1.7** yellow/red Load when practical
 - [ ] **2.1** Three-Gate → Epic 2
@@ -60,6 +59,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 ## Recently completed
 
+- [x] **Bundle C** — Station `here` shares A.4 office gate (v0.4.48, Tier 2 **PASS**)
 - [x] **A.4** Proximity hide — loco in-cab PASS; house hide deferred known issue (v0.4.47)
 - [x] **A.1–A.3** Behind-camera, sticky row, on-object/sticky + edge fan (through v0.4.43)
 - [x] **Bundle B** clutter diet through v0.4.36

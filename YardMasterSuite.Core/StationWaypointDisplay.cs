@@ -3,24 +3,26 @@ using System;
 namespace YardMasterSuite.Core;
 
 /// <summary>
-/// Pure in-zone station waypoint formatting for the always-on nav chip (4.6).
+/// Pure in-zone station waypoint formatting for the always-on nav chip (4.6 / Bundle C).
 /// Bearing/distance are flat-map from the player to the station office.
-/// Bundle B.2: map coords dropped from the chip (id + distance / here only).
+/// <c>here</c> uses the same office gate as AR house hide (<see cref="ArProximityHide.IsAtOffice"/>).
 /// </summary>
 public static class StationWaypointDisplay
 {
-    public const float HereThresholdMeters = 1f;
-
     /// <summary>
     /// Zone waypoint chip, or null when outside a station zone (omit from HUD join).
     /// </summary>
+    /// <param name="atOffice">
+    /// True when player is inside the office footprint / radius — same predicate as house AR hide.
+    /// </param>
     public static string? Format(
         bool inZone,
         string? yardId,
         float? stationX,
         float? stationZ,
         float? playerX,
-        float? playerZ)
+        float? playerZ,
+        bool atOffice = false)
     {
         if (!inZone)
         {
@@ -38,7 +40,7 @@ public static class StationWaypointDisplay
             return "— Station";
         }
 
-        var point = TryGetWalkPoint(stationX.Value, stationZ.Value, playerX.Value, playerZ.Value);
+        var point = TryGetWalkPoint(stationX.Value, stationZ.Value, playerX.Value, playerZ.Value, atOffice);
         if (point is null)
         {
             return "— Station";
@@ -55,17 +57,21 @@ public static class StationWaypointDisplay
         return $"Station {label} {point} {meters}m";
     }
 
-    /// <summary>16-point walk bearing toward station, <c>here</c>, or null.</summary>
-    public static string? TryGetWalkPoint(float stationX, float stationZ, float playerX, float playerZ)
+    /// <summary>16-point walk bearing toward station, <c>here</c> when <paramref name="atOffice"/>, or null.</summary>
+    public static string? TryGetWalkPoint(
+        float stationX,
+        float stationZ,
+        float playerX,
+        float playerZ,
+        bool atOffice = false)
     {
-        var dx = stationX - playerX;
-        var dz = stationZ - playerZ;
-        var distance = Math.Sqrt(dx * dx + dz * dz);
-        if (distance < HereThresholdMeters)
+        if (atOffice)
         {
             return "here";
         }
 
+        var dx = stationX - playerX;
+        var dz = stationZ - playerZ;
         return HeadingDisplay.ToCompassPoint(HeadingDisplay.FromForward(dx, dz));
     }
 }

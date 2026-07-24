@@ -27,7 +27,7 @@ Screenshots live in [`ux-smoke-2026-07-23/`](ux-smoke-2026-07-23/).
 | 11 | Mainline / yard-only clutter | **FAIL** — see Bundle B |
 | 12 | Station chip only in zone | **PASS** (keep; trim overload — Bundle B) |
 | 13 | Station chip in zone | **PASS** |
-| 14 | “At station / here” proximity | **FAIL** — see Bundle C |
+| 14 | “At station / here” proximity | **PASS** — Bundle C v0.4.48 (same gate as house hide) |
 | 15 | No job bar when no jobs | **PASS** |
 | 16 | Job bar on take | **PASS** |
 | 17 | Zone meters + cancelled / preview-prep | **Needs UX fix** — see Bundle D (remove Zone on taken; Preview edge for pre-validate) |
@@ -114,15 +114,17 @@ Screenshots live in [`ux-smoke-2026-07-23/`](ux-smoke-2026-07-23/).
 ---
 
 ### Bundle C — “I’m at the office” radius  
-**Stories:** 4.6 / 4.9 proximity · smoke #14  
+**Stories:** 4.6 / 4.9 proximity · smoke #14 · **PASS** **v0.4.48**
 
 **Thoughts:** Exact XZ to an interior transform will never read as “here” when you’re on the sidewalk or in the lobby. Use a **radius**, not a 1 m point.
 
+**Shipped:** one gate — `TelemetryReader.IsPlayerAtOffice` → `ArProximityHide.IsAtOffice`. Exact Lobby Box AABB when available (A.4 good-enough); else flat **20 m** XZ. Same predicate drives house AR hide **and** Station chip `here`. Smoke: ~11 m → icon + meters; at door → `Station SM here` + house gone together.
+
 **Do (one ship):**
-1. Raise office “here” / hide-icon radius (start ~**15–25 m** flat XZ; tune in smoke).
-2. Station text chip: show **`Station SM here`** (no meters/coords) inside that radius.
-3. Hide house AR icon inside that radius (ties to Bundle A.4).
-4. If still wrong at the door, retarget office anchor to `JobValidator` / booklet spawn after this radius lands.
+1. ~~Raise office “here” / hide-icon radius~~ — shared A.4 footprint / 20 m fallback.
+2. ~~Station text chip: **`Station SM here`** inside that gate.~~
+3. ~~Hide house AR icon on the **same** gate.~~
+4. If still wrong at the door, retarget office anchor to `JobValidator` / booklet spawn (defer; A.4 bounds parked).
 
 ---
 
@@ -170,7 +172,7 @@ Each bundle = own version bump + deploy + short smoke; then commit after PASS.
 
 **A done when:** A.1–A.3 smoke PASS; A.4 loco hide PASS; A.4 house hide deferred (known outdoor false-hide @ ~12–14 m from door).
 
-**C done when:** standing at Station Office door / inside lobby shows `here` (or hidden house), not 16 m.
+**C done when:** standing at Station Office door / inside lobby shows `here` (or hidden house), not 16 m. **PASS** **v0.4.48**.
 
 **D done when:** taken job bar has Job + Bonus only (no ~1700 m Zone); Abandoned/Expired → red Cancelled; while prepping unvalidated jobs, Preview/Avail meters track the **tight** Regular edge (not AnyJobTaken).
 

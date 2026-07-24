@@ -32,7 +32,7 @@ Legacy IDs (`CMD-01a`, `QOL-08`, …) stay in parentheses so older notes still r
 
 | Stage | Player focus | Mod focus | Stories |
 |-------|----------------|-----------|---------|
-| **1 — Apprentice** | Throttle, brakes, sander, don’t blow the fuse | Situational Awareness HUD | **Epic 1** *(done)* + **4.3** + **4.7**; next **4.6** / Epic 2 |
+| **1 — Apprentice** | Throttle, brakes, sander, don’t blow the fuse | Situational Awareness HUD | **Epic 1** *(done)* + **4.3** + **4.6** + **4.7**; next Bundle **D** / Epic 2 |
 | **2 — Junior Yardman** | Switches, yard paths, consist moves | Remote switch / path integrity | **3.3–3.4** |
 | **3 — Yard Master** | Multi-stop efficiency | Auto dispatch + workbench | **3.5**, **5.1**, **3.1** |
 
@@ -133,7 +133,7 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
   - [x] **1.14 Park / return mark** — `Home` sets/updates session mark at player XZ; `Shift+Home` clears. Always-on nav chip `Marked NE 84m` (16-point bearing + meters back) or `Marked here` within 1 m; omitted when unmarked. Quiet `T2 mark` on set/clear / bearing change. Distinct from live `Heading` / `Pos`. **Done** — Tier 1 + Tier 2 **PASS** (v0.4.25).
     > As a yard worker, I want to mark where I left the loco so when I’m running around I always know which way and how far to get back.
 
-  **Build order (Stage 1 open work):** **Epic 1** complete → **4.6** / Epic 2; re-smoke Load yellow/red when practical. *(Do not reopen **1.8** HUD thermal prediction.)*
+  **Build order (Stage 1 open work):** **Epic 1** + **4.6** complete → Bundle **D** / Epic 2; re-smoke Load yellow/red when practical. *(Do not reopen **1.8** HUD thermal prediction.)*
 
 ---
 
@@ -188,8 +188,8 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
   - [ ] **4.5 Next station distance** *(linear nav)* — When Fuel/Oil are in warn/critical, optional `Next: … [N km]` using live station data (not a static mileage table); fail-closed if path/station unknown. *No GPS minimap.*
     > As an engineer, I want distance to the next station when fluids are low so I know whether I can make it without a map overlay.
 
-  - [ ] **4.6 Station waypoint (foot) + in-zone station coords** — When the player is inside a city/station **zone**, show that station’s map coords (and distance + 16-point bearing to it) on the always-on / nav strip for job-board walks. Fail-closed outside zones / if station unknown. Distinct from **4.5** (loco fluid-gated). *No minimap.*
-    > As a yard master, I want the local station’s coordinates and which way to walk when I’m in a city zone so I don’t get lost finding the job board.
+  - [x] **4.6 Station waypoint (foot) + in-zone station chip** — In job-generation zone: `Station {YardID} {bearing} {m}m` or **`here`**. Map coords **cut** (Bundle B.2). **`here`** shares office gate with house AR hide (Bundle C). Fail-closed outside zones. *No minimap.* **Done** — Tier 1 + Tier 2 **PASS** (v0.4.48).
+    > As a yard master, I want the local station’s id and which way to walk when I’m in a city zone so I don’t get lost finding the job board.
 
   - [ ] **4.8 Active Job HUD + preview-prep edge** — When ≥1 job is **taken**: centered bar with job id(s) + bonus remaining only (no Zone/Keep meters — distance does not cancel taken jobs). When job Abandoned/Expired → red **Cancelled**. Separately, support **prep-before-validate**: while available (unvalidated) jobs exist and none taken, show meters to the **tight Regular** destroy edge (`Preview`/`Avail`) so staging cars for bonus doesn’t silently wipe previews. Fail-closed when nothing to show. See [UX_SMOKE_FEEDBACK_2026-07-23.md](doc/requirements/UX_SMOKE_FEEDBACK_2026-07-23.md) Bundle D.
     > As a yard master, I want my taken job + bonus clock without fake “zone death,” and a clear preview-edge warning while I stage cars before validating so I don’t lose the ticket saving bonus time.

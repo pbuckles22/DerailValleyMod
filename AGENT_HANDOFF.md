@@ -117,7 +117,7 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 |--|--|
 | **Project** | *Yard Master Suite* (UMM / Harmony / net48) |
 | **MVP** | **Epic 1** System Monitor HUD |
-| **Version (`main`)** | **0.4.47** *(Bundle A.4 proximity hide; house outdoor false-hide deferred)* |
+| **Version (`main`)** | **0.4.48** *(Bundle C: Station `here` = house-hide gate)* |
 | **Active branch** | `main` |
 
 **Shipped on `main`**
@@ -125,11 +125,11 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 - [x] **Epic 0** Safe Boot *(0.4 scaffold)*
 - [x] **Epic 1** Diagnostic HUD — **1.1–1.14** complete (Motors current-state only — Hot dwell **cut**)
 - [x] **4.1–4.3**, **4.7** Spherecast, cargo, hide loco bar, centered stacked HUD IA
-- [x] **4.4–4.9** baseline + Bundle **B** (**v0.4.36**) + Bundle **A.1–A.3** (**v0.4.43**) + **A.4** (**v0.4.47** loco hide PASS; house hide **deferred** known issue)
+- [x] **4.4–4.9** baseline + Bundle **B** (**v0.4.36**) + Bundle **A.1–A.4** (**v0.4.47**) + **Bundle C** (**v0.4.48**)
 
 **Next**
 
-- [ ] **Bundle C → D** per [UX_SMOKE_FEEDBACK_2026-07-23.md](doc/requirements/UX_SMOKE_FEEDBACK_2026-07-23.md) (C may retouch office `here` / house hide)
+- [ ] **Bundle D** — job Zone truth + preview-prep edge ([UX_SMOKE_FEEDBACK_2026-07-23.md](doc/requirements/UX_SMOKE_FEEDBACK_2026-07-23.md))
 - [ ] **2.1** Three-Gate → **2.2** Thermal governor (after Epic 4 fix bundles settle)
 - [ ] Re-smoke Load yellow/red when practical
 - [ ] Known issue: A.4 house outdoor false-hide (~12–14 m) — see `TECH_DEBT.md`
