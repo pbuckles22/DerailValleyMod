@@ -17,9 +17,11 @@ public sealed class MonitorHudDriver : MonoBehaviour
     private const KeyCode ParkMarkKey = KeyCode.Home;
 
     private const float RefreshSeconds = 0.1f;
-    private const float Pad = 12f;
-    private const float Height = 28f;
-    private const float Gap = 4f;
+
+    /// <summary>
+    /// GUI Y just below the last visible HUD bar (top-left origin). Updated each OnGUI for AR sticky row (A.2).
+    /// </summary>
+    public static float LastStackBottomGuiY { get; private set; }
 
     private static readonly Color BarBackground = new(0.12f, 0.12f, 0.12f, 0.82f);
 
@@ -125,6 +127,7 @@ public sealed class MonitorHudDriver : MonoBehaviour
             _parkLabel = null;
             _stationLabel = null;
             _alwaysOnLabel = "";
+            LastStackBottomGuiY = 0f;
             return;
         }
 
@@ -468,30 +471,32 @@ public sealed class MonitorHudDriver : MonoBehaviour
     {
         if (!HudWorldSession.IsActive(PlayerManager.PlayerTransform != null))
         {
+            LastStackBottomGuiY = 0f;
             return;
         }
 
         EnsureStyles();
 
         // Stack top → bottom, all centered: loco → look-at → active job → always-on nav.
-        var y = Pad;
+        var y = MonitorHudStackLayout.Pad;
 
         if (_trainLabel != null)
         {
-            y = DrawCenteredBar(_trainLabel, _trainStyle!, y) + Gap;
+            y = DrawCenteredBar(_trainLabel, _trainStyle!, y) + MonitorHudStackLayout.Gap;
         }
 
         if (_localLabel != null)
         {
-            y = DrawCenteredBar(_localLabel, _localStyle!, y) + Gap;
+            y = DrawCenteredBar(_localLabel, _localStyle!, y) + MonitorHudStackLayout.Gap;
         }
 
         if (_jobLabel != null)
         {
-            y = DrawCenteredBar(_jobLabel, _jobStyle!, y) + Gap;
+            y = DrawCenteredBar(_jobLabel, _jobStyle!, y) + MonitorHudStackLayout.Gap;
         }
 
-        DrawCenteredBar(_alwaysOnLabel, _alwaysOnStyle!, y);
+        y = DrawCenteredBar(_alwaysOnLabel, _alwaysOnStyle!, y);
+        LastStackBottomGuiY = y;
     }
 
     private float DrawCenteredBar(string label, GUIStyle style, float y)
@@ -500,9 +505,9 @@ public sealed class MonitorHudDriver : MonoBehaviour
         // Grow from content only (DESIGN_SYSTEM). Style padding is already in CalcSize —
         // do not floor to a wide min (showed empty right pad after Pos was removed).
         var width = Mathf.Ceil(style.CalcSize(new GUIContent(measure)).x);
-        var x = Mathf.Max(Pad, (Screen.width - width) * 0.5f);
-        GUI.Label(new Rect(x, y, width, Height), label, style);
-        return y + Height;
+        var x = Mathf.Max(MonitorHudStackLayout.Pad, (Screen.width - width) * 0.5f);
+        GUI.Label(new Rect(x, y, width, MonitorHudStackLayout.BarHeight), label, style);
+        return y + MonitorHudStackLayout.BarHeight;
     }
 
     private static string StripRichText(string text)

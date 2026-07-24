@@ -102,7 +102,8 @@ public sealed class ArWaypointOverlay : MonoBehaviour
         var viewUp = Vector3.Dot(toTarget, cam.transform.up);
         var behind = ArMarkerProjection.IsBehindCamera(viewForward);
 
-        // Ahead: Unity projection. Behind: discard W2SP — use view-plane atan2 → edge.
+        // Ahead: Unity projection X. Behind: view-plane atan2 → edge X (A.1).
+        // Sticky row (A.2): pin Y under HUD stack — no pitch wander.
         var screen = cam.WorldToScreenPoint(lifted);
         var x = screen.x;
         var y = screen.y;
@@ -115,6 +116,30 @@ public sealed class ArWaypointOverlay : MonoBehaviour
             ArMarkerProjection.DefaultEdgeMarginPixels,
             ref x,
             ref y);
+
+        var dx = world.x - playerPos.x;
+        var dy = world.y - playerPos.y;
+        var dz = world.z - playerPos.z;
+        var dist = Mathf.Sqrt(dx * dx + dy * dy + dz * dz);
+        var distLabel = ArMarkerDisplay.FormatDistanceOnly(dist);
+        var labelSize = string.IsNullOrEmpty(distLabel)
+            ? Vector2.zero
+            : _labelStyle!.CalcSize(new GUIContent(distLabel));
+        var iconH = icon != null ? IconPixels : 22f;
+        var iconW = icon != null ? IconPixels : 22f;
+        var width = Mathf.Max(iconW, labelSize.x) + 8f;
+        var height = iconH + (labelSize.y > 0 ? labelSize.y + 2f : 0f);
+
+        var stackBottom = MonitorHudDriver.LastStackBottomGuiY;
+        if (stackBottom < 1f)
+        {
+            stackBottom = MonitorHudStackLayout.StackBottomGuiY(false, false, false);
+        }
+
+        var stickyTop = MonitorHudStackLayout.StickyRowTopGuiY(stackBottom);
+        var stickyCenterGuiY = stickyTop + height * 0.5f;
+        ArStickyRowPlacement.PinScreenYToStickyRow(stickyCenterGuiY, Screen.height, ref y);
+
         var clamped = ArMarkerProjection.ClampToScreen(
             x,
             y,
@@ -124,21 +149,8 @@ public sealed class ArWaypointOverlay : MonoBehaviour
             out x,
             out y);
 
-        var dx = world.x - playerPos.x;
-        var dy = world.y - playerPos.y;
-        var dz = world.z - playerPos.z;
-        var dist = Mathf.Sqrt(dx * dx + dy * dy + dz * dz);
-        var distLabel = ArMarkerDisplay.FormatDistanceOnly(dist);
-        var guiY = ArMarkerProjection.ToGuiY(y, Screen.height);
-
-        var labelSize = string.IsNullOrEmpty(distLabel)
-            ? Vector2.zero
-            : _labelStyle!.CalcSize(new GUIContent(distLabel));
-        var iconH = icon != null ? IconPixels : 22f;
-        var iconW = icon != null ? IconPixels : 22f;
-        var width = Mathf.Max(iconW, labelSize.x) + 8f;
-        var height = iconH + (labelSize.y > 0 ? labelSize.y + 2f : 0f);
-        var rect = new Rect(x - width * 0.5f, guiY - height * 0.5f, width, height);
+        var guiY = ArStickyRowPlacement.MarkerTopGuiY(stickyTop, height);
+        var rect = new Rect(x - width * 0.5f, guiY, width, height);
 
         var plate = new Rect(rect.x - 4f, rect.y - 2f, rect.width + 8f, rect.height + 4f);
         var plateColor = new Color(0.08f, 0.08f, 0.08f, clamped || behind ? 0.72f : 0.55f);
