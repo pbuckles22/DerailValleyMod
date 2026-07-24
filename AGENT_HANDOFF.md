@@ -125,17 +125,12 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 - [x] **Epic 0** Safe Boot *(0.4 scaffold)*
 - [x] **Epic 1** Diagnostic HUD — **1.1–1.14** complete (Motors current-state only — Hot dwell **cut**)
 - [x] **4.1–4.3**, **4.7** Spherecast, cargo, hide loco bar, centered stacked HUD IA
-- [ ] **4.4–4.9** code on `main` @ **v0.4.29** — Tier 1 green; Tier 2 partial (known FAILs → UX bundles)
+- [ ] **4.4–4.9** baseline on `main`; Bundle **B** UX diet **PASS** through **v0.4.36**; remaining smoke FAILs → Bundle **A → C → D**
 
 **Next**
 
-- [x] **Bundle B.1** remove Pos + hug bar width — **v0.4.31** (smoke PASS)
-- [x] **Bundle B.2** Station chip drop coords — **v0.4.32** (smoke PASS)
-- [x] **Bundle B.3** omit `— Track` — **v0.4.33** (smoke PASS)
-- [x] **HUD in-world only** — **v0.4.34** (smoke PASS)
-- [x] **Drop HUD version chip** — **v0.4.35** (smoke PASS; verify via Mod Manager)
-- [x] **Bundle B.4** omit empty Job — **v0.4.36** (smoke PASS)
-- [ ] **Bundle A → C → D** per [UX_SMOKE_FEEDBACK_2026-07-23.md](doc/requirements/UX_SMOKE_FEEDBACK_2026-07-23.md)
+- [ ] **Bundle A.1** behind-camera edge — then **A.2 → A.3 → A.4** (one branch/smoke each) per [UX_SMOKE_FEEDBACK_2026-07-23.md](doc/requirements/UX_SMOKE_FEEDBACK_2026-07-23.md)
+- [ ] **Bundle C → D** after A
 - [ ] **2.1** Three-Gate → **2.2** Thermal governor (after Epic 4 fix bundles settle)
 - [ ] Re-smoke Load yellow/red when practical
 

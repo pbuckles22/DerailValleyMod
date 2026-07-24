@@ -73,16 +73,21 @@ Screenshots live in [`ux-smoke-2026-07-23/`](ux-smoke-2026-07-23/).
 ## Combined fix bundles (hit these 1-by-1)
 
 ### Bundle A — AR compass correctness + layout  
-**Stories:** 4.9 follow-ups · smoke #4/#7  
-**Problem:** Behind-camera projection wrong; icons roam vertically; too much clutter when already at the target.
+**Stories:** **4.9** follow-ups · smoke #4/#7 (PM: [PM_PLAN.md](../../PM_PLAN.md) Epic 4)  
+**Problem:** Behind-camera projection wrong; icons roam vertically; too much clutter when already at the target.  
+**Ship rule:** one step per branch (same as Bundle B); smoke PASS before the next step. **Do not** land A.1–A.4 in one uncommitted pile.
 
-**Do (one ship):**
-1. Fix behind-camera / off-screen projection so markers clamp to the **correct screen edge** (turn cue), never “fake center.”
-2. Add a **sticky marker row** under the lowest HUD bar: horizontal compass strip; when a target is ahead, its icon sits **centered in that row**; when aside/behind, icon slides to the matching edge of that row.
-3. **Optional on-object ghost:** if the target is in camera frustum ahead, also draw the icon at the world projection (duplicate). Sticky row always on.
-4. **Proximity hide:** no loco icon while player is in that loco; no house icon while within office “here” radius (Bundle C).
+**Epic link:** Bundle A is presentation/fix follow-up on shipped **4.9** AR markers (baseline already on `main`). It does **not** open new Epic 4 stories; it closes smoke FAILs against 4.9. Proximity hide for the house icon (**A.4**) shares the office “here” radius with **Bundle C** (4.6) — implement A.4 hide with a provisional radius or stub, then tune radius in C; or land A.4 hide after C if hide needs the final radius (prefer provisional ~15–25 m in A.4 so A can smoke independently).
 
-**Out of scope for this ship:** distance fading polish, new art.
+**Steps (separate ships):**
+1. **A.1 Behind-camera edge** — markers clamp to the **correct** screen edge (turn cue), never fake center. Pure math in `ArMarkerProjection` (+ tests); wire `ArWaypointOverlay`.
+2. **A.2 Sticky marker row** — horizontal compass strip under the lowest HUD bar; ahead → centered in row; aside/behind → matching row edge. Y = bottom of last visible HUD bar + gap.
+3. **A.3 On-object ghost** — if target is in frustum ahead, also draw icon at world projection (duplicate). Sticky row always on.
+4. **A.4 Proximity hide** — no loco icon while player is in that loco; no house icon while within office “here” radius (align with Bundle C; start ~15–25 m XZ if C not done).
+
+**Out of scope until later:** distance fading polish, new art; Heading text removal (wait until A feels good); Bundle C office chip `here` wording (C’s ship).
+
+**A done when:** A.1–A.4 smoke PASS — behind → sticky-row edge (not center); looking at loco → centered under HUD **and** on-object ghost; in-cab / in-office hides self-marker.
 
 ---
 
@@ -150,7 +155,7 @@ Screenshots live in [`ux-smoke-2026-07-23/`](ux-smoke-2026-07-23/).
 | Order | Bundle | Why this order |
 |------:|--------|----------------|
 | 1 | **B** | Fast clutter diet (`Pos`, Track omit, station coords) — clean canvas before AR tuning |
-| 2 | **A** | Hard AR math (behind-camera + sticky row); easier to verify on a quiet HUD |
+| 2 | **A** | Hard AR math (behind-camera + sticky row); easier to verify on a quiet HUD — **ship A.1→A.4 one-by-one** |
 | 3 | **C** | Needs clean Station chip (B) + trustworthy house marker (A) to judge `here` / hide |
 | 4 | **D** | Job-state / preview-edge — independent of foot nav once A–C feel good |
 | 5 | **E** | Deferred playtests |
@@ -163,7 +168,7 @@ Each bundle = own version bump + deploy + short smoke; then commit after PASS.
 
 **B done when:** always-on has no `Pos`; mainline second bar has no Track segment; in-zone Station chip has no raw coords; no `— Job` when the car has no job. **PASS** through **v0.4.36**.
 
-**A done when:** with loco/house/pin behind you, icons sit on the sticky row edge (not center); looking at loco puts icon centered under HUD **and** on the loco; in-cab / in-office hides self-marker.
+**A done when:** A.1–A.4 smoke PASS — behind → sticky-row edge (not center); looking at loco → centered under HUD **and** on-object ghost; in-cab / in-office hides self-marker.
 
 **C done when:** standing at Station Office door / inside lobby shows `here` (or hidden house), not 16 m.
 
