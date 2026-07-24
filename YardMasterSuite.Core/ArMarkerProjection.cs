@@ -20,14 +20,22 @@ public static class ArMarkerProjection
 {
     public const float DefaultEdgeMarginPixels = 28f;
 
+    /// <summary>Camera-forward rejection: target is behind / on the near plane.</summary>
+    public static bool IsBehindCamera(float viewForward, float epsilon = 0.05f) =>
+        viewForward <= epsilon;
+
     /// <summary>
-    /// When the target is behind the camera, flip to the opposite screen side so edge clamp
-    /// points the correct way to turn.
+    /// When behind the camera, replace unreliable <c>WorldToScreenPoint</c> coords with a
+    /// screen-edge point from atan2(viewRight, viewUp) so clamp becomes a turn cue — never fake center.
+    /// When ahead, leaves <paramref name="screenX"/> / <paramref name="screenY"/> unchanged.
     /// </summary>
-    public static void ApplyBehindCameraFlip(
+    public static void ApplyBehindCameraEdge(
         bool behindCamera,
+        float viewRight,
+        float viewUp,
         float screenWidth,
         float screenHeight,
+        float edgeMargin,
         ref float screenX,
         ref float screenY)
     {
@@ -36,8 +44,76 @@ public static class ArMarkerProjection
             return;
         }
 
-        screenX = screenWidth - screenX;
-        screenY = screenHeight - screenY;
+        ProjectViewDirectionToEdge(
+            viewRight,
+            viewUp,
+            screenWidth,
+            screenHeight,
+            edgeMargin,
+            out screenX,
+            out screenY);
+    }
+
+    /// <summary>
+    /// Map view-plane lateral offsets to the inset screen rectangle edge (Unity bottom-left origin).
+    /// </summary>
+    public static void ProjectViewDirectionToEdge(
+        float viewRight,
+        float viewUp,
+        float screenWidth,
+        float screenHeight,
+        float edgeMargin,
+        out float screenX,
+        out float screenY)
+    {
+        var minX = edgeMargin;
+        var maxX = Math.Max(edgeMargin, screenWidth - edgeMargin);
+        var minY = edgeMargin;
+        var maxY = Math.Max(edgeMargin, screenHeight - edgeMargin);
+        var cx = (minX + maxX) * 0.5f;
+        var cy = (minY + maxY) * 0.5f;
+
+        // Degenerate: no lateral signal — default bottom-center (turn-around cue).
+        if (Math.Abs(viewRight) < 1e-6f && Math.Abs(viewUp) < 1e-6f)
+        {
+            screenX = cx;
+            screenY = minY;
+            return;
+        }
+
+        // 0 = up in view, +π/2 = right (Unity screen +X right, +Y up).
+        var angle = Math.Atan2(viewRight, viewUp);
+        var dx = (float)Math.Sin(angle);
+        var dy = (float)Math.Cos(angle);
+
+        var t = float.PositiveInfinity;
+        if (dx > 1e-6f)
+        {
+            t = Math.Min(t, (maxX - cx) / dx);
+        }
+        else if (dx < -1e-6f)
+        {
+            t = Math.Min(t, (minX - cx) / dx);
+        }
+
+        if (dy > 1e-6f)
+        {
+            t = Math.Min(t, (maxY - cy) / dy);
+        }
+        else if (dy < -1e-6f)
+        {
+            t = Math.Min(t, (minY - cy) / dy);
+        }
+
+        if (float.IsInfinity(t) || t < 0f)
+        {
+            screenX = cx;
+            screenY = minY;
+            return;
+        }
+
+        screenX = cx + dx * t;
+        screenY = cy + dy * t;
     }
 
     /// <summary>
