@@ -6,7 +6,8 @@ namespace YardMasterSuite.Monitor;
 /// <summary>
 /// In-world IMGUI overlay for Monitor Mode telemetry.
 /// Top bar = usable loco-train totals (hidden when not usable — 4.3); second bar = look-at preferred, standing fallback.
-/// Always-on: version + Heading (1.12) + Marked (1.14) + Station zone (4.6).
+/// Always-on: Heading (1.12) + Marked (1.14) + Station zone (4.6).
+/// No mod version chip on HUD — verify ship # in UMM Mod Manager.
 /// Bundle B.1: Pos (1.13) removed from the always-on bar.
 /// Active Job bar (4.8) when jobs are taken. Loco bar centered IA (4.7).
 /// </summary>
@@ -146,7 +147,6 @@ public sealed class MonitorHudDriver : MonoBehaviour
             _parkLabel = TelemetryReader.CurrentParkLabel();
             _stationLabel = TelemetryReader.CurrentStationWaypointLabel();
             _alwaysOnLabel = AlwaysOnHudLine.Format(
-                $"v{Main.ModVersion}",
                 _headingLabel,
                 _parkLabel,
                 _stationLabel);

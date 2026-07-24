@@ -102,7 +102,8 @@ Screenshots live in [`ux-smoke-2026-07-23/`](ux-smoke-2026-07-23/).
 **B.1 smoke (v0.4.31):** always-on shows `v… | Heading …` (+ Marked/Station if any) and **never** a `Pos` chip; bar width hugs text (no empty right pad).  
 **B.2 smoke (v0.4.32):** in-zone Station chip is `Station SM NE 84m` / `Station SM here` — **no** raw map coords.  
 **B.3 smoke (v0.4.33):** on mainline / unknown track, second bar has **no** Track segment (not `— Track`); yard ID still shows `Track SM-O6I`.  
-**In-world HUD (v0.4.34):** launcher / menus show **no** Monitor bars (no `v… | — Heading`).
+**In-world HUD (v0.4.34):** launcher / menus show **no** Monitor bars (no `v… | — Heading`).  
+**No HUD version (v0.4.35):** always-on has Heading (+ Marked/Station) only — **no** `v…` chip; confirm ship # in Mod Manager.
 
 ---
 

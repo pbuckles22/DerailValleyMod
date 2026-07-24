@@ -21,9 +21,6 @@ public static class Main
     /// <summary>UMM logger → Player.log. Used for Tier 2 discrete debug lines.</summary>
     internal static void Log(string message) => _modEntry?.Logger.Log(message);
 
-    /// <summary>UMM <c>info.json</c> version — shown on HUD so a new DLL is obvious in-game.</summary>
-    internal static string ModVersion => _modEntry?.Info.Version ?? "?";
-
     /// <summary>Mods/YardMasterSuite/Icons — AR waypoint PNGs.</summary>
     internal static string? IconsPath
     {

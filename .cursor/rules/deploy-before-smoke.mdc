@@ -16,7 +16,7 @@ powershell -ExecutionPolicy Bypass -File package.ps1 -NoArchive -Configuration R
 ```
 
 2. **Verify** `Mods\YardMasterSuite\info.json` → `Version` matches shipped `info.json` (and DLL timestamp is fresh).
-3. **Then** ask for smoke; tell the user to confirm the HUD `v…` chip matches.
+3. **Then** ask for smoke; tell the user to confirm the ship # in **UMM Mod Manager** (Yard Master Suite Version column) — **not** an in-HUD `v…` chip.
 
 ## After smoke — before commit / push / epic close
 
