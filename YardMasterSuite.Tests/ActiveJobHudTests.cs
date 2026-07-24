@@ -37,38 +37,62 @@ public class BonusTimeDisplayTests
     }
 }
 
-public class ZoneEdgeDisplayTests
+public class PreviewEdgeDisplayTests
 {
     [Fact]
     public void MetersRemaining_and_radius_helpers()
     {
-        Assert.Equal(100f, ZoneEdgeDisplay.RadiusFromSqr(10_000f));
-        Assert.Equal(30f, ZoneEdgeDisplay.DistanceFromSqr(900f));
-        Assert.Equal(70f, ZoneEdgeDisplay.MetersRemaining(30f, 100f));
-        Assert.Equal(-10f, ZoneEdgeDisplay.MetersRemaining(110f, 100f));
-        Assert.Null(ZoneEdgeDisplay.MetersRemaining(null, 100f));
+        Assert.Equal(100f, PreviewEdgeDisplay.RadiusFromSqr(10_000f));
+        Assert.Equal(30f, PreviewEdgeDisplay.DistanceFromSqr(900f));
+        // 100 − 30 player − 30 safety buffer = 40
+        Assert.Equal(40f, PreviewEdgeDisplay.MetersRemaining(30f, 100f));
+        // Past geometric edge → more negative after buffer
+        Assert.Equal(-40f, PreviewEdgeDisplay.MetersRemaining(110f, 100f));
+        Assert.Null(PreviewEdgeDisplay.MetersRemaining(null, 100f));
     }
 
     [Fact]
-    public void Format_in_out_and_colors()
+    public void MetersRemaining_applies_safety_buffer()
     {
-        Assert.Equal("— Zone", ZoneEdgeDisplay.Format(null));
-        Assert.Equal("Zone OUT", ZoneEdgeDisplay.Format(-1f));
-        Assert.Equal("Zone 450m", ZoneEdgeDisplay.Format(450.4f));
-        Assert.Contains(ZoneEdgeDisplay.WarningColor, ZoneEdgeDisplay.Format(100f, richText: true));
-        Assert.Contains(ZoneEdgeDisplay.CriticalColor, ZoneEdgeDisplay.Format(10f, richText: true));
-        Assert.Contains(ZoneEdgeDisplay.CriticalColor, ZoneEdgeDisplay.Format(-1f, richText: true));
+        Assert.Equal(30f, PreviewEdgeDisplay.SafetyBufferMeters);
+        // Cab 5 m inside geometric edge → buffer makes HUD show OUT territory
+        Assert.Equal(-25f, PreviewEdgeDisplay.MetersRemaining(95f, 100f));
+    }
+
+    [Fact]
+    public void Format_preview_in_out_and_colors()
+    {
+        Assert.Equal("— Preview", PreviewEdgeDisplay.Format(null));
+        Assert.Equal("Preview OUT", PreviewEdgeDisplay.Format(-1f));
+        Assert.Equal("Preview 450m", PreviewEdgeDisplay.Format(450.4f));
+        Assert.Contains(PreviewEdgeDisplay.WarningColor, PreviewEdgeDisplay.Format(100f, richText: true));
+        Assert.Contains(PreviewEdgeDisplay.CriticalColor, PreviewEdgeDisplay.Format(10f, richText: true));
+        Assert.Contains(PreviewEdgeDisplay.CriticalColor, PreviewEdgeDisplay.Format(-1f, richText: true));
     }
 }
 
 public class ActiveJobHudLineTests
 {
     [Fact]
-    public void Format_joins_chips()
+    public void Format_taken_job_is_job_and_bonus_only()
     {
         Assert.Equal(
-            "Job SM-FH-12  |  Bonus 14:32  |  Zone 820m",
-            ActiveJobHudLine.Format("Job SM-FH-12", "Bonus 14:32", "Zone 820m"));
+            "Job SM-FH-12  |  Bonus 14:32",
+            ActiveJobHudLine.Format("Job SM-FH-12", "Bonus 14:32"));
+    }
+
+    [Fact]
+    public void Format_preview_only_bar()
+    {
+        Assert.Equal("Preview 180m", ActiveJobHudLine.FormatPreview("Preview 180m"));
+    }
+
+    [Fact]
+    public void FormatCancelled_red_when_rich()
+    {
+        Assert.Equal("Job SM-FH-12  |  Cancelled", ActiveJobHudLine.FormatCancelled("SM-FH-12"));
+        Assert.Contains(ActiveJobHudLine.CancelledColor, ActiveJobHudLine.FormatCancelled("SM-FH-12", richText: true));
+        Assert.Equal("Cancelled", ActiveJobHudLine.FormatCancelled(null));
     }
 
     [Fact]
@@ -78,6 +102,17 @@ public class ActiveJobHudLineTests
         Assert.Equal("Job SM-FH-12", ActiveJobHudLine.FormatJobId("SM-FH-12", 0));
         Assert.Equal("Job SM-FH-12 (+2)", ActiveJobHudLine.FormatJobId("SM-FH-12", 2));
     }
+
+    [Fact]
+    public void IsCancelledState_abandoned_or_expired_only()
+    {
+        Assert.True(ActiveJobHudLine.IsCancelledState("Abandoned"));
+        Assert.True(ActiveJobHudLine.IsCancelledState("Expired"));
+        Assert.False(ActiveJobHudLine.IsCancelledState("InProgress"));
+        Assert.False(ActiveJobHudLine.IsCancelledState("Completed"));
+        Assert.False(ActiveJobHudLine.IsCancelledState("Failed"));
+        Assert.False(ActiveJobHudLine.IsCancelledState(null));
+    }
 }
 
 public class Tier2ActiveJobDebugTests
@@ -85,25 +120,30 @@ public class Tier2ActiveJobDebugTests
     [Fact]
     public void NextLogMessage_quiet_on_same_minute()
     {
-        var a = new ActiveJobDebugSnapshot(true, "SM-FH-12", "Bonus 14:32", "Zone 820m");
-        var b = new ActiveJobDebugSnapshot(true, "SM-FH-12", "Bonus 14:10", "Zone 820m");
+        var a = new ActiveJobDebugSnapshot(true, "SM-FH-12", "Bonus 14:32", null);
+        var b = new ActiveJobDebugSnapshot(true, "SM-FH-12", "Bonus 14:10", null);
         Assert.Null(Tier2ActiveJobDebug.NextLogMessage(a, b));
 
-        var c = new ActiveJobDebugSnapshot(true, "SM-FH-12", "Bonus 13:59", "Zone 820m");
+        var c = new ActiveJobDebugSnapshot(true, "SM-FH-12", "Bonus 13:59", null);
         Assert.Equal(
-            "T2 job change: Job SM-FH-12  |  Bonus 13:59  |  Zone 820m",
+            "T2 job change: Job SM-FH-12  |  Bonus 13:59",
             Tier2ActiveJobDebug.NextLogMessage(a, c));
     }
 
     [Fact]
-    public void NextLogMessage_appear_hide()
+    public void NextLogMessage_appear_hide_and_preview()
     {
         var hidden = new ActiveJobDebugSnapshot(false, null, null, null);
-        var shown = new ActiveJobDebugSnapshot(true, "A", "Bonus 1:00", "Zone 10m");
+        var shown = new ActiveJobDebugSnapshot(true, "A", "Bonus 1:00", null);
         Assert.Equal("T2 job init (hidden)", Tier2ActiveJobDebug.NextLogMessage(null, hidden));
         Assert.Equal(
-            "T2 job appear: Job A  |  Bonus 1:00  |  Zone 10m",
+            "T2 job appear: Job A  |  Bonus 1:00",
             Tier2ActiveJobDebug.NextLogMessage(hidden, shown));
         Assert.Equal("T2 job hide", Tier2ActiveJobDebug.NextLogMessage(shown, hidden));
+
+        var preview = new ActiveJobDebugSnapshot(true, null, null, "Preview 10m");
+        Assert.Equal(
+            "T2 job appear: Preview 10m",
+            Tier2ActiveJobDebug.NextLogMessage(hidden, preview));
     }
 }

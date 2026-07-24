@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using DV.InventorySystem;
 using DV.Logic.Job;
 using DV.Signs;
 using DV.ThingTypes;
@@ -347,37 +348,76 @@ internal static class TelemetryReader
     }
 
     /// <summary>
-    /// Active Job HUD line (4.8), or null when no taken jobs (bar omitted).
+    /// Active Job HUD (4.8 / Bundle D):
+    /// taken = Job+Bonus only; Cancelled flash; else Preview edge (pre-validate prep).
+    /// Null when nothing to show.
     /// </summary>
     public static string? CurrentActiveJobHudLineOrNull()
     {
-        if (!TryGetPrimaryActiveJob(out var job, out var extraCount) || job == null)
+        EnsureJobLifecycleHooks();
+
+        if (TryConsumeCancelledFlash(out var cancelledId))
         {
-            return null;
+            return ActiveJobHudLine.FormatCancelled(cancelledId, richText: true);
         }
 
-        var remaining = BonusTimeDisplay.RemainingSeconds(job.TimeLimit, SafeTimeOnJob(job));
-        var zoneMeters = TryGetActiveJobZoneMetersRemaining(job);
-        return ActiveJobHudLine.Format(
-            ActiveJobHudLine.FormatJobId(job.ID, extraCount),
-            BonusTimeDisplay.Format(remaining, richText: true),
-            ZoneEdgeDisplay.Format(zoneMeters, richText: true));
+        if (TryGetPrimaryActiveJob(out var job, out var extraCount) && job != null)
+        {
+            if (ActiveJobHudLine.IsCancelledState(job.State.ToString()))
+            {
+                NoteCancelled(job.ID);
+                return ActiveJobHudLine.FormatCancelled(job.ID, richText: true);
+            }
+
+            var remaining = BonusTimeDisplay.RemainingSeconds(job.TimeLimit, SafeTimeOnJob(job));
+            return ActiveJobHudLine.Format(
+                ActiveJobHudLine.FormatJobId(job.ID, extraCount),
+                BonusTimeDisplay.Format(remaining, richText: true));
+        }
+
+        if (TryGetPreviewEdgeMetersRemaining(out var previewMeters))
+        {
+            return ActiveJobHudLine.FormatPreview(PreviewEdgeDisplay.Format(previewMeters, richText: true));
+        }
+
+        return null;
     }
 
     internal static ActiveJobDebugSnapshot CurrentActiveJobDebugSnapshot()
     {
-        if (!TryGetPrimaryActiveJob(out var job, out _) || job == null)
+        EnsureJobLifecycleHooks();
+
+        if (TryConsumeCancelledFlash(out var cancelledId))
         {
-            return new ActiveJobDebugSnapshot(false, null, null, null);
+            return new ActiveJobDebugSnapshot(true, cancelledId, "Cancelled", null);
         }
 
-        var remaining = BonusTimeDisplay.RemainingSeconds(job.TimeLimit, SafeTimeOnJob(job));
-        var zoneMeters = TryGetActiveJobZoneMetersRemaining(job);
-        return new ActiveJobDebugSnapshot(
-            true,
-            job.ID,
-            BonusTimeDisplay.Format(remaining, richText: false),
-            ZoneEdgeDisplay.Format(zoneMeters, richText: false));
+        if (TryGetPrimaryActiveJob(out var job, out _) && job != null)
+        {
+            if (ActiveJobHudLine.IsCancelledState(job.State.ToString()))
+            {
+                NoteCancelled(job.ID);
+                return new ActiveJobDebugSnapshot(true, job.ID, "Cancelled", null);
+            }
+
+            var remaining = BonusTimeDisplay.RemainingSeconds(job.TimeLimit, SafeTimeOnJob(job));
+            return new ActiveJobDebugSnapshot(
+                true,
+                job.ID,
+                BonusTimeDisplay.Format(remaining, richText: false),
+                null);
+        }
+
+        if (TryGetPreviewEdgeMetersRemaining(out var previewMeters))
+        {
+            return new ActiveJobDebugSnapshot(
+                true,
+                null,
+                null,
+                PreviewEdgeDisplay.Format(previewMeters, richText: false));
+        }
+
+        return new ActiveJobDebugSnapshot(false, null, null, null);
     }
 
     public static bool TrySetParkMarkAtPlayer()
@@ -1573,36 +1613,236 @@ internal static class TelemetryReader
         }
     }
 
-    /// <summary>
-    /// Meters remaining to the job-keep (destroy) zone edge for the job's origin yard,
-    /// else the station the player is currently inside.
-    /// </summary>
-    private static float? TryGetActiveJobZoneMetersRemaining(Job job)
+    private const float CancelledFlashSeconds = 8f;
+    private static float _cancelledUntil = -1f;
+    private static string? _cancelledJobId;
+    private static Job? _lifecycleHookJob;
+
+    private static void EnsureJobLifecycleHooks()
     {
         try
         {
-            if (!TryResolveJobKeepStation(job, out var station) || station == null)
+            Job? target = null;
+            if (TryGetPrimaryActiveJob(out var job, out _) && job != null)
             {
-                return null;
+                target = job;
             }
 
-            var range = station.GetComponent<StationJobGenerationRange>();
-            if (range == null)
+            if (ReferenceEquals(_lifecycleHookJob, target))
             {
-                return null;
+                return;
             }
 
-            var radius = ZoneEdgeDisplay.RadiusFromSqr(range.destroyGeneratedJobsSqrDistanceAnyJobTaken);
-            var playerDist = ZoneEdgeDisplay.DistanceFromSqr(range.PlayerSqrDistanceFromStationCenter);
-            return ZoneEdgeDisplay.MetersRemaining(playerDist, radius);
+            UnhookJobLifecycle();
+            if (target == null)
+            {
+                return;
+            }
+
+            target.JobAbandoned += OnJobCancelled;
+            target.JobExpired += OnJobCancelled;
+            target.JobCompleted += OnJobCompleted;
+            _lifecycleHookJob = target;
         }
         catch
         {
-            return null;
+            // fail closed — Cancelled flash optional
         }
     }
 
-    private static bool TryResolveJobKeepStation(Job job, out StationController? station)
+    private static void UnhookJobLifecycle()
+    {
+        if (_lifecycleHookJob == null)
+        {
+            return;
+        }
+
+        try
+        {
+            _lifecycleHookJob.JobAbandoned -= OnJobCancelled;
+            _lifecycleHookJob.JobExpired -= OnJobCancelled;
+            _lifecycleHookJob.JobCompleted -= OnJobCompleted;
+        }
+        catch
+        {
+            // ignore
+        }
+
+        _lifecycleHookJob = null;
+    }
+
+    private static void OnJobCancelled(Job job) =>
+        NoteCancelled(job != null ? job.ID : null);
+
+    private static void OnJobCompleted(Job _)
+    {
+        _cancelledUntil = -1f;
+        _cancelledJobId = null;
+    }
+
+    private static void NoteCancelled(string? jobId)
+    {
+        _cancelledJobId = jobId;
+        _cancelledUntil = Time.unscaledTime + CancelledFlashSeconds;
+    }
+
+    private static bool TryConsumeCancelledFlash(out string? jobId)
+    {
+        jobId = null;
+        if (_cancelledUntil < 0f || Time.unscaledTime > _cancelledUntil)
+        {
+            _cancelledUntil = -1f;
+            _cancelledJobId = null;
+            return false;
+        }
+
+        // Prefer live taken job over cancelled flash.
+        if (TryGetPrimaryActiveJob(out var live, out _) && live != null
+            && !ActiveJobHudLine.IsCancelledState(live.State.ToString()))
+        {
+            _cancelledUntil = -1f;
+            _cancelledJobId = null;
+            return false;
+        }
+
+        jobId = _cancelledJobId;
+        return true;
+    }
+
+    /// <summary>
+    /// Bundle D primary story: meters to <c>destroyGeneratedJobsSqrDistanceRegular</c>
+    /// while holding any job paperwork in inventory (overview and/or booklet — multi-job prep).
+    /// Gate: currentJobs empty + inventory has ≥1 job item. Does not use board availableJobs alone
+    /// (Preview only when you have tickets on you). Station = most urgent origin among held jobs.
+    /// </summary>
+    private static bool TryGetPreviewEdgeMetersRemaining(out float? metersRemaining)
+    {
+        metersRemaining = null;
+        try
+        {
+            var current = JobsManager.Instance?.currentJobs;
+            if (current != null && current.Count > 0)
+            {
+                return false;
+            }
+
+            if (!TryGetJobsFromPlayerInventory(out var heldJobs) || heldJobs.Count == 0)
+            {
+                return false;
+            }
+
+            float? best = null;
+            for (var i = 0; i < heldJobs.Count; i++)
+            {
+                if (!TryResolvePreviewStationForJob(heldJobs[i], out var station) || station == null)
+                {
+                    continue;
+                }
+
+                var range = station.GetComponent<StationJobGenerationRange>();
+                if (range == null)
+                {
+                    continue;
+                }
+
+                var radius = PreviewEdgeDisplay.RadiusFromSqr(range.destroyGeneratedJobsSqrDistanceRegular);
+                var playerDist = PreviewEdgeDisplay.DistanceFromSqr(range.PlayerSqrDistanceFromStationCenter);
+                var remaining = PreviewEdgeDisplay.MetersRemaining(playerDist, radius);
+                if (remaining is null)
+                {
+                    continue;
+                }
+
+                // Most urgent wipe among multi-job inventory.
+                if (best is null || remaining.Value < best.Value)
+                {
+                    best = remaining;
+                }
+            }
+
+            metersRemaining = best;
+            return metersRemaining != null;
+        }
+        catch
+        {
+            metersRemaining = null;
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Any <see cref="JobOverview"/> or <see cref="JobBooklet"/> in backpack/hotbar/hands
+    /// (including dropped-but-still-tracked slots when <c>includingDropped</c> is true).
+    /// </summary>
+    private static bool TryGetJobsFromPlayerInventory(out List<Job> jobs)
+    {
+        var found = new List<Job>();
+        jobs = found;
+        try
+        {
+            var inv = Inventory.Instance;
+            if (inv == null)
+            {
+                return false;
+            }
+
+            var seen = new HashSet<Job>();
+            void Consider(GameObject? go)
+            {
+                if (go == null)
+                {
+                    return;
+                }
+
+                Job? job = null;
+                var overview = go.GetComponent<JobOverview>();
+                if (overview != null)
+                {
+                    job = overview.job;
+                }
+                else
+                {
+                    var booklet = go.GetComponent<JobBooklet>();
+                    if (booklet != null)
+                    {
+                        job = booklet.job;
+                    }
+                }
+
+                if (job == null || !seen.Add(job))
+                {
+                    return;
+                }
+
+                found.Add(job);
+            }
+
+            var items = inv.GetItemsArray(includingDropped: true);
+            if (items != null)
+            {
+                for (var i = 0; i < items.Length; i++)
+                {
+                    Consider(items[i]);
+                }
+            }
+
+            // Hands / equip slots (multi-job prep often holds a ticket).
+            var handCap = inv.HandCapacity;
+            for (var h = 0; h < handCap; h++)
+            {
+                Consider(inv.GetEquippedItemAtSlot(h));
+            }
+
+            return found.Count > 0;
+        }
+        catch
+        {
+            jobs = new List<Job>();
+            return false;
+        }
+    }
+
+    private static bool TryResolvePreviewStationForJob(Job job, out StationController? station)
     {
         station = null;
         try
@@ -1611,13 +1851,62 @@ internal static class TelemetryReader
             if (!string.IsNullOrWhiteSpace(originYard))
             {
                 station = StationController.GetStationByYardID(originYard);
-                if (station != null && station.StationInfoValid)
+                if (station != null && station.StationInfoValid
+                    && station.GetComponent<StationJobGenerationRange>() != null)
                 {
                     return true;
                 }
             }
 
-            return TryGetStationControllerInPlayerZone(out station) && station != null;
+            // Fallback: nearest station with a generation-range component (no gen-zone gate).
+            return TryGetNearestStationWithJobRange(out station);
+        }
+        catch
+        {
+            station = null;
+            return false;
+        }
+    }
+
+    private static bool TryGetNearestStationWithJobRange(out StationController? station)
+    {
+        station = null;
+        try
+        {
+            var stations = StationController.allStations;
+            if (stations == null || stations.Count == 0)
+            {
+                return false;
+            }
+
+            StationController? best = null;
+            var bestSqr = float.MaxValue;
+            for (var i = 0; i < stations.Count; i++)
+            {
+                var candidate = stations[i];
+                if (candidate == null || !candidate.StationInfoValid)
+                {
+                    continue;
+                }
+
+                var range = candidate.GetComponent<StationJobGenerationRange>();
+                if (range == null)
+                {
+                    continue;
+                }
+
+                var sqr = range.PlayerSqrDistanceFromStationCenter;
+                if (sqr >= bestSqr)
+                {
+                    continue;
+                }
+
+                bestSqr = sqr;
+                best = candidate;
+            }
+
+            station = best;
+            return best != null;
         }
         catch
         {

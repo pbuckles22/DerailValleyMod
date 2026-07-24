@@ -109,7 +109,7 @@ public sealed class MonitorHudDriver : MonoBehaviour
     private bool _lastActiveJobVisible;
     private string? _lastActiveJobId;
     private string? _lastActiveJobBonus;
-    private string? _lastActiveJobZone;
+    private string? _lastActiveJobPreview;
 
     private void OnDisable()
     {
@@ -316,14 +316,14 @@ public sealed class MonitorHudDriver : MonoBehaviour
                 _lastActiveJobVisible,
                 _lastActiveJobId,
                 _lastActiveJobBonus,
-                _lastActiveJobZone);
+                _lastActiveJobPreview);
         }
 
         var line = Tier2ActiveJobDebug.NextLogMessage(previous, snap);
         _lastActiveJobVisible = snap.Visible;
         _lastActiveJobId = snap.JobId;
         _lastActiveJobBonus = snap.BonusClock;
-        _lastActiveJobZone = snap.ZoneFragment;
+        _lastActiveJobPreview = snap.PreviewFragment;
         _hasActiveJobDebug = true;
         if (line != null)
         {

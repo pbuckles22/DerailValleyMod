@@ -1,4 +1,4 @@
-# UX / smoke feedback — Epic 4 AR + HUD (v0.4.29)
+image.png# UX / smoke feedback — Epic 4 AR + HUD (v0.4.29)
 
 **Recorded:** 2026-07-23  
 **Build tested:** `v0.4.29`  
@@ -30,7 +30,7 @@ Screenshots live in [`ux-smoke-2026-07-23/`](ux-smoke-2026-07-23/).
 | 14 | “At station / here” proximity | **PASS** — Bundle C v0.4.48 (same gate as house hide) |
 | 15 | No job bar when no jobs | **PASS** |
 | 16 | Job bar on take | **PASS** |
-| 17 | Zone meters + cancelled / preview-prep | **Needs UX fix** — see Bundle D (remove Zone on taken; Preview edge for pre-validate) |
+| 17 | Zone meters + cancelled / preview-prep | **PASS** — Bundle D @ **v0.4.52** (Preview inventory-gated; colors/OUT/wipe; taken Job+Bonus). Follow-up: license warn on pickup. |
 | 18 | Complete delivery / clear job bar | **DEFER** |
 | 19 | No `Next:` when fluids OK | **PASS** |
 | 20–21 | Fluids-low Next station | **DEFER** (debug fluids later) |
@@ -128,20 +128,14 @@ Screenshots live in [`ux-smoke-2026-07-23/`](ux-smoke-2026-07-23/).
 
 ---
 
-### Bundle D — Active job truth + preview-prep edge  
-**Stories:** 4.8 · smoke #17  
+### Bundle D — Preview-prep edge (primary) + taken bar cleanup  
+**Stories:** 4.8 · smoke #17 · **PASS** **v0.4.52**
 
-**Backend (verified):** leaving destroy zone → `ExpireAllAvailableJobsInStation` on **`availableJobs` only**. Taken jobs cancel via abandon/trash booklet / Comms Radio delete / car fell-through-world — **not** by distance.
+**Shipped:** inventory-gated `Preview Nm` (Regular − 30 m buffer); colors/OUT; taken = Job+Bonus only; Cancelled on abandon. Game wipe distance unchanged.
 
-**Player need:** bonus-prep workflow = shunt/stage cars **before** validator so the bonus clock starts late. That leaves a live preview at risk of the **tight Regular** destroy edge. HUD must warn for that; must **not** imply a taken job dies at ~1.7 km.
+**Follow-up (new story, not D):** when picking up / holding an overview the player **cannot** validate (missing licenses), warn early — Preview alone does not mean “you can take this job.”
 
-**Do (one ship):**
-1. **Taken job bar:** `Job … · Bonus …` only — **remove** Zone/Keep meters from validated/taken jobs (they lie).
-2. **Cancelled:** when taken job state flips Abandoned/Expired (API), flash bar **red** + **`Cancelled`** (do not invent Cancelled from walking past AnyJobTaken).
-3. **Preview / prep danger (the real early-kill):** while in a station zone with **available** (unvalidated) jobs and **no** taken job — show meters remaining to `destroyGeneratedJobsSqrDistanceRegular`, labeled clearly (e.g. **`Preview 180m`** / **`Avail`**), warn colors near the edge, **`OUT`** when past it. That matches prep-before-validate.
-4. Optional same ship: if overviews are detectable in inventory, prefer gating the Preview chip on “holding a preview” rather than “any availableJobs”; otherwise availableJobs + no taken is the fail-closed proxy.
-
-**Defer:** full delivery smoke (#18).
+**Defer:** delivery smoke (#18).
 
 ---
 
@@ -174,7 +168,7 @@ Each bundle = own version bump + deploy + short smoke; then commit after PASS.
 
 **C done when:** standing at Station Office door / inside lobby shows `here` (or hidden house), not 16 m. **PASS** **v0.4.48**.
 
-**D done when:** taken job bar has Job + Bonus only (no ~1700 m Zone); Abandoned/Expired → red Cancelled; while prepping unvalidated jobs, Preview/Avail meters track the **tight** Regular edge (not AnyJobTaken).
+**D done when:** while prepping unvalidated jobs, `Preview` tracks **Regular** edge (warn / OUT); taken bar is Job + Bonus only (no Zone); abandon → red Cancelled. **PASS** **v0.4.52**.
 
 ---
 
@@ -182,5 +176,5 @@ Each bundle = own version bump + deploy + short smoke; then commit after PASS.
 
 - Sticky row Y = bottom of last visible HUD bar + gap (reuse `MonitorHudDriver` stack end).
 - Behind-camera: prefer camera-forward rejection + **atan2** direction in view plane → edge point; don’t trust naive `Screen.width - x` alone on Unity `WorldToScreenPoint` behind hits.
-- Bundle D APIs: `StationJobGenerationRange` (Regular vs AnyJobTaken), `Station.availableJobs` / `takenJobs`, `Job` Abandoned/Expired events — not “rename Zone.”
+- Bundle D APIs: `currentJobs` empty + `logicStation.availableJobs`; `destroyGeneratedJobsSqrDistanceRegular` + `PlayerSqrDistanceFromStationCenter`; taken = no distance chip; `Job` Abandoned/Expired → Cancelled.
 - Hide rules: `PlayerManager.Car == LastLoco` (or seated in loco) → no loco marker; office radius → no house marker.

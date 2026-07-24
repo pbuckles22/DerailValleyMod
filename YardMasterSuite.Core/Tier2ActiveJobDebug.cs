@@ -1,22 +1,23 @@
 namespace YardMasterSuite.Core;
 
 /// <summary>
-/// Discrete Player.log lines for Tier 2 Active Job HUD (4.8).
+/// Discrete Player.log lines for Tier 2 Active Job HUD (4.8 / Bundle D).
 /// </summary>
 public readonly struct ActiveJobDebugSnapshot
 {
-    public ActiveJobDebugSnapshot(bool visible, string? jobId, string? bonusClock, string? zoneFragment)
+    public ActiveJobDebugSnapshot(bool visible, string? jobId, string? bonusClock, string? previewFragment)
     {
         Visible = visible;
         JobId = jobId;
         BonusClock = bonusClock;
-        ZoneFragment = zoneFragment;
+        PreviewFragment = previewFragment;
     }
 
     public bool Visible { get; }
     public string? JobId { get; }
     public string? BonusClock { get; }
-    public string? ZoneFragment { get; }
+    /// <summary>Preview edge chip, or null when taken job / cancelled / hidden.</summary>
+    public string? PreviewFragment { get; }
 
     public string FormatFragment()
     {
@@ -25,10 +26,19 @@ public readonly struct ActiveJobDebugSnapshot
             return "— JobHud";
         }
 
+        if (!string.IsNullOrEmpty(PreviewFragment) && string.IsNullOrEmpty(JobId) && string.IsNullOrEmpty(BonusClock))
+        {
+            return PreviewFragment!;
+        }
+
+        if (BonusClock == "Cancelled" || BonusClock?.Contains("Cancelled") == true)
+        {
+            return ActiveJobHudLine.FormatCancelled(JobId);
+        }
+
         return ActiveJobHudLine.Format(
             ActiveJobHudLine.FormatJobId(JobId, 0),
-            BonusClock ?? "— Bonus",
-            ZoneFragment ?? "— Zone");
+            BonusClock ?? "— Bonus");
     }
 }
 
@@ -59,13 +69,13 @@ public static class Tier2ActiveJobDebug
         if (current.Visible
             && (prior.JobId != current.JobId
                 || prior.BonusClock != current.BonusClock
-                || prior.ZoneFragment != current.ZoneFragment))
+                || prior.PreviewFragment != current.PreviewFragment))
         {
-            // Bonus clock ticks often — only log when minute bucket or zone/job changes.
+            // Bonus clock ticks often — only log when minute bucket or preview/job changes.
             var priorBucket = MinuteBucket(prior.BonusClock);
             var currentBucket = MinuteBucket(current.BonusClock);
             if (prior.JobId == current.JobId
-                && prior.ZoneFragment == current.ZoneFragment
+                && prior.PreviewFragment == current.PreviewFragment
                 && priorBucket == currentBucket)
             {
                 return null;

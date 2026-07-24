@@ -100,7 +100,7 @@ Look-at wins; standing fallback when crosshair is not on a car. Hidden when no t
 
 **4.6 notes:** In job-generation zone — always-on `Station SM NE 84m` (or `here`) using the **station office** transform (not yard center). **Bundle B.2:** no map coords on the chip. Omit outside zones.
 
-**4.8 notes:** Taken jobs — centered bar `Job ID · Bonus m:ss` only (no Zone meters; destroy radius does not cancel taken jobs). Abandoned/Expired → red `Cancelled`. Prep-before-validate — when available jobs exist and none taken, optional `Preview Nm` to `destroyGeneratedJobsSqrDistanceRegular` (warn near edge / `OUT`). Details: [UX_SMOKE_FEEDBACK_2026-07-23.md](UX_SMOKE_FEEDBACK_2026-07-23.md) Bundle D.
+**4.8 notes:** **Primary:** prep-before-validate — `currentJobs` empty + `availableJobs` → `Preview Nm` to `destroyGeneratedJobsSqrDistanceRegular` (warn / `OUT`). Taken jobs — `Job ID · Bonus` only (no Zone; distance does not cancel). Abandoned/Expired → red `Cancelled`. Details: [UX_SMOKE_FEEDBACK_2026-07-23.md](UX_SMOKE_FEEDBACK_2026-07-23.md) Bundle D.
 
 **4.9 notes:** AR screen markers with PNG icons (loco / house / pin) under `Mods/.../Icons/`; tint color secondary. Edge-clamped when behind; caption = meters only. `T2 ar`.
 

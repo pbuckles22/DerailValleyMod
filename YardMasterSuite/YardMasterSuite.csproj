@@ -13,6 +13,7 @@
     <Reference Include="Assembly-CSharp" />
     <Reference Include="BezierCurves" />
     <Reference Include="DV.BrakeSystem" />
+    <Reference Include="DV.Inventory" />
     <Reference Include="DV.RailTrack" />
     <Reference Include="DV.SignPlacer" />
     <Reference Include="DV.Simulation" />

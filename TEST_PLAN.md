@@ -296,17 +296,67 @@ Always-on: in job-generation zone show `Station {YardID} {bearing} {m}m` (or `he
 - [x] Walk to office — house icon hides **and** chip flips to `Station … here` at the same moment (v0.4.48)
 - [ ] `T2 station` on enter/leave / bearing change
 
-### 4.8 Active Job HUD + preview-prep edge — `T2 job` — retarget after Bundle D
+### 4.8 Active Job HUD + preview-prep edge — `T2 job` — Bundle **D** v0.4.52 · pending B re-smoke
 
-Taken: `Job … · Bonus …` only. Preview prep: `Preview …m` to Regular destroy edge when available jobs and none taken. Cancelled on Abandoned/Expired.
+**Build:** UMM **Yard Master Suite 0.4.52**.  
+**Primary story (B):** warn while shunting with job paperwork **in inventory** (any overview/booklet — multi-job OK).  
+**Colors:** Preview warn &lt; **200 m** (yellow); critical / OUT &lt; **50 m** (red). Cancelled flash ~**8 s**.  
+**API:** `currentJobs` empty + inventory has ≥1 `JobOverview`/`JobBooklet` → player vs that job’s origin Regular destroy (**not** generation zone; **not** board-only). HUD meters include **−30 m** safety buffer. Game wipe distance **unchanged**.  
+**B3 root cause (0.4.50):** Preview used gen-zone → vanished ~400 m early. Fixed 0.4.51+.  
+**0.4.52:** Preview only while holding job item(s); empty hands/board alone → no Preview.
 
-**Sign-off**
+#### Setup
 
-- [ ] No taken / no preview risk — job bar absent (or Preview omitted)
-- [ ] Take a job — bar shows Job id + Bonus; **no** Zone/Keep meters
-- [ ] Abandon / expire taken job — bar shows red **Cancelled**
-- [ ] Hold/stage unvalidated jobs (no taken) — Preview meters track tight Regular edge; near edge warn; past → `OUT`
-- [ ] `T2 job` on appear/hide / bonus minute / preview edge change
+1. Load world → Mod Manager **0.4.52 Active**.
+2. Enter station; **pick up** one or more job overviews into inventory/hands (**do not** validate yet).
+3. Confirm Preview shows; drop all job items → Preview **gone**.
+
+#### A — Quiet / fail-closed — **PASS** @ 0.4.49
+
+| Step | Action | Expect |
+|------|--------|--------|
+| A1 | Leave station zone, no taken job | No job bar / no Preview |
+| A2 | In zone, empty board, no taken | No job bar |
+
+#### B — Pre-validate prep (PRIMARY)
+
+Goal: assemble job-numbered cars (A, then B onto same loco) **before** validating, to save bonus clock. Crossing Regular edge wipes `availableJobs` / staged cars.
+
+| Step | Action | Expect |
+|------|--------|--------|
+| B1 | Hold ≥1 job overview (no validated job) | `Preview Nm` (~800 m at SM OK). Empty inventory → **no** Preview |
+| B2 | Hold several overviews; shunt deep in yard | Preview stays; meters comfortable |
+| B3 | Drive out past where Station chip vanishes | Preview **stays**; meters drop; &lt;200 m yellow; &lt;50 m red |
+| B4 | Cross wipe line (HUD has −30 m buffer) | `Preview OUT` (red); game wipe distance unchanged |
+| B5 | Step back with overview still in inventory | `Preview Nm` returns (not Cancelled) |
+| B6 | Validate / take | Preview → `Job … \| Bonus …` only (**no** Zone) |
+
+#### B0 — Taken bar regression (table stakes)
+
+| Step | Action | Expect |
+|------|--------|--------|
+| B0.1 | With taken job, drive far | Still Job + Bonus; **no** Zone; distance ≠ Cancelled |
+
+#### C — Cancelled — **PASS** @ 0.4.49
+
+| Step | Action | Expect |
+|------|--------|--------|
+| C1 | Trash / abandon taken booklet | Red `Job … \| Cancelled` ~8 s |
+
+#### Sign-off — Bundle D **PASS** @ v0.4.52 (player 2026-07-24)
+
+- [x] A — fail-closed (0.4.49)
+- [x] UMM **0.4.52** Active
+- [x] B1 / inventory — Preview with overview in hand (~639–768 m at SM)
+- [x] B1b — drop/stow all job items → Preview gone (player PASS)
+- [x] B3 — Preview stays past ~400 m; yellow/red/OUT through Regular edge
+- [x] B4b — wipe / EXPIRED after too far from origin (player + screenshot)
+- [x] B5 — reverse from red/OUT, return, validate OK (player PASS)
+- [x] B6 — after validate: `Job … | Bonus …` only (screenshot SM-FH-83)
+- [x] B0 — taken job drive: Job+Bonus, no Preview/Zone (screenshot)
+- [x] C — Cancelled (0.4.49)
+
+**Defer:** delivery clear (#18). **Follow-up (not Bundle D):** warn when held overview requires licenses the player lacks.
 
 ### 4.9 AR wayfinding markers — `T2 ar` — pending smoke v0.4.29
 
