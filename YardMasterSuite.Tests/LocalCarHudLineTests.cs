@@ -34,6 +34,32 @@ public class LocalCarHudLineTests
             "Pipe 1.0 bar  |  Handbrake 0  |  Couplers F+ R+  |  Car XX  |  Job SM-SU-46  |  Track C-06S  |  Cargo Steel Rails",
             freight);
 
+        var withMass = LocalCarHudLine.Format(
+            "Pipe 1.0 bar",
+            "Handbrake 0",
+            "Couplers F+ R+",
+            "Car XX",
+            "Job SM-FH-97",
+            "Track SM-B2O",
+            cargo: "Empty Cargo",
+            mass: "Mass 28 t");
+        Assert.Equal(
+            "Pipe 1.0 bar  |  Handbrake 0  |  Couplers F+ R+  |  Car XX  |  Job SM-FH-97  |  Track SM-B2O  |  Mass 28 t  |  Empty Cargo",
+            withMass);
+
+        var withConsist = LocalCarHudLine.Format(
+            "Pipe 1.0 bar",
+            "Handbrake 0",
+            "Couplers F+ R+",
+            "Car XX",
+            "Job SM-SU-07",
+            "Track SM-B3I",
+            cargo: "Empty Cargo",
+            mass: "Car 17 t  |  all cars 153 t");
+        Assert.Equal(
+            "Pipe 1.0 bar  |  Handbrake 0  |  Couplers F+ R+  |  Car XX  |  Job SM-SU-07  |  Track SM-B3I  |  Car 17 t  |  all cars 153 t  |  Empty Cargo",
+            withConsist);
+
         var loco = LocalCarHudLine.Format(
             "Pipe 5.0 bar",
             "Handbrake 0",

@@ -1,123 +1,106 @@
 using YardMasterSuite.Core;
+using Xunit;
 
 namespace YardMasterSuite.Tests;
 
-public class FluidDisplayTests
+public class FluidDebugOverrideTests
 {
-    [Theory]
-    [InlineData(null, null)]
-    [InlineData(0f, 0f)]
-    [InlineData(100f, 0f)]
-    [InlineData(null, 1000f)]
-    public void PercentFromAmount_unknown_when_inputs_invalid(float? amount, float? capacity)
+    public FluidDebugOverrideTests()
     {
-        Assert.Null(FluidDisplay.PercentFromAmount(amount, capacity));
+        FluidDebugOverride.Clear();
     }
 
     [Fact]
-    public void PercentFromAmount_is_amount_over_capacity()
+    public void Cycle_is_per_car_id()
     {
-        Assert.Equal(42f, FluidDisplay.PercentFromAmount(420f, 1000f));
-        Assert.Equal(100f, FluidDisplay.PercentFromAmount(1000f, 1000f));
-        Assert.Equal(0f, FluidDisplay.PercentFromAmount(0f, 1000f));
+        FluidDebugOverride.Cycle("loco-a");
+        Assert.Equal("fuel=100% oil=5%", FluidDebugOverride.StatusFragment("loco-a"));
+        Assert.Equal("off", FluidDebugOverride.StatusFragment("loco-b"));
+        Assert.Equal(72f, FluidDebugOverride.ApplyOil("loco-b", 72f));
+        Assert.Equal(5f, FluidDebugOverride.ApplyOil("loco-a", 72f));
     }
 
     [Fact]
-    public void PercentFromAmount_clamps_above_100()
+    public void Cycle_combined_presets_then_real()
     {
-        Assert.Equal(100f, FluidDisplay.PercentFromAmount(1200f, 1000f));
+        FluidDebugOverride.Cycle("x");
+        Assert.Equal(5f, FluidDebugOverride.ApplyOil("x", 72f));
+        Assert.Equal(100f, FluidDebugOverride.ApplyFuel("x", 72f));
+
+        FluidDebugOverride.Cycle("x");
+        Assert.Equal(100f, FluidDebugOverride.ApplyOil("x", 72f));
+        Assert.Equal(5f, FluidDebugOverride.ApplyFuel("x", 72f));
+
+        FluidDebugOverride.Cycle("x");
+        Assert.Equal(5f, FluidDebugOverride.ApplyFuel("x", 72f));
+        Assert.Equal(5f, FluidDebugOverride.ApplyOil("x", 72f));
+
+        FluidDebugOverride.Cycle("x");
+        Assert.Equal(100f, FluidDebugOverride.ApplyFuel("x", 72f));
+        Assert.Equal(100f, FluidDebugOverride.ApplyOil("x", 72f));
+
+        FluidDebugOverride.Cycle("x");
+        Assert.Equal("off", FluidDebugOverride.StatusFragment("x"));
+        Assert.Equal(72f, FluidDebugOverride.ApplyOil("x", 72f));
     }
 
     [Fact]
-    public void PercentFromNormalized_scales_0_1_to_percent()
+    public void Clear_restores_passthrough()
     {
-        Assert.Null(FluidDisplay.PercentFromNormalized(null));
-        Assert.Equal(0f, FluidDisplay.PercentFromNormalized(0f));
-        Assert.Equal(42f, FluidDisplay.PercentFromNormalized(0.42f));
-        Assert.Equal(100f, FluidDisplay.PercentFromNormalized(1.2f));
+        FluidDebugOverride.Cycle("x");
+        FluidDebugOverride.Clear();
+        Assert.Equal(71f, FluidDebugOverride.ApplyOil("x", 71f));
+        Assert.Equal("off", FluidDebugOverride.StatusFragment("x"));
+    }
+}
+
+public class LoadDebugOverrideTests
+{
+    public LoadDebugOverrideTests()
+    {
+        LoadDebugOverride.Clear();
     }
 
     [Fact]
-    public void Format_shows_placeholder_and_whole_percent()
+    public void Cycle_warn_then_critical_then_off_per_car()
     {
-        Assert.Equal("— Fuel", FluidDisplay.FormatFuel(null));
-        Assert.Equal("— Oil", FluidDisplay.FormatOil(null));
-        Assert.Equal("Fuel 0 %", FluidDisplay.FormatFuel(0f));
-        Assert.Equal("Oil 55 %", FluidDisplay.FormatOil(55.4f));
-        Assert.Equal("Fuel 67 %", FluidDisplay.FormatFuel(66.6f));
+        LoadDebugOverride.Cycle("a");
+        Assert.Equal(85f, LoadDebugOverride.Apply("a", 10f));
+        Assert.Equal(10f, LoadDebugOverride.Apply("b", 10f));
+
+        LoadDebugOverride.Cycle("a");
+        Assert.Equal(97f, LoadDebugOverride.Apply("a", 10f));
+
+        LoadDebugOverride.Cycle("a");
+        Assert.Equal("off", LoadDebugOverride.StatusFragment("a"));
+        Assert.Equal(10f, LoadDebugOverride.Apply("a", 10f));
+    }
+}
+
+public class CouplerDebugOverrideTests
+{
+    public CouplerDebugOverrideTests()
+    {
+        CouplerDebugOverride.Clear();
     }
 
     [Fact]
-    public void Format_plain_has_no_color_tags()
+    public void Cycle_front_rear_both_mu_then_off_per_car()
     {
-        Assert.Equal("Fuel 15 %", FluidDisplay.FormatFuel(15f));
-        Assert.Equal("Oil 10 %", FluidDisplay.FormatOil(10f));
-    }
+        CouplerDebugOverride.Cycle("c1");
+        Assert.Equal(CouplerLinkStatus.MuWarning, CouplerDebugOverride.ApplyFront("c1", CouplerLinkStatus.Open));
+        Assert.Equal(CouplerLinkStatus.Linked, CouplerDebugOverride.ApplyRear("c1", CouplerLinkStatus.Open));
+        Assert.Equal(CouplerLinkStatus.Open, CouplerDebugOverride.ApplyFront("c2", CouplerLinkStatus.Open));
 
-    [Fact]
-    public void FormatHud_yellow_when_either_fluid_below_20()
-    {
-        Assert.Equal("Fuel 20 %", FluidDisplay.FormatFuelHud(20f, 50f));
-        Assert.Equal("Oil 50 %", FluidDisplay.FormatOilHud(20f, 50f));
+        CouplerDebugOverride.Cycle("c1");
+        Assert.Equal(CouplerLinkStatus.Linked, CouplerDebugOverride.ApplyFront("c1", null));
+        Assert.Equal(CouplerLinkStatus.MuWarning, CouplerDebugOverride.ApplyRear("c1", null));
 
-        Assert.Equal(
-            $"<color={FluidDisplay.WarningColor}>Fuel 19 %</color>",
-            FluidDisplay.FormatFuelHud(19f, 50f));
-        Assert.Equal(
-            $"<color={FluidDisplay.WarningColor}>Oil 50 %</color>",
-            FluidDisplay.FormatOilHud(19f, 50f));
+        CouplerDebugOverride.Cycle("c1");
+        Assert.Equal(CouplerLinkStatus.MuWarning, CouplerDebugOverride.ApplyFront("c1", null));
+        Assert.Equal(CouplerLinkStatus.MuWarning, CouplerDebugOverride.ApplyRear("c1", null));
 
-        Assert.Equal(
-            $"<color={FluidDisplay.WarningColor}>Fuel 67 %</color>",
-            FluidDisplay.FormatFuelHud(67f, 10f));
-        Assert.Equal(
-            $"<color={FluidDisplay.WarningColor}>Oil 10 %</color>",
-            FluidDisplay.FormatOilHud(67f, 10f));
-    }
-
-    [Fact]
-    public void FormatHud_red_when_either_fluid_below_5()
-    {
-        Assert.Equal(
-            $"<color={FluidDisplay.WarningColor}>Fuel 5 %</color>",
-            FluidDisplay.FormatFuelHud(5f, 50f));
-        Assert.Equal(
-            $"<color={FluidDisplay.WarningColor}>Oil 50 %</color>",
-            FluidDisplay.FormatOilHud(5f, 50f));
-
-        Assert.Equal(
-            $"<color={FluidDisplay.CriticalColor}>Fuel 4 %</color>",
-            FluidDisplay.FormatFuelHud(4f, 50f));
-        Assert.Equal(
-            $"<color={FluidDisplay.CriticalColor}>Oil 50 %</color>",
-            FluidDisplay.FormatOilHud(4f, 50f));
-
-        Assert.Equal(
-            $"<color={FluidDisplay.CriticalColor}>Fuel 67 %</color>",
-            FluidDisplay.FormatFuelHud(67f, 3f));
-        Assert.Equal(
-            $"<color={FluidDisplay.CriticalColor}>Oil 3 %</color>",
-            FluidDisplay.FormatOilHud(67f, 3f));
-    }
-
-    [Fact]
-    public void FormatHud_placeholder_stays_plain_even_when_peer_low()
-    {
-        Assert.Equal("— Oil", FluidDisplay.FormatOilHud(10f, null));
-        Assert.Equal(
-            $"<color={FluidDisplay.WarningColor}>Fuel 10 %</color>",
-            FluidDisplay.FormatFuelHud(10f, null));
-    }
-
-    [Fact]
-    public void IsLow_and_IsCritical_use_whole_percent_bands()
-    {
-        Assert.False(FluidDisplay.IsLow(null));
-        Assert.False(FluidDisplay.IsCritical(null));
-        Assert.False(FluidDisplay.IsLow(20f));
-        Assert.True(FluidDisplay.IsLow(19.4f));
-        Assert.False(FluidDisplay.IsCritical(5f));
-        Assert.True(FluidDisplay.IsCritical(4.4f));
-        Assert.True(FluidDisplay.IsLow(4f));
+        CouplerDebugOverride.Cycle("c1");
+        Assert.Equal("off", CouplerDebugOverride.StatusFragment("c1"));
     }
 }

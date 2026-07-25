@@ -117,8 +117,8 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 |--|--|
 | **Project** | *Yard Master Suite* (UMM / Harmony / net48) |
 | **MVP** | **Epic 1** System Monitor HUD |
-| **Version (`main`)** | **0.4.53** *(license warn on held overview)* |
-| **Active branch** | `main` |
+| **Version (`main`)** | **0.4.53** — WIP branch **0.4.66** (Tier 2 debug hotkeys + turntable QOL; F7 = UnloadCargo/LoadCargo) |
+| **Active branch** | `feature/4-5-fluid-debug-inject` |
 
 **Shipped on `main`**
 
@@ -129,10 +129,12 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 
 **Next**
 
-- [ ] **4.5** / Bundle E leftovers (fluids Next station, Load yellow/red, etc.)
+- [ ] Confirm Tier 2 smoke for **F7** unload/load mass+visual @ **0.4.66** (other debug keys mostly PASS @ 0.4.65)
+- [ ] Then push/merge `feature/4-5-fluid-debug-inject` when ready (user held push)
+- [ ] Bundle E leftovers (Load yellow/red, MU, Empty Cargo)
 - [ ] **2.1** Three-Gate → **2.2** Thermal governor (after Epic 4 fix bundles settle)
-- [ ] Re-smoke Load yellow/red when practical
 - [ ] Known issue: A.4 house outdoor false-hide (~12–14 m) — see `TECH_DEBT.md`
+- Backlog: **3.1b** license-gated re-rail; session reset ~7AM hotkey
 
 **Merge-ready:** `dotnet test YardMasterSuite.sln` · `dotnet build YardMasterSuite.sln -c Release` · **deploy to Mods** via `package.ps1 -NoArchive` (required before Tier 2 smoke — see [.cursor/rules/deploy-before-smoke.mdc](.cursor/rules/deploy-before-smoke.mdc))
 

@@ -2,7 +2,7 @@
 
 Human-readable **snapshot**. Keep in sync with [AGENT_HANDOFF.md](../AGENT_HANDOFF.md) → *Current state* and checkbox truth in [PM_PLAN.md](../PM_PLAN.md).
 
-**Last updated:** 2026-07-24
+**Last updated:** 2026-07-25
 
 ---
 
@@ -16,6 +16,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 | **Journey** | Stage 1 — Apprentice (“don’t blow up”) |
 | **MVP** | Epic 1 System Monitor HUD |
 | **Version (`main`)** | **0.4.53** *(license warn on held overview)* |
+| **WIP branch** | `feature/4-5-fluid-debug-inject` @ **0.4.66** *(debug hotkeys + turntable QOL; not pushed)* |
 
 ---
 
@@ -23,7 +24,8 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 | Branch | Role |
 |--------|------|
-| **`main`** | Integration — license-warn @ 0.4.53; next Epic 4 leftovers (4.5 / Bundle E) |
+| **`main`** | Integration — license-warn @ 0.4.53 |
+| **`feature/4-5-fluid-debug-inject`** | Tier 2 debug inject + turntable QOL @ **0.4.66** — commit local; **no push/merge yet** |
 
 ---
 

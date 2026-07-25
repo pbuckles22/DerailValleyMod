@@ -15,7 +15,8 @@ public static class LocalCarHudLine
         string? job,
         string? track,
         string? cargo = null,
-        string? locoType = null)
+        string? locoType = null,
+        string? mass = null)
     {
         var parts = new List<string>
         {
@@ -29,6 +30,11 @@ public static class LocalCarHudLine
         if (!string.IsNullOrWhiteSpace(track))
         {
             parts.Add(track!.Trim());
+        }
+
+        if (!string.IsNullOrEmpty(mass))
+        {
+            parts.Add(mass!);
         }
 
         if (!string.IsNullOrEmpty(cargo))

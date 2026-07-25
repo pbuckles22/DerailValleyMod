@@ -16,6 +16,38 @@ public sealed class MonitorHudDriver : MonoBehaviour
     /// <summary>Home = set/update park mark; Shift+Home = clear. Session-only.</summary>
     private const KeyCode ParkMarkKey = KeyCode.Home;
 
+    /// <summary>Shift+F1 = toggle Tier 2 debug hotkeys (and bottom legend HUD).</summary>
+    private const KeyCode DebugToggleKey = KeyCode.F1;
+
+    /// <summary>F5 = cycle lighter: give → Lost&amp;Found → real (not F12 — opens console).</summary>
+    private const KeyCode LighterDebugKey = KeyCode.F5;
+
+    /// <summary>F6 = cycle Load% for the loco you are in (off → 85% → 97% → off).</summary>
+    private const KeyCode LoadDebugKey = KeyCode.F6;
+
+    /// <summary>F7 = look-at freight: unload (tare) ↔ full load.</summary>
+    private const KeyCode CargoCycleKey = KeyCode.F7;
+
+    /// <summary>F8 = cycle fluids for the loco you are in.</summary>
+    private const KeyCode FluidDebugKey = KeyCode.F8;
+
+    /// <summary>F9 = cycle coupler MU-yellow for the look-at / target car.</summary>
+    private const KeyCode CouplerDebugKey = KeyCode.F9;
+
+    /// <summary>F11 = toggle SH282 + MU licenses together.</summary>
+    private const KeyCode S282LicenseKey = KeyCode.F11;
+
+    /// <summary>Page Up/Down = QOL turntable (not debug-gated).</summary>
+    private const KeyCode TurntableCwKey = KeyCode.PageUp;
+    private const KeyCode TurntableCcwKey = KeyCode.PageDown;
+
+    private const float TurntableTapMaxSeconds = 0.22f;
+
+    private float _turntableCwDownAt = -1f;
+    private float _turntableCcwDownAt = -1f;
+    private bool _turntableCwDidHold;
+    private bool _turntableCcwDidHold;
+
     private const float RefreshSeconds = 0.1f;
 
     /// <summary>
@@ -29,6 +61,7 @@ public sealed class MonitorHudDriver : MonoBehaviour
     private string? _trainLabel;
     private string? _localLabel;
     private string? _jobLabel;
+    private string? _debugHotkeyLabel;
     private string _headingLabel = "— Heading";
     private string? _parkLabel;
     private string? _stationLabel;
@@ -37,10 +70,12 @@ public sealed class MonitorHudDriver : MonoBehaviour
     private GUIStyle? _localStyle;
     private GUIStyle? _jobStyle;
     private GUIStyle? _alwaysOnStyle;
+    private GUIStyle? _debugHotkeyStyle;
     private Texture2D? _trainTex;
     private Texture2D? _localTex;
     private Texture2D? _jobTex;
     private Texture2D? _alwaysOnTex;
+    private Texture2D? _debugHotkeyTex;
 
     private bool _hasConsistDebug;
     private bool _lastHasLoco;
@@ -57,6 +92,7 @@ public sealed class MonitorHudDriver : MonoBehaviour
     private string? _lastTrack;
     private string? _lastCargo;
     private string? _lastLocoType;
+    private string? _lastMass;
 
     private bool _hasLookAtDebug;
     private bool _lastLookAtVisible;
@@ -68,6 +104,7 @@ public sealed class MonitorHudDriver : MonoBehaviour
     private string? _lastLookAtTrack;
     private string? _lastLookAtCargo;
     private string? _lastLookAtLocoType;
+    private string? _lastLookAtMass;
 
     private bool _hasCouplerDebug;
     private bool _lastCouplerVisible;
@@ -101,10 +138,6 @@ public sealed class MonitorHudDriver : MonoBehaviour
     private string? _lastStationYardId;
     private string? _lastStationWalkPoint;
 
-    private bool _hasNextStationDebug;
-    private bool _lastNextStationVisible;
-    private string? _lastNextStationLabel;
-
     private bool _hasActiveJobDebug;
     private bool _lastActiveJobVisible;
     private string? _lastActiveJobId;
@@ -124,6 +157,7 @@ public sealed class MonitorHudDriver : MonoBehaviour
             _trainLabel = null;
             _localLabel = null;
             _jobLabel = null;
+            _debugHotkeyLabel = null;
             _parkLabel = null;
             _stationLabel = null;
             _alwaysOnLabel = "";
@@ -132,6 +166,18 @@ public sealed class MonitorHudDriver : MonoBehaviour
         }
 
         PollParkMarkHotkey();
+        PollDebugToggleHotkey();
+        // QOL: turntable always available in-world (Epic 4), not behind debug gate.
+        PollTurntableHotkeys();
+        if (DebugHotkeyGate.Enabled)
+        {
+            PollFluidDebugHotkeys();
+            PollCargoDebugHotkeys();
+            PollS282LicenseHotkey();
+            PollLighterDebugHotkey();
+            PollLoadDebugHotkey();
+            PollCouplerDebugHotkey();
+        }
 
         _elapsed += Time.unscaledDeltaTime;
         if (_elapsed < RefreshSeconds)
@@ -146,6 +192,7 @@ public sealed class MonitorHudDriver : MonoBehaviour
             _trainLabel = TelemetryReader.CurrentTrainHudLineOrNull();
             _localLabel = TelemetryReader.CurrentLocalCarHudLineOrNull();
             _jobLabel = TelemetryReader.CurrentActiveJobHudLineOrNull();
+            _debugHotkeyLabel = DebugHotkeyGate.Enabled ? DebugHotkeyHudLine.Format() : null;
             _headingLabel = TelemetryReader.CurrentHeadingLabel();
             _parkLabel = TelemetryReader.CurrentParkLabel();
             _stationLabel = TelemetryReader.CurrentStationWaypointLabel();
@@ -163,7 +210,6 @@ public sealed class MonitorHudDriver : MonoBehaviour
             EmitPositionDebugIfNeeded();
             EmitParkDebugIfNeeded();
             EmitStationWaypointDebugIfNeeded();
-            EmitNextStationDebugIfNeeded();
             EmitActiveJobDebugIfNeeded();
         }
         finally
@@ -186,6 +232,181 @@ public sealed class MonitorHudDriver : MonoBehaviour
         }
 
         TelemetryReader.TrySetParkMarkAtPlayer();
+    }
+
+    private void PollDebugToggleHotkey()
+    {
+        var shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+        if (!shift || !Input.GetKeyDown(DebugToggleKey))
+        {
+            return;
+        }
+
+        var on = DebugHotkeyGate.Toggle();
+        if (!on)
+        {
+            FluidDebugOverride.Clear();
+            LoadDebugOverride.Clear();
+            CouplerDebugOverride.Clear();
+            _debugHotkeyLabel = null;
+        }
+        else
+        {
+            _debugHotkeyLabel = DebugHotkeyHudLine.Format();
+        }
+
+        Main.Log($"T2 debug-hotkeys: {(on ? "on" : "off")}");
+    }
+
+    private void PollFluidDebugHotkeys()
+    {
+        var shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+        if (shift || !Input.GetKeyDown(FluidDebugKey))
+        {
+            return;
+        }
+
+        var loco = PlayerManager.Car;
+        if (loco == null || !loco.IsLoco || string.IsNullOrEmpty(loco.ID))
+        {
+            Main.Log("T2 fluid-debug: fail (sit in a loco)");
+            return;
+        }
+
+        FluidDebugOverride.Cycle(loco.ID);
+        Main.Log($"T2 fluid-debug [{loco.ID}]: {FluidDebugOverride.StatusFragment(loco.ID)}");
+    }
+
+    private void PollCouplerDebugHotkey()
+    {
+        var shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+        if (shift || !Input.GetKeyDown(CouplerDebugKey))
+        {
+            return;
+        }
+
+        var car = TelemetryReader.TryGetTargetCar();
+        if (car == null || string.IsNullOrEmpty(car.ID))
+        {
+            Main.Log("T2 coupler-debug: fail (look at / stand on a car)");
+            return;
+        }
+
+        CouplerDebugOverride.Cycle(car.ID);
+        Main.Log($"T2 coupler-debug [{car.ID}]: {CouplerDebugOverride.StatusFragment(car.ID)}");
+    }
+
+    private void PollCargoDebugHotkeys()
+    {
+        if (!Input.GetKeyDown(CargoCycleKey))
+        {
+            return;
+        }
+
+        var ok = TelemetryReader.TryDebugCycleTargetCargo(out var message);
+        Main.Log($"T2 cargo-debug cycle: {(ok ? "ok" : "fail")} ({message})");
+    }
+
+    private void PollS282LicenseHotkey()
+    {
+        if (!Input.GetKeyDown(S282LicenseKey))
+        {
+            return;
+        }
+
+        var ok = TelemetryReader.TryDebugToggleSteamAndMuLicenses(out var message);
+        Main.Log($"T2 license-debug SH282+MU: {(ok ? "ok" : "fail")} ({message})");
+    }
+
+    private void PollLighterDebugHotkey()
+    {
+        if (!Input.GetKeyDown(LighterDebugKey))
+        {
+            return;
+        }
+
+        var ok = TelemetryReader.TryDebugCycleLighter(out var message);
+        Main.Log($"T2 lighter-debug: {(ok ? "ok" : "fail")} ({message})");
+    }
+
+    private void PollLoadDebugHotkey()
+    {
+        if (!Input.GetKeyDown(LoadDebugKey))
+        {
+            return;
+        }
+
+        var loco = PlayerManager.Car;
+        if (loco == null || !loco.IsLoco || string.IsNullOrEmpty(loco.ID))
+        {
+            Main.Log("T2 load-debug: fail (sit in a loco)");
+            return;
+        }
+
+        LoadDebugOverride.Cycle(loco.ID);
+        Main.Log($"T2 load-debug [{loco.ID}]: {LoadDebugOverride.StatusFragment(loco.ID)}");
+    }
+
+    private void PollTurntableHotkeys()
+    {
+        PollTurntableAxis(TurntableCwKey, ref _turntableCwDownAt, ref _turntableCwDidHold, +1f);
+        PollTurntableAxis(TurntableCcwKey, ref _turntableCcwDownAt, ref _turntableCcwDidHold, -1f);
+
+        // Hold push is applied in FixedUpdate (bar/lever simulation).
+        if (!_turntableCwDidHold && !_turntableCcwDidHold)
+        {
+            TelemetryReader.ClearTurntableHoldPush();
+        }
+    }
+
+    private void FixedUpdate()
+    {
+        if (!HudWorldSession.IsActive(PlayerManager.PlayerTransform != null))
+        {
+            TelemetryReader.ClearTurntableHoldPush();
+            TelemetryReader.CancelTurntableSnapAssist();
+            return;
+        }
+
+        TelemetryReader.ApplyTurntableBarSimulation(Time.fixedDeltaTime, out var status);
+        if (!string.IsNullOrEmpty(status))
+        {
+            Main.Log($"T2 turntable: {status}");
+        }
+    }
+
+    private void PollTurntableAxis(KeyCode key, ref float downAt, ref bool didHold, float direction)
+    {
+        if (Input.GetKeyDown(key))
+        {
+            downAt = Time.unscaledTime;
+            didHold = false;
+            TelemetryReader.CancelTurntableSnapAssist();
+        }
+
+        if (Input.GetKey(key) && downAt >= 0f)
+        {
+            var held = Time.unscaledTime - downAt;
+            if (held > TurntableTapMaxSeconds)
+            {
+                didHold = true;
+                TelemetryReader.CancelTurntableSnapAssist();
+                TelemetryReader.SetTurntableHoldPush(direction);
+            }
+        }
+
+        if (Input.GetKeyUp(key) && downAt >= 0f)
+        {
+            TelemetryReader.ClearTurntableHoldPush();
+            if (!didHold)
+            {
+                var ok = TelemetryReader.TryBeginTurntableSnapAssist(out var message);
+                Main.Log($"T2 turntable tap: {(ok ? "ok" : "fail")} ({message})");
+            }
+
+            downAt = -1f;
+            didHold = false;
+        }
     }
 
     private void EmitSpeedLimitDebugIfNeeded()
@@ -287,25 +508,6 @@ public sealed class MonitorHudDriver : MonoBehaviour
         }
     }
 
-    private void EmitNextStationDebugIfNeeded()
-    {
-        var snap = TelemetryReader.CurrentNextStationDebugSnapshot();
-        NextStationDebugSnapshot? previous = null;
-        if (_hasNextStationDebug)
-        {
-            previous = new NextStationDebugSnapshot(_lastNextStationVisible, _lastNextStationLabel);
-        }
-
-        var line = Tier2NextStationDebug.NextLogMessage(previous, snap);
-        _lastNextStationVisible = snap.Visible;
-        _lastNextStationLabel = snap.Label;
-        _hasNextStationDebug = true;
-        if (line != null)
-        {
-            Main.Log(line);
-        }
-    }
-
     private void EmitActiveJobDebugIfNeeded()
     {
         var snap = TelemetryReader.CurrentActiveJobDebugSnapshot();
@@ -393,7 +595,8 @@ public sealed class MonitorHudDriver : MonoBehaviour
                 _lastJob,
                 _lastTrack,
                 _lastCargo,
-                _lastLocoType);
+                _lastLocoType,
+                _lastMass);
         }
 
         var line = Tier2LocalCarDebug.NextLogMessage(previous, snap);
@@ -406,6 +609,7 @@ public sealed class MonitorHudDriver : MonoBehaviour
         _lastTrack = snap.Track;
         _lastCargo = snap.Cargo;
         _lastLocoType = snap.LocoType;
+        _lastMass = snap.Mass;
         _hasLocalDebug = true;
         if (line != null)
         {
@@ -428,7 +632,8 @@ public sealed class MonitorHudDriver : MonoBehaviour
                 _lastLookAtJob,
                 _lastLookAtTrack,
                 _lastLookAtCargo,
-                _lastLookAtLocoType);
+                _lastLookAtLocoType,
+                _lastLookAtMass);
         }
 
         var line = Tier2LookAtDebug.NextLogMessage(previous, snap);
@@ -441,6 +646,7 @@ public sealed class MonitorHudDriver : MonoBehaviour
         _lastLookAtTrack = snap.Track;
         _lastLookAtCargo = snap.Cargo;
         _lastLookAtLocoType = snap.LocoType;
+        _lastLookAtMass = snap.Mass;
         _hasLookAtDebug = true;
         if (line != null)
         {
@@ -497,6 +703,12 @@ public sealed class MonitorHudDriver : MonoBehaviour
 
         y = DrawCenteredBar(_alwaysOnLabel, _alwaysOnStyle!, y);
         LastStackBottomGuiY = y;
+
+        if (_debugHotkeyLabel != null)
+        {
+            var bottomY = Screen.height - MonitorHudStackLayout.Pad - MonitorHudStackLayout.BarHeight;
+            DrawCenteredBar(_debugHotkeyLabel, _debugHotkeyStyle!, bottomY);
+        }
     }
 
     private float DrawCenteredBar(string label, GUIStyle style, float y)
@@ -546,7 +758,9 @@ public sealed class MonitorHudDriver : MonoBehaviour
             && _jobStyle != null
             && _jobStyle.normal.background != null
             && _alwaysOnStyle != null
-            && _alwaysOnStyle.normal.background != null)
+            && _alwaysOnStyle.normal.background != null
+            && _debugHotkeyStyle != null
+            && _debugHotkeyStyle.normal.background != null)
         {
             return;
         }
@@ -561,10 +775,12 @@ public sealed class MonitorHudDriver : MonoBehaviour
         _localTex = CreateTexture(BarBackground);
         _jobTex = CreateTexture(BarBackground);
         _alwaysOnTex = CreateTexture(BarBackground);
+        _debugHotkeyTex = CreateTexture(BarBackground);
         _trainStyle = CreateBarStyle(_trainTex);
         _localStyle = CreateBarStyle(_localTex);
         _jobStyle = CreateBarStyle(_jobTex);
         _alwaysOnStyle = CreateBarStyle(_alwaysOnTex);
+        _debugHotkeyStyle = CreateBarStyle(_debugHotkeyTex);
     }
 
     private void DestroyStyles()
@@ -573,10 +789,12 @@ public sealed class MonitorHudDriver : MonoBehaviour
         DestroyTexture(ref _localTex);
         DestroyTexture(ref _jobTex);
         DestroyTexture(ref _alwaysOnTex);
+        DestroyTexture(ref _debugHotkeyTex);
         _trainStyle = null;
         _localStyle = null;
         _jobStyle = null;
         _alwaysOnStyle = null;
+        _debugHotkeyStyle = null;
     }
 
     private static GUIStyle CreateBarStyle(Texture2D background)

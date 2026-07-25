@@ -31,10 +31,10 @@ Screenshots live in [`ux-smoke-2026-07-23/`](ux-smoke-2026-07-23/).
 | 15 | No job bar when no jobs | **PASS** |
 | 16 | Job bar on take | **PASS** |
 | 17 | Zone meters + cancelled / preview-prep | **PASS** — Bundle D @ **v0.4.52**; license warn @ **v0.4.53** (`No license: SH` etc.) |
-| 18 | Complete delivery / clear job bar | **DEFER** |
-| 19 | No `Next:` when fluids OK | **PASS** |
-| 20–21 | Fluids-low Next station | **DEFER** (debug fluids later) |
-| 22–24 | Load colors / MU / Empty Cargo | **DEFER** |
+| 18 | Complete delivery / clear job bar | **PASS** — job bar cleared after FF-FH-11 complete; Cancelled flash on trash abandon (SM-FH-29) |
+| 19 | No `Next:` when fluids OK | **PASS** — reconfirmed (Fuel/Oil ~72%/71%, no Next chip) |
+| 20–21 | Fluids-low Next station | **PASS then CUT** @ 0.4.54; cut verify **PASS** @ **0.4.55** (no `Next:` with F8/F9 / mainline) |
+| 22–24 | Load colors / MU / Empty Cargo | **#24 Empty Cargo PASS** @ 0.4.56; #22 Load / #23 MU still open |
 
 **Extra product asks (this session):** remove **`Pos`**; hide house when **inside station**; hide loco icon when **inside loco**; AR markers **sticky under HUD** (with optional on-object duplicate when in sight); **no Monitor HUD on launcher** (no `v… | — Heading` outside world session).
 
@@ -139,10 +139,10 @@ Screenshots live in [`ux-smoke-2026-07-23/`](ux-smoke-2026-07-23/).
 
 ---
 
-### Bundle E — Deferred (do not start until A–D settle)
-- Fluids-low **Next:** station (#20–21) — needs debug fluid inject or long play.
+### Bundle E — Deferred / cuts
+- ~~Fluids-low **Next:** station (#20–21)~~ **CUT** with **4.5** (nearest-yard chip rejected).
 - Load yellow/red (#22), MU coupler yellow (#23), Empty Cargo wording (#24).
-- Delivery clears job bar (#18).
+- ~~Delivery clears job bar (#18)~~ **PASS**.
 
 ---
 

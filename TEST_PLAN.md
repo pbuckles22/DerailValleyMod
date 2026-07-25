@@ -115,7 +115,7 @@ Look-at **wins** over standing. Locos append `Loco DE6`-style type. **4.1:** sph
 - [x] Stand on A, look at B — bar shows B; look at sky — A
 - [x] Point at loco — `Loco …`; freight omits
 - [x] Distant car ~80–250 m resolves *(PASS\*)*
-- [~] Freight `Cargo …` / `Empty Cargo` — load PASS; Empty Cargo smoke deferred (**4.2**)
+- [x] Freight `Cargo …` / `Empty Cargo` — load PASS; Empty Cargo **PASS** @ 0.4.56 (F6 dump)
 
 ---
 
@@ -274,16 +274,30 @@ Second bar includes `Track SM-O6I` on yard tracks. **Omit** the Track segment on
 - [x] Mainline / no yard ID — **no** Track segment (not `— Track`)
 - [ ] `T2 local-car` / `T2 look-at` fragments include Track only when present
 
-### 4.5 Next station (fluids) — `T2 next-station` — pending smoke v0.4.26
+### 4.5 Next station (fluids) — **CUT** v0.4.55 · cut smoke **PASS**
 
-When Fuel or Oil is yellow/red on a usable loco: optional `Next: … [N.N km]` on loco bar. Omit when fluids OK or start/dest station unknown.
+Former `Next: … [N km]` on loco bar when fluids low — **removed**. Smoke A1–6 **PASS** @ 0.4.54 then product cut. Cut verify @ **0.4.55** (player 2026-07-25): F8/F9 low fluids, mainline — **no** `Next:` chip.
 
-**Sign-off**
+**Fluid HUD debug inject (kept):** in-world, usable loco (debug gate on — **Shift+F1** toggles; bottom legend HUD when on):
+- **F8** — cycle **Fluids**: real → low oil / full fuel → low fuel / full oil → both low → both full → real
+- Player.log: `T2 fluid-debug: …`
 
-- [ ] Fluids OK — no Next chip
-- [ ] Fluids low while in a station zone (or on that yard’s track) — Next shows another station + km
-- [ ] On mainline with no resolvable start station — Next omitted (fail-closed)
-- [ ] `T2 next-station` on appear/change
+**Cargo / Load / Coupler / license / turntable / lighter debug (v0.4.64):** one key per concern (cycle). Look-at or stand on **freight** for F7:
+- **F6** — loco **Load %** HUD: off → **85%** yellow → **97%** red → off *(F10 remapped — Windows often eats F10)*
+  *(Load % is traction amps, not car Mass — sit in DE2/DE6.)*
+- **F7** — cargo look-at freight: **unload (tare) ↔ full load** (game UnloadCargo/LoadCargo events)
+- **F9** — coupler HUD for #23: off → front `F*` yellow → rear `R*` yellow → both → off
+- **F11** — grant **S282** (`SH282`) license
+- **F12** — lighter: **give → remove → real** (steam fire-up)
+- **PgUp / PgDn** — within turntable **SearchRadius + 15 m** (or look-at); hold = bar/lever rate; tap = assist if ≤2 m from lock
+- Player.log: `T2 cargo-debug …` / `T2 load-debug: …` / `T2 coupler-debug: …` / `T2 turntable …` / `T2 lighter-debug …`
+
+**Cut sign-off — PASS @ 0.4.55**
+
+- [x] UMM **0.4.55** Active
+- [x] F8 Oil 5% — no `Next:`
+- [x] F9 Fuel 5% — no `Next:`
+- [x] Mainline low fluid — no `Next:`
 
 ### 4.6 Station waypoint (foot) — `T2 station` — Bundle **C** **PASS** v0.4.48
 
@@ -356,7 +370,7 @@ Goal: assemble job-numbered cars (A, then B onto same loco) **before** validatin
 - [x] B0 — taken job drive: Job+Bonus, no Preview/Zone (screenshot)
 - [x] C — Cancelled (0.4.49)
 
-**Defer:** delivery clear (#18). **License warn:** v0.4.53 Tier 2 **PASS**.
+**Defer:** ~~delivery clear (#18)~~ **PASS** (player 2026-07-24). **License warn:** v0.4.53 Tier 2 **PASS**.
 
 ### 4.8b License warn on held overview — `T2 job` — v0.4.53 · **PASS**
 

@@ -81,6 +81,9 @@ public static class Main
     {
         DestroyHud();
         ParkMarkSession.Clear();
+        FluidDebugOverride.Clear();
+        LoadDebugOverride.Clear();
+        CouplerDebugOverride.Clear();
         _harmony?.UnpatchAll(modEntry.Info.Id);
         _harmony = null;
         _modEntry = null;

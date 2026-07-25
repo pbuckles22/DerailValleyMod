@@ -158,8 +158,11 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
   - [ ] **3.2 Comms Radio Overlay** — Auxiliary HUD panel with helper actions for consist ops / teleport (keeps tools off physical item clutter).
     > As a yard master, I want a Comms-style helper panel so teleport and yard tools stay one click away.
 
-  - [ ] **3.3 Manual switch / turntable remote** — Flip switches and turntables from the HUD / look-at so you don’t walk back and forth. *Stage 2.*
+  - [ ] **3.3 Manual switch / turntable remote** — Flip switches and turntables from the HUD / look-at so you don’t walk back and forth. *Stage 2.* *(Note: temporary **PgUp/PgDn** bar-sim for nearby turntable is Epic 4 QOL smoke aid — not a substitute for 3.3.)*
     > As a shunter, I want to flip switches and turntables from my HUD so I don’t have to walk kilometres between throws.
+
+  - [ ] **3.1b License-gated re-rail / spawn** *(debug → product candidate)* — Hotkey: scroll liveries the player holds licenses for; place with same re-rail blue/red ghost box as native re-rail. Replace/extend any ad-hoc spawn debt.
+    > As a tester/yard master, I want to re-rail a licensed loco under the crosshair with clear place/no-place feedback.
 
   - [ ] **3.4 Path tracer: manual check** *(was parking-lot Switch Path Tracer)* — Pick a destination; show whether switches are aligned (“check my math”) without auto-throwing. *Stage 2.*
     > As a yard master, I want to click a destination and see if my switches are aligned so I can verify the path myself.
@@ -176,17 +179,17 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
   - [x] **4.1 Enhanced targeting** *(was QOL-06)* — Look-at spherecast **0.15 m**, max **250 m**. *PASS\*; slight sky-stickiness accepted.*
     > As a yard scout, I want distant cars to resolve under the crosshair so I can inspect from farther away.
 
-  - [x] **4.2 Cargo on second bar** *(was QOL-07)* — Freight `Cargo …` / `Empty Cargo`. *Empty Cargo smoke deferred.*
+  - [x] **4.2 Cargo on second bar** *(was QOL-07)* — Freight `Cargo …` / `Empty Cargo`. **Done** — Tier 1 + Tier 2 **PASS** (Empty Cargo @ v0.4.56). Look-at **Mass** chip @ v0.4.57.
     > As a yard scout, I want cargo named on the second bar so I know what a car is carrying.
 
   - [x] **4.3 Hide loco gadget top bar** *(was QOL-08)* — Show loco chips **only** on a usable loco train; otherwise **hide** (no red dash wall). Reuse usable-train + look-at target. Supersedes **1.4** red-null UI. **Done** — Tier 1 + Tier 2 **PASS** (v0.4.14+)
-    > As a player, I want loco gadget readouts only when a loco is relevant — like cab instruments — not a wall of dashes in the yard.
+    > As a player, I want loco gadget readouts only whimage.pngimage.pngimage.pngen a loco is relevant — like cab instruments — not a wall of dashes in the yard.
 
-  - [ ] **4.4 Extended car inspection — Track ID** — Add current Track ID (e.g. `SM-O6I`) on look-at inspector. Job already ships on the second bar.
+  - [x] **4.4 Extended car inspection — Track ID** — Add current Track ID (e.g. `SM-O6I`) on look-at inspector. Job already ships on the second bar. **Done** — Tier 1 + Tier 2 **PASS** (Bundle B / reconfirmed v0.4.53).
     > As a yard master, I want a car’s Track ID when looking at it so I can identify lost consists.
 
-  - [ ] **4.5 Next station distance** *(linear nav)* — When Fuel/Oil are in warn/critical, optional `Next: … [N km]` using live station data (not a static mileage table); fail-closed if path/station unknown. *No GPS minimap.*
-    > As an engineer, I want distance to the next station when fluids are low so I know whether I can make it without a map overlay.
+  - [x] **4.5 Next station distance** *(linear nav)* — **Cut** (2026-07-25). Nearest-other-yard chip (`Next: Farm [2.0 km]`) was clutter and not mainland range guidance. Revisit only with a real range/route story (Epic 3 path / destination).
+    > ~~As an engineer, I want distance to the next station when fluids are low…~~
 
   - [x] **4.6 Station waypoint (foot) + in-zone station chip** — In job-generation zone: `Station {YardID} {bearing} {m}m` or **`here`**. Map coords **cut** (Bundle B.2). **`here`** shares office gate with house AR hide (Bundle C). Fail-closed outside zones. *No minimap.* **Done** — Tier 1 + Tier 2 **PASS** (v0.4.48).
     > As a yard master, I want the local station’s id and which way to walk when I’m in a city zone so I don’t get lost finding the job board.
@@ -220,6 +223,8 @@ Not scheduled — discuss when Journey stage friction demands it:
 - [ ] Mounting Suite / precision mounting
 - [ ] Engine Temp Soft Governor *(if distinct from **2.2**)*
 - [ ] Speed-limit auto-throttle governor *(soft-cap to % of Limit — same pattern as **2.2**; candidate **2.4**)*
+- [ ] **Session reset hotkey** — e.g. Shift+F6: set time ~07:00, clear/reset weather board, invalidate active jobs, refresh available job board (Tier 2 / sandbox).
+- [ ] **License-gated re-rail scroll** — see **3.1b** (promoted from debug ask).
 
 ---
 

@@ -42,13 +42,15 @@ High ROI; frequent pain; not blocking.
 
 
 
-- [ ] **MU yellow smoke (2-loco)** — `F*` / `R*` yellow implemented; in-game smoke deferred until a second loco is available. *(pairs with **1.5**)*
+- [ ] **MU yellow smoke (2-loco)** — HUD force is now **per-loco**; use F11 for SH282+MU, sit in each DE2 for F6. Still need real 2-loco MU coupling smoke. *(pairs with **1.5**)*
 
 - [ ] **Coupler plain `*` vs yellow `*`** — loose and MU share the glyph; HUD color distinguishes, but plain `T2 coupler` / Format strings cannot. Revisit with MU smoke — distinct debug labels or marks.
 
 - [x] **Cache Load amp reflection by type** — landed with **1.8** (`LoadFieldCache` + `MotorSetFieldMap`).
 
-- [ ] **Re-smoke Load yellow/red** — **1.7** live `%` **PASS\***; ≥80% / ≥95% color bands not exercised in-game yet. *(Debug fluid-force path removed — no documented override for forced low tanks.)*
+- [x] **Re-smoke Load yellow/red** — F6 per-loco force **PASS** path @ v0.4.64+ (was F10).
+
+- [x] **Cargo dump mass/visual desync** — fixed @ 0.4.66: F7 uses `UnloadCargo`/`LoadCargo` (events) not `DumpCargo`.
 
 - [x] **Re-smoke Motors Hot/Dead** — **1.8** Tier 2 **PASS** (OK / brief Hot / Dead).
 

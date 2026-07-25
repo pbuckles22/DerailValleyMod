@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using DV;
+using DV.CabControls;
 using DV.InventorySystem;
 using DV.Logic.Job;
 using DV.Signs;
 using DV.ThingTypes;
+using DV.ThingTypes.TransitionHelpers;
 using LocoSim.Implementations;
 using LocoSim.Resources;
 using UnityEngine;
@@ -905,11 +908,12 @@ internal static class TelemetryReader
     {
         try
         {
-            return TryGetLinkStatus(TryGetTargetCar()?.frontCoupler);
+            var car = TryGetTargetCar();
+            return CouplerDebugOverride.ApplyFront(car?.ID, TryGetLinkStatus(car?.frontCoupler));
         }
         catch
         {
-            return null;
+            return CouplerDebugOverride.ApplyFront(TryGetTargetCar()?.ID, null);
         }
     }
 
@@ -917,11 +921,12 @@ internal static class TelemetryReader
     {
         try
         {
-            return TryGetLinkStatus(TryGetTargetCar()?.rearCoupler);
+            var car = TryGetTargetCar();
+            return CouplerDebugOverride.ApplyRear(car?.ID, TryGetLinkStatus(car?.rearCoupler));
         }
         catch
         {
-            return null;
+            return CouplerDebugOverride.ApplyRear(TryGetTargetCar()?.ID, null);
         }
     }
 
@@ -942,8 +947,8 @@ internal static class TelemetryReader
             ? (float?)null
             : SpeedDisplay.ToKilometersPerHour(speedMps.Value);
         var limit = TryGetSpeedLimitState();
-        var nextStation = TryGetNextStationChip(fuel, oil);
-        // 4.7 center-weighted IA: Fuel·Oil·Mass·Grade·Load·Speed·Limit·Motors·Handbrakes·Cars (+ optional Next)
+        // 4.7 center-weighted IA: Fuel·Oil·Mass·Grade·Load·Speed·Limit·Motors·Handbrakes·Cars
+        // 4.5 Next: station — cut (nearest-yard chip was clutter / wrong for mainland range).
         return TrainHudLine.Format(
             FluidDisplay.FormatFuelHud(fuel, oil),
             FluidDisplay.FormatOilHud(fuel, oil),
@@ -954,8 +959,7 @@ internal static class TelemetryReader
             SpeedLimitDisplay.FormatHud(speedKmh, limit.CurrentKmh, limit.Trend),
             MotorDisplay.FormatHud(TryGetMotorStatus()),
             HandbrakeDisplay.FormatTotal(TryGetConsistHandbrakeAppliedCount()),
-            CarsDisplay.Format(TryGetConsistCarCount()),
-            nextStation);
+            CarsDisplay.Format(TryGetConsistCarCount()));
     }
 
     /// <summary>Legacy join helper — empty when top bar is hidden.</summary>
@@ -967,12 +971,14 @@ internal static class TelemetryReader
     {
         try
         {
-            var flow = TryGetUsableLoco()?.SimController?.SimulationFlow;
-            return flow == null ? null : ReadLoadPercent(flow);
+            var loco = TryGetUsableLoco();
+            var flow = loco?.SimController?.SimulationFlow;
+            var real = flow == null ? null : ReadLoadPercent(flow);
+            return LoadDebugOverride.Apply(loco?.ID, real);
         }
         catch
         {
-            return null;
+            return LoadDebugOverride.Apply(TryGetUsableLoco()?.ID, null);
         }
     }
 
@@ -995,12 +1001,14 @@ internal static class TelemetryReader
     {
         try
         {
-            var flow = TryGetUsableLoco()?.SimController?.SimulationFlow;
-            return flow == null ? null : ReadFluidPercent(flow, ResourceContainerType.FUEL);
+            var loco = TryGetUsableLoco();
+            var flow = loco?.SimController?.SimulationFlow;
+            var real = flow == null ? null : ReadFluidPercent(flow, ResourceContainerType.FUEL);
+            return FluidDebugOverride.ApplyFuel(loco?.ID, real);
         }
         catch
         {
-            return null;
+            return FluidDebugOverride.ApplyFuel(TryGetUsableLoco()?.ID, null);
         }
     }
 
@@ -1009,12 +1017,14 @@ internal static class TelemetryReader
     {
         try
         {
-            var flow = TryGetUsableLoco()?.SimController?.SimulationFlow;
-            return flow == null ? null : ReadFluidPercent(flow, ResourceContainerType.OIL);
+            var loco = TryGetUsableLoco();
+            var flow = loco?.SimController?.SimulationFlow;
+            var real = flow == null ? null : ReadFluidPercent(flow, ResourceContainerType.OIL);
+            return FluidDebugOverride.ApplyOil(loco?.ID, real);
         }
         catch
         {
-            return null;
+            return FluidDebugOverride.ApplyOil(TryGetUsableLoco()?.ID, null);
         }
     }
 
@@ -1034,7 +1044,8 @@ internal static class TelemetryReader
             JobDisplay.Format(TryGetJobId()),
             TrackDisplay.Format(TryGetTrackId()),
             TryGetCargoLabel(car),
-            TryGetLocoTypeLabel(car));
+            TryGetLocoTypeLabel(car),
+            TryGetCarMassLabel(car));
     }
 
     public static string CurrentHudLine()
@@ -1186,7 +1197,8 @@ internal static class TelemetryReader
             JobDisplay.Format(TryGetJobId()),
             TrackDisplay.Format(TryGetTrackId()),
             TryGetCargoLabel(car),
-            TryGetLocoTypeLabel(car));
+            TryGetLocoTypeLabel(car),
+            TryGetCarMassLabel(car));
     }
 
     private static LocalCarDebugSnapshot HiddenLocalCarSnapshot() =>
@@ -1220,6 +1232,694 @@ internal static class TelemetryReader
         catch
         {
             return CargoDisplay.Format(car.IsLoco, null);
+        }
+    }
+
+    /// <summary>Single-car mass (+ Consist total when coupled) for look-at / standing bar.</summary>
+    private static string? TryGetCarMassLabel(TrainCar car)
+    {
+        try
+        {
+            if (car.massController == null)
+            {
+                return null;
+            }
+
+            var carKg = car.massController.TotalMass;
+            if (carKg <= 0f)
+            {
+                return null;
+            }
+
+            return TonnageDisplay.FormatCarAndConsistFromKilograms(
+                carKg,
+                TryGetTrainsetMassKilograms(car));
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>Sum of all cars in this car's trainset (coupled consist), fail-closed.</summary>
+    private static float? TryGetTrainsetMassKilograms(TrainCar car)
+    {
+        try
+        {
+            var set = car.trainset;
+            var cars = set?.cars;
+            if (cars == null || cars.Count == 0)
+            {
+                return car.massController != null ? car.massController.TotalMass : null;
+            }
+
+            float total = 0f;
+            var any = false;
+            foreach (var c in cars)
+            {
+                if (c?.massController == null)
+                {
+                    continue;
+                }
+
+                total += c.massController.TotalMass;
+                any = true;
+            }
+
+            return any ? total : null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Tier 2 F7: look-at freight unload ↔ full load via game CargoLoaded/Unloaded events
+    /// (same path as Comms Radio cargo loader — updates mass + visuals). Fail-closed.
+    /// </summary>
+    public static bool TryDebugCycleTargetCargo(out string message)
+    {
+        message = "no freight";
+        try
+        {
+            var car = TryGetTargetCar();
+            if (car == null || car.IsLoco)
+            {
+                return false;
+            }
+
+            var logic = car.logicCar;
+            if (logic == null)
+            {
+                message = "no logicCar";
+                return false;
+            }
+
+            var carId = car.ID ?? "";
+            var hasCargo = logic.CurrentCargoTypeInCar != CargoType.None && logic.LoadedCargoAmount > 0f;
+            var action = CargoDebugCycle.NextAction(hasCargo);
+
+            if (action == CargoDebugAction.Unload)
+            {
+                logic.UnloadCargo(logic.LoadedCargoAmount, logic.CurrentCargoTypeInCar);
+                message = $"unloaded {carId}";
+                return true;
+            }
+
+            if (!TryLoadFullOnLogic(car, logic, out var loadedType, out var loadErr))
+            {
+                message = loadErr;
+                return false;
+            }
+
+            message = $"loaded {loadedType} on {carId}";
+            return true;
+        }
+        catch (Exception ex)
+        {
+            message = ex.GetType().Name;
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Full load using last-unloaded type when possible, else first loadable type for this car.
+    /// Uses <see cref="Car.LoadCargo"/> so TrainCar events refresh mass and cargo model.
+    /// </summary>
+    private static bool TryLoadFullOnLogic(TrainCar car, Car logic, out CargoType loaded, out string error)
+    {
+        loaded = CargoType.None;
+        error = "load failed";
+
+        var capacity = car.cargoCapacity > 0f ? car.cargoCapacity : logic.capacity;
+        if (capacity <= 0f)
+        {
+            error = "no capacity";
+            return false;
+        }
+
+        if (logic.CurrentCargoTypeInCar != CargoType.None)
+        {
+            logic.UnloadCargo(logic.LoadedCargoAmount, logic.CurrentCargoTypeInCar);
+        }
+
+        foreach (var cargo in EnumerateLoadCandidates(car, logic))
+        {
+            try
+            {
+                logic.LoadCargo(capacity, cargo, null);
+                loaded = cargo;
+                return true;
+            }
+            catch
+            {
+                // try next candidate
+            }
+        }
+
+        error = "no loadable cargo";
+        return false;
+    }
+
+    private static IEnumerable<CargoType> EnumerateLoadCandidates(TrainCar car, Car logic)
+    {
+        var list = new List<CargoType>();
+        if (logic.LastUnloadedCargoType != CargoType.None)
+        {
+            list.Add(logic.LastUnloadedCargoType);
+        }
+
+        try
+        {
+            var parent = car.carLivery?.parentType;
+            if (parent != null &&
+                Globals.G?.Types?.CarTypeToLoadableCargo != null &&
+                Globals.G.Types.CarTypeToLoadableCargo.TryGetValue(parent, out var loadable) &&
+                loadable != null)
+            {
+                foreach (var c in loadable)
+                {
+                    if (c?.v1 is { } t && t != CargoType.None && !list.Contains(t))
+                    {
+                        list.Add(t);
+                    }
+                }
+            }
+        }
+        catch
+        {
+            // Globals / livery lookup fail-closed → fall through to hard-coded list
+        }
+
+        foreach (var fallback in new[]
+                 {
+                     CargoType.IronOre,
+                     CargoType.Coal,
+                     CargoType.SteelRails,
+                     CargoType.SteelSlabs,
+                     CargoType.ScrapMetal,
+                 })
+        {
+            if (!list.Contains(fallback))
+            {
+                list.Add(fallback);
+            }
+        }
+
+        return list;
+    }
+
+    /// <summary>Tier 2: toggle SH282 + MultipleUnit together (same status). Fail-closed.</summary>
+    public static bool TryDebugToggleSteamAndMuLicenses(out string message)
+    {
+        message = "fail";
+        try
+        {
+            var lm = LicenseManager.Instance;
+            if (lm == null)
+            {
+                message = "no LicenseManager";
+                return false;
+            }
+
+            var s282 = TransitionHelpers.ToV2(GeneralLicenseType.SH282);
+            var mu = TransitionHelpers.ToV2(GeneralLicenseType.MultipleUnit);
+            if (s282 == null || mu == null)
+            {
+                message = "no license v2";
+                return false;
+            }
+
+            var haveS282 = lm.IsGeneralLicenseAcquired(s282);
+            var haveMu = lm.IsGeneralLicenseAcquired(mu);
+            if (haveS282 && haveMu)
+            {
+                lm.RemoveGeneralLicense(s282);
+                lm.RemoveGeneralLicense(mu);
+                message = "removed SH282+MU";
+                return true;
+            }
+
+            if (!haveS282)
+            {
+                lm.AcquireGeneralLicense(s282);
+            }
+
+            if (!haveMu)
+            {
+                lm.AcquireGeneralLicense(mu);
+            }
+
+            message = "acquired SH282+MU";
+            return true;
+        }
+        catch (Exception ex)
+        {
+            message = ex.GetType().Name;
+            return false;
+        }
+    }
+
+    private static LighterDebugPhase _lighterDebugPhase = LighterDebugPhase.Real;
+    private static GameObject? _debugLighterGo;
+
+    /// <summary>
+    /// Tier 2 F5: cycle lighter inventory — give → remove (lost&amp;found) → real. Avoids F12 console.
+    /// </summary>
+    public static bool TryDebugCycleLighter(out string message)
+    {
+        message = "fail";
+        try
+        {
+            var next = LighterDebugCycle.Next(_lighterDebugPhase);
+            switch (next)
+            {
+                case LighterDebugPhase.InInventory:
+                    if (!TryGiveDebugLighter(out message))
+                    {
+                        return false;
+                    }
+
+                    _lighterDebugPhase = LighterDebugPhase.InInventory;
+                    return true;
+
+                case LighterDebugPhase.Removed:
+                    TryRemoveDebugLighter(out message);
+                    _lighterDebugPhase = LighterDebugPhase.Removed;
+                    return true;
+
+                default:
+                    TryRemoveDebugLighter(out _);
+                    _lighterDebugPhase = LighterDebugPhase.Real;
+                    message = "lighter real";
+                    return true;
+            }
+        }
+        catch (Exception ex)
+        {
+            message = ex.GetType().Name;
+            return false;
+        }
+    }
+
+    private static bool TryGiveDebugLighter(out string message)
+    {
+        message = "no inventory";
+        var inv = Inventory.Instance;
+        if (inv == null)
+        {
+            return false;
+        }
+
+        var existing = inv.GetItemByName("lighter", partialNameCheck: true, includeDropped: false);
+        if (existing != null)
+        {
+            _debugLighterGo = existing;
+            message = "lighter already present";
+            return true;
+        }
+
+        var prefab = Resources.Load<GameObject>("lighter");
+        if (prefab == null)
+        {
+            message = "no lighter prefab";
+            return false;
+        }
+
+        var go = Object.Instantiate(prefab);
+        go.name = "lighter";
+        var spec = go.GetComponent<InventoryItemSpec>();
+        if (spec != null)
+        {
+            spec.BelongsToPlayer = true;
+        }
+
+        var rb = go.GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.isKinematic = true;
+        }
+
+        if (!inv.CanAddItem(go))
+        {
+            Object.Destroy(go);
+            message = "inventory full";
+            return false;
+        }
+
+        var slot = inv.AddItemToInventory(go);
+        if (slot < 0)
+        {
+            Object.Destroy(go);
+            message = "add failed";
+            return false;
+        }
+
+        _debugLighterGo = go;
+        message = "lighter given";
+        return true;
+    }
+
+    private static void TryRemoveDebugLighter(out string message)
+    {
+        message = "no lighter";
+        try
+        {
+            var inv = Inventory.Instance;
+            var go = _debugLighterGo;
+            if ((go == null || go.Equals(null)) && inv != null)
+            {
+                go = inv.GetItemByName("lighter", partialNameCheck: true, includeDropped: true);
+            }
+
+            if (go == null || go.Equals(null))
+            {
+                _debugLighterGo = null;
+                message = "lighter already gone";
+                return;
+            }
+
+            // Unequip first — DestroyItem while held NRE's in Lighter.OnDestroy.
+            if (inv != null)
+            {
+                try
+                {
+                    inv.UnequipItem(true, -1);
+                }
+                catch
+                {
+                    // best-effort
+                }
+
+                try
+                {
+                    inv.DropItemFromHandsOrInventory(go);
+                }
+                catch
+                {
+                    // continue to lost&found
+                }
+            }
+
+            var storage = StorageController.Instance;
+            if (storage != null)
+            {
+                var item = go.GetComponent<ItemBase>() ?? go.GetComponentInChildren<ItemBase>();
+                if (item != null)
+                {
+                    storage.AddItemToLostAndFound(item, true);
+                    message = "lighter → Lost&Found";
+                }
+                else if (inv != null)
+                {
+                    inv.DropItemFromHandsOrInventory(go);
+                    message = "lighter dropped (no ItemBase)";
+                }
+                else
+                {
+                    message = "no ItemBase";
+                }
+            }
+            else if (inv != null)
+            {
+                // Last resort: drop only (do not DestroyItem — leaves ghost UI + NRE).
+                inv.DropItemFromHandsOrInventory(go);
+                message = "lighter dropped";
+            }
+            else
+            {
+                message = "no storage";
+            }
+
+            _debugLighterGo = null;
+        }
+        catch (Exception ex)
+        {
+            message = ex.GetType().Name;
+            _debugLighterGo = null;
+        }
+    }
+
+    /// <summary>
+    /// Turntable debug input: simulates bar/lever push via the same °/s FixedUpdate uses.
+    /// Hold = full rate (12°/s). Tap assist = bar-like rate (≈2.4°/s) only within 2 m of lock.
+    /// </summary>
+    private static float _turntableHoldPushSign;
+    private static bool _turntableSnapAssist;
+    private static bool _turntableSnapAssistLoggedStart;
+
+    /// <summary>Hold PageUp/Down: simulate full push (±1 → 12°/s).</summary>
+    public static void SetTurntableHoldPush(float directionSign)
+    {
+        _turntableSnapAssist = false;
+        _turntableHoldPushSign = directionSign == 0f ? 0f : (directionSign > 0f ? 1f : -1f);
+    }
+
+    public static void ClearTurntableHoldPush() => _turntableHoldPushSign = 0f;
+
+    /// <summary>
+    /// Tap: begin bar-push assist toward nearest track if within 2 m arc of lock.
+    /// </summary>
+    public static bool TryBeginTurntableSnapAssist(out string message)
+    {
+        message = "no turntable";
+        _turntableHoldPushSign = 0f;
+        _turntableSnapAssist = false;
+        _turntableSnapAssistLoggedStart = false;
+        try
+        {
+            if (!TryGetEligibleTurntable(out var ctrl, out _) || ctrl == null)
+            {
+                return false;
+            }
+
+            var track = ctrl.turntable;
+            if (track == null)
+            {
+                message = "no track";
+                return false;
+            }
+
+            var snap = track.ClosestSnappingAngle();
+            if (float.IsNaN(snap) || snap < 0f)
+            {
+                message = "no snap angle";
+                return false;
+            }
+
+            var delta = TurntableRailTrack.AngleRangeNeg180To180(snap - track.currentYRotation);
+            var halfLen = track.SearchRadius;
+            if (!TurntableSnapRange.IsWithinLockArc(delta, halfLen))
+            {
+                var arc = TurntableSnapRange.ArcMeters(delta, halfLen);
+                message = $"out of snap range ({arc:0.0} m > {TurntableSnapRange.MaxLockArcMeters:0} m)";
+                return false;
+            }
+
+            _turntableSnapAssist = true;
+            message = $"snap assist ({TurntableSnapRange.ArcMeters(delta, halfLen):0.0} m to lock)";
+            return true;
+        }
+        catch (Exception ex)
+        {
+            message = ex.GetType().Name;
+            return false;
+        }
+    }
+
+    public static void CancelTurntableSnapAssist() => _turntableSnapAssist = false;
+
+    /// <summary>
+    /// Call from <c>FixedUpdate</c>: inject bar/lever-equivalent rotation (no SetAngle teleport).
+    /// </summary>
+    public static void ApplyTurntableBarSimulation(float fixedDeltaTime, out string? status)
+    {
+        status = null;
+        try
+        {
+            if (_turntableHoldPushSign == 0f && !_turntableSnapAssist)
+            {
+                return;
+            }
+
+            if (!TryGetEligibleTurntable(out var ctrl, out _) || ctrl == null)
+            {
+                _turntableSnapAssist = false;
+                _turntableHoldPushSign = 0f;
+                status = "lost turntable";
+                return;
+            }
+
+            var track = ctrl.turntable;
+            if (track == null)
+            {
+                return;
+            }
+
+            ctrl.PlayerControlAllowed = true;
+
+            // DV: push field ~0.2 → intensity 0.2 * 12°/s ≈ 2.4°/s (bar).
+            // Full lever intensity 1 → 12°/s (MAX_ROTATION_SPEED_DEGREES_PER_SEC).
+            const float maxDegPerSec = 12f;
+            const float barIntensity = 0.2f;
+
+            float sign;
+            float intensity;
+            if (_turntableSnapAssist)
+            {
+                var snap = track.ClosestSnappingAngle();
+                if (float.IsNaN(snap) || snap < 0f)
+                {
+                    _turntableSnapAssist = false;
+                    status = "snap assist abort";
+                    return;
+                }
+
+                var delta = TurntableRailTrack.AngleRangeNeg180To180(snap - track.currentYRotation);
+                var halfLen = track.SearchRadius;
+                if (!TurntableSnapRange.IsWithinLockArc(delta, halfLen))
+                {
+                    _turntableSnapAssist = false;
+                    status = "left snap range";
+                    return;
+                }
+
+                if (Math.Abs(delta) < 0.5f)
+                {
+                    track.targetYRotation = TurntableRailTrack.AngleRange0To360(snap);
+                    track.RotateToTargetRotation(true);
+                    _turntableSnapAssist = false;
+                    status = $"locked {snap:0.0}";
+                    return;
+                }
+
+                sign = Math.Sign(delta);
+                intensity = barIntensity;
+                if (!_turntableSnapAssistLoggedStart)
+                {
+                    _turntableSnapAssistLoggedStart = true;
+                    status = $"bar-push → {snap:0.0}";
+                }
+            }
+            else
+            {
+                sign = _turntableHoldPushSign;
+                intensity = 1f;
+            }
+
+            var step = sign * intensity * maxDegPerSec * fixedDeltaTime;
+            if (Math.Abs(step) < 0.00001f)
+            {
+                return;
+            }
+
+            var next = TurntableRailTrack.AngleRange0To360(track.currentYRotation + step);
+            track.targetYRotation = next;
+            track.RotateToTargetRotation(false);
+        }
+        catch
+        {
+            _turntableSnapAssist = false;
+            _turntableHoldPushSign = 0f;
+        }
+    }
+
+    private static bool TryGetEligibleTurntable(out TurntableController? ctrl, out float distance) =>
+        TryGetNearbyTurntable(out ctrl, out distance);
+
+    private static bool TryGetNearbyTurntable(out TurntableController? ctrl, out float distance)
+    {
+        ctrl = null;
+        distance = float.MaxValue;
+        try
+        {
+            // Prefer turntable under the crosshair (cab or yard walk).
+            if (TryGetLookAtTurntable(out var lookAt) && lookAt != null)
+            {
+                ctrl = lookAt;
+                var player = PlayerManager.PlayerTransform;
+                distance = player != null
+                    ? Vector3.Distance(player.position, lookAt.transform.position)
+                    : 0f;
+                return true;
+            }
+
+            var playerTf = PlayerManager.PlayerTransform;
+            if (playerTf == null)
+            {
+                return false;
+            }
+
+            var pos = playerTf.position;
+            ctrl = TurntableController.FindClosestTo(pos);
+            if (ctrl == null)
+            {
+                return false;
+            }
+
+            distance = Vector3.Distance(pos, ctrl.transform.position);
+            // Prefer: turntable SearchRadius (bridge half-length) + 15 m — cab or walk.
+            var search = ctrl.turntable != null ? ctrl.turntable.SearchRadius : 40f;
+            var max = search + 15f;
+            if (distance > max)
+            {
+                ctrl = null;
+                return false;
+            }
+
+            return true;
+        }
+        catch
+        {
+            ctrl = null;
+            return false;
+        }
+    }
+
+    private static bool TryGetLookAtTurntable(out TurntableController? ctrl)
+    {
+        ctrl = null;
+        try
+        {
+            var cam = PlayerManager.PlayerCamera;
+            if (cam == null)
+            {
+                cam = Camera.main;
+            }
+
+            if (cam == null)
+            {
+                return false;
+            }
+
+            var ray = new Ray(cam.transform.position, cam.transform.forward);
+            if (!Physics.Raycast(ray, out var hit, 250f))
+            {
+                return false;
+            }
+
+            ctrl = hit.collider.GetComponentInParent<TurntableController>();
+            if (ctrl != null)
+            {
+                return true;
+            }
+
+            var rail = hit.collider.GetComponentInParent<TurntableRailTrack>();
+            if (rail == null)
+            {
+                return false;
+            }
+
+            ctrl = rail.GetComponentInParent<TurntableController>()
+                ?? rail.GetComponent<TurntableController>()
+                ?? TurntableController.FindClosestTo(rail.transform.position);
+            return ctrl != null;
+        }
+        catch
+        {
+            ctrl = null;
+            return false;
         }
     }
 

@@ -96,7 +96,7 @@ Look-at wins; standing fallback when crosshair is not on a car. Hidden when no t
 
 **4.4 notes:** Second-bar `Track SM-O6I` from `logicCar.CurrentTrack.ID.FullDisplayID`. **Bundle B.3:** omit the segment when unknown / generic mainline (no `— Track`).
 
-**4.5 notes:** When Fuel or Oil is in yellow/red, optional loco-bar `Next: Name [N.N km]` using `JobPaymentCalculator.GetDistanceBetweenStations` from current zone/yard station to nearest other. Omit when fluids OK or path/station unknown.
+**4.5 notes:** **Cut** (2026-07-25). Former fluid-gated `Next: Name [N km]` (nearest other yard) removed from loco bar — wrong UX for mainland range. Fluid HUD debug inject kept (F8/F9 / Shift+F8 clear / Shift+F9 both 100%).
 
 **4.6 notes:** In job-generation zone — always-on `Station SM NE 84m` (or `here`) using the **station office** transform (not yard center). **Bundle B.2:** no map coords on the chip. Omit outside zones.
 
