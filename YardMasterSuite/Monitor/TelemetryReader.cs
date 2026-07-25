@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using DV;
 using DV.CabControls;
@@ -1295,52 +1296,140 @@ internal static class TelemetryReader
     }
 
     /// <summary>
-    /// Tier 2 F7: look-at freight unload ↔ full load via game CargoLoaded/Unloaded events
-    /// (same path as Comms Radio cargo loader — updates mass + visuals). Fail-closed.
+    /// Tier 2 F7: unload ↔ full load for <b>all freight</b> in the look-at / standing car's
+    /// trainset (coupled consist). Uses game CargoLoaded/Unloaded events. Fail-closed.
     /// </summary>
     public static bool TryDebugCycleTargetCargo(out string message)
     {
         message = "no freight";
         try
         {
-            var car = TryGetTargetCar();
-            if (car == null || car.IsLoco)
+            var seed = TryGetTargetCar();
+            if (seed == null)
             {
                 return false;
             }
 
-            var logic = car.logicCar;
-            if (logic == null)
+            var freight = CollectTrainsetFreight(seed);
+            if (freight.Count == 0)
             {
-                message = "no logicCar";
                 return false;
             }
 
-            var carId = car.ID ?? "";
-            var hasCargo = logic.CurrentCargoTypeInCar != CargoType.None && logic.LoadedCargoAmount > 0f;
-            var action = CargoDebugCycle.NextAction(hasCargo);
+            var anyHasCargo = false;
+            foreach (var car in freight)
+            {
+                if (FreightHasCargo(car))
+                {
+                    anyHasCargo = true;
+                    break;
+                }
+            }
+
+            var action = CargoDebugCycle.NextAction(anyHasCargo);
+            var ok = 0;
+            var fail = 0;
 
             if (action == CargoDebugAction.Unload)
             {
-                logic.UnloadCargo(logic.LoadedCargoAmount, logic.CurrentCargoTypeInCar);
-                message = $"unloaded {carId}";
-                return true;
+                foreach (var car in freight)
+                {
+                    var logic = car.logicCar;
+                    if (logic == null || !FreightHasCargo(car))
+                    {
+                        continue;
+                    }
+
+                    try
+                    {
+                        logic.UnloadCargo(logic.LoadedCargoAmount, logic.CurrentCargoTypeInCar);
+                        ok++;
+                    }
+                    catch
+                    {
+                        fail++;
+                    }
+                }
+
+                message = fail == 0
+                    ? $"unloaded {ok}/{freight.Count} freight"
+                    : $"unloaded {ok}/{freight.Count} freight ({fail} fail)";
+                return ok > 0;
             }
 
-            if (!TryLoadFullOnLogic(car, logic, out var loadedType, out var loadErr))
+            foreach (var car in freight)
             {
-                message = loadErr;
-                return false;
+                var logic = car.logicCar;
+                if (logic == null)
+                {
+                    fail++;
+                    continue;
+                }
+
+                if (TryLoadFullOnLogic(car, logic, out _, out _))
+                {
+                    ok++;
+                }
+                else
+                {
+                    fail++;
+                }
             }
 
-            message = $"loaded {loadedType} on {carId}";
-            return true;
+            message = fail == 0
+                ? $"loaded {ok}/{freight.Count} freight"
+                : $"loaded {ok}/{freight.Count} freight ({fail} fail)";
+            return ok > 0;
         }
         catch (Exception ex)
         {
             message = ex.GetType().Name;
             return false;
         }
+    }
+
+    private static bool FreightHasCargo(TrainCar car)
+    {
+        var logic = car.logicCar;
+        return logic != null
+            && logic.CurrentCargoTypeInCar != CargoType.None
+            && logic.LoadedCargoAmount > 0f;
+    }
+
+    /// <summary>Non-loco cars in <paramref name="seed"/>'s trainset (or just seed if alone).</summary>
+    private static List<TrainCar> CollectTrainsetFreight(TrainCar seed)
+    {
+        var list = new List<TrainCar>();
+        try
+        {
+            var cars = seed.trainset?.cars;
+            if (cars == null || cars.Count == 0)
+            {
+                if (!seed.IsLoco)
+                {
+                    list.Add(seed);
+                }
+
+                return list;
+            }
+
+            foreach (var c in cars)
+            {
+                if (c != null && !c.IsLoco)
+                {
+                    list.Add(c);
+                }
+            }
+        }
+        catch
+        {
+            if (!seed.IsLoco)
+            {
+                list.Add(seed);
+            }
+        }
+
+        return list;
     }
 
     /// <summary>
@@ -1430,8 +1519,15 @@ internal static class TelemetryReader
         return list;
     }
 
-    /// <summary>Tier 2: toggle SH282 + MultipleUnit together (same status). Fail-closed.</summary>
-    public static bool TryDebugToggleSteamAndMuLicenses(out string message)
+    private static LicenseDebugMode _licenseDebugMode = LicenseDebugMode.Real;
+    private static List<GeneralLicenseType_v2>? _licenseSnapshotGeneral;
+    private static List<JobLicenseType_v2>? _licenseSnapshotJob;
+
+    /// <summary>
+    /// Tier 2 F11: grant <b>all</b> obtainable general + job licenses, then restore the
+    /// pre-override snapshot on the next press ("real"). Fail-closed.
+    /// </summary>
+    public static bool TryDebugToggleAllLicenses(out string message)
     {
         message = "fail";
         try
@@ -1443,35 +1539,201 @@ internal static class TelemetryReader
                 return false;
             }
 
-            var s282 = TransitionHelpers.ToV2(GeneralLicenseType.SH282);
-            var mu = TransitionHelpers.ToV2(GeneralLicenseType.MultipleUnit);
-            if (s282 == null || mu == null)
+            var next = LicenseDebugToggle.Next(_licenseDebugMode);
+            if (next == LicenseDebugMode.AllGranted)
             {
-                message = "no license v2";
-                return false;
-            }
+                if (!TrySnapshotLicenses(lm, out message))
+                {
+                    return false;
+                }
 
-            var haveS282 = lm.IsGeneralLicenseAcquired(s282);
-            var haveMu = lm.IsGeneralLicenseAcquired(mu);
-            if (haveS282 && haveMu)
-            {
-                lm.RemoveGeneralLicense(s282);
-                lm.RemoveGeneralLicense(mu);
-                message = "removed SH282+MU";
+                if (!TryAcquireAllLicenses(lm, out message))
+                {
+                    _licenseSnapshotGeneral = null;
+                    _licenseSnapshotJob = null;
+                    return false;
+                }
+
+                _licenseDebugMode = LicenseDebugMode.AllGranted;
+                message = LicenseDebugToggle.StatusFragment(_licenseDebugMode);
                 return true;
             }
 
-            if (!haveS282)
+            if (!TryRestoreLicenseSnapshot(lm, out message))
             {
-                lm.AcquireGeneralLicense(s282);
+                return false;
             }
 
-            if (!haveMu)
+            _licenseDebugMode = LicenseDebugMode.Real;
+            _licenseSnapshotGeneral = null;
+            _licenseSnapshotJob = null;
+            message = LicenseDebugToggle.StatusFragment(_licenseDebugMode);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            message = ex.GetType().Name;
+            return false;
+        }
+    }
+
+    /// <summary>Restore real licenses if F11 override is active (e.g. debug gate off).</summary>
+    public static void RestoreLicenseDebugIfNeeded()
+    {
+        if (_licenseDebugMode != LicenseDebugMode.AllGranted)
+        {
+            return;
+        }
+
+        TryDebugToggleAllLicenses(out _);
+    }
+
+    private static bool TrySnapshotLicenses(LicenseManager lm, out string message)
+    {
+        message = "snapshot fail";
+        try
+        {
+            var general = lm.GetGeneralAcquiredLicenses();
+            var jobs = lm.GetAcquiredJobLicenses();
+            _licenseSnapshotGeneral = general != null
+                ? new List<GeneralLicenseType_v2>(general)
+                : new List<GeneralLicenseType_v2>();
+            _licenseSnapshotJob = jobs != null
+                ? new List<JobLicenseType_v2>(jobs)
+                : new List<JobLicenseType_v2>();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            message = ex.GetType().Name;
+            return false;
+        }
+    }
+
+    private static bool TryAcquireAllLicenses(LicenseManager lm, out string message)
+    {
+        message = "acquire fail";
+        var acquired = 0;
+        try
+        {
+            foreach (GeneralLicenseType t in Enum.GetValues(typeof(GeneralLicenseType)))
             {
-                lm.AcquireGeneralLicense(mu);
+                if (t == GeneralLicenseType.NotSet)
+                {
+                    continue;
+                }
+
+                var v2 = TransitionHelpers.ToV2(t);
+                if (v2 == null)
+                {
+                    continue;
+                }
+
+                try
+                {
+                    if (!lm.IsGeneralLicenseObtainable(v2) && !lm.IsGeneralLicenseAcquired(v2))
+                    {
+                        continue;
+                    }
+
+                    if (!lm.IsGeneralLicenseAcquired(v2))
+                    {
+                        lm.AcquireGeneralLicense(v2);
+                        acquired++;
+                    }
+                }
+                catch
+                {
+                    // skip unobtainable / blocked
+                }
             }
 
-            message = "acquired SH282+MU";
+            foreach (JobLicenses t in Enum.GetValues(typeof(JobLicenses)))
+            {
+                var v2 = TransitionHelpers.ToV2(t);
+                if (v2 == null)
+                {
+                    continue;
+                }
+
+                try
+                {
+                    if (!lm.IsJobLicenseObtainable(v2) && !lm.IsJobLicenseAcquired(v2))
+                    {
+                        continue;
+                    }
+
+                    if (!lm.IsJobLicenseAcquired(v2))
+                    {
+                        lm.AcquireJobLicense(v2);
+                        acquired++;
+                    }
+                }
+                catch
+                {
+                    // skip unobtainable / blocked
+                }
+            }
+
+            message = $"acquired +{acquired}";
+            return true;
+        }
+        catch (Exception ex)
+        {
+            message = ex.GetType().Name;
+            return false;
+        }
+    }
+
+    private static bool TryRestoreLicenseSnapshot(LicenseManager lm, out string message)
+    {
+        message = "restore fail";
+        try
+        {
+            var keepGeneral = new HashSet<GeneralLicenseType_v2>(
+                _licenseSnapshotGeneral ?? Enumerable.Empty<GeneralLicenseType_v2>());
+            var keepJob = new HashSet<JobLicenseType_v2>(
+                _licenseSnapshotJob ?? Enumerable.Empty<JobLicenseType_v2>());
+
+            var currentGeneral = lm.GetGeneralAcquiredLicenses();
+            if (currentGeneral != null)
+            {
+                foreach (var lic in currentGeneral.ToArray())
+                {
+                    if (lic != null && !keepGeneral.Contains(lic))
+                    {
+                        lm.RemoveGeneralLicense(lic);
+                    }
+                }
+            }
+
+            var currentJob = lm.GetAcquiredJobLicenses();
+            if (currentJob != null)
+            {
+                var toRemove = currentJob.Where(j => j != null && !keepJob.Contains(j)).ToList();
+                if (toRemove.Count > 0)
+                {
+                    lm.RemoveJobLicense(toRemove);
+                }
+            }
+
+            foreach (var lic in keepGeneral)
+            {
+                if (lic != null && !lm.IsGeneralLicenseAcquired(lic))
+                {
+                    lm.AcquireGeneralLicense(lic);
+                }
+            }
+
+            foreach (var lic in keepJob)
+            {
+                if (lic != null && !lm.IsJobLicenseAcquired(lic))
+                {
+                    lm.AcquireJobLicense(lic);
+                }
+            }
+
+            message = "restored";
             return true;
         }
         catch (Exception ex)

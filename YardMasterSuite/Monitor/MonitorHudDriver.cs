@@ -25,7 +25,7 @@ public sealed class MonitorHudDriver : MonoBehaviour
     /// <summary>F6 = cycle Load% for the loco you are in (off → 85% → 97% → off).</summary>
     private const KeyCode LoadDebugKey = KeyCode.F6;
 
-    /// <summary>F7 = look-at freight: unload (tare) ↔ full load.</summary>
+    /// <summary>F7 = look-at consist: unload ↔ full load all freight.</summary>
     private const KeyCode CargoCycleKey = KeyCode.F7;
 
     /// <summary>F8 = cycle fluids for the loco you are in.</summary>
@@ -34,7 +34,7 @@ public sealed class MonitorHudDriver : MonoBehaviour
     /// <summary>F9 = cycle coupler MU-yellow for the look-at / target car.</summary>
     private const KeyCode CouplerDebugKey = KeyCode.F9;
 
-    /// <summary>F11 = toggle SH282 + MU licenses together.</summary>
+    /// <summary>F11 = toggle all licenses ↔ restore real snapshot.</summary>
     private const KeyCode S282LicenseKey = KeyCode.F11;
 
     /// <summary>Page Up/Down = QOL turntable (not debug-gated).</summary>
@@ -248,6 +248,7 @@ public sealed class MonitorHudDriver : MonoBehaviour
             FluidDebugOverride.Clear();
             LoadDebugOverride.Clear();
             CouplerDebugOverride.Clear();
+            TelemetryReader.RestoreLicenseDebugIfNeeded();
             _debugHotkeyLabel = null;
         }
         else
@@ -314,8 +315,8 @@ public sealed class MonitorHudDriver : MonoBehaviour
             return;
         }
 
-        var ok = TelemetryReader.TryDebugToggleSteamAndMuLicenses(out var message);
-        Main.Log($"T2 license-debug SH282+MU: {(ok ? "ok" : "fail")} ({message})");
+        var ok = TelemetryReader.TryDebugToggleAllLicenses(out var message);
+        Main.Log($"T2 license-debug: {(ok ? "ok" : "fail")} ({message})");
     }
 
     private void PollLighterDebugHotkey()

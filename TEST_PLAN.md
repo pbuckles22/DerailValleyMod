@@ -282,15 +282,15 @@ Former `Next: … [N km]` on loco bar when fluids low — **removed**. Smoke A1�
 - **F8** — cycle **Fluids**: real → low oil / full fuel → low fuel / full oil → both low → both full → real
 - Player.log: `T2 fluid-debug: …`
 
-**Cargo / Load / Coupler / license / turntable / lighter debug (v0.4.64):** one key per concern (cycle). Look-at or stand on **freight** for F7:
+**Cargo / Load / Coupler / license / turntable / lighter debug (v0.4.67):** one key per concern (cycle). Look-at or stand on a car in the consist for F7:
+- **F5** — lighter: **give → Lost&Found remove → real** *(not F12 — console)*
 - **F6** — loco **Load %** HUD: off → **85%** yellow → **97%** red → off *(F10 remapped — Windows often eats F10)*
   *(Load % is traction amps, not car Mass — sit in DE2/DE6.)*
-- **F7** — cargo look-at freight: **unload (tare) ↔ full load** (game UnloadCargo/LoadCargo events)
+- **F7** — **all freight** in the coupled trainset: **unload (tare) ↔ full load** (game UnloadCargo/LoadCargo events)
 - **F9** — coupler HUD for #23: off → front `F*` yellow → rear `R*` yellow → both → off
-- **F11** — grant **S282** (`SH282`) license
-- **F12** — lighter: **give → remove → real** (steam fire-up)
+- **F11** — grant **all** obtainable general + job licenses ↔ restore pre-press snapshot (**real**)
 - **PgUp / PgDn** — within turntable **SearchRadius + 15 m** (or look-at); hold = bar/lever rate; tap = assist if ≤2 m from lock
-- Player.log: `T2 cargo-debug …` / `T2 load-debug: …` / `T2 coupler-debug: …` / `T2 turntable …` / `T2 lighter-debug …`
+- Player.log: `T2 cargo-debug …` / `T2 load-debug: …` / `T2 coupler-debug: …` / `T2 turntable …` / `T2 lighter-debug …` / `T2 license-debug …`
 
 **Cut sign-off — PASS @ 0.4.55**
 

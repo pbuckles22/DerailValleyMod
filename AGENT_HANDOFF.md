@@ -117,8 +117,8 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 |--|--|
 | **Project** | *Yard Master Suite* (UMM / Harmony / net48) |
 | **MVP** | **Epic 1** System Monitor HUD |
-| **Version (`main`)** | **0.4.53** — WIP branch **0.4.66** (Tier 2 debug hotkeys + turntable QOL; F7 = UnloadCargo/LoadCargo) |
-| **Active branch** | `feature/4-5-fluid-debug-inject` |
+| **Version (`main`)** | **0.4.67** — Tier 2 debug hotkeys (F7 consist cargo; F11 all licenses) + turntable QOL |
+| **Active branch** | `main` |
 
 **Shipped on `main`**
 
@@ -126,12 +126,12 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 - [x] **Epic 1** Diagnostic HUD — **1.1–1.14** complete (Motors current-state only — Hot dwell **cut**)
 - [x] **4.1–4.3**, **4.7** Spherecast, cargo, hide loco bar, centered stacked HUD IA
 - [x] **4.4–4.9** baseline + Bundles **B** / **A** / **C** / **D** (**v0.4.52**) + **license warn** (**v0.4.53**)
+- [x] **Tier 2 debug inject** — F5–F9 / F11 + PgUp/PgDn turntable (**v0.4.67**; F7/F11 Tier 2 **PASS**)
 
 **Next**
 
-- [ ] Confirm Tier 2 smoke for **F7** unload/load mass+visual @ **0.4.66** (other debug keys mostly PASS @ 0.4.65)
-- [ ] Then push/merge `feature/4-5-fluid-debug-inject` when ready (user held push)
-- [ ] Bundle E leftovers (Load yellow/red, MU, Empty Cargo)
+- [ ] **4.10 Loco radar** — find spawned locos (type + distance + track / AR) so MU couple smoke (#23) is practical
+- [ ] Bundle E leftovers (Load yellow/red live hard-pull, **MU yellow 2-loco**)
 - [ ] **2.1** Three-Gate → **2.2** Thermal governor (after Epic 4 fix bundles settle)
 - [ ] Known issue: A.4 house outdoor false-hide (~12–14 m) — see `TECH_DEBT.md`
 - Backlog: **3.1b** license-gated re-rail; session reset ~7AM hotkey

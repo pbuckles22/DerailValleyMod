@@ -62,6 +62,7 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
 | **4.7** | *(was parking-lot HUD IA)* | Center-weighted / stacked HUD IA |
 | **4.8** | *(new)* | Active Job HUD + preview-prep edge |
 | **4.9** | *(new)* | AR wayfinding markers (loco / station office / pin) |
+| **4.10** | *(new)* | Loco radar (find spawned locos for MU / yard walk) |
 | **5.1** | *(new)* | Digital Catalog |
 
 ---
@@ -199,6 +200,9 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
 
   - [ ] **4.9 AR wayfinding markers** — Screen-space icons (distinct shapes; color secondary) for (1) last/active loco, (2) in-zone **station office** (not yard center), (3) custom pin (`Home` / `Shift+Home`). `WorldToScreenPoint` + edge clamp when behind; icon + distance only. Replaces foot-nav dependence on Heading/Pos text.
     > As a yard worker, I want floating markers for my loco, the station office, and my pin so I can run toward them without reading compass math.
+
+  - [ ] **4.10 Loco radar** — List / mark nearest spawned locomotives (type, distance, track) so the player can find a second loco for MU couple without wandering the yard. Unblocks Bundle E **#23** MU yellow smoke. Gemini scratch: `doc/GeminiDocs/Loco Radar*`. Prefer AR markers on nearest N other locos (or HUD chips) — not log-only.
+    > As a yard master, I want to see where other locos are so I can walk to one and MU without searching the whole yard.
 
   - [x] **4.7 HUD strip IA reorder** — Horizontally **center** every HUD row; stack loco → look-at → always-on nav bar (same chrome as loco/look-at). Loco chip order: `Fuel · Oil · Mass · Grade · Load · Speed · Limit · Motors · Handbrakes · Cars`. **Done** — Tier 1 + Tier 2 **PASS** (v0.4.23).
     > As a driver, I want Speed and Limit in the visual center of the loco bar so I glance there first.

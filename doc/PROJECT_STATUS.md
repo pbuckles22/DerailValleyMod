@@ -15,8 +15,8 @@ Stack: Unity / C# `net48` / UMM / Harmony
 |--|--|
 | **Journey** | Stage 1 — Apprentice (“don’t blow up”) |
 | **MVP** | Epic 1 System Monitor HUD |
-| **Version (`main`)** | **0.4.53** *(license warn on held overview)* |
-| **WIP branch** | `feature/4-5-fluid-debug-inject` @ **0.4.66** *(debug hotkeys + turntable QOL; not pushed)* |
+| **Version (`main`)** | **0.4.67** *(Tier 2 debug: F7 consist cargo; F11 all licenses)* |
+| **WIP branch** | *(none — next: `feature/4-10-loco-radar`)* |
 
 ---
 
@@ -24,8 +24,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 | Branch | Role |
 |--------|------|
-| **`main`** | Integration — license-warn @ 0.4.53 |
-| **`feature/4-5-fluid-debug-inject`** | Tier 2 debug inject + turntable QOL @ **0.4.66** — commit local; **no push/merge yet** |
+| **`main`** | Integration — **0.4.67** Tier 2 debug hotkeys + turntable QOL |
 
 ---
 
@@ -37,21 +36,23 @@ Stack: Unity / C# `net48` / UMM / Harmony
 - [x] **Epic 1** — Diagnostic HUD *(Stage 1 — complete 2026-07-23)*
 - [ ] **Epic 2** — Governor Mode
 - [ ] **Epic 3** — Yard Master / Dispatcher
-- [ ] **Epic 4** — HUD quality *(4.4–4.9 + Bundles B/A/C/D + license-warn on `main`; 4.5 / Bundle E open)*
+- [ ] **Epic 4** — HUD quality *(Bundles B/A/C/D + license-warn + Tier 2 debug @ 0.4.67; next **4.10** loco radar; Bundle E MU open)*
 - [ ] **Epic 5** — Digital Catalog
 
 ### Next (Stage 1 leftovers / Stage 2)
 
 - [x] **Follow-up** — warn on overview if player lacks required licenses *(v0.4.53, Tier 2 **PASS**)*
+- [x] **Tier 2 debug inject** — F7 consist unload/load + F11 all licenses *(v0.4.67, Tier 2 **PASS**)*
+- [ ] **4.10 Loco radar** — find spawned locos (unblocks MU couple smoke)
 - [ ] Re-smoke **1.7** yellow/red Load when practical
 - [ ] **2.1** Three-Gate → Epic 2
 
 ### Deferred smokes / known issues
 
 - [ ] **A.4 house AR hide** — outdoor false-positive ~12–14 m from Station Office door (SM); loco hide PASS @ v0.4.47. See `TECH_DEBT.md`.
-- [ ] Yellow MU `F*` / `R*` with two locos
-- [ ] `Empty Cargo` wording (**4.2**)
-- [ ] Load ≥80% / ≥95% colors (**1.7**)
+- [ ] Yellow MU `F*` / `R*` with two locos *(blocked on **4.10**)*
+- [x] `Empty Cargo` wording (**4.2**) — **PASS** @ 0.4.56
+- [ ] Load ≥80% / ≥95% colors (**1.7**) — F6 force PASS; live hard-pull optional
 
 ### Cut / moved
 
@@ -61,6 +62,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 ## Recently completed
 
+- [x] **Tier 2 debug inject** — F7 consist unload/load; F11 all licenses ↔ real; turntable PgUp/PgDn (v0.4.67, Tier 2 **PASS**)
 - [x] **License warn** — `No license: FH` / `SH` on held overview when missing licenses (v0.4.53, Tier 2 **PASS**)
 - [x] **Bundle D** — inventory-gated Preview Regular edge; taken Job+Bonus; Cancelled (v0.4.52, Tier 2 **PASS**)
 - [x] **Bundle C** — Station `here` shares A.4 office gate (v0.4.48, Tier 2 **PASS**)
