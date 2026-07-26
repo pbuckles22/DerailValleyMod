@@ -121,7 +121,7 @@ Look-at **wins** over standing. Locos append `Loco DE6`-style type. **4.1:** sph
 
 ### 1.5 Coupler tight/loose *(was CMD-01c)* — `T2 coupler`
 
-Marks: `+` usable · plain `*` loose chain · `-` open · yellow `*` MU warning.
+Marks: `-` clear · **red** `*` tow not ready · **yellow** `*` loco↔loco MU open · white `+` tow-ready (no MU required) · **blue** `+` loco↔loco with MU (Player.log: `*` / `*Y` / `+`).
 
 **Sign-off**
 
@@ -131,6 +131,25 @@ Marks: `+` usable · plain `*` loose chain · `-` open · yellow `*` MU warning.
 - [x] Fully linked → `+`
 - [x] Standing or look-at drives marks (look-at wins)
 - [x] Mod Off → On; no exceptions
+
+### Bundle E #23 — Loco↔loco coupler colors — **PASS** v0.4.80
+
+**Red** `*` = tow not ready (any unfinished step, loco or car). **Yellow** `*` = loco↔loco tow-ready, MU open (license-agnostic). **White** `+` = tow-ready when MU not required. **Blue** `+` = loco↔loco with MU. Clear = `-`.
+
+**Sign-off**
+
+- [x] UMM **0.4.80** Active
+- [x] Clear → `F- R-`
+- [x] Mid-couple (cock open, air-only, …) → **red** `*`
+- [x] Mech+air ready, MU open → **yellow** `*` (both locos)
+- [x] MU plugged → **blue** `+`
+- [x] Mixed ends (e.g. MU team + air-only rear) → blue `+` / red `*` as appropriate
+- [ ] Optional later: car↔car / loco↔car white `+` confirm
+- [x] Mod Off → On; no exceptions
+
+### Bundle E follow-up — loco↔freight coupler smoke *(optional)*
+
+Confirm **red** mid-couple / **white `+`** tow-ready on car ends.
 
 ---
 

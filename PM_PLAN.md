@@ -104,7 +104,7 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
   - [x] **1.4 Train + local-car HUD** *(was CMD-01b)* — Top bar = usable loco-train totals; second bar = local car; `T2 consist` / `T2 local-car`. *(Red null top superseded by **4.3**.)*
     > As a driver, I want train totals and the car under me on two bars so cab and consist stay clear.
 
-  - [x] **1.5 Coupler tight/loose** *(was CMD-01c)* — Chain tight vs loose marks; `T2 coupler`.
+  - [x] **1.5 Coupler tight/loose** *(was CMD-01c)* — Chain tight vs loose marks; `T2 coupler`. Bundle E **#23** colors: red tow-not-ready / yellow loco↔loco MU open / white tow-ready / blue MU team (**v0.4.80**, Tier 2 **PASS**).
     > As a shunter, I want tight vs loose chains shown so I know if an end is really ready to move.
 
   - [x] **1.6 Look-at inspect** *(was CMD-01d)* — Look-at wins second bar; standing fallback; `Loco …` type; `T2 look-at`.

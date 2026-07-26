@@ -3913,22 +3913,63 @@ internal static class TelemetryReader
         var tightened = mechanicallyCoupled
             && (coupler.IsTightened() || (other != null && other.IsTightened()));
         var airHoseConnected = IsAirHoseConnected(coupler);
+        var cockOpenThisEnd = coupler.IsCockOpen;
         var cocksOpen = AreCocksOpenBothSides(coupler);
-        // Blue MU only when both ends have an adapter (loco↔loco). Missing MU = yellow warning, still usable.
-        var mu = TryGetMuAdapter(coupler);
-        var otherMu = other == null ? null : TryGetMuAdapter(other);
-        var muPresent = mu != null && mu.IsInitialized
-            && otherMu != null && otherMu.IsInitialized;
-        var muConnected = mu != null && otherMu != null
-            && mu.IsInitialized && otherMu.IsInitialized
-            && mu.IsConnected && otherMu.IsConnected;
+        // Loco↔loco MU: read this end's muModule even when not mechanically coupled (MU-only).
+        TryGetMuCableState(coupler, other, out var muPresent, out var muConnected);
         return CouplingLink.Resolve(
             mechanicallyCoupled,
             tightened,
             airHoseConnected,
             cocksOpen,
+            cockOpenThisEnd,
             muPresent,
             muConnected);
+    }
+
+    /// <summary>
+    /// MU cable required when both cars are MU-capable, or when this end's MU is already plugged.
+    /// Connection from <see cref="TrainCar.muModule"/> without needing a mechanical couple first.
+    /// </summary>
+    private static void TryGetMuCableState(
+        Coupler coupler,
+        Coupler? other,
+        out bool muPresent,
+        out bool muConnected)
+    {
+        muPresent = false;
+        muConnected = false;
+
+        var car = coupler.train;
+        if (car == null || !car.IsMultipleUnit)
+        {
+            return;
+        }
+
+        var mod = car.muModule;
+        if (mod != null)
+        {
+            muConnected = coupler.isFrontCoupler ? mod.ConnectedFront : mod.ConnectedRear;
+        }
+        else
+        {
+            var mu = TryGetMuAdapter(coupler);
+            if (mu != null && mu.IsInitialized)
+            {
+                muConnected = mu.IsConnected;
+            }
+        }
+
+        var otherCar = other?.train;
+        if (otherCar != null && otherCar.IsMultipleUnit)
+        {
+            muPresent = true;
+        }
+        else if (muConnected)
+        {
+            // MU plugged with no mechanical couple yet — still a mid-couple / MU context.
+            muPresent = true;
+        }
     }
 
     private static bool AreCocksOpenBothSides(Coupler coupler)

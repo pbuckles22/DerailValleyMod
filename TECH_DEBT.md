@@ -42,9 +42,9 @@ High ROI; frequent pain; not blocking.
 
 
 
-- [ ] **MU yellow smoke (2-loco)** — F11 grants all licenses (incl. MU) @ **0.4.67**; **4.10** loco radar shipped @ **0.4.75** — ready for real 2-loco couple smoke. *(pairs with **1.5** / Bundle E #23)*
+- [x] **MU yellow smoke (2-loco)** — Bundle E **#23** **PASS** @ **0.4.80** (red / yellow / white / blue scheme; MU via `muModule`).
 
-- [ ] **Coupler plain `*` vs yellow `*`** — loose and MU share the glyph; HUD color distinguishes, but plain `T2 coupler` / Format strings cannot. Revisit with MU smoke — distinct debug labels or marks.
+- [x] **Coupler plain `*` vs yellow `*`** — plain/log uses `*Y` for MU-open; HUD color distinguishes red mid-couple vs yellow MU.
 
 - [x] **Cache Load amp reflection by type** — landed with **1.8** (`LoadFieldCache` + `MotorSetFieldMap`).
 

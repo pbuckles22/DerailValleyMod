@@ -77,7 +77,7 @@ Look-at wins; standing fallback when crosshair is not on a car. Hidden when no t
 |------|----------------|----------------|
 | Pipe | `Pipe 2.0 bar` | `— Pipe` |
 | Handbrake | `Handbrake 1` | `— Handbrake` |
-| Couplers | `F+` usable · plain `F*` loose · `F-` open · yellow `F*` MU open | `— Couplers` |
+| Couplers | `F-` clear · **red** `F*` tow not ready (any unfinished step) · **yellow** `F*` loco↔loco tow-ready, MU open · white `F+` tow-ready (car/freight) · **blue** `F+` loco↔loco with MU (logs: `*` / `*Y` / `+`) | `— Couplers` |
 | Car | `Car 3` · `Car N/A` on loco · `Car XX` if not usable train | — |
 | Job | `Job FH-12` | omit when none — Bundle **B.4** |
 | Track | `Track SM-O6I` | omit when unknown/mainline — **4.4** / Bundle **B.3** |

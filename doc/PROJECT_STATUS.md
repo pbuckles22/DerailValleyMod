@@ -15,7 +15,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 |--|--|
 | **Journey** | Stage 1 — Apprentice (“don’t blow up”) |
 | **MVP** | Epic 1 System Monitor HUD |
-| **Version (`main`)** | **0.4.75** *(**4.10** loco radar)* |
+| **Version (`main`)** | **0.4.80** *(Bundle E **#23** coupler colors)* |
 | **WIP branch** | *(none)* |
 
 ---
@@ -24,7 +24,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 | Branch | Role |
 |--------|------|
-| **`main`** | Integration — **0.4.75** loco radar |
+| **`main`** | Integration — **0.4.80** coupler colors |
 
 ---
 
@@ -36,7 +36,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 - [x] **Epic 1** — Diagnostic HUD *(Stage 1 — complete 2026-07-23)*
 - [ ] **Epic 2** — Governor Mode
 - [ ] **Epic 3** — Yard Master / Dispatcher
-- [ ] **Epic 4** — HUD quality *(Bundles B/A/C/D + license-warn + Tier 2 debug + **4.10** @ 0.4.75; Bundle E MU open)*
+- [ ] **Epic 4** — HUD quality *(Bundles B/A/C/D + license-warn + Tier 2 debug + **4.10** + Bundle E **#23** @ 0.4.80)*
 - [ ] **Epic 5** — Digital Catalog
 
 ### Next (Stage 1 leftovers / Stage 2)
@@ -44,14 +44,15 @@ Stack: Unity / C# `net48` / UMM / Harmony
 - [x] **Follow-up** — warn on overview if player lacks required licenses *(v0.4.53, Tier 2 **PASS**)*
 - [x] **Tier 2 debug inject** — F7 consist unload/load + F11 all licenses *(v0.4.67, Tier 2 **PASS**)*
 - [x] **4.10 Loco radar** — nearest other locos AR *(v0.4.75, Tier 2 **PASS**)*
-- [ ] Bundle E **#23** MU yellow 2-loco couple smoke *(unblocked)*
+- [x] Bundle E **#23** loco↔loco coupler colors *(v0.4.80, Tier 2 **PASS**)*
+- [ ] Optional: loco↔freight / car↔car coupler color confirm
 - [ ] Re-smoke **1.7** yellow/red Load when practical
 - [ ] **2.1** Three-Gate → Epic 2
 
 ### Deferred smokes / known issues
 
 - [ ] **A.4 house AR hide** — outdoor false-positive ~12–14 m from Station Office door (SM); loco hide PASS @ v0.4.47. See `TECH_DEBT.md`.
-- [ ] Yellow MU `F*` / `R*` with two locos *(ready to smoke after **4.10**)*
+- [x] Yellow MU `F*` / `R*` with two locos — **PASS** @ 0.4.80 (yellow = tow-ready MU open; blue = MU team)
 - [x] `Empty Cargo` wording (**4.2**) — **PASS** @ 0.4.56
 - [ ] Load ≥80% / ≥95% colors (**1.7**) — F6 force PASS; live hard-pull optional
 
@@ -63,6 +64,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 ## Recently completed
 
+- [x] Bundle E **#23** — coupler HUD: red tow-not-ready / yellow loco↔loco MU open / white tow-ready / blue MU team (v0.4.80, Tier 2 **PASS**)
 - [x] **4.10 Loco radar** — amber other-loco sticky AR; place `FF-A2P` / `FF #Y-…`; rigid pack (v0.4.75, Tier 2 **PASS**)
 - [x] **Tier 2 debug inject** — F7 consist unload/load; F11 all licenses ↔ real; turntable PgUp/PgDn (v0.4.67, Tier 2 **PASS**)
 - [x] **License warn** — `No license: FH` / `SH` on held overview when missing licenses (v0.4.53, Tier 2 **PASS**)

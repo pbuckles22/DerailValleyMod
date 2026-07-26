@@ -117,7 +117,7 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 |--|--|
 | **Project** | *Yard Master Suite* (UMM / Harmony / net48) |
 | **MVP** | **Epic 1** System Monitor HUD |
-| **Version (`main`)** | **0.4.75** — **4.10** loco radar (other-loco AR + place labels) |
+| **Version (`main`)** | **0.4.80** — Bundle E **#23** coupler colors (red/yellow/white/blue) |
 | **Active branch** | `main` |
 
 **Shipped on `main`**
@@ -128,10 +128,11 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 - [x] **4.4–4.9** baseline + Bundles **B** / **A** / **C** / **D** (**v0.4.52**) + **license warn** (**v0.4.53**)
 - [x] **Tier 2 debug inject** — F5–F9 / F11 + PgUp/PgDn turntable (**v0.4.67**; F7/F11 Tier 2 **PASS**)
 - [x] **4.10 Loco radar** — nearest other locos AR (**v0.4.75**, Tier 2 **PASS**)
+- [x] Bundle E **#23** loco↔loco coupler colors (**v0.4.80**, Tier 2 **PASS**)
 
 **Next**
 
-- [ ] Bundle E leftovers (Load yellow/red live hard-pull, **MU yellow 2-loco** — now unblocked)
+- [ ] Bundle E leftovers (optional loco↔freight coupler confirm; Load live hard-pull)
 - [ ] **2.1** Three-Gate → **2.2** Thermal governor (after Epic 4 fix bundles settle)
 - [ ] Known issue: A.4 house outdoor false-hide (~12–14 m) — see `TECH_DEBT.md`
 - Backlog: **3.1b** license-gated re-rail; session reset ~7AM hotkey

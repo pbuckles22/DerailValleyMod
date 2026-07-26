@@ -20,51 +20,74 @@ public class CouplingLinkTests
     }
 
     [Fact]
-    public void Resolve_open_when_not_usable()
+    public void Resolve_open_only_when_fully_clear()
     {
         Assert.Equal(
             CouplerLinkStatus.Open,
-            CouplingLink.Resolve(true, true, false, true, muCablePresent: true, muCableConnected: false));
-        Assert.Equal(
-            CouplerLinkStatus.Open,
-            CouplingLink.Resolve(false, false, false, false, muCablePresent: false, muCableConnected: false));
+            CouplingLink.Resolve(
+                false, false, false, false, cockOpenThisEnd: false,
+                muCablePresent: true, muCableConnected: false));
     }
 
-    [Fact]
-    public void Resolve_loose_when_coupled_but_chain_not_tight()
+    [Theory]
+    [InlineData(false, false, true, false, false, false)]
+    [InlineData(true, false, false, false, false, false)]
+    [InlineData(true, true, false, false, false, false)]
+    [InlineData(true, true, true, false, false, false)]
+    [InlineData(false, false, false, false, true, false)]
+    [InlineData(false, false, false, false, false, true)]
+    [InlineData(true, false, true, true, true, false)]
+    public void Resolve_loose_for_any_mid_couple_order(
+        bool mech,
+        bool tight,
+        bool air,
+        bool cocksBoth,
+        bool cockThis,
+        bool muConnected)
     {
         Assert.Equal(
             CouplerLinkStatus.Loose,
-            CouplingLink.Resolve(true, false, true, true, muCablePresent: false, muCableConnected: false));
-        Assert.Equal(
-            CouplerLinkStatus.Loose,
-            CouplingLink.Resolve(true, false, false, false, muCablePresent: false, muCableConnected: false));
+            CouplingLink.Resolve(
+                mech, tight, air, cocksBoth, cockThis,
+                muCablePresent: true, muCableConnected: muConnected));
     }
 
     [Fact]
-    public void Resolve_mu_warning_when_usable_but_blue_open()
+    public void Resolve_mu_warning_when_usable_loco_pair_mu_open()
     {
         Assert.Equal(
             CouplerLinkStatus.MuWarning,
-            CouplingLink.Resolve(true, true, true, true, muCablePresent: true, muCableConnected: false));
+            CouplingLink.Resolve(
+                true, true, true, true, cockOpenThisEnd: true,
+                muCablePresent: true, muCableConnected: false));
     }
 
     [Fact]
-    public void Resolve_linked_when_usable_and_mu_connected_or_not_needed()
+    public void Resolve_mu_team_when_usable_loco_pair_mu_connected()
+    {
+        Assert.Equal(
+            CouplerLinkStatus.MuTeam,
+            CouplingLink.Resolve(
+                true, true, true, true, cockOpenThisEnd: true,
+                muCablePresent: true, muCableConnected: true));
+    }
+
+    [Fact]
+    public void Resolve_linked_white_when_usable_and_mu_not_required()
     {
         Assert.Equal(
             CouplerLinkStatus.Linked,
-            CouplingLink.Resolve(true, true, true, true, muCablePresent: false, muCableConnected: false));
-        Assert.Equal(
-            CouplerLinkStatus.Linked,
-            CouplingLink.Resolve(true, true, true, true, muCablePresent: true, muCableConnected: true));
+            CouplingLink.Resolve(
+                true, true, true, true, cockOpenThisEnd: true,
+                muCablePresent: false, muCableConnected: false));
     }
 
     [Fact]
-    public void IsUsable_true_for_linked_and_mu_warning()
+    public void IsUsable_true_for_tow_ready_states()
     {
         Assert.True(CouplingLink.IsUsable(CouplerLinkStatus.Linked));
         Assert.True(CouplingLink.IsUsable(CouplerLinkStatus.MuWarning));
+        Assert.True(CouplingLink.IsUsable(CouplerLinkStatus.MuTeam));
         Assert.False(CouplingLink.IsUsable(CouplerLinkStatus.Open));
         Assert.False(CouplingLink.IsUsable(CouplerLinkStatus.Loose));
     }

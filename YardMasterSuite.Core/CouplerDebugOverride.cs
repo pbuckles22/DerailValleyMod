@@ -89,6 +89,7 @@ public static class CouplerDebugOverride
         status switch
         {
             CouplerLinkStatus.Linked => "+",
+            CouplerLinkStatus.MuTeam => "+B",
             CouplerLinkStatus.Loose => "*",
             CouplerLinkStatus.MuWarning => "*Y",
             CouplerLinkStatus.Open => "-",

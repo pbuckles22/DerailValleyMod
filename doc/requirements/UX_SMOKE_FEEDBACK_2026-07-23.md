@@ -34,7 +34,7 @@ Screenshots live in [`ux-smoke-2026-07-23/`](ux-smoke-2026-07-23/).
 | 18 | Complete delivery / clear job bar | **PASS** — job bar cleared after FF-FH-11 complete; Cancelled flash on trash abandon (SM-FH-29) |
 | 19 | No `Next:` when fluids OK | **PASS** — reconfirmed (Fuel/Oil ~72%/71%, no Next chip) |
 | 20–21 | Fluids-low Next station | **PASS then CUT** @ 0.4.54; cut verify **PASS** @ **0.4.55** (no `Next:` with F8/F9 / mainline) |
-| 22–24 | Load colors / MU / Empty Cargo | **#24 Empty Cargo PASS** @ 0.4.56; #22 Load / #23 MU still open |
+| 22–24 | Load colors / MU / Empty Cargo | **#24 Empty Cargo PASS** @ 0.4.56; **#23 coupler colors PASS** @ 0.4.80; #22 Load live hard-pull optional |
 
 **Extra product asks (this session):** remove **`Pos`**; hide house when **inside station**; hide loco icon when **inside loco**; AR markers **sticky under HUD** (with optional on-object duplicate when in sight); **no Monitor HUD on launcher** (no `v… | — Heading` outside world session).
 
@@ -141,7 +141,9 @@ Screenshots live in [`ux-smoke-2026-07-23/`](ux-smoke-2026-07-23/).
 
 ### Bundle E — Deferred / cuts
 - ~~Fluids-low **Next:** station (#20–21)~~ **CUT** with **4.5** (nearest-yard chip rejected).
-- Load yellow/red (#22), MU coupler yellow (#23), Empty Cargo wording (#24).
+- Load yellow/red (#22) live hard-pull — optional.
+- ~~MU coupler yellow (#23)~~ **PASS** @ **0.4.80** (red/yellow/white/blue).
+- ~~Empty Cargo wording (#24)~~ **PASS**.
 - ~~Delivery clears job bar (#18)~~ **PASS**.
 
 ---

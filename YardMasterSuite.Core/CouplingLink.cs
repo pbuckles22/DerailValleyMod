@@ -2,7 +2,8 @@ namespace YardMasterSuite.Core;
 
 /// <summary>
 /// Usable link = mechanical + tightened + air hose + cocks open both sides.
-/// MU blue wires are optional for running; missing MU on loco↔loco is a warning only.
+/// Mid-couple (any order) → Loose. Loco↔loco usable without MU → MuWarning.
+/// Loco↔loco with MU → MuTeam. Otherwise usable → Linked.
 /// </summary>
 public static class CouplingLink
 {
@@ -13,38 +14,62 @@ public static class CouplingLink
         bool cocksOpenBothSides) =>
         mechanicallyCoupled && tightened && airHoseConnected && cocksOpenBothSides;
 
+    /// <summary>
+    /// True when something is started on this end but the tow link is not fully ready
+    /// (air-only, metal-only, this cock open, MU early, etc. — any order).
+    /// </summary>
+    public static bool HasMidCoupleProgress(
+        bool mechanicallyCoupled,
+        bool tightened,
+        bool airHoseConnected,
+        bool cocksOpenBothSides,
+        bool cockOpenThisEnd,
+        bool muCableConnected) =>
+        mechanicallyCoupled
+        || tightened
+        || airHoseConnected
+        || cocksOpenBothSides
+        || cockOpenThisEnd
+        || muCableConnected;
+
     public static CouplerLinkStatus Resolve(
         bool mechanicallyCoupled,
         bool tightened,
         bool airHoseConnected,
         bool cocksOpenBothSides,
+        bool cockOpenThisEnd,
         bool muCablePresent,
         bool muCableConnected)
     {
-        if (!mechanicallyCoupled)
+        if (IsUsableLink(mechanicallyCoupled, tightened, airHoseConnected, cocksOpenBothSides))
         {
-            return CouplerLinkStatus.Open;
+            if (muCablePresent)
+            {
+                return muCableConnected
+                    ? CouplerLinkStatus.MuTeam
+                    : CouplerLinkStatus.MuWarning;
+            }
+
+            return CouplerLinkStatus.Linked;
         }
 
-        if (!tightened)
+        if (HasMidCoupleProgress(
+                mechanicallyCoupled,
+                tightened,
+                airHoseConnected,
+                cocksOpenBothSides,
+                cockOpenThisEnd,
+                muCableConnected))
         {
             return CouplerLinkStatus.Loose;
         }
 
-        if (!IsUsableLink(mechanicallyCoupled, tightened, airHoseConnected, cocksOpenBothSides))
-        {
-            return CouplerLinkStatus.Open;
-        }
-
-        if (muCablePresent && !muCableConnected)
-        {
-            return CouplerLinkStatus.MuWarning;
-        }
-
-        return CouplerLinkStatus.Linked;
+        return CouplerLinkStatus.Open;
     }
 
-    /// <summary>True when the end is usable for train continuity (MU warning still counts).</summary>
+    /// <summary>True when the end is usable for train continuity (MU open still counts).</summary>
     public static bool IsUsable(CouplerLinkStatus status) =>
-        status is CouplerLinkStatus.Linked or CouplerLinkStatus.MuWarning;
+        status is CouplerLinkStatus.Linked
+            or CouplerLinkStatus.MuWarning
+            or CouplerLinkStatus.MuTeam;
 }
