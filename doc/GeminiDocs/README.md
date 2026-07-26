@@ -18,6 +18,7 @@ Promote decisions into tracked docs (`PM_PLAN.md`, `doc/requirements/*`, `TEST_P
 
 | Pack | Topic |
 |------|--------|
+| [`Loco_Radar_4_10_Sticky_Pack.md`](./Loco_Radar_4_10_Sticky_Pack.md) | **4.10 loco radar** — sticky bar, place (`SM-…` vs `FF #Y`), Venn fix via rigid cluster edge-fit (0.4.73). Attachments: `Loco_Radar_4_10_Sticky_Pack__*.cs` |
 | [`Key Buffer Implementation.md`](./Key%20Buffer%20Implementation.md) | **OFF-TOPIC for Yard Master / Bundle D** — Windows hotkey swallow/inject for \` double-tap screenshot (`GlobalHotkeyManager`, `SendInput`, WPF `Dispatcher`). Not Preview edge. |
 | [`Test Plan.md`](./Test%20Plan.md) | Bundle D smoke letters (may be stale vs v0.4.52 inventory gate) — prefer tracked [`TEST_PLAN.md`](../../TEST_PLAN.md) §4.8. |
 

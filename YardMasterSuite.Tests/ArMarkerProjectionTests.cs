@@ -21,6 +21,22 @@ public class ArMarkerProjectionTests
     }
 
     [Fact]
+    public void ClampCenterToFit_keeps_full_half_extent_inside()
+    {
+        Assert.Equal(48f, ArMarkerProjection.ClampCenterToFit(10f, halfExtent: 40f, size: W, edgeMargin: 8f));
+        Assert.Equal(W - 48f, ArMarkerProjection.ClampCenterToFit(W - 5f, 40f, W, 8f));
+        Assert.Equal(400f, ArMarkerProjection.ClampCenterToFit(400f, 40f, W, 8f));
+    }
+
+    [Fact]
+    public void MarkerBoxFitsInView_rejects_clipped_box()
+    {
+        Assert.True(ArMarkerProjection.MarkerBoxFitsInView(400f, 300f, 40f, 40f, W, H, 8f));
+        Assert.False(ArMarkerProjection.MarkerBoxFitsInView(20f, 300f, 40f, 40f, W, H, 8f));
+        Assert.False(ArMarkerProjection.MarkerBoxFitsInView(400f, 20f, 40f, 40f, W, H, 8f));
+    }
+
+    [Fact]
     public void ApplyBehindCameraEdge_noop_when_ahead()
     {
         float x = 100f;
@@ -226,6 +242,7 @@ public class ArMarkerDisplayTests
     public void FormatLabel_glyph_and_distance()
     {
         Assert.Equal("▲ 120m", ArMarkerDisplay.FormatLabel(ArWaypointKind.Loco, 120.4f));
+        Assert.Equal("▲ 50m", ArMarkerDisplay.FormatLabel(ArWaypointKind.OtherLoco, 50f));
         Assert.Equal("⌂ 15m", ArMarkerDisplay.FormatLabel(ArWaypointKind.Station, 15f));
         Assert.Equal("● 3m", ArMarkerDisplay.FormatLabel(ArWaypointKind.Pin, 2.6f));
         Assert.Equal("▲", ArMarkerDisplay.FormatLabel(ArWaypointKind.Loco, null));

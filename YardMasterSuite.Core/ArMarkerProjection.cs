@@ -10,6 +10,8 @@ public enum ArWaypointKind
     Loco = 0,
     Station = 1,
     Pin = 2,
+    /// <summary>Other spawned loco for MU / yard find (4.10 radar).</summary>
+    OtherLoco = 3,
 }
 
 /// <summary>
@@ -182,6 +184,41 @@ public static class ArMarkerProjection
     }
 
     /// <summary>
+    /// Clamp a box center so the full half-extent stays inside the safe rect (whole marker on-screen).
+    /// </summary>
+    public static float ClampCenterToFit(
+        float center,
+        float halfExtent,
+        float size,
+        float edgeMargin)
+    {
+        var pad = Math.Max(0f, edgeMargin) + Math.Max(0f, halfExtent);
+        var min = pad;
+        var max = Math.Max(min, size - pad);
+        return Math.Min(max, Math.Max(min, center));
+    }
+
+    /// <summary>
+    /// True when a marker box centered at (x, guiY) fits in the screen with margin (GUI Y top-left).
+    /// </summary>
+    public static bool MarkerBoxFitsInView(
+        float centerX,
+        float centerGuiY,
+        float halfWidth,
+        float halfHeight,
+        float screenWidth,
+        float screenHeight,
+        float edgeMargin)
+    {
+        var padX = edgeMargin + halfWidth;
+        var padY = edgeMargin + halfHeight;
+        return centerX >= padX
+            && centerX <= screenWidth - padX
+            && centerGuiY >= padY
+            && centerGuiY <= screenHeight - padY;
+    }
+
+    /// <summary>
     /// Clamp a screen point into the safe rect. Returns true if moved.
     /// </summary>
     public static bool ClampToScreen(
@@ -235,11 +272,12 @@ public static class ArMarkerDisplay
         return $"{meters}m";
     }
 
-    /// <summary>Distinct shapes (not color-only): loco ▲, station ⌂, pin ●.</summary>
+    /// <summary>Distinct shapes (not color-only): loco ▲, station ⌂, pin ●; other loco same ▲.</summary>
     public static string Glyph(ArWaypointKind kind) =>
         kind switch
         {
             ArWaypointKind.Loco => "▲",
+            ArWaypointKind.OtherLoco => "▲",
             ArWaypointKind.Station => "⌂",
             ArWaypointKind.Pin => "●",
             _ => "•",

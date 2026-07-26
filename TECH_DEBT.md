@@ -42,7 +42,7 @@ High ROI; frequent pain; not blocking.
 
 
 
-- [ ] **MU yellow smoke (2-loco)** — F11 grants all licenses (incl. MU) @ **0.4.67**; still need real 2-loco couple smoke. Blocked on finding yard locos → **4.10 loco radar**. *(pairs with **1.5** / Bundle E #23)*
+- [ ] **MU yellow smoke (2-loco)** — F11 grants all licenses (incl. MU) @ **0.4.67**; **4.10** loco radar shipped @ **0.4.75** — ready for real 2-loco couple smoke. *(pairs with **1.5** / Bundle E #23)*
 
 - [ ] **Coupler plain `*` vs yellow `*`** — loose and MU share the glyph; HUD color distinguishes, but plain `T2 coupler` / Format strings cannot. Revisit with MU smoke — distinct debug labels or marks.
 

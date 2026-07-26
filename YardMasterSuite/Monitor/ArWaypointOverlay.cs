@@ -6,7 +6,7 @@ using YardMasterSuite.Core;
 namespace YardMasterSuite.Monitor;
 
 /// <summary>
-/// AR screen-space wayfinding markers (4.9): loco / station office / pin icons.
+/// AR screen-space wayfinding markers (4.9 + 4.10): loco / station office / pin / other-loco radar.
 /// PNG shapes are primary; tint colors are secondary. Glyph text is fallback only.
 /// </summary>
 public sealed class ArWaypointOverlay : MonoBehaviour
@@ -18,8 +18,11 @@ public sealed class ArWaypointOverlay : MonoBehaviour
     private const float PinVerticalLiftMeters = 0.6f;
 
     private static readonly Color LocoColor = new(0.31f, 0.76f, 0.97f, 1f);
+    private static readonly Color OtherLocoColor = new(1f, 0.72f, 0.28f, 1f);
     private static readonly Color StationColor = new(0.51f, 0.78f, 0.52f, 1f);
     private static readonly Color PinColor = new(1f, 0.84f, 0.31f, 1f);
+
+    private const int MaxFrames = 3 + LocoRadarSelection.DefaultMaxResults;
 
     private GUIStyle? _labelStyle;
     private Texture2D? _locoIcon;
@@ -35,8 +38,9 @@ public sealed class ArWaypointOverlay : MonoBehaviour
     private MarkerMotion _locoMotion;
     private MarkerMotion _stationMotion;
     private MarkerMotion _pinMotion;
+    private readonly MarkerMotion[] _radarMotions = new MarkerMotion[LocoRadarSelection.DefaultMaxResults];
 
-    private readonly MarkerFrame[] _frames = new MarkerFrame[3];
+    private readonly MarkerFrame[] _frames = new MarkerFrame[MaxFrames];
 
     private struct MarkerMotion
     {
@@ -52,6 +56,7 @@ public sealed class ArWaypointOverlay : MonoBehaviour
         public float LastDrawX;
         public float LastDrawGuiY;
         public bool HasLastDraw;
+        public int RadarSlot;
     }
 
     private struct MarkerFrame
@@ -106,7 +111,8 @@ public sealed class ArWaypointOverlay : MonoBehaviour
                 LocoColor,
                 _locoIcon,
                 ref _locoMotion,
-                out _frames[n]))
+                out _frames[n],
+                labelOverride: null))
         {
             n++;
         }
@@ -119,7 +125,8 @@ public sealed class ArWaypointOverlay : MonoBehaviour
                 StationColor,
                 _stationIcon,
                 ref _stationMotion,
-                out _frames[n]))
+                out _frames[n],
+                labelOverride: null))
         {
             n++;
         }
@@ -132,12 +139,50 @@ public sealed class ArWaypointOverlay : MonoBehaviour
                 PinColor,
                 _pinIcon,
                 ref _pinMotion,
-                out _frames[n]))
+                out _frames[n],
+                labelOverride: null))
         {
             n++;
         }
 
+        var radarCount = TelemetryReader.GetArOtherLocoCount();
+        for (var r = 0; r < radarCount && n < MaxFrames; r++)
+        {
+            if (!TelemetryReader.TryGetArOtherLoco(r, out var world, out var caption))
+            {
+                _radarMotions[r].Progress = 0f;
+                _radarMotions[r].HasObjectAnchor = false;
+                _radarMotions[r].HasLastDraw = false;
+                _radarMotions[r].WantedOnObject = false;
+                continue;
+            }
+
+            _radarMotions[r].RadarSlot = r;
+            if (TryPrepareWorldMarker(
+                    cam,
+                    playerPos,
+                    ArWaypointKind.OtherLoco,
+                    world,
+                    caption,
+                    OtherLocoColor,
+                    _locoIcon,
+                    ref _radarMotions[r],
+                    out _frames[n]))
+            {
+                n++;
+            }
+        }
+
+        for (var r = radarCount; r < _radarMotions.Length; r++)
+        {
+            _radarMotions[r].Progress = 0f;
+            _radarMotions[r].HasObjectAnchor = false;
+            _radarMotions[r].HasLastDraw = false;
+            _radarMotions[r].WantedOnObject = false;
+        }
+
         ApplyEdgeStackOffsets(_frames, n);
+        ApplyNonOverlappingOffsets(_frames, n);
 
         var locoOn = false;
         var stationOn = false;
@@ -170,7 +215,8 @@ public sealed class ArWaypointOverlay : MonoBehaviour
         Color color,
         Texture2D? icon,
         ref MarkerMotion motion,
-        out MarkerFrame frame)
+        out MarkerFrame frame,
+        string? labelOverride)
     {
         frame = default;
         if (!getter(out var world))
@@ -182,6 +228,30 @@ public sealed class ArWaypointOverlay : MonoBehaviour
             return false;
         }
 
+        return TryPrepareWorldMarker(
+            cam,
+            playerPos,
+            kind,
+            world,
+            labelOverride,
+            color,
+            icon,
+            ref motion,
+            out frame);
+    }
+
+    private bool TryPrepareWorldMarker(
+        Camera cam,
+        Vector3 playerPos,
+        ArWaypointKind kind,
+        Vector3 world,
+        string? labelOverride,
+        Color color,
+        Texture2D? icon,
+        ref MarkerMotion motion,
+        out MarkerFrame frame)
+    {
+        frame = default;
         var lift = kind == ArWaypointKind.Pin ? PinVerticalLiftMeters : VerticalLiftMeters;
         var lifted = world + Vector3.up * lift;
         var toTarget = lifted - cam.transform.position;
@@ -195,13 +265,17 @@ public sealed class ArWaypointOverlay : MonoBehaviour
         var dy = world.y - playerPos.y;
         var dz = world.z - playerPos.z;
         var dist = Mathf.Sqrt(dx * dx + dy * dy + dz * dz);
-        var distLabel = ArMarkerDisplay.FormatDistanceOnly(dist);
+        var distLabel = labelOverride ?? ArMarkerDisplay.FormatDistanceOnly(dist);
 
         var labelSize = string.IsNullOrEmpty(distLabel)
             ? Vector2.zero
             : _labelStyle!.CalcSize(new GUIContent(distLabel));
         var iconH = icon != null ? IconPixels : 22f;
-        var height = iconH + (labelSize.y > 0 ? labelSize.y + 2f : 0f);
+        var iconW = icon != null ? IconPixels : 22f;
+        var contentW = Mathf.Max(iconW, labelSize.x) + 8f + 8f;
+        var height = iconH + (labelSize.y > 0 ? labelSize.y + 2f : 0f) + 4f;
+        var halfW = contentW * 0.5f;
+        var halfH = height * 0.5f;
 
         var stackBottom = MonitorHudDriver.LastStackBottomGuiY;
         if (stackBottom < 1f)
@@ -232,6 +306,11 @@ public sealed class ArWaypointOverlay : MonoBehaviour
 
         var stickyCenterGuiY = stickyTop + height * 0.5f;
         ArStickyRowPlacement.PinScreenYToStickyRow(stickyCenterGuiY, Screen.height, ref stickyScreenY);
+        stickyX = ArMarkerProjection.ClampCenterToFit(
+            stickyX,
+            halfW,
+            Screen.width,
+            ArMarkerProjection.DefaultEdgeMarginPixels);
         ArMarkerProjection.ClampToScreen(
             stickyX,
             stickyScreenY,
@@ -240,20 +319,46 @@ public sealed class ArWaypointOverlay : MonoBehaviour
             ArMarkerProjection.DefaultEdgeMarginPixels,
             out stickyX,
             out stickyScreenY);
+        stickyX = ArMarkerProjection.ClampCenterToFit(
+            stickyX,
+            halfW,
+            Screen.width,
+            ArMarkerProjection.DefaultEdgeMarginPixels);
         var stickyGuiCenter = ArStickyRowPlacement.MarkerTopGuiY(stickyTop, height) + height * 0.5f;
 
-        var wantOnObject = ArMarkerProjection.ShouldPlaceOnObject(
-            behind,
-            screen.z,
-            screen.x,
-            screen.y,
-            Screen.width,
-            Screen.height);
-        if (wantOnObject || (!behind && screen.z > 0.05f))
+        // Radar markers always share the sticky locator bar (same as house when clamped).
+        // Other kinds use on-object only when the full box fits in view.
+        var wantOnObject = kind != ArWaypointKind.OtherLoco
+            && ArMarkerProjection.ShouldPlaceOnObject(
+                behind,
+                screen.z,
+                screen.x,
+                screen.y,
+                Screen.width,
+                Screen.height);
+        if (wantOnObject || (!behind && screen.z > 0.05f && kind != ArWaypointKind.OtherLoco))
         {
             motion.LastObjectX = screen.x;
             motion.LastObjectGuiY = ArMarkerProjection.ToGuiY(screen.y, Screen.height);
             motion.HasObjectAnchor = true;
+        }
+
+        if (wantOnObject)
+        {
+            var objectGuiY = motion.HasObjectAnchor
+                ? motion.LastObjectGuiY
+                : ArMarkerProjection.ToGuiY(screen.y, Screen.height);
+            if (!ArMarkerProjection.MarkerBoxFitsInView(
+                    screen.x,
+                    objectGuiY,
+                    halfW,
+                    halfH,
+                    Screen.width,
+                    Screen.height,
+                    ArMarkerProjection.DefaultEdgeMarginPixels))
+            {
+                wantOnObject = false;
+            }
         }
 
         if (!motion.HasObjectAnchor && wantOnObject)
@@ -295,7 +400,7 @@ public sealed class ArWaypointOverlay : MonoBehaviour
             ? margin
             : Math.Max(margin, Screen.width - margin);
 
-        var indices = new int[3];
+        var indices = new int[n];
         var count = 0;
         for (var i = 0; i < n; i++)
         {
@@ -333,6 +438,92 @@ public sealed class ArWaypointOverlay : MonoBehaviour
         {
             frames[indices[i]].StickyX = xs[i];
         }
+    }
+
+    /// <summary>
+    /// Every visible marker is a non-overlapping square — pack colliding AABBs side-by-side (no Venn).
+    /// </summary>
+    private void ApplyNonOverlappingOffsets(MarkerFrame[] frames, int n)
+    {
+        if (n < 2 || _labelStyle == null)
+        {
+            return;
+        }
+
+        var xs = new float[n];
+        var ys = new float[n];
+        var halfW = new float[n];
+        var halfH = new float[n];
+        for (var i = 0; i < n; i++)
+        {
+            ref var f = ref frames[i];
+            if (f.WantOnObject && f.Motion.HasObjectAnchor)
+            {
+                xs[i] = f.Motion.LastObjectX;
+                ys[i] = f.Motion.LastObjectGuiY;
+            }
+            else
+            {
+                xs[i] = f.StickyX;
+                ys[i] = f.StickyGuiCenter;
+            }
+
+            EstimateMarkerHalfExtents(f.Icon, f.DistLabel, out halfW[i], out halfH[i]);
+        }
+
+        ArScreenClusterLayout.PackNonOverlapping(
+            xs,
+            ys,
+            halfW,
+            halfH,
+            n,
+            ArScreenClusterLayout.DefaultGapPixels,
+            Screen.width,
+            ArMarkerProjection.DefaultEdgeMarginPixels);
+
+        for (var i = 0; i < n; i++)
+        {
+            ref var f = ref frames[i];
+            if (f.WantOnObject && f.Motion.HasObjectAnchor)
+            {
+                var motion = f.Motion;
+                motion.LastObjectX = xs[i];
+                // Y only: never crush X gaps with per-marker clamp (that caused Venn at screen edges).
+                motion.LastObjectGuiY = ArMarkerProjection.ClampCenterToFit(
+                    ys[i],
+                    halfH[i],
+                    Screen.height,
+                    ArMarkerProjection.DefaultEdgeMarginPixels);
+                f.Motion = motion;
+            }
+            else
+            {
+                f.StickyX = xs[i];
+                // Snap sticky draw — lerp from a crushed prior frame recreated the Venn.
+                var motion = f.Motion;
+                motion.Progress = 1f;
+                motion.WantedOnObject = false;
+                motion.LastDrawX = xs[i];
+                motion.LastDrawGuiY = f.StickyGuiCenter;
+                motion.HasLastDraw = true;
+                motion.FromX = xs[i];
+                motion.FromGuiY = f.StickyGuiCenter;
+                f.Motion = motion;
+            }
+        }
+    }
+
+    private void EstimateMarkerHalfExtents(Texture2D? icon, string? distLabel, out float halfW, out float halfH)
+    {
+        var iconH = icon != null ? IconPixels : 22f;
+        var iconW = icon != null ? IconPixels : 22f;
+        var labelSize = string.IsNullOrEmpty(distLabel)
+            ? Vector2.zero
+            : _labelStyle!.CalcSize(new GUIContent(distLabel!));
+        var width = Mathf.Max(iconW, labelSize.x) + 8f + 8f; // content pad + plate
+        var height = iconH + (labelSize.y > 0 ? labelSize.y + 2f : 0f) + 4f; // plate
+        halfW = width * 0.5f;
+        halfH = height * 0.5f;
     }
 
     private void FinishMarkerMotionAndDraw(ref MarkerFrame frame, float deltaSeconds)
@@ -394,6 +585,14 @@ public sealed class ArWaypointOverlay : MonoBehaviour
                 break;
             case ArWaypointKind.Pin:
                 _pinMotion = motion;
+                break;
+            case ArWaypointKind.OtherLoco:
+                var slot = motion.RadarSlot;
+                if (slot >= 0 && slot < _radarMotions.Length)
+                {
+                    _radarMotions[slot] = motion;
+                }
+
                 break;
         }
 

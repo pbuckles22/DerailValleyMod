@@ -63,6 +63,15 @@ internal static class TelemetryReader
     private static SignDebug[] _signDebugCache = Array.Empty<SignDebug>();
     private static float _signDebugCacheAt = -999f;
 
+    /// <summary>FindObjectsOfType throttle for other-loco AR radar (4.10).</summary>
+    private const float LocoRadarCacheSeconds = 2.5f;
+
+    private static float _locoRadarCachedAt = -999f;
+    private static readonly TrainCar?[] _locoRadarCars = new TrainCar?[LocoRadarSelection.DefaultMaxResults];
+    private static readonly string?[] _locoRadarTypeIds = new string?[LocoRadarSelection.DefaultMaxResults];
+    private static readonly string?[] _locoRadarPlaceLabels = new string?[LocoRadarSelection.DefaultMaxResults];
+    private static int _locoRadarCount;
+
     /// <summary>Call once at the start of each Monitor HUD refresh.</summary>
     public static void BeginHudTick()
     {
@@ -471,6 +480,336 @@ internal static class TelemetryReader
         catch
         {
             return false;
+        }
+    }
+
+    /// <summary>How many other-loco AR radar markers are available (4.10). Throttled scan.</summary>
+    public static int GetArOtherLocoCount()
+    {
+        EnsureLocoRadarCache();
+        return _locoRadarCount;
+    }
+
+    /// <summary>
+    /// Nearest other loco for AR radar (4.10). Excludes self / my-loco AR target / same consist.
+    /// Caption is live distance; world position comes from the cached car transform.
+    /// </summary>
+    public static bool TryGetArOtherLoco(int index, out Vector3 world, out string caption)
+    {
+        world = default;
+        caption = "";
+        try
+        {
+            EnsureLocoRadarCache();
+            if (index < 0 || index >= _locoRadarCount)
+            {
+                return false;
+            }
+
+            var car = _locoRadarCars[index];
+            if (car == null)
+            {
+                return false;
+            }
+
+            world = car.transform.position;
+            var dist = 0f;
+            if (TryGetPlayerPosition(out var px, out var py, out var pz))
+            {
+                var dx = world.x - px;
+                var dy = world.y - py;
+                var dz = world.z - pz;
+                dist = Mathf.Sqrt((dx * dx) + (dy * dy) + (dz * dz));
+            }
+
+            caption = LocoRadarDisplay.FormatCaption(
+                _locoRadarTypeIds[index],
+                dist,
+                _locoRadarPlaceLabels[index]);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static void EnsureLocoRadarCache()
+    {
+        if (Time.unscaledTime - _locoRadarCachedAt < LocoRadarCacheSeconds)
+        {
+            return;
+        }
+
+        _locoRadarCachedAt = Time.unscaledTime;
+        _locoRadarCount = 0;
+        for (var i = 0; i < _locoRadarCars.Length; i++)
+        {
+            _locoRadarCars[i] = null;
+            _locoRadarTypeIds[i] = null;
+            _locoRadarPlaceLabels[i] = null;
+        }
+
+        if (!TryGetPlayerPosition(out var px, out var py, out var pz))
+        {
+            return;
+        }
+
+        TrainCar[] allCars;
+        try
+        {
+            allCars = Object.FindObjectsOfType<TrainCar>() ?? Array.Empty<TrainCar>();
+        }
+        catch
+        {
+            return;
+        }
+
+        var exclude = new HashSet<int>();
+        CollectLocoRadarExclusions(exclude);
+
+        var candidates = new List<LocoRadarCandidate>(8);
+        var byId = new Dictionary<int, TrainCar>(8);
+        for (var i = 0; i < allCars.Length; i++)
+        {
+            var car = allCars[i];
+            if (car == null || !car.IsLoco)
+            {
+                continue;
+            }
+
+            int id;
+            try
+            {
+                id = car.GetInstanceID();
+            }
+            catch
+            {
+                continue;
+            }
+
+            if (exclude.Contains(id))
+            {
+                continue;
+            }
+
+            Vector3 pos;
+            try
+            {
+                pos = car.transform.position;
+            }
+            catch
+            {
+                continue;
+            }
+
+            var dx = pos.x - px;
+            var dy = pos.y - py;
+            var dz = pos.z - pz;
+            candidates.Add(new LocoRadarCandidate(id, (dx * dx) + (dy * dy) + (dz * dz)));
+            byId[id] = car;
+        }
+
+        var ranked = new int[LocoRadarSelection.DefaultMaxResults];
+        var n = LocoRadarSelection.RankNearest(
+            candidates,
+            excludeIds: null,
+            LocoRadarSelection.DefaultMaxResults,
+            ranked);
+        for (var i = 0; i < n; i++)
+        {
+            if (!byId.TryGetValue(ranked[i], out var car) || car == null)
+            {
+                continue;
+            }
+
+            _locoRadarCars[_locoRadarCount] = car;
+            _locoRadarTypeIds[_locoRadarCount] = TryGetLocoTypeId(car);
+            _locoRadarPlaceLabels[_locoRadarCount] = TryGetLocoRadarPlaceLabel(car);
+            _locoRadarCount++;
+        }
+    }
+
+    private static void CollectLocoRadarExclusions(HashSet<int> exclude)
+    {
+        void AddCar(TrainCar? car)
+        {
+            if (car == null)
+            {
+                return;
+            }
+
+            try
+            {
+                exclude.Add(car.GetInstanceID());
+            }
+            catch
+            {
+                // ignored
+            }
+        }
+
+        void AddTrainsetLocos(TrainCar? seed)
+        {
+            if (seed == null)
+            {
+                return;
+            }
+
+            AddCar(seed);
+            try
+            {
+                var cars = seed.trainset?.cars;
+                if (cars == null)
+                {
+                    return;
+                }
+
+                for (var i = 0; i < cars.Count; i++)
+                {
+                    var c = cars[i];
+                    if (c != null && c.IsLoco)
+                    {
+                        AddCar(c);
+                    }
+                }
+            }
+            catch
+            {
+                // ignored
+            }
+        }
+
+        AddTrainsetLocos(PlayerManager.Car);
+        AddCar(PlayerManager.LastLoco);
+        AddTrainsetLocos(TryGetUsableLoco());
+    }
+
+    private static string? TryGetLocoTypeId(TrainCar car)
+    {
+        try
+        {
+            if (!car.IsLoco)
+            {
+                return null;
+            }
+
+            return car.carLivery?.parentType?.id ?? car.carLivery?.id;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Place for radar: identifiable <c>SM-T12P</c>-style track alone; otherwise city + track (e.g. <c>FF #Y</c>).
+    /// Spur tracks may be <c>IsGeneric()</c> but still expose FullDisplayID / yardId <c>#Y</c> — keep that token.
+    /// </summary>
+    private static string? TryGetLocoRadarPlaceLabel(TrainCar car)
+    {
+        try
+        {
+            string? trackDisplay = null;
+            string? trackYard = null;
+            var track = car.logicCar?.CurrentTrack;
+            var id = track?.ID;
+            if (id != null)
+            {
+                // Prefer FullDisplayID even when IsGeneric — #Y spurs are often generic but labeled.
+                var display = id.FullDisplayID?.Trim();
+                if (!string.IsNullOrEmpty(display))
+                {
+                    trackDisplay = display;
+                }
+
+                trackYard = id.yardId?.Trim();
+                // If display was blank, keep spur junk (#Y) as the track token (not as city).
+                if (string.IsNullOrEmpty(trackDisplay)
+                    && !string.IsNullOrEmpty(trackYard)
+                    && !LocoRadarDisplay.IsUsableCityYardId(trackYard))
+                {
+                    trackDisplay = trackYard;
+                }
+            }
+
+            string? city;
+            if (LocoRadarDisplay.TrackIncludesCity(trackDisplay))
+            {
+                city = null;
+            }
+            else
+            {
+                var nearest = TryGetNearestYardId(car.transform.position);
+                city = LocoRadarDisplay.IsUsableCityYardId(nearest) ? nearest : null;
+                if (city == null && LocoRadarDisplay.IsUsableCityYardId(trackYard))
+                {
+                    city = trackYard;
+                }
+            }
+
+            return LocoRadarDisplay.FormatPlace(trackDisplay, city);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>Closest station YardID (or Name) to world XZ — no job-zone gate.</summary>
+    private static string? TryGetNearestYardId(Vector3 world)
+    {
+        try
+        {
+            var stations = StationController.allStations;
+            if (stations == null || stations.Count == 0)
+            {
+                return null;
+            }
+
+            StationController? best = null;
+            var bestSqr = float.MaxValue;
+            for (var i = 0; i < stations.Count; i++)
+            {
+                var candidate = stations[i];
+                if (candidate == null || !candidate.StationInfoValid)
+                {
+                    continue;
+                }
+
+                var range = candidate.GetComponent<StationJobGenerationRange>();
+                var center = range != null
+                    ? range.transform.position
+                    : candidate.transform.position;
+                var dx = world.x - center.x;
+                var dz = world.z - center.z;
+                var sqr = (dx * dx) + (dz * dz);
+                if (sqr >= bestSqr)
+                {
+                    continue;
+                }
+
+                bestSqr = sqr;
+                best = candidate;
+            }
+
+            if (best == null)
+            {
+                return null;
+            }
+
+            var yardId = best.stationInfo?.YardID?.Trim();
+            if (!string.IsNullOrEmpty(yardId))
+            {
+                return yardId;
+            }
+
+            var name = best.stationInfo?.Name?.Trim();
+            return string.IsNullOrEmpty(name) ? null : name;
+        }
+        catch
+        {
+            return null;
         }
     }
 

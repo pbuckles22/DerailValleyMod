@@ -406,6 +406,18 @@ Screen markers: loco / office / pin **PNG icons** (shape primary). Edge clamp wh
 - [ ] Turn away — marker clamps to screen edge
 - [ ] `T2 ar` shows loco / office / pin set changes
 
+### 4.10 Loco radar — **PASS** v0.4.75
+
+Nearest **other** locos as amber AR markers on the sticky locator bar. Place: `SM-T12P` / `FF-A2P` or `FF #Y-…` (city + spur). Rigid AABB pack. Unblocks Bundle E **#23**.
+
+**Sign-off**
+
+- [x] UMM **0.4.75** Active
+- [x] Radar on sticky bar — full plate visible
+- [x] Turntable / edge pair — two squares side-by-side, no Venn
+- [x] `SM-…` / `FF-A2P` track only; spur → **`FF #Y-…`** (city + track)
+- [x] No YardMaster exceptions in Player.log
+
 ### 4.7 HUD strip IA — **PASS** v0.4.23
 
 All rows centered. Stack: loco → look-at → always-on bar (same chrome).
