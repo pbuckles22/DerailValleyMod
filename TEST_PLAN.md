@@ -144,12 +144,16 @@ Marks: `-` clear · **red** `*` tow not ready · **yellow** `*` loco↔loco MU o
 - [x] Mech+air ready, MU open → **yellow** `*` (both locos)
 - [x] MU plugged → **blue** `+`
 - [x] Mixed ends (e.g. MU team + air-only rear) → blue `+` / red `*` as appropriate
-- [ ] Optional later: car↔car / loco↔car white `+` confirm
+- [x] Optional: car↔car / loco↔car white `+` confirm — **PASS** @ 0.4.80 (player pics + Player.log)
 - [x] Mod Off → On; no exceptions
 
-### Bundle E follow-up — loco↔freight coupler smoke *(optional)*
+### Bundle E follow-up — loco↔freight coupler smoke — **PASS** v0.4.80
 
-Confirm **red** mid-couple / **white `+`** tow-ready on car ends.
+Confirm **red** mid-couple / **white `+`** tow-ready on car ends — **PASS** (loco↔freight + car↔car; Off→On clean).
+
+### Bundle E #22 — Load live hard-pull — **WAIVED** 2026-07-26
+
+F6 force yellow/red already **PASS**. Dedicated live hard-pull setup not worth it; watch colors in normal play.
 
 ---
 
@@ -320,7 +324,7 @@ Former `Next: … [N km]` on loco bar when fluids low — **removed**. Smoke A1�
 
 ### 4.6 Station waypoint (foot) — `T2 station` — Bundle **C** **PASS** v0.4.48
 
-Always-on: in job-generation zone show `Station {YardID} {bearing} {m}m` (or `here`). **No** map coords. Omit outside zones. **`here`** = same office gate as house AR hide (AABB / 20 m fallback).
+Always-on: in job-generation zone show `Station {YardID} {bearing} {m}m` (or `here`). **No** map coords. Omit outside zones. **`here`** = same office gate as house AR hide (AABB / 20 m fallback). Apron flip to `here` (~12–14 m) is **accepted**.
 
 **Sign-off**
 
@@ -412,18 +416,19 @@ Goal: assemble job-numbered cars (A, then B onto same loco) **before** validatin
 - [x] Preview still works alongside warn when near Regular edge
 
 
-### 4.9 AR wayfinding markers — `T2 ar` — pending smoke v0.4.29
+### 4.9 AR wayfinding markers — `T2 ar` — **PASS** (closed 2026-07-26)
 
-Screen markers: loco / office / pin **PNG icons** (shape primary). Edge clamp when behind. Office = paperwork area (not yard center).
+Screen markers: loco / office / pin **PNG icons** (shape primary). Edge clamp when behind. Office = paperwork area (not yard center). Bundles **A** (sticky/on-object/edge + loco hide) + **C** (`here` / house hide same gate) + baseline icons. **Product:** apron ~12–14 m from Station Office door → house icon hides **and** Station chip shows `here` together — accepted “at office,” not a false-hide bug.
 
 **Sign-off**
 
-- [ ] Chip `v0.4.29`
-- [ ] After using a loco — train icon + meters toward that loco
-- [ ] Enter station zone — house icon at **office/validator**, not mid-yard cargo
-- [ ] `Home` — pin icon; `Shift+Home` clears
-- [ ] Turn away — marker clamps to screen edge
-- [ ] `T2 ar` shows loco / office / pin set changes
+- [x] Baseline icons + distance (loco / office / pin) — shipped; Bundles A–C smoke **PASS** through **v0.4.48**
+- [x] After using a loco — train icon + meters (loco hide in-cab **PASS** @ v0.4.47)
+- [x] Enter station zone — house icon at **office/validator**, not mid-yard cargo
+- [x] `Home` — pin icon; `Shift+Home` clears
+- [x] Turn away — marker clamps / sticky-row edge (Bundle A **PASS**)
+- [x] Office proximity — house hide + `Station … here` same gate (**PASS** Bundle C v0.4.48; accepted 2026-07-26)
+- [x] `T2 ar` shows loco / office / pin set changes
 
 ### 4.10 Loco radar — **PASS** v0.4.75
 

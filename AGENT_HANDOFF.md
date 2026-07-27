@@ -124,17 +124,13 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 
 - [x] **Epic 0** Safe Boot *(0.4 scaffold)*
 - [x] **Epic 1** Diagnostic HUD — **1.1–1.14** complete (Motors current-state only — Hot dwell **cut**)
-- [x] **4.1–4.3**, **4.7** Spherecast, cargo, hide loco bar, centered stacked HUD IA
-- [x] **4.4–4.9** baseline + Bundles **B** / **A** / **C** / **D** (**v0.4.52**) + **license warn** (**v0.4.53**)
+- [x] **Epic 4** HUD quality — **complete 2026-07-26** (**4.1–4.10**; Bundles B/A/C/D; **4.9** closed with office `here`/house-hide accepted)
 - [x] **Tier 2 debug inject** — F5–F9 / F11 + PgUp/PgDn turntable (**v0.4.67**; F7/F11 Tier 2 **PASS**)
-- [x] **4.10 Loco radar** — nearest other locos AR (**v0.4.75**, Tier 2 **PASS**)
-- [x] Bundle E **#23** loco↔loco coupler colors (**v0.4.80**, Tier 2 **PASS**)
+- [x] Bundle E **#23** + freight/car confirm (**v0.4.80**, Tier 2 **PASS**); **#22** Load live hard-pull **waived**
 
 **Next**
 
-- [ ] Bundle E leftovers (optional loco↔freight coupler confirm; Load live hard-pull)
-- [ ] **2.1** Three-Gate → **2.2** Thermal governor (after Epic 4 fix bundles settle)
-- [ ] Known issue: A.4 house outdoor false-hide (~12–14 m) — see `TECH_DEBT.md`
+- [ ] **2.1** Three-Gate → **2.2** Thermal governor
 - Backlog: **3.1b** license-gated re-rail; session reset ~7AM hotkey
 
 **Merge-ready:** `dotnet test YardMasterSuite.sln` · `dotnet build YardMasterSuite.sln -c Release` · **deploy to Mods** via `package.ps1 -NoArchive` (required before Tier 2 smoke — see [.cursor/rules/deploy-before-smoke.mdc](.cursor/rules/deploy-before-smoke.mdc))

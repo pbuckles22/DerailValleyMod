@@ -34,7 +34,7 @@ Screenshots live in [`ux-smoke-2026-07-23/`](ux-smoke-2026-07-23/).
 | 18 | Complete delivery / clear job bar | **PASS** — job bar cleared after FF-FH-11 complete; Cancelled flash on trash abandon (SM-FH-29) |
 | 19 | No `Next:` when fluids OK | **PASS** — reconfirmed (Fuel/Oil ~72%/71%, no Next chip) |
 | 20–21 | Fluids-low Next station | **PASS then CUT** @ 0.4.54; cut verify **PASS** @ **0.4.55** (no `Next:` with F8/F9 / mainline) |
-| 22–24 | Load colors / MU / Empty Cargo | **#24 Empty Cargo PASS** @ 0.4.56; **#23 coupler colors PASS** @ 0.4.80; #22 Load live hard-pull optional |
+| 22–24 | Load colors / MU / Empty Cargo | **#24 Empty Cargo PASS** @ 0.4.56; **#23 coupler colors PASS** @ 0.4.80 (+ loco↔freight/car confirm PASS); **#22 Load live hard-pull WAIVED** 2026-07-26 |
 
 **Extra product asks (this session):** remove **`Pos`**; hide house when **inside station**; hide loco icon when **inside loco**; AR markers **sticky under HUD** (with optional on-object duplicate when in sight); **no Monitor HUD on launcher** (no `v… | — Heading` outside world session).
 
@@ -77,17 +77,17 @@ Screenshots live in [`ux-smoke-2026-07-23/`](ux-smoke-2026-07-23/).
 **Problem:** Behind-camera projection wrong; icons roam vertically; too much clutter when already at the target.  
 **Ship rule:** one step per branch (same as Bundle B); smoke PASS before the next step. **Do not** land A.1–A.4 in one uncommitted pile.
 
-**Epic link:** Bundle A is presentation/fix follow-up on shipped **4.9** AR markers (baseline already on `main`). It does **not** open new Epic 4 stories; it closes smoke FAILs against 4.9. Proximity hide for the house icon (**A.4**) shares the office “here” radius with **Bundle C** (4.6) — implement A.4 hide with a provisional radius or stub, then tune radius in C; or land A.4 hide after C if hide needs the final radius (prefer provisional ~15–25 m in A.4 so A can smoke independently).
+**Epic link:** Bundle A was presentation/fix follow-up on shipped **4.9** AR markers. **A.4** house hide shares the office gate with Bundle **C** (`here`). **Closed 2026-07-26:** apron ~12–14 m → `here` + house hide accepted as design.
 
 **Steps (separate ships):**
 1. **A.1 Behind-camera edge** — markers clamp to the **correct** screen edge (turn cue), never fake center. Pure math in `ArMarkerProjection` (+ tests); wire `ArWaypointOverlay`. **PASS @ v0.4.37.**
 2. **A.2 Sticky marker row** — horizontal compass strip under the lowest HUD bar; ahead → centered in row; aside/behind → matching row edge. Y = bottom of last visible HUD bar + gap. **PASS @ v0.4.38.**
 3. **A.3 On-object / sticky mutual exclusive** — in frustum ahead → **one** full-bright icon on the object; off-screen/behind → sticky under HUD (edge turn cue). Smooth ~1s ease glide (frozen start). Park pin uses mark-time Y + small lift. Behind-edge **hysteresis**. **Edge fan:** same-side sticky markers offset inward ~40px by bearing (no pile-up). **PASS @ v0.4.43.**
-4. **A.4 Proximity hide** — **loco in-cab hide PASS** (player smoke). **House hide DEFERRED** as known issue @ **v0.4.47** (Lobby Box AABB: MaxBuilding 25 / fallback half-extent 8 / shrink −2): icon can still vanish ~**12–14 m** from the Station Office door while outdoors (SM confirmed). True interior detection is hard without DV interior triggers; further bounds tuning **stopped**. Revisit with Bundle **C** (`here` radius / retarget) or a later known-issue pass — see `TECH_DEBT.md` *Accept for now*.
+4. **A.4 Proximity hide** — **loco in-cab hide PASS** (player smoke). **House hide + Station `here`:** same office gate (Lobby Box AABB / 20 m fallback). Apron ~**12–14 m** from door → house gone + `here` together — **accepted product answer** 2026-07-26 (not a false-hide bug; no further bounds tuning). Bundle **C** **PASS** @ **v0.4.48**.
 
-**Out of scope until later:** distance fading polish, new art; Heading text removal (wait until A feels good); Bundle C office chip `here` wording (C’s ship); **further A.4 house-bounds tuning** (deferred known issue).
+**Out of scope until later:** distance fading polish, new art; Heading text removal (wait until A feels good).
 
-**A done when:** A.1–A.3 smoke PASS; A.4 loco hide PASS; A.4 house hide **deferred** (known outdoor false-hide) — behind → sticky-row edge (not center); looking at loco → **on-object** marker (not sticky duplicate); in-cab hides loco self-marker.
+**A done when:** A.1–A.3 smoke PASS; A.4 loco hide PASS; A.4 house/`here` gate **accepted** — behind → sticky-row edge (not center); looking at loco → **on-object** marker (not sticky duplicate); in-cab hides loco self-marker.
 
 ---
 
@@ -124,7 +124,7 @@ Screenshots live in [`ux-smoke-2026-07-23/`](ux-smoke-2026-07-23/).
 1. ~~Raise office “here” / hide-icon radius~~ — shared A.4 footprint / 20 m fallback.
 2. ~~Station text chip: **`Station SM here`** inside that gate.~~
 3. ~~Hide house AR icon on the **same** gate.~~
-4. If still wrong at the door, retarget office anchor to `JobValidator` / booklet spawn (defer; A.4 bounds parked).
+4. ~~If still wrong at the door, retarget office anchor…~~ **Closed** — apron `here` + house hide accepted 2026-07-26.
 
 ---
 
@@ -141,8 +141,9 @@ Screenshots live in [`ux-smoke-2026-07-23/`](ux-smoke-2026-07-23/).
 
 ### Bundle E — Deferred / cuts
 - ~~Fluids-low **Next:** station (#20–21)~~ **CUT** with **4.5** (nearest-yard chip rejected).
-- Load yellow/red (#22) live hard-pull — optional.
-- ~~MU coupler yellow (#23)~~ **PASS** @ **0.4.80** (red/yellow/white/blue).
+- ~~Load yellow/red (#22) live hard-pull~~ **WAIVED** 2026-07-26 (F6 color path PASS; live bands in normal play — not worth dedicated setup).
+- ~~MU coupler yellow (#23)~~ **PASS** @ **0.4.80** (red/yellow/white/blue); loco↔freight / car↔car confirm **PASS** same build.
+- ~~**A.4 house outdoor false-hide**~~ **ACCEPTED** 2026-07-26 — apron → `here` + house hide is the design (same gate as Bundle C).
 - ~~Empty Cargo wording (#24)~~ **PASS**.
 - ~~Delivery clears job bar (#18)~~ **PASS**.
 
@@ -166,7 +167,7 @@ Each bundle = own version bump + deploy + short smoke; then commit after PASS.
 
 **B done when:** always-on has no `Pos`; mainline second bar has no Track segment; in-zone Station chip has no raw coords; no `— Job` when the car has no job. **PASS** through **v0.4.36**.
 
-**A done when:** A.1–A.3 smoke PASS; A.4 loco hide PASS; A.4 house hide deferred (known outdoor false-hide @ ~12–14 m from door).
+**A done when:** A.1–A.3 smoke PASS; A.4 loco hide PASS; A.4 house/`here` accepted (apron ~12–14 m → `here` + hide).
 
 **C done when:** standing at Station Office door / inside lobby shows `here` (or hidden house), not 16 m. **PASS** **v0.4.48**.
 

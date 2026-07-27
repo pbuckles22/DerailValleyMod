@@ -110,7 +110,7 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
   - [x] **1.6 Look-at inspect** *(was CMD-01d)* — Look-at wins second bar; standing fallback; `Loco …` type; `T2 look-at`.
     > As a yard scout, I want to aim at a car and see its integrity so I can inspect from a roof or the ground.
 
-  - [x] **1.7 Load monitor** *(was CMD-02a)* — Top-bar `Load %` (amps / max); yellow ≥80%, red ≥95%; `T2 power`. **Done** — Tier 1; Tier 2 **PASS\*** (live % on DE2; color bands deferred until hard pull)
+  - [x] **1.7 Load monitor** *(was CMD-02a)* — Top-bar `Load %` (amps / max); yellow ≥80%, red ≥95%; `T2 power`. **Done** — Tier 1; Tier 2 **PASS** (live % on DE2; F6 color bands **PASS**; live hard-pull **#22** waived 2026-07-26 — confirm in normal play)
     > As an engineer, I want load % on the HUD so I know how close I am to blowing the traction motor fuses.
 
   - [x] **1.8 Motor status** *(was CMD-02b)* — Top-bar `Motors` OK (green) / Hot (yellow) / Dead (red); `T2 power`. **Done / shipped** — Tier 1 + Tier 2 **PASS**. HUD is **current-state only** (OK = below threshold; Hot = above `overheatingTemperatureThreshold` while fuse alive; Dead = TMS trip / working &lt; total). **Cut:** early Hot / hysteresis / predictive dwell on the HUD — thermal mitigation belongs in **Epic 2**.
@@ -134,7 +134,7 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
   - [x] **1.14 Park / return mark** — `Home` sets/updates session mark at player XZ; `Shift+Home` clears. Always-on nav chip `Marked NE 84m` (16-point bearing + meters back) or `Marked here` within 1 m; omitted when unmarked. Quiet `T2 mark` on set/clear / bearing change. Distinct from live `Heading` / `Pos`. **Done** — Tier 1 + Tier 2 **PASS** (v0.4.25).
     > As a yard worker, I want to mark where I left the loco so when I’m running around I always know which way and how far to get back.
 
-  **Build order (Stage 1 open work):** **Epic 1** + **4.6** complete → Bundle **D** / Epic 2; re-smoke Load yellow/red when practical. *(Do not reopen **1.8** HUD thermal prediction.)*
+  **Build order:** **Epic 4** complete → **2.1** Three-Gate → **2.2**. *(Do not reopen **1.8** HUD thermal prediction.)*
 
 ---
 
@@ -175,7 +175,7 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
 
 ---
 
-- [ ] **Epic 4 — HUD quality (QOL)** — Small UX polish on the Diagnostic HUD. *Supports Stage 1 playability.*
+- [x] **Epic 4 — HUD quality (QOL)** — Small UX polish on the Diagnostic HUD. *Supports Stage 1 playability.* **Status: complete — 2026-07-26**
 
   - [x] **4.1 Enhanced targeting** *(was QOL-06)* — Look-at spherecast **0.15 m**, max **250 m**. *PASS\*; slight sky-stickiness accepted.*
     > As a yard scout, I want distant cars to resolve under the crosshair so I can inspect from farther away.
@@ -198,7 +198,7 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
   - [x] **4.8 Active Job HUD + preview-prep edge** — Inventory-gated `Preview Nm` to Regular destroy (−30 m HUD buffer); taken = Job+Bonus only; Abandoned/Expired → red **Cancelled**. **Done** — Tier 1 + Tier 2 **PASS** (v0.4.52). License warn on held overview (`No license: FH`) — **Done** — Tier 1 + Tier 2 **PASS** (v0.4.53).
     > As a yard master, I want a clear preview-edge warning while I shunt job cars before validating so I don’t lose the ticket saving bonus time, and my taken job bar shows bonus without fake zone death.
 
-  - [ ] **4.9 AR wayfinding markers** — Screen-space icons (distinct shapes; color secondary) for (1) last/active loco, (2) in-zone **station office** (not yard center), (3) custom pin (`Home` / `Shift+Home`). `WorldToScreenPoint` + edge clamp when behind; icon + distance only. Replaces foot-nav dependence on Heading/Pos text.
+  - [x] **4.9 AR wayfinding markers** — Screen-space icons (distinct shapes; color secondary) for (1) last/active loco, (2) in-zone **station office** (not yard center), (3) custom pin (`Home` / `Shift+Home`). `WorldToScreenPoint` + edge clamp when behind; icon + distance only. Replaces foot-nav dependence on Heading/Pos text. **Done** — baseline + Bundles A/C (**v0.4.48**); sticky/on-object/edge through **v0.4.43**; loco radar **4.10**. Office proximity: same gate hides house AR and flips Station chip to **`here`** (~12–14 m apron = accepted “at office”, not a false-hide bug — product decision 2026-07-26).
     > As a yard worker, I want floating markers for my loco, the station office, and my pin so I can run toward them without reading compass math.
 
   - [x] **4.10 Loco radar** — Nearest other locos as amber sticky AR markers (type · m · place). Place: `SM-…` / `FF-A2P` track alone, or `FF #Y-…` spur with city. Rigid AABB pack (no Venn). Unblocks Bundle E **#23**. *Done* — Tier 1 + Tier 2 **PASS** (v0.4.75).

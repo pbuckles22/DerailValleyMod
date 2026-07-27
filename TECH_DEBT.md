@@ -48,7 +48,7 @@ High ROI; frequent pain; not blocking.
 
 - [x] **Cache Load amp reflection by type** — landed with **1.8** (`LoadFieldCache` + `MotorSetFieldMap`).
 
-- [x] **Re-smoke Load yellow/red** — F6 per-loco force **PASS** path @ v0.4.64+ (was F10).
+- [x] **Re-smoke Load yellow/red** — F6 per-loco force **PASS** path @ v0.4.64+ (was F10). Live hard-pull (**#22**) **waived** 2026-07-26 — confirm in normal play if colors misbehave.
 
 - [x] **Cargo dump mass/visual desync** — fixed @ 0.4.66: F7 uses `UnloadCargo`/`LoadCargo` (events) not `DumpCargo`.
 
@@ -92,7 +92,7 @@ Isolated + workaround + revisit trigger.
 
 - [ ] **Unused `ParkMarkDisplay.FormatCoords`** — HUD uses `FormatReturn` only; delete or wire on next mark/display edit.
 
-- [ ] **A.4 house AR hide — outdoor false-positive** — @ **v0.4.47** Lobby Box, house marker can still hide ~**12–14 m** from Station Office door while outdoors (SM). Loco in-cab hide **PASS**. True “indoors” needs DV interior triggers we don’t have. *Revisit with Bundle **C** office `here` / retarget, or a later bounds pass. Area: `StationOfficeBounds`, `TelemetryReader.TryGetArStationOfficeWorldPosition`.*
+- [x] **A.4 house AR hide / Station `here`** — **Accepted** 2026-07-26: same office gate hides house icon and shows `Station … here`. Apron ~12–14 m from door flipping to `here` is intentional “at office,” not a bug. No further bounds tuning. Loco in-cab hide **PASS** @ v0.4.47; Bundle C **PASS** @ v0.4.48.
 
 - [x] **License warn on held overview** — **Done v0.4.53** (Tier 2 **PASS**): red `No license: FH` / `SH` / etc. while holding overview/booklet whose licenses are missing; joins Preview when both apply.
 
