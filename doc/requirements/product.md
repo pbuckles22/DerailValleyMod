@@ -104,6 +104,9 @@ Look-at wins; standing fallback when crosshair is not on a car. Hidden when no t
 
 **4.9 notes:** AR screen markers with PNG icons (loco / house / pin) under `Mods/.../Icons/`; tint color secondary. Edge-clamped when behind; caption = meters only. `T2 ar`. **Office proximity (A.4 / Bundle C):** one gate hides the house icon and flips the Station chip to `here`. Being ~12–14 m from the door (apron) and seeing `here` is **accepted** — not an outdoor false-hide bug.
 
+**4.11 notes:** Rear-camera chip — check-point clearance, tenths. **Green** ≤0.5 m + couple-scan; **yellow** through **30 m**; plain farther. No “Couple ready”. Clearance can vary by car coupler geometry (fixed −0.25 m inset, not per-type table).
+
+
 **4.7 notes:** All HUD rows centered. Stack: loco (if any) → look-at (if any) → active job (if any) → always-on nav. Chip order on loco bar as above.
 
 ---

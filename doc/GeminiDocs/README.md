@@ -18,8 +18,10 @@ Promote decisions into tracked docs (`PM_PLAN.md`, `doc/requirements/*`, `TEST_P
 
 | Pack | Topic |
 |------|--------|
-| [`Loco_Radar_4_10_Sticky_Pack.md`](./Loco_Radar_4_10_Sticky_Pack.md) | **4.10 loco radar** — sticky bar, place (`SM-…` vs `FF #Y`), Venn fix via rigid cluster edge-fit (0.4.73). Attachments: `Loco_Radar_4_10_Sticky_Pack__*.cs` |
-| [`Key Buffer Implementation.md`](./Key%20Buffer%20Implementation.md) | **OFF-TOPIC for Yard Master / Bundle D** — Windows hotkey swallow/inject for \` double-tap screenshot (`GlobalHotkeyManager`, `SendInput`, WPF `Dispatcher`). Not Preview edge. |
-| [`Test Plan.md`](./Test%20Plan.md) | Bundle D smoke letters (may be stale vs v0.4.52 inventory gate) — prefer tracked [`TEST_PLAN.md`](../../TEST_PLAN.md) §4.8. |
-
-**Still aligned with Bundle D (our ship):** Preview = inventory job paperwork; meters = Regular destroy − player − **30 m** HUD buffer; game wipe distance **unchanged**; no gen-zone gate. That came from earlier Job Cancellation / safety-buffer guidance — **not** from `Key Buffer Implementation.md`.
+| [`A411_Backup_Proximity.md`](./A411_Backup_Proximity.md) | **4.11 @ 0.5.12** — unified: green `Rear Nm` honesty + ranging context (**1 md + 4 code**) |
+| [`Recent Findings & Feature Concepts.md`](./Recent%20Findings%20%26%20Feature%20Concepts.md) | Triaged **2026-07-27**: §4 backup → **4.11**; §2 radar = shipped **4.10**; §3 Harbor Hill → **2.2** backlog; §1 DM3 → parking lot |
+| [`Loco Radar Implementation Context.md`](./Loco%20Radar%20Implementation%20Context.md) | **Superseded** by shipped **4.10** |
+| [`A2_Thermal_Governor_TriggerMismatch.md`](./A2_Thermal_Governor_TriggerMismatch.md) | **2.2** Hot trigger mismatch — parked after **4.11** |
+| [`Loco_Radar_4_10_Sticky_Pack.md`](./Loco_Radar_4_10_Sticky_Pack.md) | Historical **4.10** sticky pack |
+| [`Key Buffer Implementation.md`](./Key%20Buffer%20Implementation.md) | **OFF-TOPIC** — Windows hotkey buffer |
+| [`Test Plan.md`](./Test%20Plan.md) | Stale Bundle D letters — prefer tracked `TEST_PLAN.md` |

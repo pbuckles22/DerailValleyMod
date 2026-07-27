@@ -16,10 +16,12 @@ public static class TrainHudLine
         string limit,
         string motors,
         string handbrakes,
-        string cars) =>
+        string cars,
+        string? backup = null) =>
         MonitorHudLine.Join(new[]
         {
             fuel, oil, mass, grade, load, speed, limit, motors, handbrakes, cars,
+            backup ?? string.Empty,
         });
 
     public static string NullLine() =>

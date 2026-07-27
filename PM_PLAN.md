@@ -175,7 +175,7 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
 
 ---
 
-- [x] **Epic 4 — HUD quality (QOL)** — Small UX polish on the Diagnostic HUD. *Supports Stage 1 playability.* **Status: complete — 2026-07-26**
+- [x] **Epic 4 — HUD quality (QOL)** — Small UX polish on the Diagnostic HUD. *Supports Stage 1 playability.* **Status: complete 2026-07-27** *(4.11 backup proximity @ **0.5.12**; 4.1–4.10 earlier)*
 
   - [x] **4.1 Enhanced targeting** *(was QOL-06)* — Look-at spherecast **0.15 m**, max **250 m**. *PASS\*; slight sky-stickiness accepted.*
     > As a yard scout, I want distant cars to resolve under the crosshair so I can inspect from farther away.
@@ -207,6 +207,9 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
   - [x] **4.7 HUD strip IA reorder** — Horizontally **center** every HUD row; stack loco → look-at → always-on nav bar (same chrome as loco/look-at). Loco chip order: `Fuel · Oil · Mass · Grade · Load · Speed · Limit · Motors · Handbrakes · Cars`. **Done** — Tier 1 + Tier 2 **PASS** (v0.4.23).
     > As a driver, I want Speed and Limit in the visual center of the loco bar so I glance there first.
 
+  - [x] **4.11 Backup proximity** — Rear-camera clearance on loco rear tip (`Rear N.Nm` / `Rear —`); **green** ≤0.5 m + couple-scan; **yellow** through 30 m; check-point inset (−0.25 m). No “Couple ready”. Cab look ignored. **Done** — Tier 1 + Tier 2 smoke **PASS** (v**0.5.12**; 3.8 m jump non-repro / user error).
+    > As a driver reversing to pick up a train, I want distance before impact and a clear cue when I am close enough to brake and couple.
+
 ---
 
 - [ ] **Epic 5 — Digital Catalog** *(Journey Stage 3 workbench)* — Convenience logistics for a working operator.
@@ -223,12 +226,13 @@ Not scheduled — discuss when Journey stage friction demands it:
 - [ ] Anti-Wheelslip
 - [ ] Startup Assist *(needs **2.1**)*
 - [ ] Auto-Service / Auto-Shop *(overlap check vs **5.1**)*
-- [ ] Manual Transmission Override
+- [ ] Manual Transmission Override *(DM3 reverser must leave neutral to unlock throttle; DM3 has no MU — knowledge note from Gemini 2026-07-27, not a ship yet)*
 - [ ] Mounting Suite / precision mounting
 - [ ] Engine Temp Soft Governor *(if distinct from **2.2**)*
 - [ ] Speed-limit auto-throttle governor *(soft-cap to % of Limit — same pattern as **2.2**; candidate **2.4**)*
 - [ ] **Session reset hotkey** — e.g. Shift+F6: set time ~07:00, clear/reset weather board, invalidate active jobs, refresh available job board (Tier 2 / sandbox).
 - [ ] **License-gated re-rail scroll** — see **3.1b** (promoted from debug ask).
+- [ ] **2.2 Thermal governor — trigger mismatch** — cab TM TEMP yellow while HUD stays `Motors OK`; no `T2 thermal:` (Harbor Hill bake test: heavy DE2, Load ~80–85%). WIP parked on `feature/2.2-thermal-governor` + stash. Gemini: `doc/GeminiDocs/A2_Thermal_Governor_TriggerMismatch.md`.
 
 ---
 

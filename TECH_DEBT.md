@@ -10,7 +10,7 @@ Durable ranked backlog. Handoff notes may mention debt; **promote** anything tha
 
 
 
-**Last full pass:** Epic 4 WIP handoff — 2026-07-23.
+**Last full pass:** Epic 4 close / **4.11** — 2026-07-27.
 
 
 
@@ -93,6 +93,10 @@ Isolated + workaround + revisit trigger.
 - [ ] **Unused `ParkMarkDisplay.FormatCoords`** — HUD uses `FormatReturn` only; delete or wire on next mark/display edit.
 
 - [x] **A.4 house AR hide / Station `here`** — **Accepted** 2026-07-26: same office gate hides house icon and shows `Station … here`. Apron ~12–14 m from door flipping to `here` is intentional “at office,” not a bug. No further bounds tuning. Loco in-cab hide **PASS** @ v0.4.47; Bundle C **PASS** @ v0.4.48.
+
+- [ ] **2.2 Thermal Hot trigger mismatch** — cab TM TEMP yellow while `Motors OK`; governor never logs `T2 thermal:`. Parked WIP + stash on `feature/2.2-thermal-governor`. Resume after **4.11** (now shipped). Area: `MotorDisplay.StatusFromSignals`, `TelemetryReader.ReadMotorStatus*`, `ThermalGovernor`.
+
+- [ ] **4.11 backup `inCoupleRange` from long-range scan** — after `GetFirstCouplerInRange` misses, ray/overlap hit ≤1.5 m can set couple-near and allow green without game couple-scan. Smoke @ **0.5.12** did not show false green; gate green to game scan only if it appears. Area: `TelemetryReader.TryGetBackupProximity`.
 
 - [x] **License warn on held overview** — **Done v0.4.53** (Tier 2 **PASS**): red `No license: FH` / `SH` / etc. while holding overview/booklet whose licenses are missing; joins Preview when both apply.
 

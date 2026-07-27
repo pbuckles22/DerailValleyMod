@@ -1299,7 +1299,272 @@ internal static class TelemetryReader
             SpeedLimitDisplay.FormatHud(speedKmh, limit.CurrentKmh, limit.Trend),
             MotorDisplay.FormatHud(TryGetMotorStatus()),
             HandbrakeDisplay.FormatTotal(TryGetConsistHandbrakeAppliedCount()),
-            CarsDisplay.Format(TryGetConsistCarCount()));
+            CarsDisplay.Format(TryGetConsistCarCount()),
+            TryGetBackupProximityHudChip());
+    }
+
+    /// <summary>
+    /// 4.11 — free consist extremity clearance / couple-ready cue (empty = omit).
+    /// </summary>
+    public static string TryGetBackupProximityHudChip()
+    {
+        try
+        {
+            if (!TryGetBackupProximity(out var meters, out var inRange, out var tipActive))
+            {
+                return string.Empty;
+            }
+
+            return BackupProximityDisplay.FormatHud(meters, inRange, tipActive);
+        }
+        catch
+        {
+            return string.Empty;
+        }
+    }
+
+    /// <summary>Overlap buffer for 4.11 clearance (game couple-scan uses only 10 — too small at 80 m).</summary>
+    private static readonly Collider[] BackupProximityHits = new Collider[128];
+
+    /// <summary>
+    /// Free tip on loco rear axis: clearance via scan / cone; green when within 1.5 m game scan
+    /// (still <c>Rear Nm</c> — not "Couple ready"). Tip with no range → Rear —.
+    /// </summary>
+    public static bool TryGetBackupProximity(
+        out float? clearanceMeters,
+        out bool inCoupleRange,
+        out bool tipActive)
+    {
+        clearanceMeters = null;
+        inCoupleRange = false;
+        tipActive = false;
+
+        var loco = TryGetUsableLoco();
+        if (loco == null)
+        {
+            return false;
+        }
+
+        var coupler = TryGetApproachTipCoupler(loco);
+        if (coupler == null || coupler.IsCoupled())
+        {
+            return false;
+        }
+
+        tipActive = true;
+
+        // Game API only at couple range (1.5 m). Distance uses DV check points (not pivot).
+        var near = coupler.GetFirstCouplerInRange(Coupler.COUPLING_SCAN_RANGE);
+        if (near != null)
+        {
+            clearanceMeters = Vector3.Distance(CouplerClearancePoint(coupler), CouplerClearancePoint(near));
+            inCoupleRange = true;
+            return true;
+        }
+
+        if (TryScanNearestForeignCoupler(coupler, out var hitMeters))
+        {
+            clearanceMeters = hitMeters;
+            inCoupleRange = BackupProximityDisplay.IsInCoupleRange(hitMeters);
+            return true;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Matches private <c>Coupler.CouplerDistanceCheckPosition</c>: inset 0.25 m along −forward
+    /// so clearance tracks couple/scan geometry, not the coupler pivot (false 0.0 with open buffers).
+    /// </summary>
+    private static Vector3 CouplerClearancePoint(Coupler coupler)
+    {
+        var t = coupler.transform;
+        var fwd = t.forward;
+        if (fwd.sqrMagnitude < 1e-6f)
+        {
+            return t.position;
+        }
+
+        return t.position + fwd.normalized * -0.25f;
+    }
+
+    /// <summary>
+    /// Free extremity tip on the loco rear axis (−forward). Cab look is ignored (rear-camera chip).
+    /// </summary>
+    private static Coupler? TryGetApproachTipCoupler(TrainCar loco)
+    {
+        var set = loco.trainset?.cars;
+        if (set == null || set.Count == 0)
+        {
+            return null;
+        }
+
+        var locoFwd = loco.transform.forward;
+        BackupProximityAim.RearIntent(
+            locoFwd.x,
+            locoFwd.y,
+            locoFwd.z,
+            out var ix,
+            out var iy,
+            out var iz);
+
+        Coupler? best = null;
+        var bestAlign = float.NegativeInfinity;
+
+        foreach (var c in set)
+        {
+            if (c == null)
+            {
+                continue;
+            }
+
+            Consider(c.frontCoupler);
+            Consider(c.rearCoupler);
+        }
+
+        return best;
+
+        void Consider(Coupler? coupler)
+        {
+            if (coupler == null || coupler.IsCoupled())
+            {
+                return;
+            }
+
+            var opposite = coupler.GetOppositeCoupler();
+            var isAlone = set!.Count == 1;
+            var oppositeCoupled = opposite != null && opposite.IsCoupled();
+            if (!isAlone && !oppositeCoupled)
+            {
+                return;
+            }
+
+            var o = coupler.transform.forward;
+            var align = BackupProximityAim.TipAlignment(o.x, o.y, o.z, ix, iy, iz);
+            if (align > bestAlign)
+            {
+                bestAlign = align;
+                best = coupler;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Nearest uncoupled foreign coupler in the tip's outward approach cone (own large buffer).
+    /// Does not use exact CurrentTrack equality (Bezier segments break that).
+    /// </summary>
+    private static bool TryScanNearestForeignCoupler(Coupler tip, out float meters)
+    {
+        meters = 0f;
+        var origin = CouplerClearancePoint(tip);
+        var tipOut = tip.transform.forward;
+        if (tipOut.sqrMagnitude < 1e-6f)
+        {
+            return false;
+        }
+
+        tipOut.Normalize();
+        const float maxDistance = BackupProximityDisplay.MaxDisplayMeters;
+        var maxSq = maxDistance * maxDistance;
+
+        int numHits;
+        try
+        {
+            numHits = Physics.OverlapSphereNonAlloc(
+                origin,
+                maxDistance,
+                BackupProximityHits,
+                ~0,
+                QueryTriggerInteraction.Ignore);
+        }
+        catch
+        {
+            return false;
+        }
+
+        var ownSet = tip.train?.trainset;
+        var nearestSq = maxSq;
+        var found = false;
+
+        for (var i = 0; i < numHits; i++)
+        {
+            var col = BackupProximityHits[i];
+            if (col == null)
+            {
+                continue;
+            }
+
+            var hitCar = TrainCar.Resolve(col.transform);
+            if (hitCar == null || (ownSet != null && hitCar.trainset == ownSet))
+            {
+                continue;
+            }
+
+            ConsiderCoupler(hitCar.frontCoupler);
+            ConsiderCoupler(hitCar.rearCoupler);
+        }
+
+        // RaycastAll along tip outward: skip own consist, take nearest foreign car hit.
+        try
+        {
+            var rayOrigin = tip.transform.position + Vector3.up * 0.35f;
+            var rayHits = Physics.RaycastAll(rayOrigin, tipOut, maxDistance, ~0, QueryTriggerInteraction.Ignore);
+            foreach (var hit in rayHits)
+            {
+                var hitCar = hit.collider != null ? TrainCar.Resolve(hit.collider.transform) : null;
+                if (hitCar == null || (ownSet != null && hitCar.trainset == ownSet))
+                {
+                    continue;
+                }
+
+                var dSq = hit.distance * hit.distance;
+                if (dSq < nearestSq)
+                {
+                    nearestSq = dSq;
+                    found = true;
+                }
+            }
+        }
+        catch
+        {
+            // keep overlap result
+        }
+
+        if (!found)
+        {
+            return false;
+        }
+
+        meters = Mathf.Sqrt(nearestSq);
+        return true;
+
+        void ConsiderCoupler(Coupler? other)
+        {
+            if (other == null || other.IsCoupled())
+            {
+                return;
+            }
+
+            var otherPt = CouplerClearancePoint(other);
+            var delta = otherPt - origin;
+            var distSq = delta.sqrMagnitude;
+            if (distSq > maxSq || distSq < 1e-6f)
+            {
+                return;
+            }
+
+            if (!BackupProximityAim.IsInApproachCone(
+                    delta.x, delta.y, delta.z, tipOut.x, tipOut.y, tipOut.z))
+            {
+                return;
+            }
+
+            if (distSq < nearestSq)
+            {
+                nearestSq = distSq;
+                found = true;
+            }
+        }
     }
 
     /// <summary>Legacy join helper — empty when top bar is hidden.</summary>
