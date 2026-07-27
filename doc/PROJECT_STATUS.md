@@ -15,7 +15,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 |--|--|
 | **Journey** | Stage 1 — Apprentice (“don’t blow up”) → Stage 2 next (**2.1**) |
 | **MVP** | Epic 1 System Monitor HUD |
-| **Version (`main`)** | **0.4.81** *(**2.1** Three-Gate)* |
+| **Version (`main`)** | **0.5.0** *(Governor era line; next **2.2**)* |
 | **WIP branch** | *(none)* |
 
 ---
@@ -24,7 +24,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 | Branch | Role |
 |--------|------|
-| **`main`** | Integration — **0.4.81**; **Next 2.2** thermal governor |
+| **`main`** | Integration — **0.5.0**; **Next 2.2** thermal governor |
 
 ---
 
@@ -34,7 +34,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 - [x] **Epic 0** — Foundation & Safe Boot *(0.4 scaffold remaining)*
 - [x] **Epic 1** — Diagnostic HUD *(Stage 1 — complete 2026-07-23)*
-- [ ] **Epic 2** — Governor Mode *(**2.1** done @ 0.4.81 → **2.2** next)*
+- [ ] **Epic 2** — Governor Mode *(**2.1** @ 0.4.81 → **2.2** on **0.5.x**)*
 - [ ] **Epic 3** — Yard Master / Dispatcher
 - [x] **Epic 4** — HUD quality *(complete 2026-07-26 — **4.1–4.10**; Bundles B/A/C/D; Bundle E)*
 - [ ] **Epic 5** — Digital Catalog
@@ -42,7 +42,11 @@ Stack: Unity / C# `net48` / UMM / Harmony
 ### Next (Stage 2)
 
 - [x] **2.1** Three-Gate helper *(v0.4.81, Tier 1)*
-- [ ] **2.2** Thermal governor
+- [ ] **2.2** Thermal governor *(first feature patches on **0.5.x**)*
+
+### Versioning
+
+Per-mod SemVer — see [RELEASE.md](../RELEASE.md). **0.4.x** = Monitor/HUD era (closed). **0.5.x** = Governor era (opened 2026-07-26). Features are **PATCH**es within the line.
 
 ### Accepted / closed leftovers
 
