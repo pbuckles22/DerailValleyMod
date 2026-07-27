@@ -140,7 +140,7 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
 
 - [ ] **Epic 2 — Governor Mode** *(MEDIUM)* — Gated soft writes via Three-Gate + safety gates. Prefix/Postfix only. *Active thermal management lives here — not on the Monitor HUD.*
 
-  - [ ] **2.1 Three-Gate helper** *(was E2-S1)* — Shared Integrity → State Registry → Soft Write path; fail closed. *Core foundation / prerequisite for 2.2 / 2.3.*
+  - [x] **2.1 Three-Gate helper** *(was E2-S1)* — Shared Integrity → State Registry → Safety → Soft Write path; fail closed. *Core foundation / prerequisite for 2.2 / 2.3.* **Done** — Tier 1 (**v0.4.81**); Tier 2 N/A until a governor soft-writes (**2.2**).
     > As a maintainer, I want one write path so every governor aborts the same safe way.
 
   - [ ] **2.2 Thermal governor** *(was CMD-04)* — Soft-scale / cap throttle when **1.8** Motor status is Hot (current over-temp); abort if unsafe. *Prediction / protection — not a HUD rewrite.*

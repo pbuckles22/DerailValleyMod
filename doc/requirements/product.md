@@ -129,11 +129,14 @@ Look-at wins; standing fallback when crosshair is not on a car. Hidden when no t
 
 ## Three-Gate pattern (all state writes)
 
+Shared helper: `YardMasterSuite.Core.ThreeGate.TryApply` (**2.1**, v0.4.81).
+
 1. **Integrity Gate** — safe for current world/consist?
 2. **State Registry Gate** — managers/objects present and expected?
-3. **Soft Write** — minimal change; abort closed on failure
+3. **Safety Gate** — governor constraints (e.g. stationary); non-governor callers pass `true`
+4. **Soft Write** — minimal change; abort closed on `false` or throw
 
-Governors also need **safety gates** (e.g. stationary) before writing. Shared helper = **2.1**.
+Fail closed: no write unless every gate passes.
 
 ---
 

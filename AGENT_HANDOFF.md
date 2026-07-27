@@ -117,7 +117,7 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 |--|--|
 | **Project** | *Yard Master Suite* (UMM / Harmony / net48) |
 | **MVP** | **Epic 1** System Monitor HUD |
-| **Version (`main`)** | **0.4.80** — Bundle E **#23** coupler colors (red/yellow/white/blue) |
+| **Version (`main`)** | **0.4.81** — **2.1** Three-Gate helper |
 | **Active branch** | `main` |
 
 **Shipped on `main`**
@@ -127,10 +127,11 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 - [x] **Epic 4** HUD quality — **complete 2026-07-26** (**4.1–4.10**; Bundles B/A/C/D; **4.9** closed with office `here`/house-hide accepted)
 - [x] **Tier 2 debug inject** — F5–F9 / F11 + PgUp/PgDn turntable (**v0.4.67**; F7/F11 Tier 2 **PASS**)
 - [x] Bundle E **#23** + freight/car confirm (**v0.4.80**, Tier 2 **PASS**); **#22** Load live hard-pull **waived**
+- [x] **2.1** Three-Gate helper (**v0.4.81**, Tier 1; Tier 2 N/A until **2.2**)
 
 **Next**
 
-- [ ] **2.1** Three-Gate → **2.2** Thermal governor
+- [ ] **2.2** Thermal governor
 - Backlog: **3.1b** license-gated re-rail; session reset ~7AM hotkey
 
 **Merge-ready:** `dotnet test YardMasterSuite.sln` · `dotnet build YardMasterSuite.sln -c Release` · **deploy to Mods** via `package.ps1 -NoArchive` (required before Tier 2 smoke — see [.cursor/rules/deploy-before-smoke.mdc](.cursor/rules/deploy-before-smoke.mdc))

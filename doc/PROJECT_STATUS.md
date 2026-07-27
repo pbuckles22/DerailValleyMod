@@ -15,7 +15,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 |--|--|
 | **Journey** | Stage 1 — Apprentice (“don’t blow up”) → Stage 2 next (**2.1**) |
 | **MVP** | Epic 1 System Monitor HUD |
-| **Version (`main`)** | **0.4.80** *(Bundle E **#23** coupler colors)* |
+| **Version (`main`)** | **0.4.81** *(**2.1** Three-Gate)* |
 | **WIP branch** | *(none)* |
 
 ---
@@ -24,7 +24,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 | Branch | Role |
 |--------|------|
-| **`main`** | Integration — **0.4.80**; **Epic 4** complete; **Next 2.1** |
+| **`main`** | Integration — **0.4.81**; **Next 2.2** thermal governor |
 
 ---
 
@@ -34,14 +34,15 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 - [x] **Epic 0** — Foundation & Safe Boot *(0.4 scaffold remaining)*
 - [x] **Epic 1** — Diagnostic HUD *(Stage 1 — complete 2026-07-23)*
-- [ ] **Epic 2** — Governor Mode
+- [ ] **Epic 2** — Governor Mode *(**2.1** done @ 0.4.81 → **2.2** next)*
 - [ ] **Epic 3** — Yard Master / Dispatcher
 - [x] **Epic 4** — HUD quality *(complete 2026-07-26 — **4.1–4.10**; Bundles B/A/C/D; Bundle E)*
 - [ ] **Epic 5** — Digital Catalog
 
 ### Next (Stage 2)
 
-- [ ] **2.1** Three-Gate → Epic 2
+- [x] **2.1** Three-Gate helper *(v0.4.81, Tier 1)*
+- [ ] **2.2** Thermal governor
 
 ### Accepted / closed leftovers
 
@@ -59,6 +60,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 ## Recently completed
 
+- [x] **2.1** Three-Gate — Integrity → State Registry → Safety → Soft Write; fail closed (v0.4.81, Tier 1)
 - [x] **Epic 4** closed — **4.9** checkbox + A.4/`here` product acceptance; Bundle E leftovers (2026-07-26)
 - [x] Bundle E **#23** — coupler HUD: red / yellow / white / blue (v0.4.80, Tier 2 **PASS**)
 - [x] **4.10 Loco radar** — amber other-loco sticky AR; place `FF-A2P` / `FF #Y-…`; rigid pack (v0.4.75, Tier 2 **PASS**)

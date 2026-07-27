@@ -455,3 +455,18 @@ All rows centered. Stack: loco → look-at → always-on bar (same chrome).
 - [x] Chip `v0.4.23`
 
 Recovery: [modding.md](doc/requirements/modding.md).
+
+---
+
+## Epic 2 — Governor Mode
+
+### 2.1 Three-Gate helper — **PASS** v0.4.81 (Tier 1)
+
+`ThreeGate.TryApply`: Integrity → State Registry → Safety → Soft Write. Fail closed (no write on gate fail; soft write `false`/throw → SoftWrite abort). Safety for governors; other callers pass `true`.
+
+**Sign-off**
+
+- [x] Tier 1 — abort each gate without calling write; apply when all pass; throw → SoftWrite abort
+- [x] Tier 2 — **N/A** until **2.2** soft-writes in-world
+
+Recovery: [modding.md](doc/requirements/modding.md).
