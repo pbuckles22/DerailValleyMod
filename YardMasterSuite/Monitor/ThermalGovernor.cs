@@ -14,6 +14,9 @@ internal static class ThermalGovernor
     private static ThreeGateAbortReason _lastAbort = ThreeGateAbortReason.None;
     private static string? _lastCapLabel;
 
+    /// <summary>True while the last Tick applied a soft-cap write (or is mid-cap session).</summary>
+    internal static bool IsCapping => _wasCapping;
+
     /// <summary>
     /// Call from FixedUpdate while world session active. Returns a discrete T2 line when state changes.
     /// </summary>

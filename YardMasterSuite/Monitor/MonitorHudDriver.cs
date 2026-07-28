@@ -34,6 +34,9 @@ public sealed class MonitorHudDriver : MonoBehaviour
     /// <summary>F9 = cycle coupler MU-yellow for the look-at / target car.</summary>
     private const KeyCode CouplerDebugKey = KeyCode.F9;
 
+    /// <summary>F10 = cycle motor heat debug (off → 50% Warning → Critical → off).</summary>
+    private const KeyCode MotorDebugKey = KeyCode.F10;
+
     /// <summary>F11 = toggle all licenses ↔ restore real snapshot.</summary>
     private const KeyCode S282LicenseKey = KeyCode.F11;
 
@@ -176,6 +179,7 @@ public sealed class MonitorHudDriver : MonoBehaviour
             PollS282LicenseHotkey();
             PollLighterDebugHotkey();
             PollLoadDebugHotkey();
+            PollMotorDebugHotkey();
             PollCouplerDebugHotkey();
         }
 
@@ -247,6 +251,7 @@ public sealed class MonitorHudDriver : MonoBehaviour
         {
             FluidDebugOverride.Clear();
             LoadDebugOverride.Clear();
+            MotorDebugOverride.Clear();
             CouplerDebugOverride.Clear();
             TelemetryReader.RestoreLicenseDebugIfNeeded();
             _debugHotkeyLabel = null;
@@ -346,6 +351,24 @@ public sealed class MonitorHudDriver : MonoBehaviour
 
         LoadDebugOverride.Cycle(loco.ID);
         Main.Log($"T2 load-debug [{loco.ID}]: {LoadDebugOverride.StatusFragment(loco.ID)}");
+    }
+
+    private void PollMotorDebugHotkey()
+    {
+        if (!Input.GetKeyDown(MotorDebugKey))
+        {
+            return;
+        }
+
+        var loco = PlayerManager.Car;
+        if (loco == null || !loco.IsLoco || string.IsNullOrEmpty(loco.ID))
+        {
+            Main.Log("T2 motor-debug: fail (sit in a loco)");
+            return;
+        }
+
+        MotorDebugOverride.Cycle(loco.ID);
+        Main.Log($"T2 motor-debug [{loco.ID}]: {MotorDebugOverride.StatusFragment(loco.ID)}");
     }
 
     private void PollTurntableHotkeys()

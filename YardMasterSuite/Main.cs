@@ -83,6 +83,7 @@ public static class Main
         ParkMarkSession.Clear();
         FluidDebugOverride.Clear();
         LoadDebugOverride.Clear();
+        MotorDebugOverride.Clear();
         CouplerDebugOverride.Clear();
         _harmony?.UnpatchAll(modEntry.Info.Id);
         _harmony = null;

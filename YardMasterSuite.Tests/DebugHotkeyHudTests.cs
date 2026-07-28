@@ -15,6 +15,7 @@ public class DebugHotkeyHudLineTests
         Assert.Contains("F7 Cargo", line);
         Assert.Contains("F8 Fluids", line);
         Assert.Contains("F9 Couplers", line);
+        Assert.Contains("F10 Motors", line);
         Assert.Contains("F11 Licenses", line);
         Assert.DoesNotContain("F12", line);
         Assert.DoesNotContain("PgUp", line);

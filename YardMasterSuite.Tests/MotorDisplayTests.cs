@@ -149,4 +149,21 @@ public class MotorDisplayTests
             $"<color={MotorDisplay.DeadColor}>Motors Dead</color>",
             MotorDisplay.FormatHud(MotorStatus.Dead));
     }
+
+    [Fact]
+    public void FormatHud_forced_heat_percent_and_governor_flash()
+    {
+        Assert.Equal(
+            $"<color={MotorDisplay.HotColor}>Motors Hot 50%</color>",
+            MotorDisplay.FormatHud(MotorStatus.Hot, governorActive: false, flashOn: false, forcedHeatPercent: 50f));
+        Assert.Equal(
+            $"<color={MotorDisplay.HotColor}>Motors Hot</color>",
+            MotorDisplay.FormatHud(MotorStatus.Hot, governorActive: true, flashOn: false));
+        Assert.Equal(
+            "<color=#FF6600>Motors Hot ▼GOV</color>",
+            MotorDisplay.FormatHud(MotorStatus.Hot, governorActive: true, flashOn: true));
+        Assert.Equal(
+            "<color=#FF6600>Motors Hot 50% ▼GOV</color>",
+            MotorDisplay.FormatHud(MotorStatus.Ok, governorActive: true, flashOn: true, forcedHeatPercent: 50f));
+    }
 }

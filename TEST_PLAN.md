@@ -489,6 +489,18 @@ Cool/Dead → release. Player.log: `T2 thermal: soft-cap → … (Warning|Critic
 - [x] Cool again — `cap release`; throttle free
 - [x] Mod Off → On; no exceptions / no stuck throttle (iterative smoke)
 
+### 2.2b Thermal debug inject + GOV flash — **PASS** v0.5.16
+
+**Shift+F1** debug on, sit in loco, **F10** cycles: off → **Motors Hot 50%** (Warning) → Critical → off. Governor soft-rolls as usual. While capping, Motors chip flashes **▼GOV**.
+
+**Sign-off**
+
+- [x] UMM **0.5.16** Active
+- [x] F10 → `Motors Hot 50%`; soft-cap `0.75 (Warning)` (Player.log)
+- [x] F10 → Critical → soft-cap `0.55` (Player.log)
+- [x] Real heat (debug off) → `soft-cap → 0.75 (Warning)` (Player.log)
+- [x] Cap release on cool / off; iterative smoke **PASS** 2026-07-28
+
 ---
 
 ## Epic 4 — HUD quality (reopened)

@@ -99,25 +99,72 @@ public static class MotorDisplay
     }
 
     public static string Format(MotorStatus? status) =>
-        FormatCore(status, richText: false);
+        FormatCore(status, richText: false, governorActive: false, flashOn: false, forcedHeatPercent: null);
 
     public static string FormatHud(MotorStatus? status) =>
-        FormatCore(status, richText: true);
+        FormatCore(status, richText: true, governorActive: false, flashOn: false, forcedHeatPercent: null);
 
-    private static string FormatCore(MotorStatus? status, bool richText)
+    /// <summary>
+    /// HUD Motors chip with optional debug heat % and governor flash (blink when actively capping).
+    /// </summary>
+    public static string FormatHud(
+        MotorStatus? status,
+        bool governorActive,
+        bool flashOn,
+        float? forcedHeatPercent = null) =>
+        FormatCore(status, richText: true, governorActive, flashOn, forcedHeatPercent);
+
+    private static string FormatCore(
+        MotorStatus? status,
+        bool richText,
+        bool governorActive,
+        bool flashOn,
+        float? forcedHeatPercent)
     {
-        if (status is null)
+        if (status is null && forcedHeatPercent is null)
         {
             return "— Motors";
         }
 
-        return status.Value switch
+        string text;
+        string color;
+
+        if (forcedHeatPercent is not null)
         {
-            MotorStatus.Ok => Colorize("Motors OK", OkColor, richText),
-            MotorStatus.Hot => Colorize("Motors Hot", HotColor, richText),
-            MotorStatus.Dead => Colorize("Motors Dead", DeadColor, richText),
-            _ => "— Motors",
-        };
+            text = $"Motors Hot {forcedHeatPercent.Value:0}%";
+            color = HotColor;
+        }
+        else
+        {
+            switch (status)
+            {
+                case MotorStatus.Ok:
+                    text = "Motors OK";
+                    color = OkColor;
+                    break;
+                case MotorStatus.Hot:
+                    text = "Motors Hot";
+                    color = HotColor;
+                    break;
+                case MotorStatus.Dead:
+                    text = "Motors Dead";
+                    color = DeadColor;
+                    break;
+                default:
+                    return "— Motors";
+            }
+        }
+
+        if (governorActive)
+        {
+            text = flashOn ? $"{text} ▼GOV" : text;
+            if (flashOn)
+            {
+                color = "#FF6600";
+            }
+        }
+
+        return Colorize(text, color, richText);
     }
 
     private static string Colorize(string text, string color, bool richText) =>

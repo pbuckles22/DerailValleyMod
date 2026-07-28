@@ -117,7 +117,7 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 |--|--|
 | **Project** | *Yard Master Suite* (UMM / Harmony / net48) |
 | **MVP** | **Epic 1** System Monitor HUD |
-| **Version (`main`)** | **0.5.15** *(**2.2** thermal governor)* |
+| **Version (`main`)** | **0.5.16** *(**2.2b** thermal debug inject + GOV flash)* |
 | **Active branch** | — |
 
 **Shipped on `main`**
@@ -125,11 +125,12 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 - [x] **Epic 0** Safe Boot *(0.4 scaffold)*
 - [x] **Epic 1** Diagnostic HUD — **1.1–1.14** complete (Motors current-state only — Hot dwell **cut**; **1.15** queued)
 - [x] **Epic 4** HUD quality — **4.1–4.11** complete 2026-07-27 (**4.11** @ **0.5.12**; **4.12** queued)
-- [x] **Tier 2 debug inject** — F5–F9 / F11 + PgUp/PgDn turntable (**v0.4.67**; F7/F11 Tier 2 **PASS**)
+- [x] **Tier 2 debug inject** — F5–F10 / F11 + PgUp/PgDn turntable (**F10** motors @ **0.5.16**)
 - [x] Bundle E **#23** + freight/car confirm (**v0.4.80**, Tier 2 **PASS**); **#22** Load live hard-pull **waived**
 - [x] **2.1** Three-Gate helper (**v0.4.81**, Tier 1)
 - [x] Version line **0.5.x** opened (Governor era) — **0.5.0**
 - [x] **2.2** Thermal governor (**v0.5.15**, Tier 1 + Tier 2 **PASS** — Warning 75% / Critical 55% soft-roll)
+- [x] **2.2b** Thermal debug + ▼GOV flash (**v0.5.16**, Tier 2 **PASS**)
 
 **Next**
 

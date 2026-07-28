@@ -1298,10 +1298,22 @@ internal static class TelemetryReader
             LoadDisplay.FormatHud(TryGetLoadPercent()),
             SpeedDisplay.FormatFromMetersPerSecond(speedMps),
             SpeedLimitDisplay.FormatHud(speedKmh, limit.CurrentKmh, limit.Trend),
-            MotorDisplay.FormatHud(TryGetMotorStatus()),
+            FormatMotorsHudChip(),
             HandbrakeDisplay.FormatTotal(TryGetConsistHandbrakeAppliedCount()),
             CarsDisplay.Format(TryGetConsistCarCount()),
             TryGetBackupProximityHudChip());
+    }
+
+    /// <summary>Motors chip with debug heat % and governor flash when capping.</summary>
+    private static string FormatMotorsHudChip()
+    {
+        var locoId = TryGetUsableLoco()?.ID;
+        var flashOn = ((int)(Time.unscaledTime * 4f) & 1) == 0;
+        return MotorDisplay.FormatHud(
+            TryGetMotorStatus(),
+            governorActive: ThermalGovernor.IsCapping,
+            flashOn: flashOn,
+            forcedHeatPercent: MotorDebugOverride.ForcedHeatPercent(locoId));
     }
 
     /// <summary>
@@ -1595,11 +1607,12 @@ internal static class TelemetryReader
         {
             var loco = TryGetUsableLoco();
             var flow = loco?.SimController?.SimulationFlow;
-            return flow == null ? null : ReadMotorStatus(flow, TryGetCabTempBand(loco));
+            var real = flow == null ? null : ReadMotorStatus(flow, TryGetCabTempBand(loco));
+            return MotorDebugOverride.ApplyStatus(loco?.ID, real);
         }
         catch
         {
-            return null;
+            return MotorDebugOverride.ApplyStatus(TryGetUsableLoco()?.ID, null);
         }
     }
 
@@ -3658,8 +3671,11 @@ internal static class TelemetryReader
     internal static TrainCar? TryGetUsableLocoForGovernor() => TryGetUsableLoco();
 
     /// <summary>Cab MU temp band for thermal soft-cap ceilings (Warning vs Critical).</summary>
-    internal static MotorCabTempBand? TryGetCabTempBandForGovernor() =>
-        TryGetCabTempBand(TryGetUsableLoco());
+    internal static MotorCabTempBand? TryGetCabTempBandForGovernor()
+    {
+        var loco = TryGetUsableLoco();
+        return MotorDebugOverride.ApplyBand(loco?.ID, TryGetCabTempBand(loco));
+    }
 
     /// <summary>
     /// DE2/DE6 expose amps on TractionMotor, TractionMotorSet, and/or TractionGenerator.

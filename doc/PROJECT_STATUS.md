@@ -2,7 +2,7 @@
 
 Human-readable **snapshot**. Keep in sync with [AGENT_HANDOFF.md](../AGENT_HANDOFF.md) → *Current state* and checkbox truth in [PM_PLAN.md](../PM_PLAN.md).
 
-**Last updated:** 2026-07-27
+**Last updated:** 2026-07-28
 
 ---
 
@@ -15,7 +15,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 |--|--|
 | **Journey** | Stage 2 — Governors |
 | **MVP** | Epic 1 System Monitor HUD |
-| **Version** | **0.5.15** on `main` *(**2.2** thermal governor)* |
+| **Version** | **0.5.16** on `main` *(**2.2** + **2.2b** thermal debug)* |
 | **WIP branch** | — |
 
 ---
@@ -24,7 +24,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 | Branch | Role |
 |--------|------|
-| **`main`** | Integration — **0.5.15**; next **4.12** direction-gated proximity |
+| **`main`** | Integration — **0.5.16**; next **4.12** direction-gated proximity |
 
 ---
 
@@ -50,5 +50,5 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 - **4.11** backup / couple-ready → **shipped** @ **0.5.12**
 - Loco radar → already **4.10**
-- Harbor Hill / Hot → **2.2** **shipped** @ **0.5.15**
+- Harbor Hill / Hot → **2.2** **shipped** @ **0.5.15**; debug inject **0.5.16**
 - DM3 → parking lot
