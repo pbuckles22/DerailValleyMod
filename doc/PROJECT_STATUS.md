@@ -13,7 +13,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 | | |
 |--|--|
-| **Journey** | Stage 2 — Yard / Dispatcher *(governors done)* |
+| **Journey** | Stage 2 — path check (**3.4**); Dispatcher Align Route (**3.5**) next |
 | **MVP** | Epic 1 System Monitor HUD |
 | **Version** | **0.5.25** on `main` *(**Epic 2** complete — **2.3**)* |
 | **WIP branch** | — |
@@ -41,7 +41,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 ### Next
 
-- [ ] **Epic 3** — build order **3.3** → **3.4** → **3.5** (or **3.1** / **3.1b** when teleport / re-rail pain dominates)
+- [ ] **Epic 3** — build order **3.4** → **3.5** (or **3.1** / **3.1b** when teleport / re-rail pain dominates); **3.3 cut** (walk grind → Dispatcher)
 - Parking: DM3 reverser/MU notes; session reset
 
 ### Gemini triage (2026-07-27)

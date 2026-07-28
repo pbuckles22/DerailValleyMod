@@ -32,9 +32,9 @@ Legacy IDs (`CMD-01a`, `QOL-08`, …) stay in parentheses so older notes still r
 
 | Stage | Player focus | Mod focus | Stories |
 |-------|----------------|-----------|---------|
-| **1 — Apprentice** | Throttle, brakes, sander, don’t blow the fuse | Situational Awareness HUD | **Epic 1** *(done)* + **4.3** + **4.6** + **4.7**; next Bundle **D** / Epic 2 |
-| **2 — Junior Yardman** | Switches, yard paths, consist moves | Remote switch / path integrity | **3.3–3.4** |
-| **3 — Yard Master** | Multi-stop efficiency | Auto dispatch + workbench | **3.5**, **5.1**, **3.1** |
+| **1 — Apprentice** | Throttle, brakes, sander, don’t blow the fuse | Situational Awareness HUD | **Epic 1** *(done)* + **4.3** + **4.6** + **4.7**; Epic 2 done |
+| **2 — Junior Yardman** | Walk/throw switches (grind to Dispatcher); verify routes | Path integrity (“check my math”) | **3.4** |
+| **3 — Yard Master** | Multi-stop / inter-city efficiency | CTC-style Align Route + workbench | **3.5** *(Dispatcher license)*, **5.1**, **3.1** |
 
 Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 play is actually enjoyable — cab gadgets on the HUD, no dash wall in the yard.
 
@@ -55,7 +55,8 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
 | **2.x** | E2-S1, CMD-04/05 | Governor Mode |
 | **3.1** | CMD-06 | Consist teleport + Station Snap & Return |
 | **3.2** | *(new)* | Comms Radio Overlay (helper UI) |
-| **3.3–3.5** | *(new / was parking-lot path tracer)* | Dispatcher: remote switch → manual path check → auto-route |
+| **3.3** | *(was remote switch)* | **Cut** — walk/throw is the grind to Dispatcher |
+| **3.4–3.5** | *(was parking-lot path tracer)* | Path check → Dispatcher-gated Align Route (yard + inter-city) |
 | **4.4** | *(new)* | Look-at Track ID |
 | **4.5** | *(was 4.4)* | Next station distance (fluids) |
 | **4.6** | *(was Project Plan 3.2)* | Station waypoint (foot) + in-zone station coords |
@@ -154,7 +155,7 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
 
 ---
 
-- [ ] **Epic 3 — Yard Master / Dispatcher** *(Journey Stages 2–3)* — Yard efficiency after HUD (+ governor abort patterns for anything that writes). Never delete cars.
+- [ ] **Epic 3 — Yard Master / Dispatcher** *(Journey Stages 2–3)* — Path integrity + CTC-style routing after HUD (+ governor abort patterns for anything that writes). Never delete cars. Scope: **yard and inter-city / mainline** (not yard-only).
 
   - [ ] **3.1 Manual consist management & teleport** *(was CMD-06)* — Teleport via native organizers and/or helper UI; abort on hazmat / jobs / coupler / speed / unknowns; fail closed. Includes **Station Snap & Return**.
     > As a yard master, I want verified teleport helpers and station snap/return so I can reorganize consists and handle paperwork without long walks.
@@ -162,19 +163,19 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
   - [ ] **3.2 Comms Radio Overlay** — Auxiliary HUD panel with helper actions for consist ops / teleport (keeps tools off physical item clutter).
     > As a yard master, I want a Comms-style helper panel so teleport and yard tools stay one click away.
 
-  - [ ] **3.3 Manual switch / turntable remote** — Flip switches and turntables from the HUD / look-at so you don’t walk back and forth. *Stage 2.* *(Note: temporary **PgUp/PgDn** bar-sim for nearby turntable is Epic 4 QOL smoke aid — not a substitute for 3.3.)*
-    > As a shunter, I want to flip switches and turntables from my HUD so I don’t have to walk kilometres between throws.
+  - [x] **3.3 Manual switch / turntable remote** — **Cut** (2026-07-28). Walking/throwing switches is the career grind to **Dispatcher**. Licensed **3.5** Align Route is the real-world remote (CTC), not a free HUD lever. *(PgUp/PgDn nearby turntable bar-sim stays Epic 4 QOL / smoke aid only.)*
+    > ~~As a shunter, I want to flip switches and turntables from my HUD…~~
 
   - [ ] **3.1b License-gated re-rail / spawn** *(debug → product candidate)* — Hotkey: scroll liveries the player holds licenses for; place with same re-rail blue/red ghost box as native re-rail. Replace/extend any ad-hoc spawn debt.
     > As a tester/yard master, I want to re-rail a licensed loco under the crosshair with clear place/no-place feedback.
 
-  - [ ] **3.4 Path tracer: manual check** *(was parking-lot Switch Path Tracer)* — Pick a destination; show whether switches are aligned (“check my math”) without auto-throwing. *Stage 2.*
-    > As a yard master, I want to click a destination and see if my switches are aligned so I can verify the path myself.
+  - [ ] **3.4 Path tracer: manual check** *(was parking-lot Switch Path Tracer)* — Pick a destination (yard spur **or** another city / mainline); show whether switches are aligned (“check my math”) without auto-throwing. *Stage 2 — no Dispatcher license required* (verification aid while you still walk levers).
+    > As an engineer / yardman, I want to pick a destination and see if my switches are aligned — in the yard or between cities — so I can verify the path myself before I occupy it.
 
-  - [ ] **3.5 Path tracer: automated dispatching** — “Align Route” after a verified path; throws switches automatically. *Stage 3 — needs stable **3.4** + write-safety patterns.*
-    > As a yard master, I want an Align Route control that fixes switches automatically once the path is verified.
+  - [ ] **3.5 Path tracer: automated dispatching** — “Align Route” after a verified path; throws switches automatically. **Requires Dispatcher license.** *Stage 3 — needs stable **3.4** + ThreeGate write-safety.* Real-world frame: CTC / interlocking desk (dispatcher sets the route; crews don’t hike every lever between terminals) — **not** a cheat when licensed.
+    > As a licensed dispatcher, I want an Align Route control that sets switches for a verified path — yard or inter-city — the way a modern control desk would.
 
-  **Build order (dispatcher):** **3.3** → **3.4** → **3.5** ( **3.1** / **3.2** when teleport / UI pain dominates).
+  **Build order (dispatcher):** **3.4** → **3.5** ( **3.1** / **3.1b** / **3.2** when teleport / re-rail / UI pain dominates).
 
 ---
 

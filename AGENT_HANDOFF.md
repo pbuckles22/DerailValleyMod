@@ -138,7 +138,7 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 
 **Next**
 
-- [ ] **Epic 3** — Yard Master / Dispatcher (**3.3** → **3.4** → **3.5**; or **3.1** / **3.1b** when needed)
+- [ ] **Epic 3** — Yard Master / Dispatcher (**3.4** → **3.5** Dispatcher-gated Align Route; yard + inter-city; **3.3 cut**; or **3.1** / **3.1b** when needed)
 - Backlog: session reset ~7AM hotkey; DM3 MU/reverser knowledge
 **Merge-ready:** `dotnet test YardMasterSuite.sln` · `dotnet build YardMasterSuite.sln -c Release` · **deploy to Mods** via `package.ps1 -NoArchive` (required before Tier 2 smoke — see [.cursor/rules/deploy-before-smoke.mdc](.cursor/rules/deploy-before-smoke.mdc))
 
