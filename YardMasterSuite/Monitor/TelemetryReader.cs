@@ -1288,7 +1288,7 @@ internal static class TelemetryReader
             ? (float?)null
             : SpeedDisplay.ToKilometersPerHour(speedMps.Value);
         var limit = TryGetSpeedLimitState();
-        // 4.7 center-weighted IA: Fuel·Oil·Mass·Grade·Load·Speed·Limit·Motors·Handbrakes·Cars
+        // 4.7 center-weighted IA: Fuel·Oil·Mass·Grade·Load·Speed·Limit·Motors·FreeMotion·Handbrakes·Cars
         // 4.5 Next: station — cut (nearest-yard chip was clutter / wrong for mainland range).
         return TrainHudLine.Format(
             FluidDisplay.FormatFuelHud(fuel, oil),
@@ -1301,7 +1301,8 @@ internal static class TelemetryReader
             FormatMotorsHudChip(),
             HandbrakeDisplay.FormatTotal(TryGetConsistHandbrakeAppliedCount()),
             CarsDisplay.Format(TryGetConsistCarCount()),
-            TryGetBackupProximityHudChip());
+            TryGetBackupProximityHudChip(),
+            TryGetConsistFreeMotionHudChip());
     }
 
     /// <summary>Motors chip with debug heat % and governor flash when capping.</summary>
@@ -1314,6 +1315,85 @@ internal static class TelemetryReader
             governorActive: ThermalGovernor.IsCapping,
             flashOn: flashOn,
             forcedHeatPercent: MotorDebugOverride.ForcedHeatPercent(locoId));
+    }
+
+    /// <summary>
+    /// 1.15 — other locos vs lead controls. Empty when synced / single loco.
+    /// Yellow = off or Neutral; Red = on + in gear + mismatch.
+    /// </summary>
+    public static string TryGetConsistFreeMotionHudChip()
+    {
+        try
+        {
+            return ConsistFreeMotion.FormatHud(TryGetConsistFreeMotionSeverity());
+        }
+        catch
+        {
+            return string.Empty;
+        }
+    }
+
+    public static FreeMotionSeverity TryGetConsistFreeMotionSeverity()
+    {
+        var lead = TryGetUsableLoco();
+        if (lead == null || !TryReadLocoControls(lead, out var leadSnap))
+        {
+            return FreeMotionSeverity.None;
+        }
+
+        var cars = lead.trainset?.cars;
+        if (cars == null || cars.Count <= 1)
+        {
+            return FreeMotionSeverity.None;
+        }
+
+        var worst = FreeMotionSeverity.None;
+        for (var i = 0; i < cars.Count; i++)
+        {
+            var c = cars[i];
+            if (c == null || !c.IsLoco || c == lead)
+            {
+                continue;
+            }
+
+            if (!TryReadLocoControls(c, out var otherSnap))
+            {
+                continue;
+            }
+
+            worst = ConsistFreeMotion.Aggregate(worst, ConsistFreeMotion.CompareUnit(leadSnap, otherSnap));
+            if (worst == FreeMotionSeverity.Red)
+            {
+                return worst;
+            }
+        }
+
+        return worst;
+    }
+
+    private static bool TryReadLocoControls(TrainCar loco, out LocoControlSnapshot snapshot)
+    {
+        snapshot = default;
+        try
+        {
+            var controls = loco?.SimController?.controlsOverrider;
+            if (controls == null)
+            {
+                return false;
+            }
+
+            var engineOn = controls.EngineOnReader != null && controls.EngineOnReader.IsOn;
+            var reverser = controls.Reverser != null ? controls.Reverser.Value : ConsistFreeMotion.NeutralReverser;
+            var throttle = controls.Throttle != null ? controls.Throttle.Value : 0f;
+            var brake = controls.Brake != null ? controls.Brake.Value : 0f;
+            var indBrake = controls.IndependentBrake != null ? controls.IndependentBrake.Value : 0f;
+            snapshot = new LocoControlSnapshot(engineOn, reverser, throttle, brake, indBrake);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     /// <summary>

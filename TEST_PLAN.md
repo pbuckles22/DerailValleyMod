@@ -530,4 +530,17 @@ Reverser gate: **Reverse** → `Rear …` / `Rear —`; **Forward** → `Front �
 - [x] Mod Off → On; no exceptions
 - [x] Iterative smoke **PASS** 2026-07-28
 
-Recovery: [modding.md](doc/requirements/modding.md).
+### 1.15 Consist free-motion — **PASS** v0.5.20
+
+Other locos vs cab: **quiet** when synced; **yellow** `MU idle` if either unit off/Neutral (brakes match); **red** `MU desync` on brake/ind-brake fight or both on+in-gear mismatch. MU cable syncs reverser/throttle — unplug MU to desync those.
+
+**Sign-off**
+
+- [x] UMM **0.5.20** Active
+- [x] Single loco / synced → no chip
+- [x] Off/Neutral (brakes match) → yellow both cabs
+- [x] Both in gear + wrong reverser/throttle → red
+- [x] Train/independent brake mismatch → red
+- [x] Match again → chip clears
+- [x] Mod Off → On; no exceptions
+- [x] Iterative smoke **PASS** 2026-07-28

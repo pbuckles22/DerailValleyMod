@@ -108,6 +108,8 @@ Look-at wins; standing fallback when crosshair is not on a car. Hidden when no t
 
 **4.12 notes:** DV reverser gate (neutral = 0.5). **Reverse** → `Rear`; **Forward** → `Front` (same colors/ranging); **Neutral** → omit. Open tip with no target within ~80 m → `Front —` / `Rear —` (not omit). After couple, tip moves to the new free end.
 
+**1.15 notes:** Loco-bar `MU idle` (yellow) / `MU desync` (red). Quiet when synced. Yellow if either unit off/Neutral (brakes match). Red on brake/ind-brake fight or both on+in-gear control mismatch. MU cable syncs reverser/throttle — unplug to test desync.
+
 
 **4.7 notes:** All HUD rows centered. Stack: loco (if any) → look-at (if any) → active job (if any) → always-on nav. Chip order on loco bar as above.
 

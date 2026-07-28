@@ -134,8 +134,8 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
   - [x] **1.14 Park / return mark** — `Home` sets/updates session mark at player XZ; `Shift+Home` clears. Always-on nav chip `Marked NE 84m` (16-point bearing + meters back) or `Marked here` within 1 m; omitted when unmarked. Quiet `T2 mark` on set/clear / bearing change. Distinct from live `Heading` / `Pos`. **Done** — Tier 1 + Tier 2 **PASS** (v0.4.25).
     > As a yard worker, I want to mark where I left the loco so when I’m running around I always know which way and how far to get back.
 
-  - [ ] **1.15 Engine / MU alive** *(after **2.2** / with HUD power)* — Surface lead **engine running** (not just sitting unstarted) and **MU/consist trip** state (e.g. second unit TMS tripped / dead) so you don’t look down and discover a dark engine or a tripped trailing MU. Distinct from **1.8** Motors Hot (temp band). Exact chip copy TBD.
-    > As an engineer, I want to know if my lead engine is actually on and whether a trailing MU has tripped so I don’t keep pulling with half the consist dead.
+  - [x] **1.15 Consist free-motion** *(was “Engine / MU alive”)* — Consist HUD chip vs cab controls: **quiet** when synced; **yellow** `MU idle` if either unit off/Neutral (brakes match); **red** `MU desync` on brake/ind-brake fight or both on+in-gear mismatch (reverser/throttle). Reads engine-on, reverser, throttle, train + independent brake. Distinct from **1.8** Motors Hot and **2.3** auto-brake. **Done** — Tier 1 + Tier 2 smoke **PASS** (v**0.5.20**).
+    > As an engineer, I want a clear warning when another loco on my train is fighting free forward or reverse motion, a softer cue when units are off or in neutral, and silence when the consist is correctly synced with me.
 
   **Build order:** **Epic 4** complete → **2.1** Three-Gate → **2.2**. *(Do not reopen **1.8** HUD thermal prediction.)*
 
