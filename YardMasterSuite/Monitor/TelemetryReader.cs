@@ -1317,18 +1317,19 @@ internal static class TelemetryReader
     }
 
     /// <summary>
-    /// 4.11 — free consist extremity clearance / couple-ready cue (empty = omit).
+    /// 4.12 — direction-gated consist extremity clearance (empty = omit).
+    /// Reverse → Rear; Forward → Front; Neutral/unknown → omit.
     /// </summary>
     public static string TryGetBackupProximityHudChip()
     {
         try
         {
-            if (!TryGetBackupProximity(out var meters, out var inRange, out var tipActive))
+            if (!TryGetBackupProximity(out var meters, out var inRange, out var tipActive, out var label))
             {
                 return string.Empty;
             }
 
-            return BackupProximityDisplay.FormatHud(meters, inRange, tipActive);
+            return BackupProximityDisplay.FormatHud(meters, inRange, tipActive, label);
         }
         catch
         {
@@ -1340,17 +1341,26 @@ internal static class TelemetryReader
     private static readonly Collider[] BackupProximityHits = new Collider[128];
 
     /// <summary>
-    /// Free tip on loco rear axis: clearance via scan / cone; green when within 1.5 m game scan
-    /// (still <c>Rear Nm</c> — not "Couple ready"). Tip with no range → Rear —.
+    /// Free tip on travel axis: Reverse → rear; Forward → front. Clearance via scan / cone;
+    /// green when within 1.5 m game scan. Tip with no range → label —.
     /// </summary>
     public static bool TryGetBackupProximity(
         out float? clearanceMeters,
         out bool inCoupleRange,
-        out bool tipActive)
+        out bool tipActive) =>
+        TryGetBackupProximity(out clearanceMeters, out inCoupleRange, out tipActive, out _);
+
+    /// <inheritdoc cref="TryGetBackupProximity(out float?, out bool, out bool)"/>
+    public static bool TryGetBackupProximity(
+        out float? clearanceMeters,
+        out bool inCoupleRange,
+        out bool tipActive,
+        out string label)
     {
         clearanceMeters = null;
         inCoupleRange = false;
         tipActive = false;
+        label = "Rear";
 
         var loco = TryGetUsableLoco();
         if (loco == null)
@@ -1358,7 +1368,16 @@ internal static class TelemetryReader
             return false;
         }
 
-        var coupler = TryGetApproachTipCoupler(loco);
+        var direction = ProximityTravelDirectionGate.FromReverser(TryGetReverserValue(loco));
+        if (!ProximityTravelDirectionGate.ShouldShowChip(direction))
+        {
+            return false;
+        }
+
+        label = ProximityTravelDirectionGate.ChipLabel(direction);
+        var useFront = ProximityTravelDirectionGate.UseFrontTip(direction);
+
+        var coupler = TryGetApproachTipCoupler(loco, useFront);
         if (coupler == null || coupler.IsCoupled())
         {
             return false;
@@ -1385,6 +1404,25 @@ internal static class TelemetryReader
         return true;
     }
 
+    /// <summary>DV reverser 0‥1 (0.5 = neutral); null if control missing.</summary>
+    private static float? TryGetReverserValue(TrainCar loco)
+    {
+        try
+        {
+            var reverser = loco?.SimController?.controlsOverrider?.Reverser;
+            if (reverser == null)
+            {
+                return null;
+            }
+
+            return reverser.Value;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     /// <summary>
     /// Matches private <c>Coupler.CouplerDistanceCheckPosition</c>: inset 0.25 m along −forward
     /// so clearance tracks couple/scan geometry, not the coupler pivot (false 0.0 with open buffers).
@@ -1402,9 +1440,10 @@ internal static class TelemetryReader
     }
 
     /// <summary>
-    /// Free extremity tip on the loco rear axis (−forward). Cab look is ignored (rear-camera chip).
+    /// Free extremity tip on travel axis. <paramref name="useFront"/> true → loco forward tip;
+    /// false → rear (−forward). Cab look ignored.
     /// </summary>
-    private static Coupler? TryGetApproachTipCoupler(TrainCar loco)
+    private static Coupler? TryGetApproachTipCoupler(TrainCar loco, bool useFront)
     {
         var set = loco.trainset?.cars;
         if (set == null || set.Count == 0)
@@ -1413,13 +1452,27 @@ internal static class TelemetryReader
         }
 
         var locoFwd = loco.transform.forward;
-        BackupProximityAim.RearIntent(
-            locoFwd.x,
-            locoFwd.y,
-            locoFwd.z,
-            out var ix,
-            out var iy,
-            out var iz);
+        float ix, iy, iz;
+        if (useFront)
+        {
+            BackupProximityAim.FrontIntent(
+                locoFwd.x,
+                locoFwd.y,
+                locoFwd.z,
+                out ix,
+                out iy,
+                out iz);
+        }
+        else
+        {
+            BackupProximityAim.RearIntent(
+                locoFwd.x,
+                locoFwd.y,
+                locoFwd.z,
+                out ix,
+                out iy,
+                out iz);
+        }
 
         Coupler? best = null;
         var bestAlign = float.NegativeInfinity;

@@ -20,6 +20,14 @@ public class BackupProximityDisplayTests
     }
 
     [Fact]
+    public void Format_supports_front_label()
+    {
+        Assert.Equal("Front 1.2m", BackupProximityDisplay.Format(1.24f, inCoupleRange: false, tipActive: true, label: "Front"));
+        Assert.Equal("Front —", BackupProximityDisplay.Format(null, inCoupleRange: false, tipActive: true, label: "Front"));
+        Assert.Contains("Front 0.4m", BackupProximityDisplay.FormatHud(0.4f, inCoupleRange: true, tipActive: true, label: "Front"));
+    }
+
+    [Fact]
     public void FormatHud_green_at_or_below_0_5_with_scan()
     {
         Assert.Contains(BackupProximityDisplay.NearColor, BackupProximityDisplay.FormatHud(0.0f, inCoupleRange: true));

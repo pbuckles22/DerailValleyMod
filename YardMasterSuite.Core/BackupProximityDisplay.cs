@@ -27,12 +27,21 @@ public static class BackupProximityDisplay
     /// <summary>
     /// Format HUD fragment. Empty string = omit chip (no free tip).
     /// <paramref name="inCoupleRange"/> required for green; also fills unknown scan as 0.0 m.
+    /// <paramref name="label"/> is <c>Rear</c> or <c>Front</c> (4.12).
     /// </summary>
-    public static string Format(float? clearanceMeters, bool inCoupleRange, bool tipActive = true) =>
-        FormatCore(clearanceMeters, inCoupleRange, tipActive, richText: false);
+    public static string Format(
+        float? clearanceMeters,
+        bool inCoupleRange,
+        bool tipActive = true,
+        string label = "Rear") =>
+        FormatCore(clearanceMeters, inCoupleRange, tipActive, richText: false, label);
 
-    public static string FormatHud(float? clearanceMeters, bool inCoupleRange, bool tipActive = true) =>
-        FormatCore(clearanceMeters, inCoupleRange, tipActive, richText: true);
+    public static string FormatHud(
+        float? clearanceMeters,
+        bool inCoupleRange,
+        bool tipActive = true,
+        string label = "Rear") =>
+        FormatCore(clearanceMeters, inCoupleRange, tipActive, richText: true, label);
 
     /// <summary>True when distance is within game couple-scan band.</summary>
     public static bool IsInCoupleRange(float? clearanceMeters, float rangeMeters = CoupleNearRangeMeters)
@@ -66,12 +75,15 @@ public static class BackupProximityDisplay
         float? clearanceMeters,
         bool inCoupleRange,
         bool tipActive,
-        bool richText)
+        bool richText,
+        string label)
     {
         if (!tipActive)
         {
             return string.Empty;
         }
+
+        var end = string.IsNullOrEmpty(label) ? "Rear" : label;
 
         var m = NormalizeClearance(clearanceMeters);
         if (m is null && inCoupleRange)
@@ -81,10 +93,10 @@ public static class BackupProximityDisplay
 
         if (m is null)
         {
-            return "Rear —";
+            return $"{end} —";
         }
 
-        var text = $"Rear {m:0.0}m";
+        var text = $"{end} {m:0.0}m";
         if (!richText)
         {
             return text;

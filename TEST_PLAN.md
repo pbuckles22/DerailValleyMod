@@ -517,4 +517,17 @@ Check-point clearance (tenths). **Green** ≤**0.5 m** + couple-scan. **Yellow**
 - [x] No “Couple ready”; fully coupled → chip omitted
 - [x] Mod Off → On; no exceptions
 
+### 4.12 Direction-gated proximity — **PASS** v0.5.17
+
+Reverser gate: **Reverse** → `Rear …` / `Rear —`; **Forward** → `Front …` / `Front —`; **Neutral** → omit. After couple, tip jumps to new free end (not stuck on locked joint).
+
+**Sign-off**
+
+- [x] UMM **0.5.17** Active
+- [x] Reverse → `Rear` / `Rear —`; Forward → `Front` / `Front —`
+- [x] Neutral → no proximity chip (AR loco radar may remain)
+- [x] After couple → reading moves to new free tip (not stuck green on locked joint)
+- [x] Mod Off → On; no exceptions
+- [x] Iterative smoke **PASS** 2026-07-28
+
 Recovery: [modding.md](doc/requirements/modding.md).

@@ -178,7 +178,7 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
 
 ---
 
-- [x] **Epic 4 — HUD quality (QOL)** — Small UX polish on the Diagnostic HUD. *Supports Stage 1 playability.* **Status: complete 2026-07-27** *(4.11 @ **0.5.12**; **4.12** direction-gated proximity queued)*
+- [x] **Epic 4 — HUD quality (QOL)** — Small UX polish on the Diagnostic HUD. *Supports Stage 1 playability.* **Status: complete 2026-07-28** *(incl. **4.12** @ **0.5.17**)*
 
   - [x] **4.1 Enhanced targeting** *(was QOL-06)* — Look-at spherecast **0.15 m**, max **250 m**. *PASS\*; slight sky-stickiness accepted.*
     > As a yard scout, I want distant cars to resolve under the crosshair so I can inspect from farther away.
@@ -213,7 +213,7 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
   - [x] **4.11 Backup proximity** — Rear-camera clearance on loco rear tip (`Rear N.Nm` / `Rear —`); **green** ≤0.5 m + couple-scan; **yellow** through 30 m; check-point inset (−0.25 m). No “Couple ready”. Cab look ignored. **Done** — Tier 1 + Tier 2 smoke **PASS** (v**0.5.12**; 3.8 m jump non-repro / user error).
     > As a driver reversing to pick up a train, I want distance before impact and a clear cue when I am close enough to brake and couple.
 
-  - [ ] **4.12 Direction-gated proximity** *(immediate after **2.2**)* — When loco is in **forward** (not reverse): **omit** `Rear …` chip. Optionally show **front** clearance (`Front N.Nm`) with the same ranging/colors while moving forward. Reverse keeps rear as today.
+  - [x] **4.12 Direction-gated proximity** — Reverser gate: **Reverse** → `Rear …`; **Forward** → `Front …` (same ranging/colors); **Neutral** → omit. Tip jumps to new free end after couple. **Done** — Tier 1 + Tier 2 smoke **PASS** (v**0.5.17**).
     > As an engineer, I only want rear proximity when I’m backing; when I’m going forward, show front clearance instead.
 
 ---

@@ -5,6 +5,15 @@ namespace YardMasterSuite.Tests;
 public class BackupProximityAimTests
 {
     [Fact]
+    public void FrontIntent_matches_loco_forward()
+    {
+        BackupProximityAim.FrontIntent(0f, 0f, 1f, out var x, out var y, out var z);
+        Assert.Equal(0f, x, precision: 4);
+        Assert.Equal(0f, y, precision: 4);
+        Assert.Equal(1f, z, precision: 4);
+    }
+
+    [Fact]
     public void RearIntent_is_opposite_loco_forward()
     {
         BackupProximityAim.RearIntent(0f, 0f, 1f, out var x, out var y, out var z);

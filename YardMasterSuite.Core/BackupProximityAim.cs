@@ -3,8 +3,8 @@ using System;
 namespace YardMasterSuite.Core;
 
 /// <summary>
-/// Pure tip / approach helpers for 4.11 backup proximity (no Unity).
-/// Intent is always loco reverse (−forward): rear-camera style, not cab look.
+/// Pure tip / approach helpers for 4.11/4.12 proximity (no Unity).
+/// Rear intent = −forward; front intent = loco forward. Cab look ignored.
 /// </summary>
 public static class BackupProximityAim
 {
@@ -22,6 +22,18 @@ public static class BackupProximityAim
         out float intentY,
         out float intentZ) =>
         Normalize(-locoFwdX, -locoFwdY, -locoFwdZ, out intentX, out intentY, out intentZ);
+
+    /// <summary>
+    /// World intent for the front sensor: loco forward (cab look ignored).
+    /// </summary>
+    public static void FrontIntent(
+        float locoFwdX,
+        float locoFwdY,
+        float locoFwdZ,
+        out float intentX,
+        out float intentY,
+        out float intentZ) =>
+        Normalize(locoFwdX, locoFwdY, locoFwdZ, out intentX, out intentY, out intentZ);
 
     /// <summary>How well a tip's outward axis matches intent (−1‥1).</summary>
     public static float TipAlignment(

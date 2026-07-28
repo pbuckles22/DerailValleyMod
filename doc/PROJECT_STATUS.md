@@ -15,7 +15,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 |--|--|
 | **Journey** | Stage 2 — Governors |
 | **MVP** | Epic 1 System Monitor HUD |
-| **Version** | **0.5.16** on `main` *(**2.2** + **2.2b** thermal debug)* |
+| **Version** | **0.5.17** on `main` *(**4.12** direction-gated proximity)* |
 | **WIP branch** | — |
 
 ---
@@ -24,7 +24,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 | Branch | Role |
 |--------|------|
-| **`main`** | Integration — **0.5.16**; next **4.12** direction-gated proximity |
+| **`main`** | Integration — **0.5.17**; next **1.15** Engine / MU alive |
 
 ---
 
@@ -36,12 +36,11 @@ Stack: Unity / C# `net48` / UMM / Harmony
 - [x] **Epic 1** — Diagnostic HUD *(complete 2026-07-23; **1.15** queued)*
 - [ ] **Epic 2** — Governor Mode *(**2.1** + **2.2** done; **2.3** next after HUD follow-ups)*
 - [ ] **Epic 3** — Yard Master / Dispatcher
-- [x] **Epic 4** — HUD quality *(complete 2026-07-27 incl. **4.11**; **4.12** queued)*
+- [x] **Epic 4** — HUD quality *(complete 2026-07-28 incl. **4.12** @ **0.5.17**)*
 - [ ] **Epic 5** — Digital Catalog
 
 ### Next
 
-- [ ] **4.12** Direction-gated proximity — hide `Rear` when forward; show `Front` when forward
 - [ ] **1.15** Engine / MU alive — lead running + trailing trip awareness
 - [ ] **2.3** Auto-brake governor
 - Parking: DM3 reverser/MU notes; **3.1b**; session reset
@@ -49,6 +48,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 ### Gemini triage (2026-07-27)
 
 - **4.11** backup / couple-ready → **shipped** @ **0.5.12**
+- **4.12** direction-gated proximity → **shipped** @ **0.5.17**
 - Loco radar → already **4.10**
 - Harbor Hill / Hot → **2.2** **shipped** @ **0.5.15**; debug inject **0.5.16**
 - DM3 → parking lot
