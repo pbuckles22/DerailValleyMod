@@ -501,6 +501,22 @@ Cool/Dead → release. Player.log: `T2 thermal: soft-cap → … (Warning|Critic
 - [x] Real heat (debug off) → `soft-cap → 0.75 (Warning)` (Player.log)
 - [x] Cap release on cool / off; iterative smoke **PASS** 2026-07-28
 
+### 2.3 Auto-brake governor — **PASS** v0.5.25
+
+**Trigger:** engine **on → off** (falling edge) on lead usable loco — **stopped or moving**.
+
+**Action:** soft-roll **train + independent** toward **full** and **throttle toward idle** at **20%/s**. Handbrakes untouched. **Never** auto-releases on engine start. Want to coast → leave engine **on**.
+
+**Player.log:** `T2 autobrake: applying` / `apply done` / `abort …`
+
+**Sign-off**
+
+- [x] UMM **0.5.25** Active
+- [x] Stationary / rolling, brakes open + throttle up, engine **Off** → `applying` → levers soft-close + throttle idle → `apply done`
+- [x] Engine **On** → no auto-release from this governor
+- [x] Already secured + Off → quiet
+- [x] Mod Off → On; no exceptions (iterative smoke **PASS** 2026-07-28)
+
 ---
 
 ## Epic 4 — HUD quality (reopened)

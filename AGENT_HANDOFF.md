@@ -117,7 +117,7 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 |--|--|
 | **Project** | *Yard Master Suite* (UMM / Harmony / net48) |
 | **MVP** | **Epic 1** System Monitor HUD |
-| **Version (`main`)** | **0.5.20** *(**1.15** consist free-motion)* |
+| **Version (`main`)** | **0.5.25** *(**Epic 2** complete — **2.3** engine-off secure)* |
 | **Active branch** | — |
 
 **Shipped on `main`**
@@ -125,6 +125,7 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 - [x] **Epic 0** Safe Boot *(0.4 scaffold)*
 - [x] **Epic 1** Diagnostic HUD — **1.1–1.15** complete (**1.15** @ **0.5.20**)
 - [x] **Epic 4** HUD quality — **4.1–4.12** complete 2026-07-28 (**4.12** @ **0.5.17**)
+- [x] **Epic 2** Governor Mode — **2.1**–**2.3** complete 2026-07-28 (**2.3** @ **0.5.25**)
 - [x] **Tier 2 debug inject** — F5–F10 / F11 + PgUp/PgDn turntable (**F10** motors @ **0.5.16**)
 - [x] Bundle E **#23** + freight/car confirm (**v0.4.80**, Tier 2 **PASS**); **#22** Load live hard-pull **waived**
 - [x] **2.1** Three-Gate helper (**v0.4.81**, Tier 1)
@@ -133,11 +134,12 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 - [x] **2.2b** Thermal debug + ▼GOV flash (**v0.5.16**, Tier 2 **PASS**)
 - [x] **4.12** Direction-gated proximity (**v0.5.17**, Tier 1 + Tier 2 **PASS**)
 - [x] **1.15** Consist free-motion (**v0.5.20**, Tier 1 + Tier 2 **PASS**)
+- [x] **2.3** Auto-brake / engine-off secure (**v0.5.25**, Tier 1 + Tier 2 **PASS**)
 
 **Next**
 
-- [ ] **2.3** Auto-brake governor
-- Backlog: **3.1b** license-gated re-rail; session reset ~7AM hotkey; DM3 MU/reverser knowledge
+- [ ] **Epic 3** — Yard Master / Dispatcher (**3.3** → **3.4** → **3.5**; or **3.1** / **3.1b** when needed)
+- Backlog: session reset ~7AM hotkey; DM3 MU/reverser knowledge
 **Merge-ready:** `dotnet test YardMasterSuite.sln` · `dotnet build YardMasterSuite.sln -c Release` · **deploy to Mods** via `package.ps1 -NoArchive` (required before Tier 2 smoke — see [.cursor/rules/deploy-before-smoke.mdc](.cursor/rules/deploy-before-smoke.mdc))
 
 ## Run and test

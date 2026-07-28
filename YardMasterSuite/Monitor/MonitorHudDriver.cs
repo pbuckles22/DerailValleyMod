@@ -403,6 +403,12 @@ public sealed class MonitorHudDriver : MonoBehaviour
         {
             Main.Log(thermal);
         }
+
+        var autobrake = AutoBrakeGovernor.Tick();
+        if (autobrake != null)
+        {
+            Main.Log(autobrake);
+        }
     }
 
     private void PollTurntableAxis(KeyCode key, ref float downAt, ref bool didHold, float direction)

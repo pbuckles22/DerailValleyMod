@@ -10,7 +10,7 @@ Durable ranked backlog. Handoff notes may mention debt; **promote** anything tha
 
 
 
-**Last full pass:** Epic 4 close / **4.11** — 2026-07-27.
+**Last full pass:** Epic 2 close / **2.3** — 2026-07-28.
 
 
 

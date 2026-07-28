@@ -129,7 +129,7 @@ Look-at wins; standing fallback when crosshair is not on a car. Hidden when no t
 1. **Teleportation is the last resort** — Never delete. Teleport only after verification.
 2. **Governor vs Monitor**
    - **Monitors (read-only):** Epic 1 HUD — integrity **1.3–1.6**, power **1.7–1.9**, terrain **1.10**. Motors (**1.8**) reports **current** thermal/fuse state only — not a driver-prediction tool.
-   - **Governors (active):** Epic 2 — thermal / auto-brake via gated soft writes. **2.2** soft-rolls throttle toward **75%** (Warning) / **55%** (Critical) while Motors is Hot (`Throttle.Set` + ThreeGate); do not push prediction into the HUD.
+   - **Governors (active):** Epic 2 — thermal / auto-brake via gated soft writes. **2.2** soft-rolls throttle toward **75%** (Warning) / **55%** (Critical) while Motors is Hot (`Throttle.Set` + ThreeGate). **2.3** on engine on→off soft-rolls **train + independent** to full and **throttle to idle** (`Brake` / `IndependentBrake` / `Throttle.Set` + ThreeGate); never auto-releases on start; coast with engine left on. Do not push prediction into the HUD.
 3. **Stability first** — Epic 0 Safe Boot before UI or logic manipulation
 
 ---

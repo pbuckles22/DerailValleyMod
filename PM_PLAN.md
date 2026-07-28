@@ -141,7 +141,7 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
 
 ---
 
-- [ ] **Epic 2 — Governor Mode** *(MEDIUM)* — Gated soft writes via Three-Gate + safety gates. Prefix/Postfix only. *Active thermal management lives here — not on the Monitor HUD.*
+- [x] **Epic 2 — Governor Mode** *(MEDIUM)* — Gated soft writes via Three-Gate + safety gates. Prefix/Postfix only. *Active thermal management lives here — not on the Monitor HUD.* **Status: complete 2026-07-28** *(**2.1**–**2.3**; close @ **0.5.25**)*
 
   - [x] **2.1 Three-Gate helper** *(was E2-S1)* — Shared Integrity → State Registry → Safety → Soft Write path; fail closed. *Core foundation / prerequisite for 2.2 / 2.3.* **Done** — Tier 1 (**v0.4.81**); Tier 2 N/A until a governor soft-writes (**2.2**).
     > As a maintainer, I want one write path so every governor aborts the same safe way.
@@ -149,8 +149,8 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
   - [x] **2.2 Thermal governor** *(was CMD-04)* — Soft-roll throttle when **1.8** Motor status is Hot (cab MU Warning/Critical); abort if unsafe. Warning ceiling **75%**, Critical **55%**, rollback **5%/s** via `Throttle.Set` + ThreeGate. **Done** — Tier 1 + Tier 2 smoke **PASS** (v**0.5.15**).
     > As an engineer, I want the mod to soft-cap throttle when motors overheat so I avoid TM Offline events.
 
-  - [ ] **2.3 Auto-brake governor** *(was CMD-05)* — Engine-toggle linked brake release when safe; abort otherwise.
-    > As an engineer, I want safe auto brake-release on engine toggle so startup is less fiddly without unsafe writes.
+  - [x] **2.3 Auto-brake governor** *(was CMD-05)* — Engine **on→off** soft-rolls **train + independent** toward full and **throttle toward idle** (any speed; coast = leave engine on); ThreeGate fail-closed; never auto-releases on start; handbrakes untouched. Distinct from parking-lot Startup Assist. **Done** — Tier 1 + Tier 2 smoke **PASS** (v**0.5.25**).
+    > As an engineer, I want air brakes applied and throttle brought down whenever I shut the engine down so an unpowered loco is not free to roll under power residue — if I want to coast, I leave the engine on.
 
 ---
 
