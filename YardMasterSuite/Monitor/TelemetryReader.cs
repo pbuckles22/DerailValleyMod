@@ -7,6 +7,7 @@ using DV.CabControls;
 using DV.InventorySystem;
 using DV.Logic.Job;
 using DV.Signs;
+using DV.Simulation.Cars;
 using DV.ThingTypes;
 using DV.ThingTypes.TransitionHelpers;
 using LocoSim.Implementations;
@@ -1592,8 +1593,9 @@ internal static class TelemetryReader
     {
         try
         {
-            var flow = TryGetUsableLoco()?.SimController?.SimulationFlow;
-            return flow == null ? null : ReadMotorStatus(flow);
+            var loco = TryGetUsableLoco();
+            var flow = loco?.SimController?.SimulationFlow;
+            return flow == null ? null : ReadMotorStatus(flow, TryGetCabTempBand(loco));
         }
         catch
         {
@@ -3652,6 +3654,13 @@ internal static class TelemetryReader
         return best;
     }
 
+    /// <summary>Lead usable loco for <see cref="ThermalGovernor"/> (same as HUD power path).</summary>
+    internal static TrainCar? TryGetUsableLocoForGovernor() => TryGetUsableLoco();
+
+    /// <summary>Cab MU temp band for thermal soft-cap ceilings (Warning vs Critical).</summary>
+    internal static MotorCabTempBand? TryGetCabTempBandForGovernor() =>
+        TryGetCabTempBand(TryGetUsableLoco());
+
     /// <summary>
     /// DE2/DE6 expose amps on TractionMotor, TractionMotorSet, and/or TractionGenerator.
     /// PortDefinition.ID strings are asset-defined and unreliable — match CLR field names instead.
@@ -3680,7 +3689,7 @@ internal static class TelemetryReader
         return null;
     }
 
-    private static MotorStatus? ReadMotorStatus(SimulationFlow flow)
+    private static MotorStatus? ReadMotorStatus(SimulationFlow flow, MotorCabTempBand? cabTempBand = null)
     {
         if (flow?.OrderedSimComps == null)
         {
@@ -3694,7 +3703,7 @@ internal static class TelemetryReader
                 continue;
             }
 
-            var fromComp = ReadMotorStatusFromComponent(comp);
+            var fromComp = ReadMotorStatusFromComponent(comp, cabTempBand);
             if (fromComp != null)
             {
                 return fromComp;
@@ -3702,6 +3711,33 @@ internal static class TelemetryReader
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Cab TM TEMP lamp band from <see cref="MultipleUnitStateObserver.MUChainTemperatureState"/>
+    /// (Warning = yellow — below TM critical overheating threshold).
+    /// </summary>
+    private static MotorCabTempBand? TryGetCabTempBand(TrainCar? loco)
+    {
+        if (loco == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            var mu = loco.GetComponent<MultipleUnitStateObserver>();
+            if (mu == null)
+            {
+                return null;
+            }
+
+            return (MotorCabTempBand)(int)mu.MUChainTemperatureState;
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     /// <summary>
@@ -3740,7 +3776,7 @@ internal static class TelemetryReader
         return null;
     }
 
-    private static MotorStatus? ReadMotorStatusFromComponent(SimComponent comp)
+    private static MotorStatus? ReadMotorStatusFromComponent(SimComponent comp, MotorCabTempBand? cabTempBand = null)
     {
         if (comp is TractionMotor tm)
         {
@@ -3749,18 +3785,19 @@ internal static class TelemetryReader
                 SafePortReferenceValue(tm.temperature),
                 SafeFloat(tm.overheatingTemperatureThreshold),
                 SafePortValue(tm.workingTractionMotorsReadOut),
-                tm.numberOfTractionMotors);
+                tm.numberOfTractionMotors,
+                cabTempBand);
         }
 
         if (comp is TractionMotorSet set)
         {
-            return ReadMotorStatusFromMotorSet(set);
+            return ReadMotorStatusFromMotorSet(set, cabTempBand);
         }
 
         return null;
     }
 
-    private static MotorStatus? ReadMotorStatusFromMotorSet(TractionMotorSet set)
+    private static MotorStatus? ReadMotorStatusFromMotorSet(TractionMotorSet set, MotorCabTempBand? cabTempBand = null)
     {
         var map = GetMotorSetFieldMap();
         if (map is null)
@@ -3773,7 +3810,8 @@ internal static class TelemetryReader
             ReadPortReferenceField(set, map.Value.Temp),
             ReadFloatField(set, map.Value.OverheatThreshold),
             ReadPortField(set, map.Value.Working),
-            ReadIntAsFloatField(set, map.Value.NumberOfMotors));
+            ReadIntAsFloatField(set, map.Value.NumberOfMotors),
+            cabTempBand);
     }
 
     private static MotorSetFieldMap? GetMotorSetFieldMap()

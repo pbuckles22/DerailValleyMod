@@ -134,6 +134,9 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
   - [x] **1.14 Park / return mark** — `Home` sets/updates session mark at player XZ; `Shift+Home` clears. Always-on nav chip `Marked NE 84m` (16-point bearing + meters back) or `Marked here` within 1 m; omitted when unmarked. Quiet `T2 mark` on set/clear / bearing change. Distinct from live `Heading` / `Pos`. **Done** — Tier 1 + Tier 2 **PASS** (v0.4.25).
     > As a yard worker, I want to mark where I left the loco so when I’m running around I always know which way and how far to get back.
 
+  - [ ] **1.15 Engine / MU alive** *(after **2.2** / with HUD power)* — Surface lead **engine running** (not just sitting unstarted) and **MU/consist trip** state (e.g. second unit TMS tripped / dead) so you don’t look down and discover a dark engine or a tripped trailing MU. Distinct from **1.8** Motors Hot (temp band). Exact chip copy TBD.
+    > As an engineer, I want to know if my lead engine is actually on and whether a trailing MU has tripped so I don’t keep pulling with half the consist dead.
+
   **Build order:** **Epic 4** complete → **2.1** Three-Gate → **2.2**. *(Do not reopen **1.8** HUD thermal prediction.)*
 
 ---
@@ -143,7 +146,7 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
   - [x] **2.1 Three-Gate helper** *(was E2-S1)* — Shared Integrity → State Registry → Safety → Soft Write path; fail closed. *Core foundation / prerequisite for 2.2 / 2.3.* **Done** — Tier 1 (**v0.4.81**); Tier 2 N/A until a governor soft-writes (**2.2**).
     > As a maintainer, I want one write path so every governor aborts the same safe way.
 
-  - [ ] **2.2 Thermal governor** *(was CMD-04)* — Soft-scale / cap throttle when **1.8** Motor status is Hot (current over-temp); abort if unsafe. *Prediction / protection — not a HUD rewrite.*
+  - [x] **2.2 Thermal governor** *(was CMD-04)* — Soft-roll throttle when **1.8** Motor status is Hot (cab MU Warning/Critical); abort if unsafe. Warning ceiling **75%**, Critical **55%**, rollback **5%/s** via `Throttle.Set` + ThreeGate. **Done** — Tier 1 + Tier 2 smoke **PASS** (v**0.5.15**).
     > As an engineer, I want the mod to soft-cap throttle when motors overheat so I avoid TM Offline events.
 
   - [ ] **2.3 Auto-brake governor** *(was CMD-05)* — Engine-toggle linked brake release when safe; abort otherwise.
@@ -175,7 +178,7 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
 
 ---
 
-- [x] **Epic 4 — HUD quality (QOL)** — Small UX polish on the Diagnostic HUD. *Supports Stage 1 playability.* **Status: complete 2026-07-27** *(4.11 backup proximity @ **0.5.12**; 4.1–4.10 earlier)*
+- [x] **Epic 4 — HUD quality (QOL)** — Small UX polish on the Diagnostic HUD. *Supports Stage 1 playability.* **Status: complete 2026-07-27** *(4.11 @ **0.5.12**; **4.12** direction-gated proximity queued)*
 
   - [x] **4.1 Enhanced targeting** *(was QOL-06)* — Look-at spherecast **0.15 m**, max **250 m**. *PASS\*; slight sky-stickiness accepted.*
     > As a yard scout, I want distant cars to resolve under the crosshair so I can inspect from farther away.
@@ -210,6 +213,9 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
   - [x] **4.11 Backup proximity** — Rear-camera clearance on loco rear tip (`Rear N.Nm` / `Rear —`); **green** ≤0.5 m + couple-scan; **yellow** through 30 m; check-point inset (−0.25 m). No “Couple ready”. Cab look ignored. **Done** — Tier 1 + Tier 2 smoke **PASS** (v**0.5.12**; 3.8 m jump non-repro / user error).
     > As a driver reversing to pick up a train, I want distance before impact and a clear cue when I am close enough to brake and couple.
 
+  - [ ] **4.12 Direction-gated proximity** *(immediate after **2.2**)* — When loco is in **forward** (not reverse): **omit** `Rear …` chip. Optionally show **front** clearance (`Front N.Nm`) with the same ranging/colors while moving forward. Reverse keeps rear as today.
+    > As an engineer, I only want rear proximity when I’m backing; when I’m going forward, show front clearance instead.
+
 ---
 
 - [ ] **Epic 5 — Digital Catalog** *(Journey Stage 3 workbench)* — Convenience logistics for a working operator.
@@ -232,7 +238,7 @@ Not scheduled — discuss when Journey stage friction demands it:
 - [ ] Speed-limit auto-throttle governor *(soft-cap to % of Limit — same pattern as **2.2**; candidate **2.4**)*
 - [ ] **Session reset hotkey** — e.g. Shift+F6: set time ~07:00, clear/reset weather board, invalidate active jobs, refresh available job board (Tier 2 / sandbox).
 - [ ] **License-gated re-rail scroll** — see **3.1b** (promoted from debug ask).
-- [ ] **2.2 Thermal governor — trigger mismatch** — cab TM TEMP yellow while HUD stays `Motors OK`; no `T2 thermal:` (Harbor Hill bake test: heavy DE2, Load ~80–85%). WIP parked on `feature/2.2-thermal-governor` + stash. Gemini: `doc/GeminiDocs/A2_Thermal_Governor_TriggerMismatch.md`.
+- [x] **2.2 Thermal governor — Hot trigger** — cab yellow = MU Warning; HUD/governor use `MUChainTemperatureState`. Soft-roll Warning **75%** / Critical **55%**. **PASS** @ **0.5.15**. Gemini: `doc/GeminiDocs/A2_Thermal_Governor_TriggerMismatch.md`.
 
 ---
 

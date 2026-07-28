@@ -11,6 +11,18 @@ public enum MotorStatus
 }
 
 /// <summary>
+/// Cab MU temperature band from <c>MultipleUnitStateObserver.TemperatureState</c>
+/// (Warning = TM TEMP yellow; Critical = overheat critical).
+/// </summary>
+public enum MotorCabTempBand
+{
+    Nominal = 0,
+    Warning = 1,
+    Critical = 2,
+    WarningAndCritical = 3,
+}
+
+/// <summary>
 /// Pure motor-status formatting for the train HUD bar.
 /// Mirrors cab TM lamp intent: green OK, yellow Hot (over-temp), red Dead (fuse off / dead TM).
 /// </summary>
@@ -43,13 +55,16 @@ public static class MotorDisplay
     /// <summary>
     /// Resolve cab-equivalent motor status from typed sim signals.
     /// Dead wins over Hot; null when no usable TM signals are present.
+    /// Prefer <paramref name="cabTempBand"/> (MU Warning/Critical) so Hot matches cab TM TEMP.
+    /// Fallback Hot: temperature ≥ TM <paramref name="overheatingThreshold"/> (critical).
     /// </summary>
     public static MotorStatus? StatusFromSignals(
         float? tmsState,
         float? temperature,
         float? overheatingThreshold,
         float? workingMotors,
-        float? totalMotors)
+        float? totalMotors,
+        MotorCabTempBand? cabTempBand = null)
     {
         var hasWorkingCount =
             workingMotors is not null
@@ -61,14 +76,21 @@ public static class MotorDisplay
             return MotorStatus.Dead;
         }
 
-        if (temperature is not null
-            && overheatingThreshold is > 0f
-            && temperature.Value > overheatingThreshold.Value)
+        if (cabTempBand is MotorCabTempBand.Warning
+            or MotorCabTempBand.Critical
+            or MotorCabTempBand.WarningAndCritical)
         {
             return MotorStatus.Hot;
         }
 
-        if (tmsState is TmsOk || temperature is not null)
+        if (temperature is not null
+            && overheatingThreshold is > 0f
+            && temperature.Value >= overheatingThreshold.Value)
+        {
+            return MotorStatus.Hot;
+        }
+
+        if (tmsState is TmsOk || temperature is not null || cabTempBand is MotorCabTempBand.Nominal)
         {
             return MotorStatus.Ok;
         }

@@ -94,7 +94,7 @@ Isolated + workaround + revisit trigger.
 
 - [x] **A.4 house AR hide / Station `here`** — **Accepted** 2026-07-26: same office gate hides house icon and shows `Station … here`. Apron ~12–14 m from door flipping to `here` is intentional “at office,” not a bug. No further bounds tuning. Loco in-cab hide **PASS** @ v0.4.47; Bundle C **PASS** @ v0.4.48.
 
-- [ ] **2.2 Thermal Hot trigger mismatch** — cab TM TEMP yellow while `Motors OK`; governor never logs `T2 thermal:`. Parked WIP + stash on `feature/2.2-thermal-governor`. Resume after **4.11** (now shipped). Area: `MotorDisplay.StatusFromSignals`, `TelemetryReader.ReadMotorStatus*`, `ThermalGovernor`.
+- [x] **2.2 Thermal Hot trigger** — Hot follows cab MU Warning/Critical (`MUChainTemperatureState`); soft-roll Warning **75%** / Critical **55%**. **PASS** @ **0.5.15**.
 
 - [ ] **4.11 backup `inCoupleRange` from long-range scan** — after `GetFirstCouplerInRange` misses, ray/overlap hit ≤1.5 m can set couple-near and allow green without game couple-scan. Smoke @ **0.5.12** did not show false green; gate green to game scan only if it appears. Area: `TelemetryReader.TryGetBackupProximity`.
 

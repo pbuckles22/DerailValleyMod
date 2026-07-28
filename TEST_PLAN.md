@@ -469,9 +469,25 @@ Recovery: [modding.md](doc/requirements/modding.md).
 - [x] Tier 1 — abort each gate without calling write; apply when all pass; throw → SoftWrite abort
 - [x] Tier 2 — **N/A** until **2.2** soft-writes in-world
 
-### 2.2 Thermal governor — **PARKED** (trigger mismatch)
+### 2.2 Thermal governor — **PASS** v0.5.15
 
-Cab TM TEMP can show yellow while HUD stays `Motors OK`; no `T2 thermal:` lines. Resume after **4.11**. Harbor Hill bake: heavy DE2, Load ~80–85% up sustained grade. See `TECH_DEBT.md` + Gemini A2 pack.
+**Hot trigger:** cab MU TM TEMP Warning/Critical (`MUChainTemperatureState`).
+
+**Soft-cap:** roll throttle down **5%/s** toward:
+- **Warning** → **75%**
+- **Critical** → **55%**
+
+Cool/Dead → release. Player.log: `T2 thermal: soft-cap → … (Warning|Critical)` / `cap release`.
+
+**Sign-off**
+
+- [x] UMM **0.5.15** Active
+- [x] Cab TM TEMP yellow → HUD `Motors Hot` (same moment)
+- [x] Motors OK / cool — throttle free
+- [x] Warning + high throttle — soft-rolls toward ≤75%; `soft-cap → 0.75 (Warning)` (Player.log)
+- [x] Critical — rolls toward ≤55% (log hit once during smoke)
+- [x] Cool again — `cap release`; throttle free
+- [x] Mod Off → On; no exceptions / no stuck throttle (iterative smoke)
 
 ---
 
@@ -488,12 +504,5 @@ Check-point clearance (tenths). **Green** ≤**0.5 m** + couple-scan. **Yellow**
 - [x] 3.8 m jump — **non-repro** (player: likely user error; waived)
 - [x] No “Couple ready”; fully coupled → chip omitted
 - [x] Mod Off → On; no exceptions
-
-**Sign-off**
-
-- [ ] UMM **0.5.12** Active
-- [ ] **`Rear ≤0.5m`** green (with scan); yellow through **30 m**; plain beyond
-- [ ] Tenths; no “Couple ready”; fully coupled → chip omitted
-- [ ] Mod Off → On; no exceptions
 
 Recovery: [modding.md](doc/requirements/modding.md).

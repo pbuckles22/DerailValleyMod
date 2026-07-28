@@ -34,7 +34,7 @@ public class MotorDisplayTests
     }
 
     [Fact]
-    public void StatusFromSignals_hot_when_temperature_over_threshold()
+    public void StatusFromSignals_hot_when_temperature_at_or_over_threshold()
     {
         Assert.Equal(
             MotorStatus.Hot,
@@ -44,6 +44,46 @@ public class MotorDisplayTests
                 overheatingThreshold: 105f,
                 workingMotors: 2f,
                 totalMotors: 2f));
+        Assert.Equal(
+            MotorStatus.Hot,
+            MotorDisplay.StatusFromSignals(
+                MotorDisplay.TmsOk,
+                temperature: 105f,
+                overheatingThreshold: 105f,
+                workingMotors: 2f,
+                totalMotors: 2f));
+    }
+
+    [Theory]
+    [InlineData(MotorCabTempBand.Warning)]
+    [InlineData(MotorCabTempBand.Critical)]
+    [InlineData(MotorCabTempBand.WarningAndCritical)]
+    public void StatusFromSignals_hot_when_cab_mu_warning_or_critical(MotorCabTempBand cab)
+    {
+        // Cab TM TEMP yellow/red uses MU overheatStandardThreshold — below TM critical.
+        Assert.Equal(
+            MotorStatus.Hot,
+            MotorDisplay.StatusFromSignals(
+                MotorDisplay.TmsOk,
+                temperature: 90f,
+                overheatingThreshold: 105f,
+                workingMotors: 2f,
+                totalMotors: 2f,
+                cabTempBand: cab));
+    }
+
+    [Fact]
+    public void StatusFromSignals_ok_when_cab_nominal_and_below_critical()
+    {
+        Assert.Equal(
+            MotorStatus.Ok,
+            MotorDisplay.StatusFromSignals(
+                MotorDisplay.TmsOk,
+                temperature: 90f,
+                overheatingThreshold: 105f,
+                workingMotors: 2f,
+                totalMotors: 2f,
+                cabTempBand: MotorCabTempBand.Nominal));
     }
 
     [Fact]
@@ -57,6 +97,20 @@ public class MotorDisplayTests
                 overheatingThreshold: 105f,
                 workingMotors: 2f,
                 totalMotors: 2f));
+    }
+
+    [Fact]
+    public void StatusFromSignals_dead_wins_over_cab_warning()
+    {
+        Assert.Equal(
+            MotorStatus.Dead,
+            MotorDisplay.StatusFromSignals(
+                MotorDisplay.TmsFuseOff,
+                temperature: 90f,
+                overheatingThreshold: 105f,
+                workingMotors: 0f,
+                totalMotors: 2f,
+                cabTempBand: MotorCabTempBand.Warning));
     }
 
     [Fact]

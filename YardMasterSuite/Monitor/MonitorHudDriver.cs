@@ -374,6 +374,12 @@ public sealed class MonitorHudDriver : MonoBehaviour
         {
             Main.Log($"T2 turntable: {status}");
         }
+
+        var thermal = ThermalGovernor.Tick();
+        if (thermal != null)
+        {
+            Main.Log(thermal);
+        }
     }
 
     private void PollTurntableAxis(KeyCode key, ref float downAt, ref bool didHold, float direction)
