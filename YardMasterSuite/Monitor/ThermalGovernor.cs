@@ -6,7 +6,7 @@ namespace YardMasterSuite.Monitor;
 
 /// <summary>
 /// <b>2.2</b> Thermal governor — soft-roll lead loco throttle when Motors are Hot.
-/// Warning → ~65% ceiling; Critical → ~40%. Fail closed via <see cref="ThreeGate"/>.
+/// Warning → ~75% ceiling; Critical → ~55%. Fail closed via <see cref="ThreeGate"/>.
 /// </summary>
 internal static class ThermalGovernor
 {
