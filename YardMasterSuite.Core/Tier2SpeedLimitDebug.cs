@@ -5,18 +5,26 @@ namespace YardMasterSuite.Core;
 /// </summary>
 public readonly struct SpeedLimitDebugSnapshot
 {
-    public SpeedLimitDebugSnapshot(bool hasLoco, string speed, string limit)
+    public SpeedLimitDebugSnapshot(bool hasLoco, string speed, string limit, string? detail = null)
     {
         HasLoco = hasLoco;
         Speed = speed;
         Limit = limit;
+        Detail = detail;
     }
 
     public bool HasLoco { get; }
     public string Speed { get; }
     public string Limit { get; }
 
-    public string FormatFragment() => $"{Speed}  |  {Limit}";
+    /// <summary>Board text / facing dots when a limit change is attributed to a scan hit.</summary>
+    public string? Detail { get; }
+
+    public string FormatFragment()
+    {
+        var core = $"{Speed}  |  {Limit}";
+        return string.IsNullOrEmpty(Detail) ? core : $"{core}  |  {Detail}";
+    }
 
     /// <summary>True when loco/limit unchanged — ignore Speed so T2 does not spam every km/h.</summary>
     public bool SameAs(SpeedLimitDebugSnapshot other) =>

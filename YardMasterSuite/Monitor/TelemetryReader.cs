@@ -14,7 +14,6 @@ using LocoSim.Implementations;
 using LocoSim.Resources;
 using UnityEngine;
 using YardMasterSuite.Core;
-using Arc = BezierArcApproximation.Arc;
 using Object = UnityEngine.Object;
 
 namespace YardMasterSuite.Monitor;
@@ -44,11 +43,6 @@ internal static class TelemetryReader
     /// <summary>Cached motor-status fields for private <see cref="TractionMotorSet"/> members.</summary>
     private static MotorSetFieldMap? _motorSetFields;
 
-    /// <summary>Per-track geometry speed limit (km/h), same ladder as SignPlacer / DVRouteManager.</summary>
-    private static readonly Dictionary<int, float?> TrackSpeedLimitCache = new();
-
-    private static readonly List<Arc> ArcScratch = new();
-
     /// <summary>Refresh loaded <see cref="SignDebug"/> boards periodically (streaming scenes).</summary>
     private const float SignDebugRefreshSeconds = 1.5f;
 
@@ -61,8 +55,34 @@ internal static class TelemetryReader
     /// <summary>Lookahead scale: meters ≈ speed(km/h) × this.</summary>
     private const float BoardLookaheadSecondsOfSpeed = 6f;
 
+    /// <summary>Associate a dual junction board with the nearest switch within this radius.</summary>
+    private const float JunctionBoardAssociateMeters = 45f;
+
+    /// <summary>Trace each board once per side while it is this close (T2 take/skip diagnosis).</summary>
+    private const float BoardTraceWindowMeters = 30f;
+
+    /// <summary>Sign instance id → last traced side (+1 ahead, −1 behind) inside the trace window.</summary>
+    private static readonly Dictionary<int, int> BoardTraceSide = new();
+
+    /// <summary>A board further than this from a track is not attributed to it.</summary>
+    private const float BoardTrackAttachMeters = 12f;
+
+    /// <summary>Sign instance id → nearest <see cref="RailTrack"/>. Boards never move, so this is permanent.</summary>
+    private static readonly Dictionary<int, RailTrack?> BoardTrackCache = new();
+
     private static SignDebug[] _signDebugCache = Array.Empty<SignDebug>();
     private static float _signDebugCacheAt = -999f;
+
+    /// <summary>Last posted board limit — held until another board is read (no geometry fallback).</summary>
+    private static float? _stickyBoardLimitKmh;
+
+    /// <summary>Last travel forward (XZ) for sticky clear on reverse.</summary>
+    private static float _stickyTravelX;
+    private static float _stickyTravelZ;
+    private static bool _hasStickyTravel;
+
+    /// <summary>Last scan attribution for T2 limit change logs.</summary>
+    private static string? _lastBoardScanDetail;
 
     /// <summary>FindObjectsOfType throttle for other-loco AR radar (4.10).</summary>
     private const float LocoRadarCacheSeconds = 2.5f;
@@ -340,6 +360,84 @@ internal static class TelemetryReader
 
         var atOffice = IsPlayerAtOffice(x, z);
         return StationWaypointDisplay.Format(true, yardId, stationX, stationZ, x, z, atOffice);
+    }
+
+    /// <summary>Always-on path check chip — frozen plan only (no live Dijkstra).</summary>
+    public static string? CurrentPathCheckLabel()
+    {
+        if (RoutePlanSession.IsStale)
+        {
+            return "Path stale";
+        }
+
+        var plan = RoutePlanSession.Plan;
+        return plan == null ? null : PathCheckDisplay.Format(plan.ToCheckResult());
+    }
+
+    /// <summary>Facing cue — frozen plan only.</summary>
+    public static string? CurrentFacingLabel()
+    {
+        if (RoutePlanSession.IsStale)
+        {
+            return null;
+        }
+
+        return RouteFacingDisplay.Format(RoutePlanSession.Plan);
+    }
+
+    /// <summary>Exit compass toward the path (frozen).</summary>
+    public static string? CurrentExitLabel() => RoutePlanSession.ExitCue;
+
+    /// <summary>Last explicit plan (Set dest / Check / Align). Null when none or stale.</summary>
+    internal static PathPlanResult? CurrentPathCheckResult() => RoutePlanSession.Plan;
+
+    /// <summary>
+    /// End = set path destination from look-at / standing track; Shift+End = clear.
+    /// </summary>
+    public static bool TrySetPathDestinationFromTarget(out string message)
+    {
+        message = "no track";
+        try
+        {
+            var car = TryGetTargetCar();
+            var track = car?.logicCar?.CurrentTrack;
+            var key = PathGraphBuilder.TrackKey(track);
+            if (key == null)
+            {
+                return false;
+            }
+
+            var yard = track?.ID?.yardId;
+            RouteDestSession.Set(yard, key);
+            message = RoutePlanService.Compute("end-pin");
+            return true;
+        }
+        catch
+        {
+            message = "fail";
+            return false;
+        }
+    }
+
+    public static void ClearPathDestination() => RoutePlanService.ClearAll();
+
+    private static string? TryGetPathOriginTrackKey()
+    {
+        try
+        {
+            var loco = TryGetUsableLoco();
+            var fromLoco = PathGraphBuilder.TrackKey(loco?.logicCar?.CurrentTrack);
+            if (fromLoco != null)
+            {
+                return fromLoco;
+            }
+
+            return PathGraphBuilder.TrackKey(TryGetTargetCar()?.logicCar?.CurrentTrack);
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     internal static StationWaypointDebugSnapshot CurrentStationWaypointDebugSnapshot()
@@ -913,8 +1011,8 @@ internal static class TelemetryReader
     }
 
     /// <summary>
-    /// Governing speed limit (km/h): last posted board behind the loco when available;
-    /// otherwise current-track geometry (SignPlacer ladder).
+    /// Governing speed limit (km/h): posted <see cref="SignDebug"/> boards only (sticky until next board).
+    /// Right-of-travel + forward aligned with travel; dual diverge only on diverge out-branch.
     /// </summary>
     public static float? TryGetSpeedLimitKmh() => TryGetSpeedLimitState().CurrentKmh;
 
@@ -923,14 +1021,16 @@ internal static class TelemetryReader
 
     private readonly struct SpeedLimitState
     {
-        public SpeedLimitState(float? currentKmh, LimitTrend trend)
+        public SpeedLimitState(float? currentKmh, LimitTrend trend, string? scanDetail)
         {
             CurrentKmh = currentKmh;
             Trend = trend;
+            ScanDetail = scanDetail;
         }
 
         public float? CurrentKmh { get; }
         public LimitTrend Trend { get; }
+        public string? ScanDetail { get; }
     }
 
     private static SpeedLimitState TryGetSpeedLimitState()
@@ -940,54 +1040,100 @@ internal static class TelemetryReader
             var loco = TryGetUsableLoco();
             if (loco == null)
             {
-                return new SpeedLimitState(null, LimitTrend.None);
+                _stickyBoardLimitKmh = null;
+                _hasStickyTravel = false;
+                _lastBoardScanDetail = null;
+                BoardTraceSide.Clear();
+                BoardTrackCache.Clear();
+                return new SpeedLimitState(null, LimitTrend.None, null);
             }
 
             var speedMps = loco.GetAbsSpeed();
             var speedKmh = SpeedDisplay.ToKilometersPerHour(speedMps);
-            var boards = ScanPostedBoards(loco, speedKmh);
-            var current = boards.CurrentKmh;
-            if (current is null)
+            var travel = TravelForward(loco);
+            ClearStickyIfTravelReversed(travel);
+
+            var boards = ScanPostedBoards(loco, speedKmh, travel);
+            if (boards.CurrentKmh is float seen)
             {
-                var bogie = loco.FrontBogie ?? loco.RearBogie;
-                var track = bogie?.track;
-                current = track == null ? null : GetOrComputeTrackSpeedLimitKmh(track);
+                _stickyBoardLimitKmh = seen;
+                _stickyTravelX = travel.x;
+                _stickyTravelZ = travel.z;
+                _hasStickyTravel = true;
             }
 
+            var current = boards.CurrentKmh ?? _stickyBoardLimitKmh;
             var trend = SpeedLimitDisplay.TrendFrom(current, boards.NextKmh);
-            return new SpeedLimitState(current, trend);
+            var detail = boards.Detail
+                ?? (boards.CurrentKmh is null && current is not null
+                    ? $"sticky={RoundLimit(current.Value)}"
+                    : null);
+            _lastBoardScanDetail = detail;
+            return new SpeedLimitState(current, trend, detail);
         }
         catch
         {
-            return new SpeedLimitState(null, LimitTrend.None);
+            return new SpeedLimitState(null, LimitTrend.None, null);
+        }
+    }
+
+    private static void ClearStickyIfTravelReversed(Vector3 travel)
+    {
+        if (!_hasStickyTravel || _stickyBoardLimitKmh is null)
+        {
+            return;
+        }
+
+        var len = Mathf.Sqrt((travel.x * travel.x) + (travel.z * travel.z));
+        if (len < 1e-4f)
+        {
+            return;
+        }
+
+        var tx = travel.x / len;
+        var tz = travel.z / len;
+        var sLen = Mathf.Sqrt((_stickyTravelX * _stickyTravelX) + (_stickyTravelZ * _stickyTravelZ));
+        if (sLen < 1e-4f)
+        {
+            return;
+        }
+
+        var sx = _stickyTravelX / sLen;
+        var sz = _stickyTravelZ / sLen;
+        if ((sx * tx) + (sz * tz) < -0.2f)
+        {
+            _stickyBoardLimitKmh = null;
+            _hasStickyTravel = false;
         }
     }
 
     private readonly struct PostedBoardScan
     {
-        public PostedBoardScan(float? currentKmh, float? nextKmh)
+        public PostedBoardScan(float? currentKmh, float? nextKmh, string? detail)
         {
             CurrentKmh = currentKmh;
             NextKmh = nextKmh;
+            Detail = detail;
         }
 
         public float? CurrentKmh { get; }
         public float? NextKmh { get; }
+        public string? Detail { get; }
     }
 
     /// <summary>
     /// Current = closest board behind; next = nearest different board ahead within lookahead.
     /// </summary>
-    private static PostedBoardScan ScanPostedBoards(TrainCar loco, float speedKmh)
+    private static PostedBoardScan ScanPostedBoards(TrainCar loco, float speedKmh, Vector3 fwd)
     {
         RefreshSignDebugCacheIfNeeded();
         if (_signDebugCache.Length == 0)
         {
-            return new PostedBoardScan(null, null);
+            return new PostedBoardScan(null, null, "no-signs");
         }
 
         var pos = loco.transform.position;
-        var fwd = TravelForward(loco);
+        var locoTrack = TryGetLocoTrack(loco);
         var lookahead = Mathf.Max(BoardLookaheadMinMeters, speedKmh * BoardLookaheadSecondsOfSpeed);
         var searchRadius = Mathf.Max(BoardLookbackMeters, lookahead);
 
@@ -995,6 +1141,8 @@ internal static class TelemetryReader
         var bestBehindAlong = float.NegativeInfinity;
         float? nextKmh = null;
         var bestAheadAlong = float.PositiveInfinity;
+        string? behindDetail = null;
+        string? aheadDetail = null;
 
         foreach (var sign in _signDebugCache)
         {
@@ -1009,41 +1157,298 @@ internal static class TelemetryReader
                 continue;
             }
 
-            var parsed = SpeedLimitBoardParser.ParseKmh(sign.text);
-            if (parsed is null)
+            var along = Vector3.Dot(delta, fwd);
+            var eval = EvaluateBoardFacing(sign, fwd, delta, locoTrack);
+            TraceBoardPass(sign, loco, along, eval);
+            if (!eval.Governs)
             {
                 continue;
             }
 
-            var along = Vector3.Dot(delta, fwd);
-            if (along < 0f && along >= -BoardLookbackMeters && along > bestBehindAlong)
+            float? parsed;
+            if (along < 0f && along >= -BoardLookbackMeters)
             {
-                bestBehindAlong = along;
-                currentKmh = parsed;
+                parsed = ResolveSignBoardKmh(sign, loco, forAhead: false);
+                if (parsed is not null && along > bestBehindAlong)
+                {
+                    bestBehindAlong = along;
+                    currentKmh = parsed;
+                    behindDetail = FormatBoardHit("behind", sign, parsed.Value, along, eval);
+                }
             }
-            else if (along > 0f && along <= lookahead && along < bestAheadAlong)
+            else if (along > 0f && along <= lookahead)
             {
-                bestAheadAlong = along;
-                nextKmh = parsed;
+                parsed = ResolveSignBoardKmh(sign, loco, forAhead: true);
+                if (parsed is not null && along < bestAheadAlong)
+                {
+                    bestAheadAlong = along;
+                    nextKmh = parsed;
+                    aheadDetail = FormatBoardHit("ahead", sign, parsed.Value, along, eval);
+                }
             }
         }
 
         if (currentKmh is not null && nextKmh is not null
             && RoundLimit(currentKmh.Value) == RoundLimit(nextKmh.Value))
         {
-            nextKmh = FindNextDifferentBoardAhead(pos, fwd, lookahead, currentKmh.Value);
+            nextKmh = FindNextDifferentBoardAhead(pos, fwd, lookahead, currentKmh.Value, loco);
+            aheadDetail = nextKmh is null ? null : aheadDetail;
         }
 
-        return new PostedBoardScan(currentKmh, nextKmh);
+        var detail = behindDetail ?? aheadDetail;
+        if (behindDetail != null && aheadDetail != null)
+        {
+            detail = behindDetail + " ; " + aheadDetail;
+        }
+
+        return new PostedBoardScan(currentKmh, nextKmh, detail);
+    }
+
+    private static string FormatBoardHit(
+        string where,
+        SignDebug sign,
+        float kmh,
+        float along,
+        SpeedLimitBoardFacing.Eval eval) =>
+        $"{where} '{BoardText(sign)}'={RoundLimit(kmh)} kind={eval.Kind} along={along:0.#}m "
+        + $"lat={eval.LateralMeters:0.#}m right={(eval.OnRight ? "y" : "n")} "
+        + $"track={BoardTrackFlag(eval)} fDot={eval.ForwardDot:0.##}";
+
+    /// <summary>y = our track, n = another track, ? = unresolved (lateral corridor fallback ran).</summary>
+    private static string BoardTrackFlag(SpeedLimitBoardFacing.Eval eval) =>
+        !eval.TrackKnown ? "?" : eval.OnOurTrack ? "y" : "n";
+
+    private static string BoardText(SignDebug sign)
+    {
+        var text = sign.text?.Replace('\n', ' ').Replace('\r', ' ').Trim() ?? "?";
+        return text.Length > 24 ? text.Substring(0, 24) : text;
+    }
+
+    /// <summary>
+    /// One Player.log line per board per side while it is within the trace window, so a board that
+    /// never takes ownership shows why (corridor, right-hand, forward align, or parse).
+    /// </summary>
+    private static void TraceBoardPass(
+        SignDebug sign,
+        TrainCar loco,
+        float along,
+        SpeedLimitBoardFacing.Eval eval)
+    {
+        var id = sign.GetInstanceID();
+        if (along > BoardTraceWindowMeters || along < -BoardTraceWindowMeters)
+        {
+            BoardTraceSide.Remove(id);
+            return;
+        }
+
+        var side = along >= 0f ? 1 : -1;
+        if (BoardTraceSide.TryGetValue(id, out var traced) && traced == side)
+        {
+            return;
+        }
+
+        BoardTraceSide[id] = side;
+        var parsed = ResolveSignBoardKmh(sign, loco, forAhead: side > 0);
+        var kmh = parsed is null ? "?" : RoundLimit(parsed.Value).ToString();
+        Main.Log(
+            $"{Tier2SpeedLimitDebug.Prefix} {(eval.Governs ? "take" : "skip")}: '{BoardText(sign)}'={kmh} "
+            + $"along={along:0.#}m lat={eval.LateralMeters:0.#}m/max={eval.MaxLateralMeters:0.#}m "
+            + $"right={(eval.OnRight ? "y" : "n")} track={BoardTrackFlag(eval)} "
+            + $"fDot={eval.ForwardDot:0.##} kind={eval.Kind}");
+    }
+
+    private static SpeedLimitBoardFacing.Eval EvaluateBoardFacing(
+        SignDebug sign,
+        Vector3 travelFwd,
+        Vector3 deltaToSign,
+        RailTrack? locoTrack)
+    {
+        try
+        {
+            var isSwitch = SpeedLimitBoardParser.IsSwitchSign(sign.text);
+            var junctionNearby = isSwitch
+                && FindNearestJunction(sign.transform.position) != null;
+            var boardTrack = ResolveBoardTrack(sign);
+            var trackKnown = boardTrack != null && locoTrack != null;
+            var sf = sign.transform.forward;
+            var sr = sign.transform.right;
+            return SpeedLimitBoardFacing.Evaluate(
+                sf.x,
+                sf.z,
+                sr.x,
+                sr.z,
+                travelFwd.x,
+                travelFwd.z,
+                deltaToSign.x,
+                deltaToSign.z,
+                isSwitch,
+                junctionNearby,
+                onOurTrack: trackKnown && ReferenceEquals(boardTrack, locoTrack),
+                trackKnown: trackKnown);
+        }
+        catch
+        {
+            return new SpeedLimitBoardFacing.Eval(
+                false, 0f, 0f, 0f, 0f, false, false, false, "err", 0f, SpeedLimitBoardFacing.KindMainline);
+        }
+    }
+
+    /// <summary>
+    /// Track a board is planted beside. Answers "is this board on my track" exactly, where lateral
+    /// distance cannot (it inflates with range on curves). Cached per sign — boards never move.
+    /// </summary>
+    private static RailTrack? ResolveBoardTrack(SignDebug sign)
+    {
+        var id = sign.GetInstanceID();
+        if (BoardTrackCache.TryGetValue(id, out var cached))
+        {
+            return cached;
+        }
+
+        RailTrack? track = null;
+        try
+        {
+            var tracks = RailTrackRegistry.RailTracks;
+            if (tracks != null && tracks.Length > 0)
+            {
+                var rail = RailTrack.GetClosest(sign.transform.position, 0f, tracks).Item1;
+                if (rail != null
+                    && RailTrack.GetClosestPoint(rail, sign.transform.position, 0f).Item2
+                        <= BoardTrackAttachMeters)
+                {
+                    track = rail;
+                }
+            }
+        }
+        catch
+        {
+            track = null;
+        }
+
+        BoardTrackCache[id] = track;
+        return track;
+    }
+
+    private static RailTrack? TryGetLocoTrack(TrainCar loco)
+    {
+        try
+        {
+            var bogie = loco.FrontBogie ?? loco.RearBogie;
+            return bogie?.track;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static float? ResolveSignBoardKmh(SignDebug sign, TrainCar loco, bool forAhead)
+    {
+        var dual = SpeedLimitBoardParser.ParseDual(sign.text);
+        if (dual is null)
+        {
+            return null;
+        }
+
+        if (!dual.Value.IsDual)
+        {
+            return dual.Value.ThroughKmh;
+        }
+
+        var diverging = forAhead
+            ? IsNearestJunctionDiverging(sign.transform.position)
+            : IsLocoOnDivergingOutBranch(sign.transform.position, loco);
+        return SpeedLimitBoardParser.Pick(dual.Value, diverging);
+    }
+
+    private static Junction? FindNearestJunction(Vector3 worldPos)
+    {
+        try
+        {
+            var junctions = RailTrackRegistry.Junctions;
+            if (junctions == null || junctions.Length == 0)
+            {
+                return null;
+            }
+
+            Junction? best = null;
+            var bestSq = JunctionBoardAssociateMeters * JunctionBoardAssociateMeters;
+            foreach (var junction in junctions)
+            {
+                if (junction == null)
+                {
+                    continue;
+                }
+
+                var d = (junction.transform.position - worldPos).sqrMagnitude;
+                if (d < bestSq)
+                {
+                    bestSq = d;
+                    best = junction;
+                }
+            }
+
+            return best;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>True when nearest junction is not on through (branch 0) — for ahead ↓ only.</summary>
+    private static bool IsNearestJunctionDiverging(Vector3 signPos)
+    {
+        var best = FindNearestJunction(signPos);
+        return best != null && best.selectedBranch != 0;
+    }
+
+    /// <summary>
+    /// Governing dual-board diverge only if the loco bogie is already on a non-through out-branch.
+    /// Stem / unknown → through (avoids 60→40 from a thrown switch with no standalone 4 board).
+    /// </summary>
+    private static bool IsLocoOnDivergingOutBranch(Vector3 signPos, TrainCar loco)
+    {
+        try
+        {
+            var bogie = loco.FrontBogie ?? loco.RearBogie;
+            var locoTrack = bogie?.track;
+            if (locoTrack == null)
+            {
+                return false;
+            }
+
+            var junction = FindNearestJunction(signPos);
+            if (junction?.outBranches == null)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < junction.outBranches.Count; i++)
+            {
+                if (junction.outBranches[i].track == locoTrack)
+                {
+                    return i != 0;
+                }
+            }
+
+            return false;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     private static float? FindNextDifferentBoardAhead(
         Vector3 pos,
         Vector3 fwd,
         float lookahead,
-        float currentKmh)
+        float currentKmh,
+        TrainCar loco)
     {
         var currentWhole = RoundLimit(currentKmh);
+        var locoTrack = TryGetLocoTrack(loco);
         float? best = null;
         var bestAlong = float.PositiveInfinity;
         foreach (var sign in _signDebugCache)
@@ -1053,13 +1458,19 @@ internal static class TelemetryReader
                 continue;
             }
 
-            var parsed = SpeedLimitBoardParser.ParseKmh(sign.text);
+            var parsed = ResolveSignBoardKmh(sign, loco, forAhead: true);
             if (parsed is null || RoundLimit(parsed.Value) == currentWhole)
             {
                 continue;
             }
 
-            var along = Vector3.Dot(sign.transform.position - pos, fwd);
+            var delta = sign.transform.position - pos;
+            if (!EvaluateBoardFacing(sign, fwd, delta, locoTrack).Governs)
+            {
+                continue;
+            }
+
+            var along = Vector3.Dot(delta, fwd);
             if (along <= 0f || along > lookahead || along >= bestAlong)
             {
                 continue;
@@ -1848,50 +2259,8 @@ internal static class TelemetryReader
         return new SpeedLimitDebugSnapshot(
             true,
             SpeedDisplay.FormatFromMetersPerSecond(TryGetAbsSpeedMetersPerSecond()),
-            SpeedLimitDisplay.Format(limit.CurrentKmh, limit.Trend));
-    }
-
-    private static float? GetOrComputeTrackSpeedLimitKmh(RailTrack track)
-    {
-        var id = track.GetInstanceID();
-        if (TrackSpeedLimitCache.TryGetValue(id, out var cached))
-        {
-            return cached;
-        }
-
-        var limit = ComputeTrackSpeedLimitKmh(track);
-        TrackSpeedLimitCache[id] = limit;
-        return limit;
-    }
-
-    /// <summary>
-    /// Same approach as DVRouteManager: BezierArcApproximation min radius → SignPlacer table.
-    /// </summary>
-    private static float? ComputeTrackSpeedLimitKmh(RailTrack track)
-    {
-        var curve = track.curve;
-        if (curve == null)
-        {
-            return null;
-        }
-
-        ArcScratch.Clear();
-        BezierArcApproximation.CalculateArcs(curve, 0.5f, ArcScratch);
-        if (ArcScratch.Count == 0)
-        {
-            return 120f;
-        }
-
-        var minRadius = float.PositiveInfinity;
-        foreach (var arc in ArcScratch)
-        {
-            if (arc.r > 0f && arc.r < minRadius)
-            {
-                minRadius = arc.r;
-            }
-        }
-
-        return SpeedLimitGeometry.MaxSpeedForMinRadius(minRadius);
+            SpeedLimitDisplay.Format(limit.CurrentKmh, limit.Trend),
+            limit.ScanDetail ?? _lastBoardScanDetail);
     }
 
     /// <summary>Standing fallback second bar (hidden when look-at wins).</summary>

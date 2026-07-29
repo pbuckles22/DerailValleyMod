@@ -1,6 +1,6 @@
-{
+﻿{
   "Id": "YardMasterSuite",
-  "Version": "0.5.25",
+  "Version": "0.5.43",
   "DisplayName": "Yard Master Suite",
   "Author": "pbuckles22",
   "EntryMethod": "YardMasterSuite.Main.Load",

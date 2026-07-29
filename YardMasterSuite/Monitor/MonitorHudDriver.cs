@@ -6,7 +6,7 @@ namespace YardMasterSuite.Monitor;
 /// <summary>
 /// In-world IMGUI overlay for Monitor Mode telemetry.
 /// Top bar = usable loco-train totals (hidden when not usable — 4.3); second bar = look-at preferred, standing fallback.
-/// Always-on: Heading (1.12) + Marked (1.14) + Station zone (4.6).
+/// Always-on: Heading (1.12) + Marked (1.14) + Station zone (4.6) + Path check (3.4).
 /// No mod version chip on HUD — verify ship # in UMM Mod Manager.
 /// Bundle B.1: Pos (1.13) removed from the always-on bar.
 /// Active Job bar (4.8) when jobs are taken. Loco bar centered IA (4.7).
@@ -15,6 +15,9 @@ public sealed class MonitorHudDriver : MonoBehaviour
 {
     /// <summary>Home = set/update park mark; Shift+Home = clear. Session-only.</summary>
     private const KeyCode ParkMarkKey = KeyCode.Home;
+
+    /// <summary>End = set path destination from look-at track; Shift+End = clear (3.4).</summary>
+    private const KeyCode PathDestKey = KeyCode.End;
 
     /// <summary>Shift+F1 = toggle Tier 2 debug hotkeys (and bottom legend HUD).</summary>
     private const KeyCode DebugToggleKey = KeyCode.F1;
@@ -68,6 +71,8 @@ public sealed class MonitorHudDriver : MonoBehaviour
     private string _headingLabel = "— Heading";
     private string? _parkLabel;
     private string? _stationLabel;
+    private string? _pathLabel;
+    private string? _facingLabel;
     private string _alwaysOnLabel = "—";
     private GUIStyle? _trainStyle;
     private GUIStyle? _localStyle;
@@ -141,6 +146,9 @@ public sealed class MonitorHudDriver : MonoBehaviour
     private string? _lastStationYardId;
     private string? _lastStationWalkPoint;
 
+    private bool _hasPathDebug;
+    private string? _lastPathChip;
+
     private bool _hasActiveJobDebug;
     private bool _lastActiveJobVisible;
     private string? _lastActiveJobId;
@@ -163,12 +171,15 @@ public sealed class MonitorHudDriver : MonoBehaviour
             _debugHotkeyLabel = null;
             _parkLabel = null;
             _stationLabel = null;
+            _pathLabel = null;
+            _facingLabel = null;
             _alwaysOnLabel = "";
             LastStackBottomGuiY = 0f;
             return;
         }
 
         PollParkMarkHotkey();
+        PollPathDestHotkey();
         PollDebugToggleHotkey();
         // QOL: turntable always available in-world (Epic 4), not behind debug gate.
         PollTurntableHotkeys();
@@ -200,10 +211,15 @@ public sealed class MonitorHudDriver : MonoBehaviour
             _headingLabel = TelemetryReader.CurrentHeadingLabel();
             _parkLabel = TelemetryReader.CurrentParkLabel();
             _stationLabel = TelemetryReader.CurrentStationWaypointLabel();
+            _pathLabel = TelemetryReader.CurrentPathCheckLabel();
+            _facingLabel = TelemetryReader.CurrentFacingLabel();
+            var exitLabel = TelemetryReader.CurrentExitLabel();
             _alwaysOnLabel = AlwaysOnHudLine.Format(
                 _headingLabel,
                 _parkLabel,
-                _stationLabel);
+                _stationLabel,
+                _pathLabel,
+                MonitorHudLine.Join(new[] { _facingLabel ?? "", exitLabel ?? "" }));
             EmitConsistDebugIfNeeded();
             EmitLocalCarDebugIfNeeded();
             EmitLookAtDebugIfNeeded();
@@ -214,6 +230,7 @@ public sealed class MonitorHudDriver : MonoBehaviour
             EmitPositionDebugIfNeeded();
             EmitParkDebugIfNeeded();
             EmitStationWaypointDebugIfNeeded();
+            EmitPathCheckDebugIfNeeded();
             EmitActiveJobDebugIfNeeded();
         }
         finally
@@ -236,6 +253,24 @@ public sealed class MonitorHudDriver : MonoBehaviour
         }
 
         TelemetryReader.TrySetParkMarkAtPlayer();
+    }
+
+    private void PollPathDestHotkey()
+    {
+        if (!Input.GetKeyDown(PathDestKey))
+        {
+            return;
+        }
+
+        if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
+        {
+            TelemetryReader.ClearPathDestination();
+            Main.Log("T2 path: cleared");
+            return;
+        }
+
+        var ok = TelemetryReader.TrySetPathDestinationFromTarget(out var message);
+        Main.Log(ok ? message : $"T2 path: fail ({message})");
     }
 
     private void PollDebugToggleHotkey()
@@ -541,6 +576,22 @@ public sealed class MonitorHudDriver : MonoBehaviour
         if (line != null)
         {
             Main.Log(line);
+        }
+    }
+
+    private void EmitPathCheckDebugIfNeeded()
+    {
+        var chip = TelemetryReader.CurrentPathCheckLabel();
+        if (_hasPathDebug && string.Equals(_lastPathChip, chip, System.StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _lastPathChip = chip;
+        _hasPathDebug = true;
+        if (chip != null)
+        {
+            Main.Log($"T2 path: {chip}");
         }
     }
 

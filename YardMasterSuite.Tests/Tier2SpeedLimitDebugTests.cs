@@ -42,9 +42,13 @@ public class Tier2SpeedLimitDebugTests
     }
 
     [Fact]
-    public void NextLogMessage_silent_when_unchanged()
+    public void NextLogMessage_includes_detail_when_present()
     {
-        var snap = Live();
-        Assert.Null(Tier2SpeedLimitDebug.NextLogMessage(snap, snap));
+        var msg = Tier2SpeedLimitDebug.NextLogMessage(
+            Live(limit: "Limit 60"),
+            new SpeedLimitDebugSnapshot(true, "Speed 36 km/h", "Limit 30", "behind '3'=30 along=-12m"));
+        Assert.Equal(
+            "T2 limit change: Speed 36 km/h  |  Limit 30  |  behind '3'=30 along=-12m",
+            msg);
     }
 }
