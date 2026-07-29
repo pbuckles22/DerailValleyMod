@@ -86,7 +86,7 @@ Look-at wins; standing fallback when crosshair is not on a car. Hidden when no t
 
 **Build order (power):** **1.7**–**1.9** done → **1.10** speed-limit alerts (grade already in **1.2**).
 
-**1.10 / 1.11 notes:** Single `Limit` badge (never two limit numbers). **1.10** = current governing limit — prefer posted boards (digit × 10); geometry / SignPlacer ladder is fallback only. Yellow within 5 km/h of limit (including at limit); red when over. **1.11** = next limit along the path with ↑ (green) / ↓ (warn) on that same badge — no GPS strip reorder. Hidden with the top bar (**4.3**).
+**1.10 / 1.11 notes:** Single `Limit` badge (never two limit numbers). **1.10** = current governing limit from posted boards only (digit × 10); sticky until the next board — **no geometry fallback**. Only boards facing oncoming for travel direction (ignore opposite-direction boards on the same track). Dual junction boards `6/4` pick diverge only when on the diverge out-branch. Yellow within 5 km/h of limit (including at limit); red when over. **1.11** = next limit along the path with ↑ (green) / ↓ (warn) on that same badge — no GPS strip reorder. Hidden with the top bar (**4.3**).
 
 **1.12 notes:** Personal compass only — not part of `TrainHudLine`. Shown on the always-on bar **only while a world session is active** (player present). Source = look direction (`ActiveCamera`, else `PlayerTransform`); Unity world +Z = N. Display = 16-point abbreviations only (`N`, `NNE`, `NE`, `ENE`, …) — never degrees. Do not paint `— Heading` on the launcher. Mod version is not shown beside Heading — use Mod Manager.
 
@@ -154,7 +154,7 @@ Fail closed: no write unless every gate passes.
 | **0** | Foundation / Safe Boot | Empty UMM mod; fail-closed — **mostly done** |
 | **1** | Diagnostic HUD *(HIGH · Stage 1)* | Integrity → Power → Terrain alerts |
 | **2** | Governor Mode *(MEDIUM)* | Three-Gate → Thermal → Auto-Brake |
-| **3** | Yard Master / Dispatcher *(Stages 2–3)* | **3.4** check path → **3.5** Align Route *(Dispatcher)*; yard + inter-city; **3.3 cut**; **3.1** teleport |
+| **3** | Yard Master / Dispatcher *(Stages 2–3)* | **3.5** city→track Align Route *(Dispatcher-gated)*; reverse cue; through-lane bias; **3.4** internal engine; **3.3 cut** |
 | **4** | HUD quality | Targeting, cargo, hide gadget bar (**4.3**) |
 | **5** | Digital Catalog | Order keys/flags/tools to player (**5.1**) |
 

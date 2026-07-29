@@ -217,7 +217,7 @@ Top bar `Fuel N %` / `Oil N %` after Motors. Yellow (paired) if either &lt; 20%;
 
 ### 1.10 Speed limit — current *(was CMD-03)* — `T2 limit` — **PASS** v0.4.20
 
-Top bar single `Limit N` after Speed. Yellow within 5 km/h of limit; red when over. **Authority:** posted `SignDebug` boards first (digit × 10); geometry fallback.
+Top bar single `Limit N` after Speed. Yellow within 5 km/h of limit; red when over. **Authority:** posted `SignDebug` boards only (digit × 10; sticky; facing our travel direction; dual junction via branch). No geometry fallback; ignore opposite-direction boards.
 
 **Sign-off**
 
@@ -516,6 +516,27 @@ Cool/Dead → release. Player.log: `T2 thermal: soft-cap → … (Warning|Critic
 - [x] Engine **On** → no auto-release from this governor
 - [x] Already secured + Off → quiet
 - [x] Mod Off → On; no exceptions (iterative smoke **PASS** 2026-07-28)
+
+---
+
+## Epic 3 — Yard Master / Dispatcher
+
+### 3.5 Align Route (CTC) — smoke @ v0.5.33
+
+**Keys / UI:** `Insert` = desk. Pathfinding on **Set dest** / **Recheck** / **Align Route** (or `End` pin). City/track dropdowns. **Recheck** = recompute from current track to saved dest (walk to a new start). Stale only when leaving the **planned corridor** (driving along the route stays Path OK).
+
+**License:** **Dispatcher** (`Dispatcher1` general). Topology cached in-session; routes memoized by origin→dest.
+
+**Sign-off**
+
+- [ ] UMM **0.5.33** Active
+- [ ] Set dest → Path N wrong / Facing / Exit; Align → threw N → Path OK
+- [ ] Drive along aligned path → stays Path OK (not stale); leave corridor → Path stale → Recheck
+- [ ] Recheck from a new track recalculates origin→dest
+- [ ] Dispatcher → Align throws; Path updates after
+- [ ] Mod Off → On; no exceptions
+
+### 3.4 Path tracer: manual check — **demoted** (engine only; see 3.5)
 
 ---
 

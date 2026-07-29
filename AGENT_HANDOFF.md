@@ -118,7 +118,7 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 | **Project** | *Yard Master Suite* (UMM / Harmony / net48) |
 | **MVP** | **Epic 1** System Monitor HUD |
 | **Version (`main`)** | **0.5.25** *(**Epic 2** complete — **2.3** engine-off secure)* |
-| **Active branch** | — |
+| **Active branch** | `feature/3.5-align-route` |
 
 **Shipped on `main`**
 
@@ -138,7 +138,7 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 
 **Next**
 
-- [ ] **Epic 3** — Yard Master / Dispatcher (**3.4** → **3.5** Dispatcher-gated Align Route; yard + inter-city; **3.3 cut**; or **3.1** / **3.1b** when needed)
+- [ ] **Epic 3** — **3.5** Align Route WIP (city→track, Dispatcher-gated, reverse cue); **3.4** internal engine; **3.3 cut**
 - Backlog: session reset ~7AM hotkey; DM3 MU/reverser knowledge
 **Merge-ready:** `dotnet test YardMasterSuite.sln` · `dotnet build YardMasterSuite.sln -c Release` · **deploy to Mods** via `package.ps1 -NoArchive` (required before Tier 2 smoke — see [.cursor/rules/deploy-before-smoke.mdc](.cursor/rules/deploy-before-smoke.mdc))
 

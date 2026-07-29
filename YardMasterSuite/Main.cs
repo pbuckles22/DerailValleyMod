@@ -71,6 +71,10 @@ public static class Main
         {
             DestroyHud();
             ParkMarkSession.Clear();
+            PathCheckSession.Clear();
+            RouteDestSession.Clear();
+            RoutePlanSession.Clear();
+            RouteMemo.Clear();
             modEntry.Logger.Log("Yard Master Suite disabled.");
         }
 
@@ -81,6 +85,10 @@ public static class Main
     {
         DestroyHud();
         ParkMarkSession.Clear();
+        PathCheckSession.Clear();
+        RouteDestSession.Clear();
+        RoutePlanSession.Clear();
+        RouteMemo.Clear();
         FluidDebugOverride.Clear();
         LoadDebugOverride.Clear();
         MotorDebugOverride.Clear();
@@ -104,6 +112,7 @@ public static class Main
             UnityEngine.Object.DontDestroyOnLoad(_hudRoot);
             _hudRoot.AddComponent<MonitorHudDriver>();
             _hudRoot.AddComponent<ArWaypointOverlay>();
+            _hudRoot.AddComponent<DispatchDeskPanel>();
         }
         catch (Exception ex)
         {

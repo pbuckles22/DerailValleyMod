@@ -1,18 +1,19 @@
 ---
-description: Comprehensive GeminiDocs handoffs must attach involved source files (≤10), flat only
+description: Comprehensive GeminiDocs handoffs — flat ≤9 code; “G this” deletes unrelated packs
 alwaysApply: true
 ---
 
 # Gemini comprehensive handoff
 
-When writing a **comprehensive** Gemini bridge pack under `doc/GeminiDocs/` (not a one-line note):
+When the user says **“Gemini this”** / **“G this”**, or asks for a **comprehensive** Gemini bridge pack under `doc/GeminiDocs/` (not a one-line note):
 
-1. Write the narrative `.md` (decisions, evidence, next steps, acceptance) **directly in** `doc/GeminiDocs/` — e.g. `A4_House_Proximity_Hide_Bounds.md`.
+1. Write an **extremely detailed** narrative `.md` (problem, evidence, attempted fixes, hypotheses, open questions, next steps, acceptance) **directly in** `doc/GeminiDocs/` — e.g. `A4_House_Proximity_Hide_Bounds.md`.
 2. **Attach involved source** — copy every repo file you believe is in the fix/diagnosis path into the **same flat folder** (`doc/GeminiDocs/` only).
-3. **No subfolders.** Never create pack directories or mirror repo trees under GeminiDocs. Encode the repo path in the filename instead, e.g. `A4_House_Proximity_Hide_Bounds__YardMasterSuite.Core__ArProximityHide.cs` (topic prefix + `__` + path with `/` → `__`).
-4. **Cap: 10 code files total** per pack. Prefer the smallest set that covers the bug/feature end-to-end (pure logic → Unity wire-up → consumer → tests). If more than 10 seem relevant, attach the top 10 and list the omitted paths in the narrative.
-5. In the handoff `.md`, add an **Attached code** section listing each flat snapshot filename, the real repo path, and why it is included.
-6. Update `doc/GeminiDocs/README.md` **Active packs** to link the flat handoff `.md`.
+3. **No subfolders.** Never create pack folders or mirror repo trees under GeminiDocs. Encode the repo path in the filename instead, e.g. `A4_House_Proximity_Hide_Bounds__YardMasterSuite.Core__ArProximityHide.cs` (topic prefix + `__` + path with `/` → `__`).
+4. **Cap: 9 code files total** per pack. Prefer the smallest set that covers the bug/feature end-to-end (pure logic → Unity wire-up → consumer → tests). If more than 9 seem relevant, **combine** related excerpts into fewer flat files and list omitted full paths in the narrative.
+5. In the handoff `.md`, add an **Attached code** section listing each flat snapshot filename, the real repo path (or “excerpt of …”), and why it is included.
+6. **Delete all old packs** — remove every file in `doc/GeminiDocs/` that does **not** belong to this new pack (wrong topic prefix / unrelated `.md` / leftover code). **Keep** `README.md` and the new pack’s narrative + attachments only. Do not leave prior Active packs lying around.
+7. Update `doc/GeminiDocs/README.md` **Active packs** to link **only** this pack’s handoff `.md` (replace the table; no stale rows).
 
 Do **not** attach binaries, `bin/`/`obj/`, or huge unrelated trees. Snapshots are local scratch (gitignored except README); refresh copies if the tree moves before the next agent runs.
 

@@ -13,10 +13,10 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 | | |
 |--|--|
-| **Journey** | Stage 2 — path check (**3.4**); Dispatcher Align Route (**3.5**) next |
+| **Journey** | Stage 3 — **3.5** Align Route (city→track, Dispatcher-gated) |
 | **MVP** | Epic 1 System Monitor HUD |
 | **Version** | **0.5.25** on `main` *(**Epic 2** complete — **2.3**)* |
-| **WIP branch** | — |
+| **WIP branch** | `feature/3.5-align-route` |
 
 ---
 
@@ -41,8 +41,8 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 ### Next
 
-- [ ] **Epic 3** — build order **3.4** → **3.5** (or **3.1** / **3.1b** when teleport / re-rail pain dominates); **3.3 cut** (walk grind → Dispatcher)
-- Parking: DM3 reverser/MU notes; session reset
+- [~] **3.5** Align Route WIP (city→track, reverse cue, SH gate); **3.4** demoted to engine; **3.3 cut**
+- Parking: DM3 reverser/MU notes; session reset; **AR in-view-only** (no false edge-stick)
 
 ### Gemini triage (2026-07-27)
 

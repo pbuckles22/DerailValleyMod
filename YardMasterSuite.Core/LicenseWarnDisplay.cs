@@ -94,6 +94,10 @@ public static class LicenseWarnDisplay
             case "Fragile":
             case "FR":
                 return "FR";
+            case "Dispatcher1":
+            case "Dispatcher":
+            case "DISP":
+                return "DISP";
             case "Basic":
                 return "Basic";
             default:

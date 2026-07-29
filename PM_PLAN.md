@@ -33,8 +33,8 @@ Legacy IDs (`CMD-01a`, `QOL-08`, …) stay in parentheses so older notes still r
 | Stage | Player focus | Mod focus | Stories |
 |-------|----------------|-----------|---------|
 | **1 — Apprentice** | Throttle, brakes, sander, don’t blow the fuse | Situational Awareness HUD | **Epic 1** *(done)* + **4.3** + **4.6** + **4.7**; Epic 2 done |
-| **2 — Junior Yardman** | Walk/throw switches (grind to Dispatcher); verify routes | Path integrity (“check my math”) | **3.4** |
-| **3 — Yard Master** | Multi-stop / inter-city efficiency | CTC-style Align Route + workbench | **3.5** *(Dispatcher license)*, **5.1**, **3.1** |
+| **2 — Junior Yardman** | Walk/throw switches (grind); earn **Shunting (SH)** | — | *(no remote throw — **3.3 cut**)* |
+| **3 — Yard Master** | City → track deliveries; don’t think about levers | CTC Align Route + reverse cue | **3.5** *(Dispatcher-gated)*, **5.1**, **3.1** |
 
 Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 play is actually enjoyable — cab gadgets on the HUD, no dash wall in the yard.
 
@@ -55,8 +55,9 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
 | **2.x** | E2-S1, CMD-04/05 | Governor Mode |
 | **3.1** | CMD-06 | Consist teleport + Station Snap & Return |
 | **3.2** | *(new)* | Comms Radio Overlay (helper UI) |
-| **3.3** | *(was remote switch)* | **Cut** — walk/throw is the grind to Dispatcher |
-| **3.4–3.5** | *(was parking-lot path tracer)* | Path check → Dispatcher-gated Align Route (yard + inter-city) |
+| **3.3** | *(was remote switch)* | **Cut** — walk/throw is the grind to SH / Align Route |
+| **3.4** | *(was check-my-math UX)* | **Internal** path engine only (no separate player chore) |
+| **3.5** | *(was parking-lot path tracer)* | City→track Align Route (Dispatcher-gated); reverse cue; through-lane bias |
 | **4.4** | *(new)* | Look-at Track ID |
 | **4.5** | *(was 4.4)* | Next station distance (fluids) |
 | **4.6** | *(was Project Plan 3.2)* | Station waypoint (foot) + in-zone station coords |
@@ -120,7 +121,7 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
   - [x] **1.9 Fluid monitor** *(was CMD-02c)* — Top-bar `Fuel %` + `Oil %`; yellow if either &lt; 20%; red if either &lt; 5% (paired); `T2 power`. **Done / shipped** — Tier 1 + Tier 2 **PASS** (v0.4.18). Steam/electric placeholders deferred.
     > As an engineer, I want Fuel/Oil % on the HUD so I know when to return for service before a stall.
 
-  - [x] **1.10 Speed limit — current** *(was CMD-03)* — Top-bar single `Limit N` after Speed; yellow within 5 km/h of limit; red when over; `T2 limit` (Limit/loco changes only). **Authority:** posted `SignDebug` boards (digit × 10); geometry / SignPlacer ladder as fallback. Grade already in **1.2**. **Done / shipped** — Tier 1 + Tier 2 **PASS** (v0.4.20).
+  - [x] **1.10 Speed limit — current** *(was CMD-03)* — Top-bar single `Limit N` after Speed; yellow within 5 km/h of limit; red when over; `T2 limit` (Limit/loco changes only). **Authority:** posted `SignDebug` boards only (digit × 10; sticky until next board; dual `6/4` via switch branch). No geometry fallback. Grade already in **1.2**. **Done / shipped** — Tier 1 + Tier 2 **PASS** (v0.4.20); boards-only UX **0.5.34**.
     > As a driver, I want the current governing speed limit on the HUD so I do not overspeed the board I’m under right now.
 
   - [x] **1.11 Speed limit — next / trend** — Same single `Limit` badge (no second km/h chip): `^` green / `v` yellow for next different board ahead (lookahead ≈ max(500 m, speed×6)). Builds on **1.10** board+fallback authority. **Done** — Tier 1 + Tier 2 **PASS** (v0.4.23).
@@ -155,27 +156,27 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
 
 ---
 
-- [ ] **Epic 3 — Yard Master / Dispatcher** *(Journey Stages 2–3)* — Path integrity + CTC-style routing after HUD (+ governor abort patterns for anything that writes). Never delete cars. Scope: **yard and inter-city / mainline** (not yard-only).
+- [ ] **Epic 3 — Yard Master / Dispatcher** *(Journey Stages 2–3)* — CTC-style **Align Route**: pick **city → track**, pathfind (through-lane bias), show reverse cue, throw switches. Never delete cars. Scope: **yard and inter-city**. DV has **no Dispatcher license** — gate Align on **Dispatcher** (Dispatcher1) as the career unlock.
 
   - [ ] **3.1 Manual consist management & teleport** *(was CMD-06)* — Teleport via native organizers and/or helper UI; abort on hazmat / jobs / coupler / speed / unknowns; fail closed. Includes **Station Snap & Return**.
     > As a yard master, I want verified teleport helpers and station snap/return so I can reorganize consists and handle paperwork without long walks.
 
-  - [ ] **3.2 Comms Radio Overlay** — Auxiliary HUD panel with helper actions for consist ops / teleport (keeps tools off physical item clutter).
+  - [ ] **3.2 Comms Radio Overlay** — Auxiliary HUD panel with helper actions for consist ops / teleport / Align Route (keeps tools off physical item clutter).
     > As a yard master, I want a Comms-style helper panel so teleport and yard tools stay one click away.
 
-  - [x] **3.3 Manual switch / turntable remote** — **Cut** (2026-07-28). Walking/throwing switches is the career grind to **Dispatcher**. Licensed **3.5** Align Route is the real-world remote (CTC), not a free HUD lever. *(PgUp/PgDn nearby turntable bar-sim stays Epic 4 QOL / smoke aid only.)*
+  - [x] **3.3 Manual switch / turntable remote** — **Cut** (2026-07-28). Walking/throwing switches is the career grind. Licensed **3.5** Align Route is the CTC remote. *(PgUp/PgDn turntable = Epic 4 QOL only.)*
     > ~~As a shunter, I want to flip switches and turntables from my HUD…~~
 
   - [ ] **3.1b License-gated re-rail / spawn** *(debug → product candidate)* — Hotkey: scroll liveries the player holds licenses for; place with same re-rail blue/red ghost box as native re-rail. Replace/extend any ad-hoc spawn debt.
     > As a tester/yard master, I want to re-rail a licensed loco under the crosshair with clear place/no-place feedback.
 
-  - [ ] **3.4 Path tracer: manual check** *(was parking-lot Switch Path Tracer)* — Pick a destination (yard spur **or** another city / mainline); show whether switches are aligned (“check my math”) without auto-throwing. *Stage 2 — no Dispatcher license required* (verification aid while you still walk levers).
-    > As an engineer / yardman, I want to pick a destination and see if my switches are aligned — in the yard or between cities — so I can verify the path myself before I occupy it.
+  - [x] **3.4 Path tracer: manual check (player chore)** — **Demoted** (2026-07-28). Not a separate "check my math" grind. Path + alignment math is the **internal engine** for **3.5** (preview before throw). Look-at **End** pin may remain as a quick spur shortcut.
+    > ~~As an engineer / yardman, I want to click a destination and only check switches…~~
 
-  - [ ] **3.5 Path tracer: automated dispatching** — “Align Route” after a verified path; throws switches automatically. **Requires Dispatcher license.** *Stage 3 — needs stable **3.4** + ThreeGate write-safety.* Real-world frame: CTC / interlocking desk (dispatcher sets the route; crews don’t hike every lever between terminals) — **not** a cheat when licensed.
-    > As a licensed dispatcher, I want an Align Route control that sets switches for a verified path — yard or inter-city — the way a modern control desk would.
+  - [~] **3.5 Align Route (CTC)** — Destination **city → yard track**; pathfind with **passthrough / through-lane cost bias**; HUD **Facing OK / Reverse into dest / N reverses** (informational — no auto-shove yet); **Align Route** throws junctions via ThreeGate. **Requires Dispatcher** (GeneralLicenseType.Dispatcher1). Fail closed on no path / unknown. *WIP.*
+    > As a licensed shunter/dispatcher, I want to pick a city and track, see if I'll need to reverse, and Align Route so switches are set for the delivery — modern desk, not hiking levers.
 
-  **Build order (dispatcher):** **3.4** → **3.5** ( **3.1** / **3.1b** / **3.2** when teleport / re-rail / UI pain dominates).
+  **Build order:** **3.5** (path engine → picker → reverse cue → Align); **3.1** / **3.1b** / **3.2** when teleport / re-rail / UI pain dominates.
 
 ---
 
@@ -239,6 +240,7 @@ Not scheduled — discuss when Journey stage friction demands it:
 - [ ] Speed-limit auto-throttle governor *(soft-cap to % of Limit — same pattern as **2.2**; candidate **2.4**)*
 - [ ] **Session reset hotkey** — e.g. Shift+F6: set time ~07:00, clear/reset weather board, invalidate active jobs, refresh available job board (Tier 2 / sandbox).
 - [ ] **License-gated re-rail scroll** — see **3.1b** (promoted from debug ask).
+- [ ] **AR markers — in-view only (no false edge-stick)** — Station house / loco / pin / radar: do **not** edge-clamp a marker onto nearby geometry when the world target is off-screen or occluded. Only pull to screen edge (or show) when the target is actually in view; otherwise omit or keep off-screen so the icon doesn’t look glued to a car beside you. *(Smoke note 2026-07-28: house @ 120 m appeared on freight car flank.)* Follow-on to **4.9** / **4.10**.
 - [x] **2.2 Thermal governor — Hot trigger** — cab yellow = MU Warning; HUD/governor use `MUChainTemperatureState`. Soft-roll Warning **75%** / Critical **55%**. **PASS** @ **0.5.15**. Gemini: `doc/GeminiDocs/A2_Thermal_Governor_TriggerMismatch.md`.
 
 ---

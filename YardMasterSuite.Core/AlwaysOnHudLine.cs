@@ -1,7 +1,7 @@
 namespace YardMasterSuite.Core;
 
 /// <summary>
-/// Always-on personal nav bar (Heading · Marked · Station).
+/// Always-on personal nav bar (Heading · Marked · Station · Path).
 /// Ship version lives in UMM Mod Manager / info.json — not on the HUD.
 /// </summary>
 public static class AlwaysOnHudLine
@@ -9,6 +9,8 @@ public static class AlwaysOnHudLine
     public static string Format(
         string heading,
         string? park = null,
-        string? station = null) =>
-        MonitorHudLine.Join(new[] { heading, park ?? "", station ?? "" });
+        string? station = null,
+        string? path = null,
+        string? facing = null) =>
+        MonitorHudLine.Join(new[] { heading, park ?? "", station ?? "", path ?? "", facing ?? "" });
 }
