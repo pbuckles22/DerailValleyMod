@@ -268,6 +268,86 @@ public class RecommendedSpeedLimitGradeTests
         Assert.Equal(40f, down);
         Assert.Equal(1400f, downAlong);
     }
+
+    [Fact]
+    public void Sticky_adopt_holds_far_restriction_across_grade_wobble()
+    {
+        // Player.log 30↔60: far 30 sits on the soft-lead edge; grade −0.6↔−0.7 flips adopt.
+        const float speed = 70f;
+        const float mass = 38f;
+        const float mild = -0.6f;
+        const float steeper = -0.7f;
+        var adoptMild = BrakeAdvisory.RequiredDistanceMeters(speed, 30f, mass, mild)
+            * RecommendedSpeedLimit.AdoptLeadFactor;
+        var adoptSteep = BrakeAdvisory.RequiredDistanceMeters(speed, 30f, mass, steeper)
+            * RecommendedSpeedLimit.AdoptLeadFactor;
+        Assert.True(adoptSteep > adoptMild + 50f, "grades must separate the adopt edge");
+        var far30 = (adoptMild + adoptSteep) * 0.5f;
+        var boards = new[]
+        {
+            new AheadBoard(60f, 500f),
+            new AheadBoard(30f, far30),
+        };
+
+        var atSteep = RecommendedSpeedLimit.Resolve(
+            postedKmh: 80f,
+            aheadBoards: boards,
+            geometryKmh: null,
+            speedKmh: speed,
+            massTonnes: mass,
+            gradePercent: steeper,
+            adoptedAlongMeters: out _,
+            stickyAdoptedKmh: null);
+        var atMildFresh = RecommendedSpeedLimit.Resolve(
+            postedKmh: 80f,
+            aheadBoards: boards,
+            geometryKmh: null,
+            speedKmh: speed,
+            massTonnes: mass,
+            gradePercent: mild,
+            adoptedAlongMeters: out _,
+            stickyAdoptedKmh: null);
+        var atMildSticky = RecommendedSpeedLimit.Resolve(
+            postedKmh: 80f,
+            aheadBoards: boards,
+            geometryKmh: null,
+            speedKmh: speed,
+            massTonnes: mass,
+            gradePercent: mild,
+            adoptedAlongMeters: out var stickyAlong,
+            stickyAdoptedKmh: 30f);
+
+        Assert.Equal(30f, atSteep);
+        Assert.Equal(60f, atMildFresh);
+        Assert.Equal(30f, atMildSticky);
+        Assert.Equal(far30, stickyAlong);
+    }
+
+    [Fact]
+    public void Sticky_adopt_releases_when_clearly_outside_release_lead()
+    {
+        const float speed = 70f;
+        const float mass = 38f;
+        const float grade = -0.6f;
+        var release = BrakeAdvisory.RequiredDistanceMeters(speed, 30f, mass, grade)
+            * RecommendedSpeedLimit.ReleaseLeadFactor;
+        var boards = new[]
+        {
+            new AheadBoard(60f, 500f),
+            new AheadBoard(30f, release + 100f),
+        };
+
+        var recommended = RecommendedSpeedLimit.Resolve(
+            postedKmh: 80f,
+            aheadBoards: boards,
+            geometryKmh: null,
+            speedKmh: speed,
+            massTonnes: mass,
+            gradePercent: grade,
+            adoptedAlongMeters: out _,
+            stickyAdoptedKmh: 30f);
+        Assert.Equal(60f, recommended);
+    }
 }
 
 public class RecommendedSpeedLimitTests

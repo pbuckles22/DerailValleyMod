@@ -97,6 +97,9 @@ internal static class TelemetryReader
     private static LimitAuthority _heldDisplayAuthority = LimitAuthority.None;
     private static float _heldDisplaySince = -999f;
 
+    /// <summary>Prior look-ahead adopt km/h for Recommended hysteresis (anti 30↔60 chatter).</summary>
+    private static float? _stickyAdoptedRecommendedKmh;
+
     /// <summary>Per-track sustained geometry limit (km/h), zone-filtered to ignore micro-kinks.</summary>
     private static readonly Dictionary<int, float?> TrackGeometryLimitCache = new();
 
@@ -1132,6 +1135,7 @@ internal static class TelemetryReader
                 BoardTakes.Reset();
                 PathAhead.Clear();
                 ClearLimitDisplayHold();
+                _stickyAdoptedRecommendedKmh = null;
                 return new SpeedLimitState(null, LimitTrend.None, null);
             }
 
@@ -1165,7 +1169,8 @@ internal static class TelemetryReader
                 speedKmh,
                 massTonnes,
                 out var adoptedAlong,
-                grade ?? 0f);
+                grade ?? 0f,
+                _stickyAdoptedRecommendedKmh);
             float? adoptedKmh = null;
             if (adoptedAlong is not null
                 && recommended is float rec
@@ -1173,6 +1178,8 @@ internal static class TelemetryReader
             {
                 adoptedKmh = rec;
             }
+
+            _stickyAdoptedRecommendedKmh = adoptedKmh;
 
             var authority = ClassifyLimitAuthority(posted, recommended, geometry, adoptedKmh);
             var held = ApplyLimitDisplayHold(recommended, authority);
@@ -1259,6 +1266,7 @@ internal static class TelemetryReader
         _heldDisplayLimitKmh = null;
         _heldDisplayAuthority = LimitAuthority.None;
         _heldDisplaySince = -999f;
+        _stickyAdoptedRecommendedKmh = null;
     }
 
     private static string? FormatRecommendedDetail(
@@ -1381,6 +1389,7 @@ internal static class TelemetryReader
         {
             _stickyBoardLimitKmh = null;
             _hasStickyTravel = false;
+            _stickyAdoptedRecommendedKmh = null;
             BoardTakes.Reset();
         }
     }
