@@ -215,13 +215,14 @@ Top bar `Fuel N %` / `Oil N %` after Motors. Yellow (paired) if either &lt; 20%;
 - [x] Mod Off → On; no exceptions
 - [x] Load-time `GUI.skin` ArgumentException fixed (styles built only in `OnGUI`)
 
-### 1.16 Recommended Limit + soft brake — `T2 limit` — **pending** v0.5.52
+### 1.16 Recommended Limit + soft brake — `T2 limit` — **pending** v0.5.53
 
-Look-ahead boards come from the **route ahead** (`TrackPathAhead`, switches as thrown) with route distance. On-path boards no longer need the right-hand gate (0.5.51 late Brake 30). Braking has a soft budget (yellow + adopt) and a hard budget (red), both reduced by downhill gravity; grade beating hard braking shows `RUNAWAY`. Sticky Limit is released only by **passing** a board. Labels `(Posted)` / `(Recommended)` / `(Geometry)`; 5 s loosen-hold.
+Look-ahead boards come from the **route ahead** (`TrackPathAhead`, switches as thrown) with **arc** route distance (Bezier span, not chord). On-path facing uses the **route tangent at the board** (not loco heading — 0.5.52 late `fDot=-0.39`). On-path boards no longer need the right-hand gate (0.5.51). Braking has a soft budget (yellow + adopt) and a hard budget (red), both reduced by downhill gravity; grade beating hard braking shows `RUNAWAY`. Sticky Limit is released only by **passing** a board. Labels `(Posted)` / `(Recommended)` / `(Geometry)`; 5 s loosen-hold.
 
 **Sign-off**
 
-- [ ] Mod Manager shows `0.5.52`
+- [ ] Mod Manager shows `0.5.53`
+- [ ] On-path drop on a **curve** (e.g. `'4'=40`): `take` in Player.log with `fDot ≲ −0.5` while still tens of meters out — **not** skip at ~12 m then Recommended at &lt;1 m
 - [ ] On-path drop (e.g. 60→30): Brake / `(Recommended)` appears with soft lead — **not** only in the last ~30 m / ~10 s
 - [ ] **Sticky:** after passing a `4` board, Limit stays 40 — an older `6`/`8` board behind never raises it (this caused the 0.5.50 derail)
 - [ ] **Downgrade:** on a negative grade the Brake chip / `(Recommended)` drop arrives materially earlier than on the flat; `T2 limit` detail shows `grade=-x.x%`

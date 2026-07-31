@@ -1460,10 +1460,19 @@ internal static class TelemetryReader
 
             var boardTrack = ResolveBoardTrack(sign);
             var pathAlong = 0f;
+            var routeTravel = fwd;
             var onPath = hasPath
-                && TrackPathAhead.TryDistance(PathAhead, boardTrack, sign.transform.position, out pathAlong);
+                && TrackPathAhead.TrySample(
+                    PathAhead,
+                    boardTrack,
+                    sign.transform.position,
+                    out pathAlong,
+                    out routeTravel);
             var along = onPath ? pathAlong : Vector3.Dot(delta, fwd);
-            var eval = EvaluateBoardFacing(sign, fwd, delta, locoTrack, onPath, hasPath);
+            // Facing uses route tangent at the board when on-path — loco heading on curves
+            // rejects boards (0.5.52: fDot=-0.39 at ~12 m).
+            var travelForFacing = onPath ? routeTravel : fwd;
+            var eval = EvaluateBoardFacing(sign, travelForFacing, delta, locoTrack, onPath, hasPath);
             TraceBoardPass(sign, loco, along, eval);
             if (!eval.Governs)
             {

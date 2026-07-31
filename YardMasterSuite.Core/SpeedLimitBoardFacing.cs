@@ -15,6 +15,11 @@ namespace YardMasterSuite.Core;
 /// opposite direction's boards, and they sit on our left.
 /// </para>
 /// <para>
+/// <b>Travel axis (0.5.53):</b> when path-ahead is known, pass the <i>route tangent at the
+/// board</i> as travel — not the loco's instantaneous heading. On curves those diverge;
+/// 0.5.52 skipped <c>'4'=40</c> at ~12 m with <c>fDot=-0.39</c> until 0.6 m.
+/// </para>
+/// <para>
 /// <b>Track attribution:</b> "is this board on my track" is answered by the caller comparing the
 /// board's nearest <c>RailTrack</c> with the loco bogie's track. Lateral distance cannot answer it:
 /// it is measured off a straight line through the loco's heading, so a board 2 m from the rail

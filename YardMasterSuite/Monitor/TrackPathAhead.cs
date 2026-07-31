@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using YardMasterSuite.Core;
 
 namespace YardMasterSuite.Monitor;
 
@@ -12,6 +13,11 @@ namespace YardMasterSuite.Monitor;
 /// admitted boards that were never on our route (log: <c>'7 4'=40 along=1398m lat=-777m track=y</c>)
 /// and hid real boards sitting just past the next switch on a different track object.
 /// </para>
+/// <para>
+/// Distances use Bezier <c>span</c> (arc), not chord from the track entry. Facing travel is the
+/// route tangent at the board — loco heading on a curve rejects governing boards
+/// (<c>fDot=-0.39</c> at ~12 m → Recommended only at 0.6 m).
+/// </para>
 /// </summary>
 internal static class TrackPathAhead
 {
@@ -20,11 +26,18 @@ internal static class TrackPathAhead
 
     internal readonly struct Segment
     {
-        public Segment(float entryDistanceMeters, Vector3 entryPosition, float lengthMeters)
+        public Segment(
+            float entryDistanceMeters,
+            Vector3 entryPosition,
+            float lengthMeters,
+            bool travelIncreasingSpan,
+            Vector3 travelHint)
         {
             EntryDistanceMeters = entryDistanceMeters;
             EntryPosition = entryPosition;
             LengthMeters = lengthMeters;
+            TravelIncreasingSpan = travelIncreasingSpan;
+            TravelHint = travelHint;
         }
 
         /// <summary>Path distance from the loco to where this track begins (negative for our own).</summary>
@@ -34,6 +47,14 @@ internal static class TrackPathAhead
         public Vector3 EntryPosition { get; }
 
         public float LengthMeters { get; }
+
+        /// <summary>
+        /// True when we walk in→out (span grows along travel). False when we walk out→in.
+        /// </summary>
+        public bool TravelIncreasingSpan { get; }
+
+        /// <summary>Flat entry→exit direction for this hop (chord fallback / missing tangent).</summary>
+        public Vector3 TravelHint { get; }
     }
 
     /// <summary>
@@ -69,8 +90,8 @@ internal static class TrackPathAhead
             var track = start;
             var entryPosition = forward ? startIn : startOut;
             var length = startLength;
-            // Our own track began behind us: distance already covered is negative.
-            var entryDistance = -Vector3.Distance(entryPosition, locoPosition);
+            // Arc already covered on our own track (negative entry). Chord underestimates on curves.
+            var entryDistance = -StartTrackCoveredMeters(start, locoPosition, length, travelIncreasingSpan: forward);
 
             for (var hop = 0; hop < MaxHops; hop++)
             {
@@ -80,7 +101,24 @@ internal static class TrackPathAhead
                     break;
                 }
 
-                into[id] = new Segment(entryDistance, entryPosition, length);
+                var exitPosition = ExitPositionOf(track, entryPosition);
+                var hint = Flat(exitPosition - entryPosition);
+                if (hint.sqrMagnitude > 1e-8f)
+                {
+                    hint.Normalize();
+                }
+                else
+                {
+                    hint = Flat(flat).sqrMagnitude > 1e-8f ? Flat(flat).normalized : Vector3.forward;
+                }
+
+                // forward=true → heading for out → span increases along travel.
+                into[id] = new Segment(
+                    entryDistance,
+                    entryPosition,
+                    length,
+                    travelIncreasingSpan: forward,
+                    travelHint: hint);
 
                 var exitDistance = entryDistance + length;
                 if (exitDistance >= maxDistanceMeters)
@@ -93,8 +131,6 @@ internal static class TrackPathAhead
                 {
                     break;
                 }
-
-                var exitPosition = ExitPositionOf(track, entryPosition);
 
                 // We enter the next track at whichever of its ends meets our exit.
                 var enterAtIn = (nextIn - exitPosition).sqrMagnitude <= (nextOut - exitPosition).sqrMagnitude;
@@ -122,22 +158,100 @@ internal static class TrackPathAhead
         Dictionary<int, Segment> path,
         RailTrack? boardTrack,
         Vector3 boardPosition,
-        out float distanceMeters)
+        out float distanceMeters) =>
+        TrySample(path, boardTrack, boardPosition, out distanceMeters, out _);
+
+    /// <summary>
+    /// Arc distance along the route plus the route travel direction at the board (flat XZ).
+    /// </summary>
+    public static bool TrySample(
+        Dictionary<int, Segment> path,
+        RailTrack? boardTrack,
+        Vector3 boardPosition,
+        out float distanceMeters,
+        out Vector3 travelForward)
     {
         distanceMeters = 0f;
+        travelForward = Vector3.zero;
         if (boardTrack == null || !path.TryGetValue(boardTrack.GetInstanceID(), out var segment))
         {
             return false;
         }
 
-        var withinTrack = Vector3.Distance(segment.EntryPosition, boardPosition);
-        if (segment.LengthMeters > 0f && withinTrack > segment.LengthMeters)
+        if (!TryClosestOnTrack(boardTrack, boardPosition, out var spanMeters, out var tangent))
         {
-            withinTrack = segment.LengthMeters;
+            var withinTrack = Vector3.Distance(segment.EntryPosition, boardPosition);
+            if (segment.LengthMeters > 0f && withinTrack > segment.LengthMeters)
+            {
+                withinTrack = segment.LengthMeters;
+            }
+
+            distanceMeters = segment.EntryDistanceMeters + withinTrack;
+            travelForward = segment.TravelHint;
+            return true;
         }
 
-        distanceMeters = segment.EntryDistanceMeters + withinTrack;
+        var alongTrack = TrackPathSpan.WithinTrackMeters(
+            spanMeters,
+            segment.LengthMeters,
+            segment.TravelIncreasingSpan);
+        distanceMeters = segment.EntryDistanceMeters + alongTrack;
+        travelForward = segment.TravelIncreasingSpan ? tangent : -tangent;
+        travelForward.y = 0f;
+        if (travelForward.sqrMagnitude < 1e-8f)
+        {
+            travelForward = segment.TravelHint;
+        }
+
         return true;
+    }
+
+    private static float StartTrackCoveredMeters(
+        RailTrack track,
+        Vector3 locoPosition,
+        float lengthMeters,
+        bool travelIncreasingSpan)
+    {
+        if (TryClosestOnTrack(track, locoPosition, out var span, out _))
+        {
+            return TrackPathSpan.WithinTrackMeters(span, lengthMeters, travelIncreasingSpan);
+        }
+
+        if (!TryEndpoints(track, out var inPos, out var outPos, out _))
+        {
+            return 0f;
+        }
+
+        var entry = travelIncreasingSpan ? inPos : outPos;
+        var covered = Vector3.Distance(entry, locoPosition);
+        return lengthMeters > 0f && covered > lengthMeters ? lengthMeters : covered;
+    }
+
+    private static bool TryClosestOnTrack(
+        RailTrack track,
+        Vector3 worldPosition,
+        out float spanMeters,
+        out Vector3 tangent)
+    {
+        spanMeters = 0f;
+        tangent = Vector3.zero;
+        try
+        {
+            var closest = RailTrack.GetClosestPoint(track, worldPosition, 0f);
+            if (closest.Item1 is not { } point)
+            {
+                return false;
+            }
+
+            spanMeters = (float)point.span;
+            tangent = point.forward;
+            tangent.y = 0f;
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     private static RailTrack? NextTrack(RailTrack track, bool forward)

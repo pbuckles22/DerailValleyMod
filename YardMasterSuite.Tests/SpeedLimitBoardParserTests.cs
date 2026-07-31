@@ -242,4 +242,39 @@ public class SpeedLimitBoardFacingTests
             onOurTrack: true, trackKnown: true);
         Assert.False(away.Governs);
     }
+
+    /// <summary>
+    /// 0.5.52 smoke: on-curve <c>'4'=40</c> skipped at ~12 m with <c>fDot=-0.39</c> (loco heading),
+    /// then Recommended only at 0.6 m. Facing must use the route tangent at the board.
+    /// </summary>
+    [Fact]
+    public void On_path_uses_route_tangent_not_skewed_loco_heading()
+    {
+        // Board faces oncoming traffic (−Z). Route tangent at the board is +Z → fDot ≈ −1.
+        var withTangent = SpeedLimitBoardFacing.Evaluate(
+            signForwardX: 0f, signForwardZ: -1f,
+            signRightX: 1f, signRightZ: 0f,
+            travelForwardX: 0f, travelForwardZ: 1f,
+            deltaToSignX: 2f, deltaToSignZ: 12f,
+            isSwitchSign: false, junctionNearby: false,
+            onOurTrack: true, trackKnown: true);
+        Assert.True(withTangent.Governs);
+        Assert.True(withTangent.ForwardDot <= -SpeedLimitBoardFacing.MinForwardAlign);
+
+        // Same board, loco heading yawed ~67° on the curve → fDot ≈ −0.39 (repro).
+        const float yawDeg = 67f;
+        var yaw = yawDeg * (float)System.Math.PI / 180f;
+        var locoX = (float)System.Math.Sin(yaw);
+        var locoZ = (float)System.Math.Cos(yaw);
+        var withLocoHeading = SpeedLimitBoardFacing.Evaluate(
+            signForwardX: 0f, signForwardZ: -1f,
+            signRightX: 1f, signRightZ: 0f,
+            travelForwardX: locoX, travelForwardZ: locoZ,
+            deltaToSignX: 2f, deltaToSignZ: 12f,
+            isSwitchSign: false, junctionNearby: false,
+            onOurTrack: true, trackKnown: true);
+        Assert.InRange(withLocoHeading.ForwardDot, -0.45f, -0.30f);
+        Assert.False(withLocoHeading.Governs);
+    }
 }
+
