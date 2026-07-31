@@ -215,6 +215,25 @@ Top bar `Fuel N %` / `Oil N %` after Motors. Yellow (paired) if either &lt; 20%;
 - [x] Mod Off → On; no exceptions
 - [x] Load-time `GUI.skin` ArgumentException fixed (styles built only in `OnGUI`)
 
+### 1.16 Recommended Limit + soft brake — `T2 limit` — **pending** v0.5.52
+
+Look-ahead boards come from the **route ahead** (`TrackPathAhead`, switches as thrown) with route distance. On-path boards no longer need the right-hand gate (0.5.51 late Brake 30). Braking has a soft budget (yellow + adopt) and a hard budget (red), both reduced by downhill gravity; grade beating hard braking shows `RUNAWAY`. Sticky Limit is released only by **passing** a board. Labels `(Posted)` / `(Recommended)` / `(Geometry)`; 5 s loosen-hold.
+
+**Sign-off**
+
+- [ ] Mod Manager shows `0.5.52`
+- [ ] On-path drop (e.g. 60→30): Brake / `(Recommended)` appears with soft lead — **not** only in the last ~30 m / ~10 s
+- [ ] **Sticky:** after passing a `4` board, Limit stays 40 — an older `6`/`8` board behind never raises it (this caused the 0.5.50 derail)
+- [ ] **Downgrade:** on a negative grade the Brake chip / `(Recommended)` drop arrives materially earlier than on the flat; `T2 limit` detail shows `grade=-x.x%`
+- [ ] Steep descent that brakes cannot hold shows `RUNAWAY — Brake N NOW` (red)
+- [ ] **Path:** boards on other branches no longer appear (`track=n` in traces); no 40 from a board ~700 m off to the side
+- [ ] Boards just past the next switch **do** appear, with sane route distance
+- [ ] Thrown diverge on `7 4`: warns before the frog; through-set stays on the through number
+- [ ] At a posted 90 you read `Limit 90 (Posted)`; adopt happens nearer than 0.5.50 (lead ×1.15, not ×3.5)
+- [ ] Same km/h: `(Recommended)` → `(Posted)` once; no bounce; no 50↔60 flash
+- [ ] Straight mainline does **not** flicker to 40 from micro-kinks
+- [ ] Clean light-engine run, **then** a loaded freight downgrade run
+
 ### 1.10 Speed limit — current *(was CMD-03)* — `T2 limit` — **PASS** v0.4.20
 
 Top bar single `Limit N` after Speed. Yellow within 5 km/h of limit; red when over. **Authority:** posted `SignDebug` boards only (digit × 10; sticky; facing our travel direction; dual junction via branch). No geometry fallback; ignore opposite-direction boards.

@@ -139,6 +139,13 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
   - [x] **1.15 Consist free-motion** *(was “Engine / MU alive”)* — Consist HUD chip vs cab controls: **quiet** when synced; **yellow** `MU idle` if either unit off/Neutral (brakes match); **red** `MU desync` on brake/ind-brake fight or both on+in-gear mismatch (reverser/throttle). Reads engine-on, reverser, throttle, train + independent brake. Distinct from **1.8** Motors Hot and **2.3** auto-brake. **Done** — Tier 1 + Tier 2 smoke **PASS** (v**0.5.20**).
     > As an engineer, I want a clear warning when another loco on my train is fighting free forward or reverse motion, a softer cue when units are off or in neutral, and silence when the consist is correctly synced with me.
 
+  - [ ] **1.16 Recommended Limit + soft brake lead** — `Limit` is a **look-ahead recommendation**: adopts the next slower posted board once inside the soft-brake lead (not when tires pass). HUD labels **`(Posted)`** / **`(Recommended)`** / `(Geometry)`; **5 s loosen-hold** and no Posted↔Recommended bounce on the same km/h.
+    - **Path-aware look-ahead (0.5.51)** — boards are gathered along the **route ahead** (`TrackPathAhead` walks the live graph through each junction as thrown), with distance measured along that route. Kills off-branch steals (`'7 4'=40 lat=-777m track=y`) and finds boards past the next switch.
+    - **Grade-aware braking (0.5.51)** — two budgets: soft (light `0.18` / heavy `0.08` m/s², 12 s reaction) drives the yellow window and adopt; hard (light `0.55` / heavy `0.30`, 3 s) drives red. Downhill gravity (`9.81 × −grade/100`) is subtracted from both, so a descent warns far earlier. Gravity beating the hard budget = explicit **`RUNAWAY — Brake N NOW`** chip rather than a braking distance the train cannot achieve. Adopt lead factor cut `3.5 → 1.15` (the chip warns early; the number changes when you must act).
+    - **Sticky = tire-pass only (0.5.51)** — `PostedStickyLimit` + `BoardTakeDetector`: a restriction is released only by passing a board. Fixes the 0.5.50 stress derail where a `'6'=60` board 273 m *behind* raised Limit 40→60 mid-descent.
+    - Posted boards remain the authored authority; **sustained geometry fills only when no board is known**. **Follow-up:** hold a limit *increase* until the rearmost car clears the slower zone; look-ahead geometry along the path (not whole-track min).
+    > As an engineer, I want Limit to show a safe speed for what is coming — with enough lead to ease from 80 to 60 — instead of flipping under my wheels and leaving me to panic-brake.
+
   **Build order:** **Epic 4** complete → **2.1** Three-Gate → **2.2**. *(Do not reopen **1.8** HUD thermal prediction.)*
 
 ---

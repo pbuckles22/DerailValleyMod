@@ -3,9 +3,10 @@ using System;
 namespace YardMasterSuite.Core;
 
 /// <summary>
-/// Pure speed-limit formatting for the train HUD bar (geometry / board km/h).
+/// Pure speed-limit formatting for the train HUD bar.
 /// Yellow within <see cref="NearThresholdKmh"/> of the limit; red when over.
 /// Optional ▲/▼ trend for the next posted change (**1.11**) — no second km/h chip.
+/// Authority suffix: (Posted) vs (Recommended) so look-ahead is never mistaken for the sign underfoot.
 /// </summary>
 public static class SpeedLimitDisplay
 {
@@ -21,11 +22,22 @@ public static class SpeedLimitDisplay
     public const string UpColor = "#55FF55";
     public const string DownColor = "#FFD400";
 
-    public static string Format(float? limitKmh, LimitTrend trend = LimitTrend.None) =>
-        FormatCore(limitKmh, richText: false, severity: LimitSeverity.None, trend);
+    public const string PostedLabel = "(Posted)";
+    public const string RecommendedLabel = "(Recommended)";
+    public const string GeometryLabel = "(Geometry)";
 
-    public static string FormatHud(float? speedKmh, float? limitKmh, LimitTrend trend = LimitTrend.None) =>
-        FormatCore(limitKmh, richText: true, severity: Severity(speedKmh, limitKmh), trend);
+    public static string Format(
+        float? limitKmh,
+        LimitTrend trend = LimitTrend.None,
+        LimitAuthority authority = LimitAuthority.None) =>
+        FormatCore(limitKmh, richText: false, severity: LimitSeverity.None, trend, authority);
+
+    public static string FormatHud(
+        float? speedKmh,
+        float? limitKmh,
+        LimitTrend trend = LimitTrend.None,
+        LimitAuthority authority = LimitAuthority.None) =>
+        FormatCore(limitKmh, richText: true, severity: Severity(speedKmh, limitKmh), trend, authority);
 
     public static LimitSeverity Severity(float? speedKmh, float? limitKmh)
     {
@@ -71,18 +83,28 @@ public static class SpeedLimitDisplay
         return LimitTrend.None;
     }
 
+    public static string AuthoritySuffix(LimitAuthority authority) =>
+        authority switch
+        {
+            LimitAuthority.Posted => $" {PostedLabel}",
+            LimitAuthority.Recommended => $" {RecommendedLabel}",
+            LimitAuthority.Geometry => $" {GeometryLabel}",
+            _ => string.Empty,
+        };
+
     private static string FormatCore(
         float? limitKmh,
         bool richText,
         LimitSeverity severity,
-        LimitTrend trend)
+        LimitTrend trend,
+        LimitAuthority authority)
     {
         if (limitKmh is null)
         {
             return "— Limit";
         }
 
-        var text = $"Limit {Round(limitKmh.Value)}";
+        var text = $"Limit {Round(limitKmh.Value)}{AuthoritySuffix(authority)}";
         if (richText && severity != LimitSeverity.None)
         {
             var color = severity == LimitSeverity.Over ? CriticalColor : WarningColor;

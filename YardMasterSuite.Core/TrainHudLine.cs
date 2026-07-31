@@ -18,10 +18,14 @@ public static class TrainHudLine
         string handbrakes,
         string cars,
         string? backup = null,
-        string? freeMotion = null) =>
+        string? freeMotion = null,
+        string? brake = null) =>
         MonitorHudLine.Join(new[]
         {
-            fuel, oil, mass, grade, load, speed, limit, motors,
+            fuel, oil, mass, grade, load, speed, limit,
+            // 1.16 sits beside Limit: it is the action for the number to its left.
+            brake ?? string.Empty,
+            motors,
             freeMotion ?? string.Empty,
             handbrakes, cars,
             backup ?? string.Empty,

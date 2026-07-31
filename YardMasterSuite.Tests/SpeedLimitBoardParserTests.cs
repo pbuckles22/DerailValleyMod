@@ -55,6 +55,8 @@ public class SpeedLimitBoardParserTests
         Assert.Equal(40f, dual.Value.DivergeKmh);
         Assert.Equal(60f, SpeedLimitBoardParser.Pick(dual.Value, diverging: false));
         Assert.Equal(40f, SpeedLimitBoardParser.Pick(dual.Value, diverging: true));
+        Assert.Equal(60f, SpeedLimitBoardParser.Pick(dual.Value, selectedBranch: 0));
+        Assert.Equal(40f, SpeedLimitBoardParser.Pick(dual.Value, selectedBranch: 1));
     }
 
     [Theory]
@@ -145,6 +147,22 @@ public class SpeedLimitBoardFacingTests
         Assert.False(Board(lateral: -2f, along: -5f).Governs);
     }
 
+    /// <summary>
+    /// 0.5.51 smoke: on-path <c>'3'=30</c> was skipped at 29.6 m (<c>right=n track=y</c>) then
+    /// suddenly governed at 25.7 m — soft lead never ran. Route membership replaces the right-hand gate.
+    /// </summary>
+    [Fact]
+    public void On_path_mainline_skips_right_hand_when_track_known()
+    {
+        var leftButOurs = Board(
+            lateral: -0.4f,
+            along: 29.6f,
+            onOurTrack: true,
+            trackKnown: true);
+        Assert.True(leftButOurs.Governs);
+        Assert.False(leftButOurs.OnRight);
+    }
+
     [Fact]
     public void Track_identity_overrides_lateral_distance()
     {
@@ -199,13 +217,14 @@ public class SpeedLimitBoardFacingTests
     }
 
     [Fact]
-    public void Switch_dual_needs_a_junction_and_our_track()
+    public void Switch_dual_without_junction_falls_back_to_mainline_on_path_rules()
     {
+        // No junction → mainline path. On-path + facing us still governs (right-hand skipped).
         var noJunction = Board(
             lateral: -2f, along: 10f,
             isSwitchSign: true, junctionNearby: false,
             onOurTrack: true, trackKnown: true);
-        Assert.False(noJunction.Governs);
+        Assert.True(noJunction.Governs);
 
         var otherTrack = Board(
             lateral: -2f, along: 10f,

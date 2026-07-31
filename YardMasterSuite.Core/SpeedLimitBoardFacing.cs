@@ -142,6 +142,11 @@ public static class SpeedLimitBoardFacing
         var rDot = hasR ? (srx * tx) + (srz * tz) : 0f;
         var facesUs = hasF && fDot <= -MinForwardAlign;
 
+        // Right-hand is only for the corridor fallback. Once track/route membership is known
+        // (path-ahead or GetClosest), a left-of-heading reading on a curve must not drop an
+        // on-path board — 0.5.51: skip '3'=30 at 29.6 m (right=n track=y) → Brake 30 at 26 m.
+        var sideOk = trackKnown || onRight;
+
         // Switch dual board at the points: no right-hand rule, still must be our track and face us.
         if (isSwitchSign && junctionNearby)
         {
@@ -160,7 +165,7 @@ public static class SpeedLimitBoardFacing
         }
 
         return new Eval(
-            governs: onRight && facesUs && ours,
+            governs: sideOk && facesUs && ours,
             fDot,
             rDot,
             lateral,
