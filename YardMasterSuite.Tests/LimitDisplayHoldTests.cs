@@ -72,6 +72,35 @@ public class LimitDisplayHoldTests
         Assert.False(LimitDisplayHold.NumberChanged(50f, 50.2f));
         Assert.True(LimitDisplayHold.NumberChanged(null, 50f));
     }
+
+    [Fact]
+    public void Standstill_keeps_held_limit_across_facing_flip()
+    {
+        // Player.log Speed 0: travel/facing jitter 40 (Recommended) ↔ 80 (Posted).
+        var next = LimitDisplayHold.Step(
+            candidateKmh: 80f,
+            candidateAuthority: LimitAuthority.Posted,
+            heldKmh: 40f,
+            heldAuthority: LimitAuthority.Recommended,
+            heldAgeSeconds: LimitDisplayHold.LoosenHoldSeconds,
+            speedKmh: 0f);
+        Assert.Equal(40f, next.LimitKmh);
+        Assert.Equal(LimitAuthority.Recommended, next.Authority);
+    }
+
+    [Fact]
+    public void Moving_still_allows_loosen_after_hold()
+    {
+        var next = LimitDisplayHold.Step(
+            candidateKmh: 80f,
+            candidateAuthority: LimitAuthority.Posted,
+            heldKmh: 40f,
+            heldAuthority: LimitAuthority.Recommended,
+            heldAgeSeconds: LimitDisplayHold.LoosenHoldSeconds,
+            speedKmh: 20f);
+        Assert.Equal(80f, next.LimitKmh);
+        Assert.Equal(LimitAuthority.Posted, next.Authority);
+    }
 }
 
 public class SpeedLimitAuthorityFormatTests

@@ -19,7 +19,8 @@ public static class TrainHudLine
         string cars,
         string? backup = null,
         string? freeMotion = null,
-        string? brake = null) =>
+        string? brake = null,
+        string? drive = null) =>
         MonitorHudLine.Join(new[]
         {
             fuel, oil, mass, grade, load, speed, limit,
@@ -29,6 +30,8 @@ public static class TrainHudLine
             freeMotion ?? string.Empty,
             handbrakes, cars,
             backup ?? string.Empty,
+            // Smoke-run odometer: how far this world session has driven.
+            drive ?? string.Empty,
         });
 
     public static string NullLine() =>

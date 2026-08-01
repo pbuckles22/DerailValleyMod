@@ -215,13 +215,29 @@ Top bar `Fuel N %` / `Oil N %` after Motors. Yellow (paired) if either &lt; 20%;
 - [x] Mod Off → On; no exceptions
 - [x] Load-time `GUI.skin` ArgumentException fixed (styles built only in `OnGUI`)
 
-### 1.16 Recommended Limit + soft brake — `T2 limit` — **pending** v0.5.54
+### 1.16 Recommended Limit + soft brake — `T2 limit` — **paused** (T2 held @ v0.5.68)
 
-Look-ahead boards come from the **route ahead** (`TrackPathAhead`, switches as thrown) with **arc** route distance (Bezier span, not chord). On-path facing uses the **route tangent at the board** (not loco heading — 0.5.52 late `fDot=-0.39`). On-path boards no longer need the right-hand gate (0.5.51). Braking has a soft budget (yellow + adopt) and a hard budget (red), both reduced by downhill gravity; grade beating hard braking shows `RUNAWAY`. Sticky Limit is released only by **passing** a board. Labels `(Posted)` / `(Recommended)` / `(Geometry)`; 5 s loosen-hold. Adopted Recommended uses release-lead hysteresis (0.5.54) so a far restriction does not 30↔60 chatter on grade wobble.
+Player priority shifted to **3.5 Google Maps Align**. Corpus retune shipped **0.5.68** (dial **0.80**, margin **10%**, Brake cap **4.5 km**) without a new Tier 2 ask. Resume 1.16 smoke after Align shortest-path.
+
+Look-ahead boards come from the **route ahead** (`TrackPathAhead`, switches as thrown) with **arc** route distance (Bezier span, not chord). On-path facing uses the **route tangent at the board** (not loco heading — 0.5.52 late `fDot=-0.39`). On-path boards no longer need the right-hand gate (0.5.51). Braking has a soft budget (yellow + adopt) and a hard budget (red), both reduced by downhill gravity; grade beating hard braking shows `RUNAWAY`. Sticky Limit is released only by **passing** a board. Labels `(Posted)` / `(Recommended)` / `(Geometry)`; 5 s loosen-hold. Adopted Recommended uses release-lead hysteresis (0.5.54) so a far restriction does not 30↔60 chatter on grade wobble. **0.5.55:** speed-floor release + scan-drop + standstill freeze. **0.5.56:** adopt-time grade kept for sticky release; sticky never clobbered by looser Resolve. **0.5.57:** rich drive/brake debug. **0.5.58:** honest hard budgets + calmer color + no duplicate target. **0.5.59:** dynamic ≤6 km route scan; tightest severe board gets Brake at mass/grade/type slowdown time ×1.5, so an intermediate 60 cannot hide a farther 30. **0.5.60:** Brake target qualifies against **speed** (the Limit chip adopting it no longer silences it); window is the worse of comfortable slowdown and guaranteed heavy-application room **+50%**; planning grade is safety-biased and the on-screen target cannot blink out. **0.5.61 (root cause):** `T2 limit`'s new `scan=/path=/reach=` diagnostics proved the 0.5.60 warning-window math was correct but starved of data — `path=7seg reach=6971m` shows the route walk already knew the board was there, while `ahead=2 min=70@465m` shows the scan could not *see* it because its `SignDebug` prop had not streamed into the scene yet (Derail Valley streams sign decor near the train; the `RailTrack` graph/curve is not streamed). Fix bypasses sign streaming entirely for early detection: every walked route segment's own curve radius is scanned via the existing SignPlacer-ladder geometry math (`SpeedLimitGeometryZones.TryGoverningZone`), synthesizing an `AheadBoard` from geometry alone wherever a real sign has not loaded yet (`T2 limit` gains `geo=N`). Also fixes issue #2 from the same session: `MinTargetDeltaKmh` (Brake's own "close enough, don't nag" gate) now equals `SpeedLimitDisplay.NearAboveKmh` (5, was 3) so Brake cannot go red while the Limit chip is still only yellow.
 
 **Sign-off**
 
-- [x] Mod Manager shows `0.5.54` — Tier 2 **PASS**
+- [ ] Mod Manager shows `0.5.68` — Tier 2 **held** (dial **0.80**, margin 10%, Brake cap 4.5 km; Align Google Maps first)
+- [ ] Mod Manager shows `0.5.67` — superseded (Drive chip; corpus capture)
+- [ ] Mod Manager shows `0.5.66` — superseded before smoke (Drive chip added for long-haul pacing)
+- [x] Mod Manager shows `0.5.65` — Tier 2 **partial** (Brake 30 without Limit 30 ×312; still sticky posted; stress thr?)
+- [x] Mod Manager shows `0.5.64` — Tier 2 **FAIL** stickiness (posted 60→stayed 30; geo along≈2665 lead≈3556; `thr=0/1` stress %)
+- [x] Mod Manager shows `0.5.63` — Tier 2 **FAIL** for stickiness (dial 0.1 still too conservative; `src=geo along≈2600 lead≈3500` under posted 60)
+- [ ] Mod Manager shows `0.5.62` — superseded before smoke
+- [ ] Mod Manager shows `0.5.61` — Tier 2 **partial** (geometry-ahead caught far 30s / `geo≥1`, but Limit stayed Recommended 30 too long under posted 70/80 — dial at 0.5.62)
+- [x] Mod Manager shows `0.5.60` — Tier 2 **FAIL** (70→30 still unwarned — root cause was sign streaming, not window math; see 0.5.61)
+- [x] Mod Manager shows `0.5.59` — Tier 2 **FAIL** (60→50→60 chip chatter; no `Brake 30` under `Limit 30 (Recommended)`; 70→30 still unwarned)
+- [ ] Mod Manager shows `0.5.58` — Tier 2 pending (honest hard lead + yellow band + no duplicate Brake target)
+- [ ] Mod Manager shows `0.5.57` — Tier 2 pending (drive/brake debug for lead tuning)
+- [ ] Mod Manager shows `0.5.56` — Tier 2 pending (sticky grade / no-clobber)
+- [x] Mod Manager shows `0.5.55` — Tier 2 **FAIL** (standstill OK; residual 30↔60/70 Recommended thrash)
+- [x] Mod Manager shows `0.5.54` — Tier 2 **PASS** (grade-edge 30↔60 ship)
 - [ ] On-path drop on a **curve** (e.g. `'4'=40`): `take` in Player.log with `fDot ≲ −0.5` while still tens of meters out — **not** skip at ~12 m then Recommended at &lt;1 m
 - [ ] On-path drop (e.g. 60→30): Brake / `(Recommended)` appears with soft lead — **not** only in the last ~30 m / ~10 s
 - [ ] **Sticky:** after passing a `4` board, Limit stays 40 — an older `6`/`8` board behind never raises it (this caused the 0.5.50 derail)
@@ -232,7 +248,22 @@ Look-ahead boards come from the **route ahead** (`TrackPathAhead`, switches as t
 - [ ] Thrown diverge on `7 4`: warns before the frog; through-set stays on the through number
 - [ ] At a posted 90 you read `Limit 90 (Posted)`; adopt happens nearer than 0.5.50 (lead ×1.15, not ×3.5)
 - [ ] Same km/h: `(Recommended)` → `(Posted)` once; no bounce; no 50↔60 flash
-- [x] **No 30↔60 Recommended chatter** on a mild grade wobble once a far restriction has been adopted (release lead holds until clearly outside) — Tier 2 **PASS** @ **0.5.54** (Player.log: zero adjacent 30↔60 flips; residual 50↔60 / standstill 40↔80 noted as follow-up)
+- [x] **No 30↔60 Recommended chatter** on a mild grade wobble once a far restriction has been adopted (release lead holds until clearly outside) — Tier 2 **PASS** @ **0.5.54** (Player.log: zero adjacent 30↔60 flips)
+- [x] Standstill does **not** thrash 40↔80 from facing jitter — Tier 2 **PASS** @ **0.5.55** (zero Speed-0 Limit flips)
+- [ ] **No 30↔60 / 50↔60 Recommended thrash** while grade eases or boards briefly leave the ahead scan — Tier 2 @ **0.5.56**
+- [ ] Limit 50 is yellow from **40–55** inclusive and red at **56+**; `Limit 60 (Recommended)` does not also show `Brake 60 in …` — Tier 2 @ **0.5.58**
+- [ ] Light DE2 downgrade: red/`RUNAWAY` arrives materially earlier than 0.5.57; following the first cue avoids the 69→49-at-30-board failure — Tier 2 @ **0.5.58**
+- [ ] At ~70 with a near 60 and farther 30, `Brake 30` appears around the DE2/mass/grade estimated slowdown time **plus 25%** (was 50% through 0.5.64), before Limit adopts 30; `T2 limit` includes `type=LocoDE2` — Tier 2 @ **0.5.65**
+- [ ] `Limit 30 (Recommended)` **and** `Brake 30 in … s` are shown together — adopting the number never removes the countdown — Tier 2 @ **0.5.60**
+- [ ] Cruising 50–70 toward a 30: the chip is up **kilometres** out (≈250 s+ on a descent), and following it needs no hard application — Tier 2 @ **0.5.60**
+- [ ] The Brake chip does **not** blink on/off between frames while grade wobbles; `T2 limit` `planGrade=` moves smoothly even when `grade=` jumps — Tier 2 @ **0.5.60**
+- [ ] If a warning still arrives late, `T2 limit` `reach=`/`min=` shows whether the route walk had even found the board — Tier 2 @ **0.5.60**
+- [ ] **The 70→30 case, for real this time:** repeat the exact route from the 0.5.60 failure. `Brake 30` (or `Limit 30 (Recommended)`) must appear kilometres out, well before the sign is close enough to render on screen. `T2 limit` should show `geo=1` (or more) on the frame the warning first appears, and `min=30@…` should show a large distance the very first time it is ever non-`—`, not just once the sign has streamed in — Tier 2 @ **0.5.61+**
+- [ ] **Dial 0.40 + align:** when `adv=… 30` appears, Limit must show `30 (Recommended)` (never Posted-only). Under mild 60/70/80, Limit should not sit on 30 for km after Brake clears. If sticky, use `suggest=`. — Tier 2 @ **0.5.67**
+- [ ] At ~70 with a farther 30, `Brake 30` still appears with useful lead under the **25%** planning buffer — Tier 2 @ **0.5.67**
+- [ ] **Drive goals (use HUD `Drive` chip):** light-engine session **≥12 km** total; prefer **2+ routes** (e.g. mainline stretch **and** Harbor Town / other steep grade). Per route, aim **≥5 km** or until you’ve seen a posted step-down + sticky release. Normal pacing; optional overspeed OK. Agent tunes from logs. Chip resets when leaving the world. — Tier 2 @ **0.5.67**
+- [ ] `Limit 40` (or `40 (Recommended)`) while cruising 41–45 (yellow, not red) shows **no** `Brake 40` chip; going to 46+ (red) does show it — Tier 2 @ **0.5.61+**
+- [ ] No new false-positive Brake/Recommended chatter from ordinary mainline curves that were never signed (geometry-ahead scan must not nag on curves loose enough that the game itself never placed a board there)
 - [ ] Straight mainline does **not** flicker to 40 from micro-kinks
 - [ ] Clean light-engine run, **then** a loaded freight downgrade run
 

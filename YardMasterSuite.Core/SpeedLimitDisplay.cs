@@ -4,14 +4,17 @@ namespace YardMasterSuite.Core;
 
 /// <summary>
 /// Pure speed-limit formatting for the train HUD bar.
-/// Yellow within <see cref="NearThresholdKmh"/> of the limit; red when over.
+/// Yellow from 10 km/h below through 5 km/h above the limit; red beyond that upper band.
 /// Optional ▲/▼ trend for the next posted change (**1.11**) — no second km/h chip.
 /// Authority suffix: (Posted) vs (Recommended) so look-ahead is never mistaken for the sign underfoot.
 /// </summary>
 public static class SpeedLimitDisplay
 {
-    /// <summary>Yellow band starts this many km/h below the posted limit (inclusive at limit).</summary>
-    public const float NearThresholdKmh = 5f;
+    /// <summary>Yellow band begins this many km/h below the Limit (inclusive).</summary>
+    public const float NearBelowKmh = 10f;
+
+    /// <summary>Yellow band extends this many km/h above the Limit (inclusive).</summary>
+    public const float NearAboveKmh = 5f;
 
     /// <summary>ASCII glyphs — Unity default GUI font often lacks ▲/▼.</summary>
     public const string UpArrow = "^";
@@ -48,12 +51,12 @@ public static class SpeedLimitDisplay
 
         var speed = Round(speedKmh.Value);
         var limit = Round(limitKmh.Value);
-        if (speed > limit)
+        if (speed > limit + NearAboveKmh)
         {
             return LimitSeverity.Over;
         }
 
-        if (speed > limit - NearThresholdKmh)
+        if (speed >= limit - NearBelowKmh)
         {
             return LimitSeverity.Near;
         }

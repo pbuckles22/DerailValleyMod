@@ -58,6 +58,18 @@ High ROI; frequent pain; not blocking.
 
 - [x] **Bundle B clutter diet** — **B.1–B.4** + in-world HUD + no version chip through **v0.4.36** (smoke PASS). Remaining UX: **A → C → D**.
 
+- [ ] **3.5 Align Route: threw N but Path still wrong** — parked until **1.16** hone done. Repro ×2 @ **0.5.67**: FF→IME `IME-A1L` and HMB transit / HB (`Path 1 wrong` after `T2 align: threw N`; Facing/Reverse cues still show). Plan/check disagree, wrong branch, or incomplete throw. Area: `RouteAlignGovernor` / `PathCheck` / `DispatchDeskPanel`.
+
+- [ ] **3.5 Align: intermediate yard thru-tracks** — parked. Dest through another city yard must prefer **pass-through / main** lanes, not industry/storage that can have cars. Player: HMB on way to HB left Path wrong / wrong track class. Ties to through-lane bias + full multi-yard corridor throw. Area: `PathFinder` / Align throw set.
+
+- [ ] **3.5 Path stale false positive** — parked. HUD `Path stale` while player reports staying on the aligned path (straight after Align). Stale is only supposed to fire when current track ∉ plan (`RoutePlanService.WatchPathDrift`). Likely incomplete `TrackIds` / yard graph gaps / origin track id churn. Session `2026-07-31_067h`.
+
+- [ ] **3.5 Align: shortest / fastest route** — parked (product goal after data). Today pathfind is not “Google Maps” — long detours (FF→HB via HMB). Need time/distance-optimal (or strongly biased) corridor before Align is trusted for long hauls.
+
+- [ ] **AR: hide house outside office / city sense** — parked. `Station HMB … 1600m` + house icon still shown far from office; player expects hide once outside city/office. Today house hide = office AABB only (`ArProximityHide`), Station chip = nearest station (not “home city limits”). Clarify product: nearest-station always-on vs office-only house.
+
+- [ ] **AR: other-loco range ≤1 km** — parked. Screenshots show DE2/S060/S282A markers well over 1000 m. Later: type filter dropdown + optional paid fast-travel / re-rail teleport via comms. Cap range first.
+
 - [ ] **Cache speed-limit state per HUD tick** — `TryGetSpeedLimitState` / board scan can run twice per refresh (train bar + `T2 limit`). Cache in `BeginHudTick` like standing/loco.
 
 - [ ] **Cache player XZ per HUD tick** — `TryGetPlayerPosition` re-runs from Pos + Marked labels and both T2 snapshots each refresh (**1.12–1.14**). Cache in `BeginHudTick` like standing/loco. Epic 4 multiplied consumers (station/AR).

@@ -6,14 +6,22 @@ namespace YardMasterSuite.Core;
 /// <summary>One governing board ahead of the loco (km/h + along-track meters).</summary>
 public readonly struct AheadBoard
 {
-    public AheadBoard(float kmh, float alongMeters)
+    public AheadBoard(float kmh, float alongMeters, bool fromGeometry = false)
     {
         Kmh = kmh;
         AlongMeters = alongMeters;
+        FromGeometry = fromGeometry;
     }
 
     public float Kmh { get; }
     public float AlongMeters { get; }
+
+    /// <summary>
+    /// True when synthesized from curve radius (not a streamed <c>SignDebug</c> prop).
+    /// Limit adopt may require these closer via <see cref="SpeedLimitAggressiveness.GeometryLimitLeadScale"/>;
+    /// Brake always treats them like any other board.
+    /// </summary>
+    public bool FromGeometry { get; }
 }
 
 /// <summary>
@@ -29,25 +37,30 @@ public static class RecommendedSpeedLimit
 {
     /// <summary>
     /// Adopt a slower board this many multiples of the soft required distance out.
-    /// The soft distance already carries reaction time, so the margin here is small — the yellow
-    /// Brake chip (<see cref="BrakeAdvisory.AdvisoryFactor"/>) is what warns far out, not the number.
+    /// Driven by <see cref="SpeedLimitAggressiveness"/> (0 = sticky-safe, 1 = late).
     /// </summary>
-    public const float AdoptLeadFactor = 1.15f;
+    public static float AdoptLeadFactor => SpeedLimitAggressiveness.AdoptLeadFactor;
 
     /// <summary>
     /// Keep a previously adopted board until this multiple of soft distance (hysteresis).
-    /// Grade/speed wobble at the adopt edge caused 30↔60 Recommended flicker without this gap.
+    /// Driven by <see cref="SpeedLimitAggressiveness"/>.
     /// </summary>
-    public const float ReleaseLeadFactor = 1.55f;
+    public static float ReleaseLeadFactor => SpeedLimitAggressiveness.ReleaseLeadFactor;
+
+    /// <summary>
+    /// Sticky release lead is computed as if still at least board+margin km/h so slowing
+    /// toward the restriction (correct braking) cannot shrink the lead and un-adopt (50↔60).
+    /// </summary>
+    public const float StickyReleaseSpeedMarginKmh = 10f;
 
     /// <summary>
     /// When already at/under an upcoming board's number, still show it for this many seconds
     /// of travel at current speed (floored at <see cref="MinHoldAheadMeters"/>).
     /// </summary>
-    public const float HoldAheadSeconds = 60f;
+    public static float HoldAheadSeconds => SpeedLimitAggressiveness.HoldAheadSeconds;
 
     /// <summary>Floor for hold-ahead distance when nearly stopped.</summary>
-    public const float MinHoldAheadMeters = 400f;
+    public static float MinHoldAheadMeters => SpeedLimitAggressiveness.MinHoldAheadMeters;
 
     /// <summary>
     /// Recommended km/h for the Limit chip, or null when nothing is known.
@@ -56,6 +69,8 @@ public static class RecommendedSpeedLimit
     /// <paramref name="gradePercent"/> lengthens the lead on a descent (downhill gravity).
     /// <paramref name="stickyAdoptedKmh"/> prior look-ahead adopt — uses <see cref="ReleaseLeadFactor"/>
     /// so a far restriction does not chatter at the soft-lead edge.
+    /// <paramref name="stickyAdoptGradePercent"/> grade when sticky was adopted — release lead uses the
+    /// more adverse of current vs adopt grade so easing out of a descent cannot un-adopt (30↔60).
     /// </summary>
     public static float? Resolve(
         float? postedKmh,
@@ -65,7 +80,8 @@ public static class RecommendedSpeedLimit
         float? massTonnes,
         out float? adoptedAlongMeters,
         float gradePercent = 0f,
-        float? stickyAdoptedKmh = null)
+        float? stickyAdoptedKmh = null,
+        float? stickyAdoptGradePercent = null)
     {
         adoptedAlongMeters = null;
         float? recommended = postedKmh;
@@ -80,6 +96,7 @@ public static class RecommendedSpeedLimit
         }
 
         var mass = massTonnes ?? BrakeAdvisory.HeavyConsistTonnes;
+        var stickySeen = false;
         if (aheadBoards != null)
         {
             for (var i = 0; i < aheadBoards.Count; i++)
@@ -98,12 +115,41 @@ public static class RecommendedSpeedLimit
 
                 var stickyMatch = stickyAdoptedKmh is float sticky
                     && Math.Abs(board.Kmh - sticky) < 0.5f;
+                if (stickyMatch)
+                {
+                    stickySeen = true;
+                }
+
+                // Aggressiveness dial shortens Limit lead for every ahead board; Brake ignores this.
+                var leadScale = SpeedLimitAggressiveness.LimitLeadScale;
+                if (leadScale <= 0f)
+                {
+                    continue;
+                }
+
                 if (speed > board.Kmh + 0.5f)
                 {
-                    var factor = stickyMatch ? ReleaseLeadFactor : AdoptLeadFactor;
-                    var lead =
-                        BrakeAdvisory.RequiredDistanceMeters(speed, board.Kmh, mass, gradePercent)
-                        * factor;
+                    float lead;
+                    if (stickyMatch)
+                    {
+                        // Floor lead speed so braking toward the board cannot un-adopt.
+                        var leadSpeed = Math.Max(speed, board.Kmh + StickyReleaseSpeedMarginKmh);
+                        // Keep the more adverse (more downhill) grade from adopt time.
+                        var releaseGrade = stickyAdoptGradePercent is float sg
+                            ? Math.Min(gradePercent, sg)
+                            : gradePercent;
+                        lead = BrakeAdvisory.RequiredDistanceMeters(
+                                   leadSpeed, board.Kmh, mass, releaseGrade)
+                               * ReleaseLeadFactor;
+                    }
+                    else
+                    {
+                        lead = BrakeAdvisory.RequiredDistanceMeters(
+                                   speed, board.Kmh, mass, gradePercent)
+                               * AdoptLeadFactor;
+                    }
+
+                    lead *= leadScale;
                     if (board.AlongMeters > lead)
                     {
                         continue;
@@ -121,6 +167,7 @@ public static class RecommendedSpeedLimit
                         hold *= ReleaseLeadFactor / AdoptLeadFactor;
                     }
 
+                    hold *= leadScale;
                     if (board.AlongMeters > hold)
                     {
                         continue;
@@ -130,6 +177,15 @@ public static class RecommendedSpeedLimit
                 recommended = board.Kmh;
                 adoptedAlongMeters = board.AlongMeters;
             }
+        }
+
+        // Scan drop: sticky board briefly missing from AheadBoards — keep the tighter number.
+        if (!stickySeen
+            && stickyAdoptedKmh is float stickyKeep
+            && (recommended is null || stickyKeep + 0.5f < recommended.Value))
+        {
+            recommended = stickyKeep;
+            adoptedAlongMeters ??= MinHoldAheadMeters;
         }
 
         if (recommended is null && geometryKmh is float geo)

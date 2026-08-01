@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace YardMasterSuite.Core;
 
@@ -68,11 +69,14 @@ public static class BrakeAdvisory
     /// <summary>Soft service deceleration for a heavy loaded consist (m/s²).</summary>
     public const float MinDecelMps2 = 0.08f;
 
-    /// <summary>Heavy service application, light loco (m/s²).</summary>
-    public const float HardMaxDecelMps2 = 0.55f;
+    /// <summary>
+    /// Heavy service application, light loco (m/s²).
+    /// Retuned from 0.55 using the 0.5.57 DE2 trace: 69→49 km/h over ~470 m at full brakes.
+    /// </summary>
+    public const float HardMaxDecelMps2 = 0.25f;
 
-    /// <summary>Heavy service application, loaded consist (m/s²).</summary>
-    public const float HardMinDecelMps2 = 0.30f;
+    /// <summary>Heavy service application, loaded consist (m/s²), conservatively retuned.</summary>
+    public const float HardMinDecelMps2 = 0.15f;
 
     /// <summary>Net deceleration at or below this counts as "cannot slow down".</summary>
     public const float MinNetDecelMps2 = 0.03f;
@@ -91,6 +95,43 @@ public static class BrakeAdvisory
 
     /// <summary>Yellow advisory starts this many multiples of the soft required <b>time</b> out.</summary>
     public const float AdvisoryFactor = 3.5f;
+
+    /// <summary>
+    /// Severe far-board warning opens at estimated slowdown time plus planning margin.
+    /// Was 50% through 0.5.64, 25% through 0.5.67; corpus 067h showed the train paced far
+    /// below posted — tighten to <b>10%</b> so Brake opens later (0.5.68).
+    /// </summary>
+    public const float WarningTimeMarginFactor = 1.10f;
+
+    /// <summary>
+    /// A target already on screen keeps its window this much wider.
+    /// Without it, grade wobble at the window edge blinked the chip on and off between frames
+    /// (0.5.59: <c>adv=Advisory 50</c> ↔ <c>adv=None</c> while Limit sat at 60).
+    /// </summary>
+    public const float WarningLatchReleaseFactor = 1.35f;
+
+    /// <summary>
+    /// Only warn about a board we must actually lose speed for. Matches the Limit chip's own
+    /// yellow tolerance (<see cref="SpeedLimitDisplay.NearAboveKmh"/>): if the Limit chip is not
+    /// showing red for this number, Brake should not either — no reason to flag "Brake 40 in Xs"
+    /// while cruising at 44 in the yellow band of a 40 (A116 deep-dive, issue #2).
+    /// </summary>
+    public const float MinTargetDeltaKmh = SpeedLimitDisplay.NearAboveKmh;
+
+    /// <summary>Lowest severe restriction used to size the route scan before boards are known.</summary>
+    public const float WarningLookaheadTargetKmh = 30f;
+
+    /// <summary>
+    /// Bound route scan / Brake window. Was 6 km; corpus often warned for 30 at 3–3.8 km with
+    /// no matching take — cap at 4.5 km so phantom far boards nag less (0.5.68).
+    /// </summary>
+    public const float MaxWarningLookaheadMeters = 4500f;
+
+    /// <summary>
+    /// Uncalibrated locomotive types use a slower, safety-biased planning profile.
+    /// DE2 is calibrated from the 0.5.57 live trace.
+    /// </summary>
+    public const float UncalibratedLocoDecelerationFactor = 0.8f;
 
     public const float GravityMps2 = 9.81f;
 
@@ -120,6 +161,186 @@ public static class BrakeAdvisory
     /// <summary>True when even a heavy application cannot overcome the grade.</summary>
     public static bool IsRunaway(float massTonnes, float gradePercent) =>
         NetHardDecelerationFor(massTonnes, gradePercent) <= MinNetDecelMps2;
+
+    /// <summary>
+    /// Estimated comfortable slowdown time for route planning, including reaction.
+    /// Uses consist mass, grade, and a locomotive-type calibration/fallback.
+    /// </summary>
+    public static float EstimatedSlowdownTimeSeconds(
+        float speedKmh,
+        float targetKmh,
+        float massTonnes,
+        float gradePercent,
+        string? locomotiveTypeId)
+    {
+        if (!TryDelta(speedKmh, targetKmh, out var speed, out var target))
+        {
+            return 0f;
+        }
+
+        var net = (DecelerationFor(massTonnes) * TypeFactor(locomotiveTypeId))
+                  - GradeAccelerationMps2(gradePercent);
+        var planningDecel = net < MinNetDecelMps2 ? MinNetDecelMps2 : net;
+        return ((speed - target) / planningDecel) + ReactionSeconds;
+    }
+
+    /// <summary>
+    /// Room a heavy application actually needs to reach <paramref name="targetKmh"/>, with the
+    /// net deceleration floored so a descent that beats the brakes still quotes a finite number
+    /// instead of going quiet.
+    /// </summary>
+    public static float GuaranteedStopDistanceMeters(
+        float speedKmh,
+        float targetKmh,
+        float massTonnes,
+        float gradePercent,
+        string? locomotiveTypeId)
+    {
+        if (!TryDelta(speedKmh, targetKmh, out var v, out var target))
+        {
+            return 0f;
+        }
+
+        var net = (HardDecelerationFor(massTonnes) * TypeFactor(locomotiveTypeId))
+                  - GradeAccelerationMps2(gradePercent);
+        var decel = net < MinNetDecelMps2 ? MinNetDecelMps2 : net;
+        return (((v * v) - (target * target)) / (2f * decel)) + (v * HardReactionSeconds);
+    }
+
+    /// <summary>
+    /// Distance at which the warning must already be up: the worse of a comfortable slowdown and
+    /// the guaranteed heavy-application room, plus <see cref="WarningTimeMarginFactor"/>.
+    /// </summary>
+    public static float PlanningDistanceMeters(
+        float speedKmh,
+        float targetKmh,
+        float massTonnes,
+        float gradePercent,
+        string? locomotiveTypeId)
+    {
+        var comfortable = SpeedDisplay.ToMetersPerSecond(speedKmh)
+                          * EstimatedSlowdownTimeSeconds(
+                              speedKmh, targetKmh, massTonnes, gradePercent, locomotiveTypeId);
+        var guaranteed = GuaranteedStopDistanceMeters(
+            speedKmh, targetKmh, massTonnes, gradePercent, locomotiveTypeId);
+        return Math.Max(comfortable, guaranteed) * WarningTimeMarginFactor;
+    }
+
+    /// <summary>
+    /// Route distance needed to discover a 30 km/h restriction before its window opens.
+    /// Extreme-grade scans are capped for runtime safety.
+    /// </summary>
+    public static float WarningLookaheadMeters(
+        float speedKmh,
+        float massTonnes,
+        float gradePercent,
+        string? locomotiveTypeId)
+    {
+        var planning = PlanningDistanceMeters(
+            speedKmh,
+            WarningLookaheadTargetKmh,
+            massTonnes,
+            gradePercent,
+            locomotiveTypeId);
+        return Math.Min(planning, MaxWarningLookaheadMeters);
+    }
+
+    /// <summary>
+    /// Tightest board anywhere in the ahead scan whose planning window is open — an intermediate
+    /// 60 must not hide a farther 30.
+    /// <para>
+    /// Qualification is against our <b>speed</b>, never against the Limit chip: the chip adopting
+    /// the restriction is what makes the warning relevant, not redundant (0.5.59 silenced the chip
+    /// at the exact frame Limit adopted 30, 1 780 m out on a −2.6 % descent).
+    /// </para>
+    /// <paramref name="latchedTargetKmh"/> is the target already on screen; it keeps a wider
+    /// window so edge wobble cannot blink it away.
+    /// </summary>
+    public static AheadBoard? SelectEarlyTarget(
+        IReadOnlyList<AheadBoard>? aheadBoards,
+        float? speedKmh,
+        float? massTonnes,
+        float gradePercent,
+        string? locomotiveTypeId,
+        float? latchedTargetKmh = null)
+    {
+        if (speedKmh is not float speed || aheadBoards == null)
+        {
+            return null;
+        }
+
+        var mass = massTonnes ?? HeavyConsistTonnes;
+        AheadBoard? best = null;
+        for (var i = 0; i < aheadBoards.Count; i++)
+        {
+            var board = aheadBoards[i];
+            if (board.AlongMeters <= 0f || board.Kmh + MinTargetDeltaKmh >= speed)
+            {
+                continue;
+            }
+
+            var window = Math.Min(
+                PlanningDistanceMeters(
+                    speed,
+                    board.Kmh,
+                    mass,
+                    gradePercent,
+                    locomotiveTypeId),
+                MaxWarningLookaheadMeters);
+            if (latchedTargetKmh is float latched && Math.Abs(board.Kmh - latched) < 0.5f)
+            {
+                window *= WarningLatchReleaseFactor;
+            }
+
+            if (board.AlongMeters > window)
+            {
+                continue;
+            }
+
+            if (best is null
+                || board.Kmh < best.Value.Kmh - 0.5f
+                || (Math.Abs(board.Kmh - best.Value.Kmh) < 0.5f
+                    && board.AlongMeters < best.Value.AlongMeters))
+            {
+                best = board;
+            }
+        }
+
+        return best;
+    }
+
+    /// <summary>How long a target survives without being re-seen by the scan.</summary>
+    public const float MaxCoastSeconds = 2f;
+
+    /// <summary>
+    /// Carry the previous target through a frame where the scan lost its board, closing the
+    /// distance at current speed. Gives up once the grace window expires, we are slow enough for
+    /// it, or it would be behind us.
+    /// </summary>
+    public static AheadBoard? CoastTarget(
+        float? heldKmh,
+        float? heldAlongMeters,
+        float coastedSeconds,
+        float speedKmh)
+    {
+        if (heldKmh is not float kmh
+            || heldAlongMeters is not float along
+            || coastedSeconds > MaxCoastSeconds
+            || speedKmh <= kmh + MinTargetDeltaKmh)
+        {
+            return null;
+        }
+
+        var closed = SpeedDisplay.ToMetersPerSecond(speedKmh) * Math.Max(0f, coastedSeconds);
+        var remaining = along - closed;
+        return remaining <= 0f ? null : new AheadBoard(kmh, remaining);
+    }
+
+    private static float TypeFactor(string? locomotiveTypeId) =>
+        IsCalibratedDe2(locomotiveTypeId) ? 1f : UncalibratedLocoDecelerationFactor;
+
+    private static bool IsCalibratedDe2(string? locomotiveTypeId) =>
+        locomotiveTypeId?.IndexOf("DE2", StringComparison.OrdinalIgnoreCase) >= 0;
 
     /// <summary>Soft brake time (seconds) including reaction. Grade-aware.</summary>
     public static float RequiredTimeSeconds(
@@ -195,7 +416,8 @@ public static class BrakeAdvisory
         float? nextLimitKmh,
         float? nextDistanceMeters,
         float? massTonnes,
-        float? gradePercent = null)
+        float? gradePercent = null,
+        string? locomotiveTypeId = null)
     {
         if (speedKmh is not float speed
             || nextLimitKmh is not float target
@@ -218,6 +440,14 @@ public static class BrakeAdvisory
             return BrakeAdvisoryState.Silent;
         }
 
+        // Either window may open the chip, so a target chosen by SelectEarlyTarget is never
+        // silenced here — two windows disagreeing is what made the chip blink (0.5.59).
+        var planning = PlanningDistanceMeters(speed, target, mass, grade, locomotiveTypeId);
+        if (eta > softTime * AdvisoryFactor && distance > planning)
+        {
+            return BrakeAdvisoryState.Silent;
+        }
+
         var targetWhole = (int)Math.Round(target, MidpointRounding.AwayFromZero);
         var roundedMeters = RoundDistance(distance);
         var roundedEta = RoundEta(eta);
@@ -230,11 +460,6 @@ public static class BrakeAdvisory
                 roundedMeters,
                 roundedEta,
                 $"RUNAWAY — Brake {targetWhole} NOW ({roundedMeters} m)");
-        }
-
-        if (eta > softTime * AdvisoryFactor)
-        {
-            return BrakeAdvisoryState.Silent;
         }
 
         var hardTime = HardRequiredTimeSeconds(speed, target, mass, grade);

@@ -47,6 +47,9 @@ doc/handoff/*-HANDOFF-*.md
 doc/GeminiDocs/*
 !doc/GeminiDocs/README.md
 
+# Speed-limit tuning: keep knobs/sessions/schema; ignore bulky frame dumps
+doc/tuning/raw/
+
 # Build output folders
 bin/
 obj/

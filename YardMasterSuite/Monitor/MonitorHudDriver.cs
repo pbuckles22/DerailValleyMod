@@ -126,9 +126,7 @@ public sealed class MonitorHudDriver : MonoBehaviour
     private string _lastPowerOil = "";
 
     private bool _hasLimitDebug;
-    private bool _lastLimitHasLoco;
-    private string _lastLimitSpeed = "";
-    private string _lastLimit = "";
+    private SpeedLimitDebugSnapshot _lastLimitDebug;
 
     private bool _hasHeadingDebug;
     private string? _lastHeadingPoint;
@@ -483,16 +481,9 @@ public sealed class MonitorHudDriver : MonoBehaviour
     private void EmitSpeedLimitDebugIfNeeded()
     {
         var snap = TelemetryReader.CurrentSpeedLimitDebugSnapshot();
-        SpeedLimitDebugSnapshot? previous = null;
-        if (_hasLimitDebug)
-        {
-            previous = new SpeedLimitDebugSnapshot(_lastLimitHasLoco, _lastLimitSpeed, _lastLimit);
-        }
-
+        SpeedLimitDebugSnapshot? previous = _hasLimitDebug ? _lastLimitDebug : null;
         var line = Tier2SpeedLimitDebug.NextLogMessage(previous, snap);
-        _lastLimitHasLoco = snap.HasLoco;
-        _lastLimitSpeed = snap.Speed;
-        _lastLimit = snap.Limit;
+        _lastLimitDebug = snap;
         _hasLimitDebug = true;
         if (line != null)
         {

@@ -2,7 +2,7 @@
 
 Human-readable **snapshot**. Keep in sync with [AGENT_HANDOFF.md](../AGENT_HANDOFF.md) → *Current state* and checkbox truth in [PM_PLAN.md](../PM_PLAN.md).
 
-**Last updated:** 2026-07-28
+**Last updated:** 2026-07-31
 
 ---
 
@@ -13,10 +13,10 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 | | |
 |--|--|
-| **Journey** | Stage 3 — **3.5** Align Route (city→track, Dispatcher-gated) |
+| **Journey** | Stage 3 — **3.5 Google Maps Align** (shortest path + complete throws) |
 | **MVP** | Epic 1 System Monitor HUD |
-| **Version** | **0.5.25** on `main` *(**Epic 2** complete — **2.3**)* |
-| **WIP branch** | `feature/3.5-align-route` |
+| **Version** | **0.5.68** *(**1.16** dial 0.80 / margin 10%; Tier 2 held)* |
+| **Next branch** | `feature/3.5-google-maps-align` |
 
 ---
 
@@ -24,7 +24,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 | Branch | Role |
 |--------|------|
-| **`main`** | Integration — **0.5.25**; next **Epic 3** |
+| **`main`** | Integration — **0.5.68**; next **3.5 Google Maps Align** |
 
 ---
 
@@ -41,8 +41,8 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 ### Next
 
-- [~] **3.5** Align Route WIP (city→track, reverse cue, SH gate); **3.4** demoted to engine; **3.3 cut**
-- Parking: DM3 reverser/MU notes; session reset; **AR in-view-only** (no false edge-stick)
+- [~] **3.5** Align — **Google Maps** shortest/fastest + yard thru-tracks + Path-wrong/stale fixes (see handoff 0001); **3.4** engine; **3.3 cut**
+- **1.16** paused for Align; parking: AR loco ≤1 km, house hide, DM3 notes, session reset
 
 ### Gemini triage (2026-07-27)
 

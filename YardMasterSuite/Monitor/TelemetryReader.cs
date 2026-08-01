@@ -99,9 +99,50 @@ internal static class TelemetryReader
 
     /// <summary>Prior look-ahead adopt km/h for Recommended hysteresis (anti 30↔60 chatter).</summary>
     private static float? _stickyAdoptedRecommendedKmh;
+    private static float? _stickyAdoptedGradePercent;
+
+    /// <summary>Brake target already on screen — keeps its window wider so it cannot blink out.</summary>
+    private static float? _brakeLatchTargetKmh;
+
+    /// <summary>Last target the scan actually saw, for riding through a one-frame scan drop.</summary>
+    private static float? _brakeSeenKmh;
+    private static float? _brakeSeenAlongMeters;
+    private static float _brakeSeenAt = -999f;
+
+    /// <summary>Safety-biased grade driving every planning window (raw reading is frame-noisy).</summary>
+    private static float? _planningGradePercent;
+    private static float _planningGradeAt = -999f;
 
     /// <summary>Per-track sustained geometry limit (km/h), zone-filtered to ignore micro-kinks.</summary>
     private static readonly Dictionary<int, float?> TrackGeometryLimitCache = new();
+
+    /// <summary>
+    /// Per-track tightest geometry zone (limit + its span within the track), cached by track id.
+    /// Curve geometry never moves, so this is permanent — unlike the streamed sign cache below.
+    /// </summary>
+    private static readonly Dictionary<int, GeometryZone?> TrackGeometryZoneCache = new();
+
+    private readonly struct GeometryZone
+    {
+        public GeometryZone(float limitKmh, float startSpanMeters, float endSpanMeters)
+        {
+            LimitKmh = limitKmh;
+            StartSpanMeters = startSpanMeters;
+            EndSpanMeters = endSpanMeters;
+        }
+
+        public float LimitKmh { get; }
+        public float StartSpanMeters { get; }
+        public float EndSpanMeters { get; }
+    }
+
+    /// <summary>Geometry-derived ahead boards added to the last scan (A116 deep-dive diagnostics).</summary>
+    private static int _lastGeoAheadCount;
+
+    /// <summary>Meters driven this world session (smoke odometer). Resets when leaving the world.</summary>
+    private static float _sessionDriveMeters;
+
+    private static bool _sessionDriveWasActive;
 
     private static readonly List<BezierArcApproximation.Arc> ArcScratch = new();
 
@@ -1056,15 +1097,13 @@ internal static class TelemetryReader
             var limit = TryGetSpeedLimitState();
             var speedMps = TryGetAbsSpeedMetersPerSecond();
             var massKg = TryGetConsistMassKilograms();
-            // Prefer the board Limit actually adopted; else nearest different ahead.
-            var target = limit.AdoptedKmh ?? limit.NextKmh;
-            var distance = limit.AdoptedAlongMeters ?? limit.NextDistanceMeters;
             return BrakeAdvisory.Evaluate(
                 speedMps is null ? null : SpeedDisplay.ToKilometersPerHour(speedMps.Value),
-                target,
-                distance,
+                limit.BrakeKmh,
+                limit.BrakeDistanceMeters,
                 massKg is null ? null : massKg.Value / 1000f,
-                TryGetGradePercent());
+                limit.PlanningGradePercent ?? TryGetGradePercent(),
+                limit.LocomotiveTypeId);
         }
         catch
         {
@@ -1082,8 +1121,14 @@ internal static class TelemetryReader
             float? nextDistanceMeters = null,
             float? adoptedKmh = null,
             float? adoptedAlongMeters = null,
-            LimitAuthority authority = LimitAuthority.None)
+            LimitAuthority authority = LimitAuthority.None,
+            float? brakeKmh = null,
+            float? brakeDistanceMeters = null,
+            float? planningGradePercent = null,
+            string? locomotiveTypeId = null)
         {
+            PlanningGradePercent = planningGradePercent;
+            LocomotiveTypeId = locomotiveTypeId;
             NextKmh = nextKmh;
             NextDistanceMeters = nextDistanceMeters;
             AdoptedKmh = adoptedKmh;
@@ -1092,6 +1137,8 @@ internal static class TelemetryReader
             Trend = trend;
             ScanDetail = scanDetail;
             Authority = authority;
+            BrakeKmh = brakeKmh;
+            BrakeDistanceMeters = brakeDistanceMeters;
         }
 
         public float? CurrentKmh { get; }
@@ -1106,6 +1153,15 @@ internal static class TelemetryReader
         /// <summary>Tightest board Limit adopted via soft lead (**1.16** Brake target).</summary>
         public float? AdoptedKmh { get; }
         public float? AdoptedAlongMeters { get; }
+
+        /// <summary>Severe far board whose planning-margin warning window is open.</summary>
+        public float? BrakeKmh { get; }
+        public float? BrakeDistanceMeters { get; }
+
+        /// <summary>Smoothed grade the target was chosen with — the advisory must reuse it.</summary>
+        public float? PlanningGradePercent { get; }
+
+        public string? LocomotiveTypeId { get; }
     }
 
     private static SpeedLimitState TryGetSpeedLimitState()
@@ -1135,16 +1191,27 @@ internal static class TelemetryReader
                 BoardTakes.Reset();
                 PathAhead.Clear();
                 ClearLimitDisplayHold();
-                _stickyAdoptedRecommendedKmh = null;
+                _brakeLatchTargetKmh = null;
                 return new SpeedLimitState(null, LimitTrend.None, null);
             }
 
             var speedMps = loco.GetAbsSpeed();
             var speedKmh = SpeedDisplay.ToKilometersPerHour(speedMps);
             var travel = TravelForward(loco);
-            ClearStickyIfTravelReversed(travel);
+            ClearStickyIfTravelReversed(travel, speedKmh);
 
-            var boards = ScanPostedBoards(loco, speedKmh, travel);
+            var massKg = TryGetConsistMassKilograms();
+            var massTonnes = massKg is null ? (float?)null : massKg.Value / 1000f;
+            var grade = TryGetGradePercent();
+            var gradeValue = PlanningGrade(grade ?? 0f);
+            var locoTypeId = TryGetLocoTypeId(loco);
+            var warningLookahead = BrakeAdvisory.WarningLookaheadMeters(
+                speedKmh,
+                massTonnes ?? BrakeAdvisory.HeavyConsistTonnes,
+                gradeValue,
+                locoTypeId);
+
+            var boards = ScanPostedBoards(loco, speedKmh, travel, warningLookahead);
             var sticky = PostedStickyLimit.Resolve(
                 _stickyBoardLimitKmh,
                 boards.TakenKmh,
@@ -1158,9 +1225,6 @@ internal static class TelemetryReader
             }
 
             var posted = sticky;
-            var massKg = TryGetConsistMassKilograms();
-            var massTonnes = massKg is null ? (float?)null : massKg.Value / 1000f;
-            var grade = TryGetGradePercent();
             var geometry = TryGetTrackGeometryLimitKmh(loco);
             var recommended = RecommendedSpeedLimit.Resolve(
                 posted,
@@ -1169,8 +1233,9 @@ internal static class TelemetryReader
                 speedKmh,
                 massTonnes,
                 out var adoptedAlong,
-                grade ?? 0f,
-                _stickyAdoptedRecommendedKmh);
+                gradeValue,
+                _stickyAdoptedRecommendedKmh,
+                _stickyAdoptedGradePercent);
             float? adoptedKmh = null;
             if (adoptedAlong is not null
                 && recommended is float rec
@@ -1179,10 +1244,54 @@ internal static class TelemetryReader
                 adoptedKmh = rec;
             }
 
-            _stickyAdoptedRecommendedKmh = adoptedKmh;
+            var adoptSticky = StickyAdoptedLimit.Step(
+                _stickyAdoptedRecommendedKmh,
+                _stickyAdoptedGradePercent,
+                adoptedKmh,
+                posted,
+                gradeValue);
+            _stickyAdoptedRecommendedKmh = adoptSticky.Kmh;
+            _stickyAdoptedGradePercent = adoptSticky.GradePercent;
+
+            // If sticky retained a tighter number than this frame's Resolve, prefer sticky for HUD.
+            if (adoptSticky.Kmh is float stickyKmh
+                && (recommended is null || stickyKmh + 0.5f < recommended.Value)
+                && (posted is null || RoundLimit(stickyKmh) != RoundLimit(posted.Value)))
+            {
+                recommended = stickyKmh;
+                adoptedKmh = stickyKmh;
+                adoptedAlong ??= RecommendedSpeedLimit.MinHoldAheadMeters;
+            }
+
+            var brakeTarget = ApplyBrakeTargetHold(
+                BrakeAdvisory.SelectEarlyTarget(
+                    boards.AheadBoards,
+                    speedKmh,
+                    massTonnes,
+                    gradeValue,
+                    locoTypeId,
+                    _brakeLatchTargetKmh),
+                speedKmh);
+
+            // 0.5.65: Brake 30 with Limit still Posted 40/60 — never show Brake without Limit N.
+            if (BrakeLimitAlign.TryApply(
+                    recommended,
+                    adoptedAlong,
+                    brakeTarget,
+                    out var alignedRec,
+                    out var alignedAlong))
+            {
+                recommended = alignedRec;
+                adoptedAlong = alignedAlong;
+                if (alignedRec is float ar
+                    && (posted is null || RoundLimit(ar) != RoundLimit(posted.Value)))
+                {
+                    adoptedKmh = ar;
+                }
+            }
 
             var authority = ClassifyLimitAuthority(posted, recommended, geometry, adoptedKmh);
-            var held = ApplyLimitDisplayHold(recommended, authority);
+            var held = ApplyLimitDisplayHold(recommended, authority, speedKmh);
             var display = held.LimitKmh;
             var displayAuthority = held.Authority;
 
@@ -1193,6 +1302,29 @@ internal static class TelemetryReader
                 ?? (boards.CurrentKmh is null && posted is not null
                     ? $"sticky={RoundLimit(posted.Value)}"
                     : null);
+            detail = AppendScanDetail(detail, boards, warningLookahead, gradeValue);
+            var tune = SpeedLimitAggressiveness.FormatTuneDetail(
+                adoptedKmh,
+                adoptedAlong,
+                boards.AheadBoards,
+                speedKmh,
+                massTonnes,
+                gradeValue,
+                _stickyAdoptedRecommendedKmh,
+                _stickyAdoptedGradePercent);
+            detail = detail == null ? tune : detail + " ; " + tune;
+            var aheadCurve = DerailRiskDebug.SelectAheadCurveBoard(boards.AheadBoards);
+            TryGetDerailRisk(loco, out var stress, out var buildUp, out var stressThr, out var buildThr);
+            var derail = DerailRiskDebug.Format(
+                stress,
+                buildUp,
+                stressThr,
+                buildThr,
+                speedKmh,
+                geometry,
+                aheadCurve?.Kmh,
+                aheadCurve?.AlongMeters);
+            detail += " ; " + derail;
             _lastBoardScanDetail = detail;
             return new SpeedLimitState(
                 display,
@@ -1202,7 +1334,11 @@ internal static class TelemetryReader
                 trendBoard?.AlongMeters,
                 adoptedKmh,
                 adoptedAlong,
-                displayAuthority);
+                displayAuthority,
+                brakeTarget?.Kmh,
+                brakeTarget?.AlongMeters,
+                gradeValue,
+                locoTypeId);
         }
         catch
         {
@@ -1241,7 +1377,8 @@ internal static class TelemetryReader
 
     private static LimitDisplayHold.State ApplyLimitDisplayHold(
         float? candidateKmh,
-        LimitAuthority candidateAuthority)
+        LimitAuthority candidateAuthority,
+        float speedKmh = float.MaxValue)
     {
         var now = Time.unscaledTime;
         var age = _heldDisplaySince < 0f ? LimitDisplayHold.LoosenHoldSeconds : now - _heldDisplaySince;
@@ -1250,7 +1387,8 @@ internal static class TelemetryReader
             candidateAuthority,
             _heldDisplayLimitKmh,
             _heldDisplayAuthority,
-            age);
+            age,
+            speedKmh);
         if (LimitDisplayHold.NumberChanged(_heldDisplayLimitKmh, next.LimitKmh))
         {
             _heldDisplaySince = now;
@@ -1267,6 +1405,100 @@ internal static class TelemetryReader
         _heldDisplayAuthority = LimitAuthority.None;
         _heldDisplaySince = -999f;
         _stickyAdoptedRecommendedKmh = null;
+        _stickyAdoptedGradePercent = null;
+        _brakeLatchTargetKmh = null;
+        _brakeSeenKmh = null;
+        _brakeSeenAlongMeters = null;
+        _brakeSeenAt = -999f;
+        _planningGradePercent = null;
+        _planningGradeAt = -999f;
+    }
+
+    /// <summary>
+    /// Keeps the Brake target alive across a frame where the scan lost its board, and remembers
+    /// the on-screen number so its window stays wider (<see cref="BrakeAdvisory.CoastTarget"/>).
+    /// </summary>
+    private static AheadBoard? ApplyBrakeTargetHold(AheadBoard? selected, float speedKmh)
+    {
+        var now = Time.unscaledTime;
+        if (selected is AheadBoard seen)
+        {
+            _brakeSeenKmh = seen.Kmh;
+            _brakeSeenAlongMeters = seen.AlongMeters;
+            _brakeSeenAt = now;
+            _brakeLatchTargetKmh = seen.Kmh;
+            return seen;
+        }
+
+        var coasted = _brakeSeenAt < 0f
+            ? null
+            : BrakeAdvisory.CoastTarget(
+                _brakeSeenKmh,
+                _brakeSeenAlongMeters,
+                now - _brakeSeenAt,
+                speedKmh);
+        if (coasted is null)
+        {
+            _brakeSeenKmh = null;
+            _brakeSeenAlongMeters = null;
+            _brakeSeenAt = -999f;
+        }
+
+        _brakeLatchTargetKmh = coasted?.Kmh;
+        return coasted;
+    }
+
+    /// <summary>
+    /// Grade for every braking plan: steeper descents apply at once, friendlier readings are
+    /// earned over time (<see cref="AdverseGradeHold"/>).
+    /// </summary>
+    private static float PlanningGrade(float rawPercent)
+    {
+        var now = Time.unscaledTime;
+        var elapsed = _planningGradeAt < 0f ? 1f : Mathf.Max(0f, now - _planningGradeAt);
+        var next = AdverseGradeHold.Step(_planningGradePercent, rawPercent, elapsed);
+        _planningGradePercent = next;
+        _planningGradeAt = now;
+        return next;
+    }
+
+    /// <summary>
+    /// How far the warning scan actually reached and what it found. A late Brake chip is either a
+    /// window problem or a board the route walk never saw — the log has to tell them apart.
+    /// </summary>
+    private static string? AppendScanDetail(
+        string? detail,
+        PostedBoardScan boards,
+        float lookaheadMeters,
+        float planningGradePercent)
+    {
+        var reach = 0f;
+        foreach (var segment in PathAhead.Values)
+        {
+            var exit = segment.EntryDistanceMeters + segment.LengthMeters;
+            if (exit > reach)
+            {
+                reach = exit;
+            }
+        }
+
+        AheadBoard? tightest = null;
+        for (var i = 0; i < boards.AheadBoards.Length; i++)
+        {
+            var board = boards.AheadBoards[i];
+            if (tightest is null || board.Kmh < tightest.Value.Kmh)
+            {
+                tightest = board;
+            }
+        }
+
+        var min = tightest is AheadBoard t
+            ? $"{RoundLimit(t.Kmh)}@{t.AlongMeters:0}m"
+            : "—";
+        var scan = $"scan={lookaheadMeters:0}m path={PathAhead.Count}seg reach={reach:0}m "
+                   + $"ahead={boards.AheadBoards.Length} geo={_lastGeoAheadCount} min={min} "
+                   + $"planGrade={planningGradePercent:0.0}%";
+        return detail == null ? scan : detail + " ; " + scan;
     }
 
     private static string? FormatRecommendedDetail(
@@ -1362,9 +1594,145 @@ internal static class TelemetryReader
         return SpeedLimitGeometryZones.GoverningLimitKmh(samples) ?? 120f;
     }
 
-    private static void ClearStickyIfTravelReversed(Vector3 travel)
+    /// <summary>
+    /// Synthesizes an <see cref="AheadBoard"/> for every walked route segment whose curve geometry
+    /// alone implies a tighter speed than the current governing number — independent of whether that
+    /// segment's actual posted-board sign prop has streamed in yet.
+    /// <para>
+    /// A116 deep-dive: the 70→30 "no warning" failure traced to <c>RefreshSignDebugCacheIfNeeded</c>
+    /// only ever seeing <c>SignDebug</c> props the game has currently instantiated near the train —
+    /// world streaming keeps distant boards from existing as GameObjects at all, no matter how far
+    /// <see cref="TrackPathAhead"/>'s route walk or <see cref="BrakeAdvisory.WarningLookaheadMeters"/>
+    /// reach. The <c>RailTrack</c> curve itself is not streamed (the route walk already proves it
+    /// reaches 6–7 km), so recomputing the same curve-radius ladder <c>SignPlacer</c> uses gives an
+    /// early, sign-independent detector for the exact same restriction.
+    /// </para>
+    /// </summary>
+    private static int AppendGeometryBoardsAhead(float lookaheadMeters)
+    {
+        var added = 0;
+        foreach (var segment in PathAhead.Values)
+        {
+            if (segment.Track == null)
+            {
+                continue;
+            }
+
+            var zone = GetOrComputeTrackGeometryZone(segment.Track);
+            if (zone is not GeometryZone z)
+            {
+                continue;
+            }
+
+            var travelStartOffset = segment.TravelIncreasingSpan
+                ? z.StartSpanMeters
+                : segment.LengthMeters - z.EndSpanMeters;
+            var along = segment.EntryDistanceMeters + travelStartOffset;
+            if (along <= 0f || along > lookaheadMeters)
+            {
+                continue;
+            }
+
+            AheadBoardsScratch.Add(new AheadBoard(z.LimitKmh, along, fromGeometry: true));
+            added++;
+        }
+
+        return added;
+    }
+
+    private static GeometryZone? GetOrComputeTrackGeometryZone(RailTrack track)
+    {
+        var id = track.GetInstanceID();
+        if (TrackGeometryZoneCache.TryGetValue(id, out var cached))
+        {
+            return cached;
+        }
+
+        var zone = ComputeTrackGeometryZone(track);
+        TrackGeometryZoneCache[id] = zone;
+        return zone;
+    }
+
+    private static GeometryZone? ComputeTrackGeometryZone(RailTrack track)
+    {
+        var curve = track.curve;
+        if (curve == null)
+        {
+            return null;
+        }
+
+        ArcScratch.Clear();
+        BezierArcApproximation.CalculateArcs(curve, 0.5f, ArcScratch);
+        if (ArcScratch.Count == 0)
+        {
+            return null;
+        }
+
+        var samples = new SpeedLimitGeometryZones.ArcSample[ArcScratch.Count];
+        for (var i = 0; i < ArcScratch.Count; i++)
+        {
+            var arc = ArcScratch[i];
+            samples[i] = new SpeedLimitGeometryZones.ArcSample(arc.r, arc.Length);
+        }
+
+        return SpeedLimitGeometryZones.TryGoverningZone(samples, out var limitKmh, out var start, out var end)
+            ? new GeometryZone(limitKmh, start, end)
+            : null;
+    }
+
+    /// <summary>
+    /// Live coupler-joint stress vs game derail thresholds (<c>TrainStress</c> /
+    /// <c>Globals.G.GameParams</c>). Fail-closed to nulls — never throws into Limit.
+    /// </summary>
+    private static void TryGetDerailRisk(
+        TrainCar loco,
+        out float? stress,
+        out float? derailBuildUp,
+        out float? stressThreshold,
+        out float? buildUpThreshold)
+    {
+        stress = null;
+        derailBuildUp = null;
+        stressThreshold = null;
+        buildUpThreshold = null;
+        try
+        {
+            var trainStress = loco.stress;
+            if (trainStress != null)
+            {
+                stress = trainStress.stress;
+                derailBuildUp = trainStress.derailBuildUp;
+            }
+
+            // TrainStress.gameParams is private — use Globals + public defaultStressThreshold fallback.
+            var gameParams = Globals.G?.GameParams;
+            if (gameParams != null)
+            {
+                stressThreshold = gameParams.DerailStressThreshold;
+                if (stressThreshold < DerailRiskDebug.MinUsableThreshold
+                    && gameParams.defaultStressThreshold >= DerailRiskDebug.MinUsableThreshold)
+                {
+                    stressThreshold = gameParams.defaultStressThreshold;
+                }
+
+                buildUpThreshold = gameParams.DerailBuildUpThreshold;
+            }
+        }
+        catch
+        {
+            // leave nulls
+        }
+    }
+
+    private static void ClearStickyIfTravelReversed(Vector3 travel, float speedKmh)
     {
         if (!_hasStickyTravel || _stickyBoardLimitKmh is null)
+        {
+            return;
+        }
+
+        // At standstill GetForwardSpeed sign jitters — do not treat that as a real reverse.
+        if (speedKmh <= LimitDisplayHold.StandstillMaxSpeedKmh)
         {
             return;
         }
@@ -1390,6 +1758,7 @@ internal static class TelemetryReader
             _stickyBoardLimitKmh = null;
             _hasStickyTravel = false;
             _stickyAdoptedRecommendedKmh = null;
+            _stickyAdoptedGradePercent = null;
             BoardTakes.Reset();
         }
     }
@@ -1431,7 +1800,11 @@ internal static class TelemetryReader
     /// Distances follow the <b>route ahead</b> (<see cref="TrackPathAhead"/>) when topology resolves,
     /// so boards on other branches never enter the Limit decision (**1.16**).
     /// </summary>
-    private static PostedBoardScan ScanPostedBoards(TrainCar loco, float speedKmh, Vector3 fwd)
+    private static PostedBoardScan ScanPostedBoards(
+        TrainCar loco,
+        float speedKmh,
+        Vector3 fwd,
+        float warningLookaheadMeters)
     {
         RefreshSignDebugCacheIfNeeded();
         AheadBoardsScratch.Clear();
@@ -1442,7 +1815,9 @@ internal static class TelemetryReader
 
         var pos = loco.transform.position;
         var locoTrack = TryGetLocoTrack(loco);
-        var lookahead = Mathf.Max(BoardLookaheadMinMeters, speedKmh * BoardLookaheadSecondsOfSpeed);
+        var lookahead = Mathf.Max(
+            Mathf.Max(BoardLookaheadMinMeters, speedKmh * BoardLookaheadSecondsOfSpeed),
+            warningLookaheadMeters);
         var searchRadius = Mathf.Max(BoardLookbackMeters, lookahead);
         var hasPath = TrackPathAhead.TryBuild(locoTrack, pos, fwd, lookahead, PathAhead);
 
@@ -1522,6 +1897,9 @@ internal static class TelemetryReader
                 }
             }
         }
+
+        var geoBoardsAdded = hasPath ? AppendGeometryBoardsAhead(lookahead) : 0;
+        _lastGeoAheadCount = geoBoardsAdded;
 
         var aheadBoards = AheadBoardsScratch.Count == 0
             ? Array.Empty<AheadBoard>()
@@ -2027,6 +2405,20 @@ internal static class TelemetryReader
     /// </summary>
     public static string? CurrentTrainHudLineOrNull()
     {
+        var inWorld = HudWorldSession.IsActive(PlayerManager.PlayerTransform != null);
+        if (!inWorld)
+        {
+            if (_sessionDriveWasActive)
+            {
+                _sessionDriveMeters = 0f;
+                _sessionDriveWasActive = false;
+            }
+
+            return null;
+        }
+
+        _sessionDriveWasActive = true;
+
         if (!HasUsableLocoTrain())
         {
             return null;
@@ -2038,6 +2430,12 @@ internal static class TelemetryReader
         var speedKmh = speedMps is null
             ? (float?)null
             : SpeedDisplay.ToKilometersPerHour(speedMps.Value);
+        if (speedKmh is float spd)
+        {
+            _sessionDriveMeters = SessionDistance.Step(
+                _sessionDriveMeters, spd, Time.unscaledDeltaTime);
+        }
+
         var limit = TryGetSpeedLimitState();
         // 4.7 center-weighted IA: Fuel·Oil·Mass·Grade·Load·Speed·Limit·Motors·FreeMotion·Handbrakes·Cars
         // 4.5 Next: station — cut (nearest-yard chip was clutter / wrong for mainland range).
@@ -2054,7 +2452,8 @@ internal static class TelemetryReader
             CarsDisplay.Format(TryGetConsistCarCount()),
             TryGetBackupProximityHudChip(),
             TryGetConsistFreeMotionHudChip(),
-            BrakeAdvisory.FormatHud(TryGetBrakeAdvisory()));
+            BrakeAdvisory.FormatHud(TryGetBrakeAdvisory()),
+            SessionDistance.Format(_sessionDriveMeters));
     }
 
     /// <summary>Motors chip with debug heat % and governor flash when capping.</summary>
@@ -2597,11 +2996,45 @@ internal static class TelemetryReader
         }
 
         var limit = TryGetSpeedLimitState();
+        var advice = TryGetBrakeAdvisory();
+        float? thr = null;
+        float? br = null;
+        float? ind = null;
+        var loco = TryGetUsableLoco();
+        if (loco != null && TryReadLocoControls(loco, out var controls))
+        {
+            thr = controls.Throttle;
+            br = controls.Brake;
+            ind = controls.IndependentBrake;
+        }
+
+        float? pipe = null;
+        try
+        {
+            pipe = loco?.brakeSystem?.brakePipePressure ?? TryGetBrakePipePressureBar();
+        }
+        catch
+        {
+            pipe = TryGetBrakePipePressureBar();
+        }
+
+        var massKg = TryGetConsistMassKilograms();
+        var drive = LimitDriveDebug.FormatDrive(
+            thr,
+            br,
+            ind,
+            pipe,
+            TryGetGradePercent(),
+            massKg is null ? null : massKg.Value / 1000f,
+            loco == null ? null : TryGetLocoTypeId(loco));
+
         return new SpeedLimitDebugSnapshot(
             true,
             SpeedDisplay.FormatFromMetersPerSecond(TryGetAbsSpeedMetersPerSecond()),
             SpeedLimitDisplay.Format(limit.CurrentKmh, limit.Trend, limit.Authority),
-            limit.ScanDetail ?? _lastBoardScanDetail);
+            limit.ScanDetail ?? _lastBoardScanDetail,
+            drive,
+            LimitDriveDebug.FormatAdvice(advice));
     }
 
     /// <summary>Standing fallback second bar (hidden when look-at wins).</summary>

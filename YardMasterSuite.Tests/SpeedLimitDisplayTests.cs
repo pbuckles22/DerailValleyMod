@@ -55,18 +55,21 @@ public class SpeedLimitDisplayTests
     }
 
     [Fact]
-    public void FormatHud_yellow_near_limit_and_red_when_over()
+    public void FormatHud_yellow_from_ten_below_through_five_over()
     {
-        Assert.Equal("Limit 60", SpeedLimitDisplay.FormatHud(55f, 60f));
+        Assert.Equal("Limit 60", SpeedLimitDisplay.FormatHud(49f, 60f));
         Assert.Equal(
             $"<color={SpeedLimitDisplay.WarningColor}>Limit 60</color>",
-            SpeedLimitDisplay.FormatHud(56f, 60f));
+            SpeedLimitDisplay.FormatHud(50f, 60f));
         Assert.Equal(
             $"<color={SpeedLimitDisplay.WarningColor}>Limit 60</color>",
             SpeedLimitDisplay.FormatHud(60f, 60f));
         Assert.Equal(
+            $"<color={SpeedLimitDisplay.WarningColor}>Limit 60</color>",
+            SpeedLimitDisplay.FormatHud(65f, 60f));
+        Assert.Equal(
             $"<color={SpeedLimitDisplay.CriticalColor}>Limit 60</color>",
-            SpeedLimitDisplay.FormatHud(61f, 60f));
+            SpeedLimitDisplay.FormatHud(66f, 60f));
     }
 
     [Fact]

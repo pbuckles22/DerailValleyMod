@@ -21,8 +21,11 @@ namespace YardMasterSuite.Monitor;
 /// </summary>
 internal static class TrackPathAhead
 {
-    /// <summary>Stop walking after this many tracks regardless of distance.</summary>
-    public const int MaxHops = 48;
+    /// <summary>
+    /// Stop walking after this many tracks regardless of distance. The 0.5.59 severe-drop scan can
+    /// reach 6 km; 48 short yard/mainline segments truncated that route before its warning horizon.
+    /// </summary>
+    public const int MaxHops = 128;
 
     internal readonly struct Segment
     {
@@ -31,13 +34,15 @@ internal static class TrackPathAhead
             Vector3 entryPosition,
             float lengthMeters,
             bool travelIncreasingSpan,
-            Vector3 travelHint)
+            Vector3 travelHint,
+            RailTrack track)
         {
             EntryDistanceMeters = entryDistanceMeters;
             EntryPosition = entryPosition;
             LengthMeters = lengthMeters;
             TravelIncreasingSpan = travelIncreasingSpan;
             TravelHint = travelHint;
+            Track = track;
         }
 
         /// <summary>Path distance from the loco to where this track begins (negative for our own).</summary>
@@ -55,6 +60,13 @@ internal static class TrackPathAhead
 
         /// <summary>Flat entry→exit direction for this hop (chord fallback / missing tangent).</summary>
         public Vector3 TravelHint { get; }
+
+        /// <summary>
+        /// The track this segment covers. Its <c>curve</c> is loaded for the whole route (unlike
+        /// posted board sign props, which stream in only near the train) — this is what lets the
+        /// geometry-ahead scan see a tight curve long before its board exists (A116 deep-dive).
+        /// </summary>
+        public RailTrack Track { get; }
     }
 
     /// <summary>
@@ -118,7 +130,8 @@ internal static class TrackPathAhead
                     entryPosition,
                     length,
                     travelIncreasingSpan: forward,
-                    travelHint: hint);
+                    travelHint: hint,
+                    track: track);
 
                 var exitDistance = entryDistance + length;
                 if (exitDistance >= maxDistanceMeters)

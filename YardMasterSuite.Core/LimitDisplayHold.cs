@@ -21,11 +21,15 @@ public enum LimitAuthority
 /// Stops Limit from flashing between look-ahead candidates.
 /// Tighter (lower) numbers apply immediately; looser (higher) numbers wait
 /// <see cref="LoosenHoldSeconds"/> so 50↔60 churn does not thrash the HUD.
+/// At standstill, the held number is frozen so travel/facing jitter cannot 40↔80.
 /// </summary>
 public static class LimitDisplayHold
 {
     /// <summary>How long a stricter Limit must stay before a looser one can replace it.</summary>
     public const float LoosenHoldSeconds = 5f;
+
+    /// <summary>At or below this speed, Limit number/authority stays frozen (facing jitter).</summary>
+    public const float StandstillMaxSpeedKmh = 0.5f;
 
     public readonly struct State
     {
@@ -42,14 +46,24 @@ public static class LimitDisplayHold
     /// <summary>
     /// <paramref name="heldAgeSeconds"/> = time since the held number last <b>changed</b>
     /// (not since last frame).
+    /// <paramref name="speedKmh"/> when ≤ <see cref="StandstillMaxSpeedKmh"/> freezes the held Limit
+    /// so dual-facing / travel sign flicker at Speed 0 cannot thrash the chip.
     /// </summary>
     public static State Step(
         float? candidateKmh,
         LimitAuthority candidateAuthority,
         float? heldKmh,
         LimitAuthority heldAuthority,
-        float heldAgeSeconds)
+        float heldAgeSeconds,
+        float speedKmh = float.MaxValue)
     {
+        if (heldKmh is not null
+            && speedKmh <= StandstillMaxSpeedKmh
+            && candidateKmh is not null)
+        {
+            return new State(heldKmh, heldAuthority);
+        }
+
         if (candidateKmh is not float candidate)
         {
             if (heldKmh is null)
