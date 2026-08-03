@@ -145,7 +145,7 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
   - [x] **1.17 Posted Limit + Next look-ahead (+ world board index)** — HUD: `Limit 80 | Next 50 (50m)` (or `1.2km`). Limit = sticky **posted** only — no `(Posted)` / `(Recommended)` labels. Soft **Brake** chip **CUT**. Geometry-ahead boards **CUT**. World board index seeds Limit from behind (not Next). **Done** — Tier 1 + Tier 2 **PASS** @ **0.5.104** (2026-08-03). *(#4 blind behind-seed on ice — reopen if Limit stays empty when a board is <600 m behind.)*
     > As a driver, I want an honest posted Limit and a clear next-sign cue with distance — not a Limit that jumps or a Brake chip that invents 50 when Next shows 80.
 
-  **Build order:** **Stress RAG chip** → then **3.1** / **3.1b** / **3.2**. *(Do not reopen **1.8** HUD thermal prediction.)*
+  **Build order:** **Stress RAG chip** **done @ 0.5.105** → then **3.1** / **3.1b** / **3.2**. *(Do not reopen **1.8** HUD thermal prediction.)*
 
 ---
 
@@ -182,10 +182,10 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
   - [x] **3.5 Align Route (CTC)** — Destination **city → yard track**; pathfind with **passthrough / through-lane cost bias**; HUD **Facing OK / Reverse into dest / N reverses** (informational — no auto-shove yet); **Align Route** throws junctions via ThreeGate. **Requires Dispatcher** (GeneralLicenseType.Dispatcher1). Fail closed on no path / unknown. **Done** — Tier 1 + Tier 2 **PASS** @ **0.5.101** (2026-08-03).
     - Mapping pump; schedule-lag ETA; rem/trip; dual-junction Align fix; planned-switch → Path stale; **#4** Through-only + occupancy (product locks Tier-1).
     - **Waived:** staged “no free I→O ⇒ skip whole city” — reopen if seen in normal play.
-    - **Next:** **Stress RAG chip** (then **3.1** / **3.1b** / **3.2**).
+    - **Next:** **3.1** / **3.1b** / **3.2** *(Stress RAG done @ **0.5.105**)*.
     > As a licensed shunter/dispatcher, I want to pick a city and track, see if I'll need to reverse, and Align Route so switches are set for the delivery — modern desk, not hiking levers.
 
-  **Build order:** **Stress RAG chip** → then **3.1** / **3.1b** / **3.2**.
+  **Build order:** **3.1** / **3.1b** / **3.2** *(Stress RAG done @ **0.5.105**)*.
 
 ---
 

@@ -2206,7 +2206,22 @@ internal static class TelemetryReader
             TryGetConsistFreeMotionHudChip(),
             throttle: CabLeverDisplay.FormatThrottle(throttlePct),
             indy: CabLeverDisplay.FormatIndy(indyPct),
-            trainBrake: CabLeverDisplay.FormatTrainBrake(trainBrakePct));
+            trainBrake: CabLeverDisplay.FormatTrainBrake(trainBrakePct),
+            stress: FormatStressHudChip());
+    }
+
+    /// <summary>Coupler derail-stress RAG chip — fail-closed to <c>— Stress</c>.</summary>
+    private static string FormatStressHudChip()
+    {
+        var loco = TryGetUsableLoco();
+        if (loco == null)
+        {
+            return StressDisplay.FormatHud(null);
+        }
+
+        TryGetDerailRisk(loco, out var stress, out var buildUp, out var stressThr, out var buildThr);
+        return StressDisplay.FormatHud(
+            StressDisplay.PercentOfThreshold(stress, stressThr, buildUp, buildThr));
     }
 
     /// <summary>Lead loco cab lever positions (0–100 %), or nulls if controls unavailable.</summary>

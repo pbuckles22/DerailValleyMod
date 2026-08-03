@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace YardMasterSuite.Core;
 
 /// <summary>
-/// Compact derail / tip-over risk fragment for <c>T2 limit</c> (and future Stress chip).
+/// Compact derail / tip-over risk fragment for <c>T2 limit</c> (Stress HUD uses <see cref="StressDisplay"/>).
 /// Live risk: coupler <c>TrainStress</c> vs game derail thresholds.
 /// Curve proxy: current speed vs ahead posted board (no geometry synthesis).
 /// </summary>

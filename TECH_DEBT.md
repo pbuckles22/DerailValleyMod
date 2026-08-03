@@ -70,7 +70,7 @@ High ROI; frequent pain; not blocking.
 
 - [x] **1.17 Posted + Next** — Recommended/Brake/geometry-ahead CUT; Limit + Next only @ **0.5.104**. Tier 2 **PASS** (2026-08-03). **Ice:** #4 blind behind-seed — reopen if Limit empty with posted board <600 m behind.
 
-- [ ] **Stress RAG HUD chip** — **next.** Coupler stress vs derail thresholds; typical green/yellow/red.
+- [x] **Stress RAG HUD chip** — train-bar `Stress N %` RAG @ **0.5.105**. Tier 2 **PASS** (2026-08-03). Coupler/derail physics only — not consist-in-zone.
 
 - [ ] **1.17 #4 behind-seed polish** — world index seed path; empty SignDebug may reuse stale PathAhead (code-review WARN). Only if smoke shows empty Limit with board behind.
 
