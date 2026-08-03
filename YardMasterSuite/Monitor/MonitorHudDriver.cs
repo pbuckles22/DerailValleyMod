@@ -6,7 +6,7 @@ namespace YardMasterSuite.Monitor;
 /// <summary>
 /// In-world IMGUI overlay for Monitor Mode telemetry.
 /// Top bar = usable loco-train totals (hidden when not usable — 4.3); second bar = look-at preferred, standing fallback.
-/// Always-on: Heading (1.12) + Marked (1.14) + Station zone (4.6) + Path check (3.4).
+/// Always-on: Heading (1.12) + Marked (1.14) + Station zone (4.6) + Path check (3.4) + Clock.
 /// No mod version chip on HUD — verify ship # in UMM Mod Manager.
 /// Bundle B.1: Pos (1.13) removed from the always-on bar.
 /// Active Job bar (4.8) when jobs are taken. Loco bar centered IA (4.7).
@@ -56,6 +56,9 @@ public sealed class MonitorHudDriver : MonoBehaviour
 
     private const float RefreshSeconds = 0.1f;
 
+    /// <summary>Remaining Align ETA — schedule-lag + arrival clamp (~1 Hz).</summary>
+    private const float EtaRefreshSeconds = 1f;
+
     /// <summary>
     /// GUI Y just below the last visible HUD bar (top-left origin). Updated each OnGUI for AR sticky row (A.2).
     /// </summary>
@@ -64,6 +67,7 @@ public sealed class MonitorHudDriver : MonoBehaviour
     private static readonly Color BarBackground = new(0.12f, 0.12f, 0.12f, 0.82f);
 
     private float _elapsed;
+    private float _etaRefreshAt;
     private string? _trainLabel;
     private string? _localLabel;
     private string? _jobLabel;
@@ -217,7 +221,8 @@ public sealed class MonitorHudDriver : MonoBehaviour
                 _parkLabel,
                 _stationLabel,
                 _pathLabel,
-                MonitorHudLine.Join(new[] { _facingLabel ?? "", exitLabel ?? "" }));
+                MonitorHudLine.Join(new[] { _facingLabel ?? "", exitLabel ?? "" }),
+                TelemetryReader.CurrentClockLabel());
             EmitConsistDebugIfNeeded();
             EmitLocalCarDebugIfNeeded();
             EmitLookAtDebugIfNeeded();
@@ -230,10 +235,26 @@ public sealed class MonitorHudDriver : MonoBehaviour
             EmitStationWaypointDebugIfNeeded();
             EmitPathCheckDebugIfNeeded();
             EmitActiveJobDebugIfNeeded();
+            RefreshRemainingEtaIfDue();
         }
         finally
         {
             TelemetryReader.EndHudTick();
+        }
+    }
+
+    private void RefreshRemainingEtaIfDue()
+    {
+        if (Time.unscaledTime - _etaRefreshAt < EtaRefreshSeconds)
+        {
+            return;
+        }
+
+        _etaRefreshAt = Time.unscaledTime;
+        var line = RoutePlanService.RefreshRemainingEta();
+        if (line != null)
+        {
+            Main.Log(line);
         }
     }
 

@@ -63,7 +63,9 @@ public static class PathPlan
         IReadOnlyList<PathEdge> edges,
         IReadOnlyDictionary<string, int> junctionSelectedBranch,
         string? originTrackId,
-        string? destinationTrackId)
+        string? destinationTrackId,
+        Func<string, PathTrackClass>? classFor = null,
+        bool skipPlainOnMultiBranchStem = true)
     {
         var dest = Normalize(destinationTrackId);
         if (dest == null)
@@ -90,12 +92,20 @@ public static class PathPlan
         }
 
         var adj = BuildAdjacency(edges);
-        if (!TryDijkstra(adj, origin, dest, out var path, out var totalCost))
+        if (!TryDijkstra(
+                adj,
+                origin,
+                dest,
+                classFor,
+                skipPlainOnMultiBranchStem,
+                out var path,
+                out var totalCost))
         {
             return Empty(PathCheckStatus.NoPath);
         }
 
         var junctionEvals = new List<PathJunctionEval>();
+        var seenJunctions = new HashSet<string>(StringComparer.Ordinal);
         var misaligned = 0;
         var reverseCount = 0;
         var lastReverse = false;
@@ -119,18 +129,7 @@ public static class PathPlan
                 }
             }
 
-            if (!hop.HasJunction || hop.JunctionId == null)
-            {
-                continue;
-            }
-
-            selected.TryGetValue(hop.JunctionId, out var actual);
-            var eval = new PathJunctionEval(hop.JunctionId, hop.RequiredBranch, actual);
-            junctionEvals.Add(eval);
-            if (!eval.Aligned)
-            {
-                misaligned++;
-            }
+            AddUniqueJunctionEval(junctionEvals, seenJunctions, ref misaligned, hop, selected);
         }
 
         var status = misaligned == 0 ? PathCheckStatus.Aligned : PathCheckStatus.Misaligned;
@@ -144,7 +143,11 @@ public static class PathPlan
             totalCost);
     }
 
-    /// <summary>Junction flips still needed before the path is clear.</summary>
+    /// <summary>
+    /// Junction flips still needed before the path is clear.
+    /// One throw per junction (first required branch along the corridor) — Align cannot
+    /// set two branches on the same points.
+    /// </summary>
     public static IReadOnlyList<PathJunctionEval> RequiredFlips(PathPlanResult plan)
     {
         if (plan == null || plan.Junctions.Count == 0)
@@ -153,15 +156,130 @@ public static class PathPlan
         }
 
         var list = new List<PathJunctionEval>();
+        var seen = new HashSet<string>(StringComparer.Ordinal);
         foreach (var j in plan.Junctions)
         {
-            if (!j.Aligned)
+            if (j.Aligned || string.IsNullOrEmpty(j.JunctionId))
             {
-                list.Add(j);
+                continue;
             }
+
+            if (!seen.Add(j.JunctionId))
+            {
+                continue;
+            }
+
+            list.Add(j);
         }
 
         return list;
+    }
+
+    /// <summary>
+    /// Re-check junction alignment along a frozen corridor (post-Align) without re-Dijkstra.
+    /// Preserves TrackIds / reverse cues from the plan that was thrown.
+    /// </summary>
+    public static PathPlanResult ReevaluateAlong(
+        IReadOnlyList<string> trackIds,
+        IReadOnlyList<PathEdge> edges,
+        IReadOnlyDictionary<string, int> junctionSelectedBranch,
+        Func<string, PathTrackClass>? classFor = null)
+    {
+        if (trackIds == null || trackIds.Count == 0)
+        {
+            return Empty(PathCheckStatus.NoPath);
+        }
+
+        if (trackIds.Count == 1)
+        {
+            return new PathPlanResult(
+                PathCheckStatus.Aligned,
+                trackIds,
+                Array.Empty<PathJunctionEval>(),
+                0,
+                0,
+                false,
+                0f);
+        }
+
+        var adj = BuildAdjacency(edges);
+        var selected = junctionSelectedBranch ?? new Dictionary<string, int>();
+        var junctionEvals = new List<PathJunctionEval>();
+        var seenJunctions = new HashSet<string>(StringComparer.Ordinal);
+        var misaligned = 0;
+        var reverseCount = 0;
+        var lastReverse = false;
+        var totalCost = 0f;
+
+        var origin = Normalize(trackIds[0]);
+        var dest = Normalize(trackIds[trackIds.Count - 1]) ?? string.Empty;
+        var originYard = PathRouteConstraints.YardIdOf(origin);
+        var destYard = PathRouteConstraints.YardIdOf(dest);
+
+        for (var i = 0; i < trackIds.Count - 1; i++)
+        {
+            var from = Normalize(trackIds[i]);
+            var to = Normalize(trackIds[i + 1]);
+            if (from == null || to == null || !TryGetHop(adj, from, to, out var hop))
+            {
+                continue;
+            }
+
+            if (!TryStepCost(hop, to, dest, originYard, destYard, classFor, out var step))
+            {
+                // Corridor became illegal under forward-only rules — keep structure, omit cost.
+                step = hop.Cost;
+            }
+
+            totalCost += step;
+            if (hop.RequiresReverse)
+            {
+                reverseCount++;
+                if (i == trackIds.Count - 2)
+                {
+                    lastReverse = true;
+                }
+            }
+
+            // First required branch along the corridor wins — dual W-0416:0 then :1
+            // must not leave Align flipping the same points forever.
+            AddUniqueJunctionEval(junctionEvals, seenJunctions, ref misaligned, hop, selected);
+        }
+
+        var status = misaligned == 0 ? PathCheckStatus.Aligned : PathCheckStatus.Misaligned;
+        return new PathPlanResult(
+            status,
+            trackIds,
+            junctionEvals,
+            misaligned,
+            reverseCount,
+            lastReverse,
+            totalCost);
+    }
+
+    /// <summary>
+    /// One eval per junction id (first hop along the corridor). Later hops that
+    /// re-tag the same points with another branch are ignored for Align/HUD.
+    /// </summary>
+    private static void AddUniqueJunctionEval(
+        List<PathJunctionEval> junctionEvals,
+        HashSet<string> seenJunctions,
+        ref int misaligned,
+        PathEdge hop,
+        IReadOnlyDictionary<string, int> selected)
+    {
+        if (!hop.HasJunction || hop.JunctionId == null || !seenJunctions.Add(hop.JunctionId))
+        {
+            return;
+        }
+
+        selected.TryGetValue(hop.JunctionId, out var actual);
+        var eval = new PathJunctionEval(hop.JunctionId, hop.RequiredBranch, actual);
+        junctionEvals.Add(eval);
+        if (!eval.Aligned)
+        {
+            misaligned++;
+        }
     }
 
     private static PathPlanResult Empty(PathCheckStatus status) =>
@@ -213,6 +331,8 @@ public static class PathPlan
         Dictionary<string, List<PathEdge>> adj,
         string origin,
         string dest,
+        Func<string, PathTrackClass>? classFor,
+        bool skipPlainOnMultiBranchStem,
         out List<string> path,
         out float totalCost)
     {
@@ -221,6 +341,8 @@ public static class PathPlan
         var costSoFar = new Dictionary<string, float>(StringComparer.Ordinal) { [origin] = 0f };
         var cameFrom = new Dictionary<string, string>(StringComparer.Ordinal) { [origin] = origin };
         var open = new List<string> { origin };
+        var originYard = PathRouteConstraints.YardIdOf(origin);
+        var destYard = PathRouteConstraints.YardIdOf(dest);
 
         while (open.Count > 0)
         {
@@ -251,13 +373,38 @@ public static class PathPlan
                 continue;
             }
 
+            // At the loco's origin throat, ignore a duplicate plain shortcut so Dijkstra
+            // must choose an actual junction branch. Do not repeat this downstream:
+            // branch rails can also look like stems, and their plain edge is the continuation.
+            var junctionStem = skipPlainOnMultiBranchStem
+                && string.Equals(current, origin, StringComparison.Ordinal)
+                && IsMultiBranchJunctionStem(hops);
+
             foreach (var hop in hops)
             {
-                var next = hop.ToTrackId;
-                var step = hop.Cost;
-                if (hop.RequiresReverse)
+                if (junctionStem && !hop.HasJunction)
                 {
-                    step += PathTrackCosts.ReversePenalty;
+                    continue;
+                }
+
+                // A single turnout cannot be both 0 and 1 on one corridor (W-0416 oscillation).
+                if (hop.HasJunction
+                    && hop.JunctionId != null
+                    && ConflictsJunctionCommitment(
+                        cameFrom,
+                        adj,
+                        origin,
+                        current,
+                        hop.JunctionId,
+                        hop.RequiredBranch))
+                {
+                    continue;
+                }
+
+                var next = hop.ToTrackId;
+                if (!TryStepCost(hop, next, dest, originYard, destYard, classFor, out var step))
+                {
+                    continue; // forward-only hard ban outside dest
                 }
 
                 var newCost = costSoFar[current] + step;
@@ -276,6 +423,124 @@ public static class PathPlan
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// True when the path origin→current already committed <paramref name="junctionId"/>
+    /// to a different branch than <paramref name="requiredBranch"/>.
+    /// </summary>
+    private static bool ConflictsJunctionCommitment(
+        Dictionary<string, string> cameFrom,
+        Dictionary<string, List<PathEdge>> adj,
+        string origin,
+        string current,
+        string junctionId,
+        int requiredBranch)
+    {
+        var node = current;
+        var guard = 0;
+        while (!string.Equals(node, origin, StringComparison.Ordinal))
+        {
+            if (!cameFrom.TryGetValue(node, out var prev) || ++guard > 10000)
+            {
+                return false;
+            }
+
+            if (TryGetHop(adj, prev, node, out var prior)
+                && prior.HasJunction
+                && string.Equals(prior.JunctionId, junctionId, StringComparison.Ordinal)
+                && prior.RequiredBranch != requiredBranch)
+            {
+                return true;
+            }
+
+            node = prev;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// True when this node is a turnout stem: 2+ outbound junction hops (different branches).
+    /// </summary>
+    public static bool IsMultiBranchJunctionStem(IReadOnlyList<PathEdge> hops)
+    {
+        if (hops == null)
+        {
+            return false;
+        }
+
+        var junctionOuts = 0;
+        for (var i = 0; i < hops.Count; i++)
+        {
+            if (hops[i].HasJunction)
+            {
+                junctionOuts++;
+                if (junctionOuts >= 2)
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Edge step cost with pass-through rules. Returns false when the hop is hard-banned
+    /// (reverse outside destination yard / dest track). Public for Tier 2 think dumps.
+    /// </summary>
+    public static bool TryStepCost(
+        PathEdge hop,
+        string nextTrackId,
+        string destTrackId,
+        string? originYardId,
+        string? destYardId,
+        Func<string, PathTrackClass>? classFor,
+        out float stepSeconds)
+    {
+        stepSeconds = hop.Cost;
+        var nextYard = PathRouteConstraints.YardIdOf(nextTrackId);
+        var inDestYard = nextYard != null
+            && destYardId != null
+            && string.Equals(nextYard, destYardId, StringComparison.OrdinalIgnoreCase);
+        var isDestTrack = string.Equals(nextTrackId, destTrackId, StringComparison.Ordinal);
+
+        // HARD BAN: reverse only allowed into the destination yard (or onto the dest track).
+        if (hop.RequiresReverse && !inDestYard && !isDestTrack)
+        {
+            return false;
+        }
+
+        if (classFor != null)
+        {
+            var toClass = classFor(nextTrackId);
+            if (toClass == PathTrackClass.SpurPocket)
+            {
+                var inOriginYard = nextYard != null
+                    && originYardId != null
+                    && string.Equals(nextYard, originYardId, StringComparison.OrdinalIgnoreCase);
+                if (inDestYard || inOriginYard || isDestTrack)
+                {
+                    stepSeconds += PathTrackCosts.SpurOccupancyPenaltySeconds * 0.5f;
+                }
+                else
+                {
+                    stepSeconds += PathTrackCosts.SpurOccupancyPenaltySeconds;
+                }
+            }
+            else if (toClass == PathTrackClass.Unknown || toClass == PathTrackClass.YardService)
+            {
+                stepSeconds += PathTrackCosts.NonThroughPenaltySeconds;
+            }
+        }
+
+        if (hop.RequiresReverse)
+        {
+            stepSeconds += PathTrackCosts.ReversePenalty;
+        }
+
+        return true;
     }
 
     private static List<string> Reconstruct(

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using DV.ThingTypes;
 using DV.ThingTypes.TransitionHelpers;
 using YardMasterSuite.Core;
@@ -78,10 +79,11 @@ internal static class RouteAlignGovernor
             applied++;
         }
 
-        PathGraphBuilder.InvalidateCache();
+        // Do NOT InvalidateCache here — that forced a full ~2k-track Rebuild hitch.
+        // Topology/lengths unchanged after flips; TryBuild refreshes selectedBranch only.
         RouteMemo.Clear();
-        // Recompute once so HUD shows Path OK after throws.
-        Main.Log(RoutePlanService.Compute("post-align"));
+        // Re-eval the same corridor (do not re-Dijkstra — origin churn was causing Path-wrong).
+        Main.Log(RoutePlanService.ReevaluateAfterAlign(plan));
         return $"T2 align: threw {applied}";
     }
 
@@ -126,6 +128,69 @@ internal static class TelemetryReaderOrigin
         {
             return null;
         }
+    }
+
+    /// <summary>
+    /// Logic + bogie keys (can disagree at junctions). Drift stays Path OK if any is on-route.
+    /// </summary>
+    public static List<string> TryGetCandidates()
+    {
+        var list = new List<string>(6);
+        try
+        {
+            AddCarCandidates(list, PlayerManager.Car);
+            AddCarCandidates(list, TelemetryReader.TryGetStandingCar());
+            var feet = FromPlayerPosition();
+            if (feet != null)
+            {
+                AddUnique(list, feet);
+            }
+
+            AddCarCandidates(list, PlayerManager.LastLoco);
+        }
+        catch
+        {
+            // keep whatever we collected
+        }
+
+        return list;
+    }
+
+    private static void AddCarCandidates(List<string> list, TrainCar? car)
+    {
+        if (car == null)
+        {
+            return;
+        }
+
+        try
+        {
+            AddUnique(list, PathGraphBuilder.TrackKey(car.logicCar?.CurrentTrack));
+            AddUnique(list, PathGraphBuilder.TrackKey(car.FrontBogie?.track));
+            AddUnique(list, PathGraphBuilder.TrackKey(car.RearBogie?.track));
+        }
+        catch
+        {
+            // ignore this car
+        }
+    }
+
+    private static void AddUnique(List<string> list, string? key)
+    {
+        if (string.IsNullOrEmpty(key))
+        {
+            return;
+        }
+
+        for (var i = 0; i < list.Count; i++)
+        {
+            if (string.Equals(list[i], key, System.StringComparison.Ordinal))
+            {
+                return;
+            }
+        }
+
+        list.Add(key!);
     }
 
     private static string? FromCar(TrainCar? car)

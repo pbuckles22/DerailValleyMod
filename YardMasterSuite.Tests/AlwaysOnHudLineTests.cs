@@ -12,10 +12,11 @@ public class AlwaysOnHudLineTests
             "Marked NNE 40m",
             "Station SM NE 84m",
             "Path OK",
-            "Facing OK");
+            "Facing OK",
+            "Clock 14:30");
 
         Assert.Equal(
-            "Heading NE  |  Marked NNE 40m  |  Station SM NE 84m  |  Path OK  |  Facing OK",
+            "Heading NE  |  Marked NNE 40m  |  Station SM NE 84m  |  Path OK  |  Facing OK  |  Clock 14:30",
             line);
         Assert.DoesNotContain("Pos", line);
         Assert.DoesNotContain("v0.", line);
@@ -24,7 +25,7 @@ public class AlwaysOnHudLineTests
     [Fact]
     public void Format_omits_blank_optional_chips()
     {
-        var line = AlwaysOnHudLine.Format("Heading N", null, null, null, null);
+        var line = AlwaysOnHudLine.Format("Heading N", null, null, null, null, null);
         Assert.Equal("Heading N", line);
     }
 }

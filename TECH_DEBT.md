@@ -58,13 +58,21 @@ High ROI; frequent pain; not blocking.
 
 - [x] **Bundle B clutter diet** — **B.1–B.4** + in-world HUD + no version chip through **v0.4.36** (smoke PASS). Remaining UX: **A → C → D**.
 
-- [ ] **3.5 Align Route: threw N but Path still wrong** — parked until **1.16** hone done. Repro ×2 @ **0.5.67**: FF→IME `IME-A1L` and HMB transit / HB (`Path 1 wrong` after `T2 align: threw N`; Facing/Reverse cues still show). Plan/check disagree, wrong branch, or incomplete throw. Area: `RouteAlignGovernor` / `PathCheck` / `DispatchDeskPanel`.
+- [x] **3.5 Align Route: threw N but Path still wrong** — post-Align `ReevaluateAlong` + flip dedupe; dual-branch same-junction fix @ **0.5.100+**. Tier 2 **PASS** @ **0.5.101**.
 
-- [ ] **3.5 Align: intermediate yard thru-tracks** — parked. Dest through another city yard must prefer **pass-through / main** lanes, not industry/storage that can have cars. Player: HMB on way to HB left Path wrong / wrong track class. Ties to through-lane bias + full multi-yard corridor throw. Area: `PathFinder` / Align throw set.
+- [x] **3.5 Align: intermediate yard thru-tracks (#4)** — Through-only + occupancy + `#Y` alias yard map @ **0.5.101**. Tier 2 **PASS** (HB Path OK). **Waived:** staged “no free I→O ⇒ skip whole city” — reopen if seen in play. Product locks Tier-1.
 
-- [ ] **3.5 Path stale false positive** — parked. HUD `Path stale` while player reports staying on the aligned path (straight after Align). Stale is only supposed to fire when current track ∉ plan (`RoutePlanService.WatchPathDrift`). Likely incomplete `TrackIds` / yard graph gaps / origin track id churn. Session `2026-07-31_067h`.
+- [x] **3.5 Path stale** — corridor leave + planned-switch flip → stale @ **0.5.101**. Tier 2 **PASS**.
 
-- [ ] **3.5 Align: shortest / fastest route** — parked (product goal after data). Today pathfind is not “Google Maps” — long detours (FF→HB via HMB). Need time/distance-optimal (or strongly biased) corridor before Align is trusted for long hauls.
+- [x] **3.5 Align: ETA** — schedule lag + arrival clamp; trip% from ETA. Tier 2 **PASS** @ **0.5.101**.
+
+- [x] **3.5 Insert mapping freeze (#1)** — frame-pump + toast @ **0.5.80**. Tier 2 **PASS**.
+
+- [ ] **1.17 World speed cache (NEXT after 3.5 commit)** — cruise stutter from live `SignDebug` scan. Index boards on graph; Limit queries cache. **Do not start on dirty 3.5 tree.** Band-aids @ 0.5.79: Align no InvalidateCache, sign refresh 5 s, Drive Dist off HUD.
+
+- [ ] **1.16 / Brake: consist ahead obstruction** — parked (after **1.17**). Player hit occupied dest track too hot; want HUD cue + recommended-speed foresight for train/cars on the route ahead (not only boards/geometry). Area: `TrackPathAhead` / Brake advisory / loco radar.
+
+- [ ] **UX: Flight-sim style always-on HUD** — parked (player ref 2026-08-01). Clean corner telemetry (airspeed/engines/fuel AOA vs flaps/trim/alt/VS), destination progress bar + ETA, not a dense top strip. Revisit with ui-ux / DESIGN_SYSTEM when HUD layout is reopened (post–3.5). Ref: flight-sim HUD screenshot in session.
 
 - [ ] **AR: hide house outside office / city sense** — parked. `Station HMB … 1600m` + house icon still shown far from office; player expects hide once outside city/office. Today house hide = office AABB only (`ArProximityHide`), Station chip = nearest station (not “home city limits”). Clarify product: nearest-station always-on vs office-only house.
 

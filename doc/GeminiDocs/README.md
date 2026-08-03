@@ -1,23 +1,24 @@
-# GeminiDocs
-
-Local scratch for Gemini conversation exports. **Not** the source of truth.
-
-Promote decisions into tracked docs (`PM_PLAN.md`, `doc/requirements/*`, `TEST_PLAN.md`, etc.), then **delete** the scratch files from this folder (keep this README).
-
-**Git:** this folder is gitignored **except this README**.
-
-**Layout:** **flat only** — no subfolders. See [`.cursor/rules/gemini-handoff.mdc`](../../.cursor/rules/gemini-handoff.mdc).
-
-## Comprehensive handoff (“Gemini this” / “G this”)
-
-- **Extremely detailed** narrative `.md` in this folder
-- Involved source as flat copies (**≤9** code files; combine excerpts if more)
-- `{topic}__{repo/path→__}.cs` naming; **Attached code** section
-- **Delete all unrelated packs** before finishing (keep only `README.md` + the new pack)
-- **Active packs** = current pack only
-
-## Active packs *(local only)*
-
-| Pack | Topic |
-|------|--------|
-| [`A116_Derail_Downgrade_StickySteal.md`](./A116_Derail_Downgrade_StickySteal.md) | **1.16 @ 0.5.50 derail** — sticky 40→60 steal after `'4 -2.1'`; grade-blind soft brake; stress derail at 60 |
+# GeminiDocs
+
+Local scratch for Gemini conversation exports. **Not** the source of truth.
+
+Promote decisions into tracked docs (`PM_PLAN.md`, `doc/requirements/*`, `TEST_PLAN.md`, etc.), then **delete** the scratch files from this folder (keep this README).
+
+**Git:** this folder is gitignored **except this README**.
+
+**Layout:** **flat only** — no subfolders. See [`.cursor/rules/gemini-handoff.mdc`](../../.cursor/rules/gemini-handoff.mdc).
+
+## Comprehensive handoff (“Gemini this” / “G this”)
+
+- **Extremely detailed** narrative `.md` in this folder
+- Involved source as flat copies (**≤9** code files; combine excerpts if more)
+- `{topic}__{repo/path→__}.cs` naming; **Attached code** section
+- **Delete all unrelated packs** before finishing (keep only `README.md` + the new pack)
+- **Active packs** = current pack only
+
+## Active packs *(local only)*
+
+| Pack | Topic |
+|------|--------|
+| [`G35_Align_FreeLane.md`](./G35_Align_FreeLane.md) | **3.5 Align @ 0.5.87** — free lane ignored; `already clear` left into pocket |
+

@@ -44,7 +44,8 @@ internal static class TelemetryReader
     private static MotorSetFieldMap? _motorSetFields;
 
     /// <summary>Refresh loaded <see cref="SignDebug"/> boards periodically (streaming scenes).</summary>
-    private const float SignDebugRefreshSeconds = 1.5f;
+    /// <summary>FindObjectsOfType&lt;SignDebug&gt; is expensive — keep well below HUD tick rate.</summary>
+    private const float SignDebugRefreshSeconds = 5f;
 
     /// <summary>How far behind the loco (m) to look for the governing posted board.</summary>
     private const float BoardLookbackMeters = 300f;
@@ -141,6 +142,9 @@ internal static class TelemetryReader
 
     /// <summary>Meters driven this world session (smoke odometer). Resets when leaving the world.</summary>
     private static float _sessionDriveMeters;
+
+    /// <summary>Session odometer meters (Drive chip) — baseline for Align trip %.</summary>
+    public static float SessionDriveMeters => _sessionDriveMeters;
 
     private static bool _sessionDriveWasActive;
 
@@ -441,7 +445,19 @@ internal static class TelemetryReader
         }
 
         var plan = RoutePlanSession.Plan;
-        return plan == null ? null : PathCheckDisplay.Format(plan.ToCheckResult());
+        if (plan == null)
+        {
+            return null;
+        }
+
+        var chip = PathCheckDisplay.Format(plan.ToCheckResult());
+        var etaCost = RoutePlanSession.EtaCostSeconds ?? plan.TotalCost;
+        return RouteEtaDisplay.WithPathChip(
+            chip,
+            etaCost,
+            RoutePlanSession.RemainingMeters,
+            RoutePlanSession.TripProgress01,
+            RoutePlanSession.EtaMode);
     }
 
     /// <summary>Facing cue — frozen plan only.</summary>
@@ -1556,7 +1572,12 @@ internal static class TelemetryReader
         }
     }
 
-    private static float? GetOrComputeTrackGeometryLimitKmh(RailTrack track)
+    /// <summary>
+    /// Shared permanent geometry-limit cache (Bezier once per RailTrack instance).
+    /// Used by speed-limit HUD and PathGraphBuilder so Align InvalidateCache does not
+    /// re-arc ~2k tracks.
+    /// </summary>
+    internal static float? GetOrComputeTrackGeometryLimitKmh(RailTrack track)
     {
         var id = track.GetInstanceID();
         if (TrackGeometryLimitCache.TryGetValue(id, out var cached))
@@ -2437,8 +2458,9 @@ internal static class TelemetryReader
         }
 
         var limit = TryGetSpeedLimitState();
-        // 4.7 center-weighted IA: Fuel·Oil·Mass·Grade·Load·Speed·Limit·Motors·FreeMotion·Handbrakes·Cars
-        // 4.5 Next: station — cut (nearest-yard chip was clutter / wrong for mainland range).
+        TryReadLeadCabLevers(out var throttlePct, out var indyPct, out var trainBrakePct);
+        // 4.7 IA + cab levers: … Load · Throttle · Indy · TrainBrake · Speed · Limit …
+        // Drive odometer stays internal for Align rem/trip — not a HUD chip.
         return TrainHudLine.Format(
             FluidDisplay.FormatFuelHud(fuel, oil),
             FluidDisplay.FormatOilHud(fuel, oil),
@@ -2453,7 +2475,67 @@ internal static class TelemetryReader
             TryGetBackupProximityHudChip(),
             TryGetConsistFreeMotionHudChip(),
             BrakeAdvisory.FormatHud(TryGetBrakeAdvisory()),
-            SessionDistance.Format(_sessionDriveMeters));
+            throttle: CabLeverDisplay.FormatThrottle(throttlePct),
+            indy: CabLeverDisplay.FormatIndy(indyPct),
+            trainBrake: CabLeverDisplay.FormatTrainBrake(trainBrakePct));
+    }
+
+    /// <summary>Lead loco cab lever positions (0–100 %), or nulls if controls unavailable.</summary>
+    private static void TryReadLeadCabLevers(
+        out float? throttlePercent,
+        out float? indyPercent,
+        out float? trainBrakePercent)
+    {
+        throttlePercent = null;
+        indyPercent = null;
+        trainBrakePercent = null;
+        try
+        {
+            var loco = TryGetUsableLoco();
+            var controls = loco?.SimController?.controlsOverrider;
+            if (controls == null)
+            {
+                return;
+            }
+
+            if (controls.Throttle != null)
+            {
+                throttlePercent = CabLeverDisplay.PercentFromNormalized(controls.Throttle.Value);
+            }
+
+            if (controls.IndependentBrake != null)
+            {
+                indyPercent = CabLeverDisplay.PercentFromNormalized(controls.IndependentBrake.Value);
+            }
+
+            if (controls.Brake != null)
+            {
+                trainBrakePercent = CabLeverDisplay.PercentFromNormalized(controls.Brake.Value);
+            }
+        }
+        catch
+        {
+            // leave nulls
+        }
+    }
+
+    /// <summary>In-game world clock for always-on chip (world session only at call site).</summary>
+    public static string CurrentClockLabel()
+    {
+        try
+        {
+            var wrapper = DateTimeWrapper.Instance;
+            if (wrapper == null)
+            {
+                return ClockDisplay.Format((System.DateTime?)null);
+            }
+
+            return ClockDisplay.Format(wrapper.DateTime);
+        }
+        catch
+        {
+            return ClockDisplay.Format((System.DateTime?)null);
+        }
     }
 
     /// <summary>Motors chip with debug heat % and governor flash when capping.</summary>

@@ -8,11 +8,22 @@ namespace YardMasterSuite.Monitor;
 /// <summary>
 /// Builds path graph + junction maps + destination catalog from live RailTrack / Junction
 /// for Align Route (3.5). Read-only — never throws switches.
-/// Topology is cached (~120s); selectedBranch is refreshed cheaply on each use.
+/// Topology/catalog are session-scoped: warm once, keep until Reload or world exit.
+/// selectedBranch is refreshed cheaply on each use. Cold build is frame-pumped.
 /// </summary>
 internal static class PathGraphBuilder
 {
-    private const float TopologyCacheSeconds = 120f;
+    /// <summary>Tracks (meta) + plains per frame — keep under a hitch budget.</summary>
+    public const int DefaultMapBudgetPerFrame = 64;
+
+    private enum MapPhase
+    {
+        None,
+        Tracks,
+        Junctions,
+        Plains,
+        Finalize,
+    }
 
     private static float _builtAt = -999f;
     private static List<PathEdge>? _edges;
@@ -20,9 +31,43 @@ internal static class PathGraphBuilder
     private static Dictionary<string, Junction>? _junctionsById;
     private static List<(string YardId, string TrackId)>? _catalog;
     private static Dictionary<string, RailTrack>? _tracksByKey;
+    private static Dictionary<string, PathTrackMeta>? _metaByKey;
+
+    private static readonly PathGraphBuildPump Pump = new();
+    private static MapPhase _mapPhase = MapPhase.None;
+    private static RailTrack[]? _mapTracks;
+    private static Junction[]? _mapJunctions;
+    private static int _mapTrackIndex;
+    private static int _mapJunctionIndex;
+    private static int _mapPlainIndex;
+    private static int _mapKeyed;
+    private static List<PathEdge>? _mapEdges;
+    private static Dictionary<string, int>? _mapSelected;
+    private static Dictionary<string, Junction>? _mapJunctionsById;
+    private static List<(string YardId, string TrackId)>? _mapCatalog;
+    private static Dictionary<string, float>? _mapEnterCost;
+    private static Dictionary<string, RailTrack>? _mapTracksByKey;
+    private static Dictionary<string, PathTrackMeta>? _mapMetaByKey;
+    private static HashSet<string>? _mapSeenPlain;
+    private static HashSet<string>? _mapSeenJunctionHop;
 
     /// <summary>Last rebuild counters for desk diagnostics (e.g. Reload list).</summary>
     public static string LastDiag { get; private set; } = "";
+
+    /// <summary>True while a frame-pumped rebuild is in progress.</summary>
+    public static bool IsMapping => Pump.IsMapping;
+
+    /// <summary>Banner text while mapping; empty when idle/ready.</summary>
+    public static string MappingBanner =>
+        Pump.IsMapping ? PathGraphBuildPump.FormatBanner(Pump.Progress01) : "";
+
+    /// <summary>True when topology/catalog are warm for this world session.</summary>
+    public static bool HasReadyCache =>
+        _edges != null
+        && _selected != null
+        && _junctionsById != null
+        && _catalog != null
+        && _catalog.Count > 0;
 
     public static bool TryBuild(
         out List<PathEdge> edges,
@@ -35,25 +80,26 @@ internal static class PathGraphBuilder
         out Dictionary<string, Junction> junctionsById,
         out List<(string YardId, string TrackId)> catalog)
     {
-        if (_edges != null
-            && _selected != null
-            && _junctionsById != null
-            && _catalog != null
-            && _catalog.Count > 0
-            && Time.unscaledTime - _builtAt < TopologyCacheSeconds)
+        if (HasReadyCache)
         {
-            RefreshSelectedBranches(_junctionsById, _selected);
-            edges = _edges;
-            junctionSelectedBranch = _selected;
-            junctionsById = _junctionsById;
-            catalog = _catalog;
+            RefreshSelectedBranches(_junctionsById!, _selected!);
+            edges = _edges!;
+            junctionSelectedBranch = _selected!;
+            junctionsById = _junctionsById!;
+            catalog = _catalog!;
             return true;
         }
 
-        return Rebuild(out edges, out junctionSelectedBranch, out junctionsById, out catalog);
+        // Never sync-rebuild on the calling thread — start/continue the pump instead.
+        EnsureMappingStarted();
+        edges = new List<PathEdge>();
+        junctionSelectedBranch = new Dictionary<string, int>();
+        junctionsById = new Dictionary<string, Junction>();
+        catalog = new List<(string, string)>();
+        return false;
     }
 
-    /// <summary>Force rebuild (e.g. after Align throws or empty cache).</summary>
+    /// <summary>Force rebuild (e.g. Reload list). Cancels any in-flight pump.</summary>
     public static void InvalidateCache()
     {
         _builtAt = -999f;
@@ -62,49 +108,143 @@ internal static class PathGraphBuilder
         _junctionsById = null;
         _catalog = null;
         _tracksByKey = null;
+        _metaByKey = null;
+        CancelMapping();
     }
 
-    private static bool Rebuild(
-        out List<PathEdge> edges,
-        out Dictionary<string, int> junctionSelectedBranch,
-        out Dictionary<string, Junction> junctionsById,
-        out List<(string YardId, string TrackId)> catalog)
+    /// <summary>Begin frame-pumped rebuild when cache is cold (no-op if warm or already mapping).</summary>
+    public static void EnsureMappingStarted()
     {
-        edges = new List<PathEdge>();
-        junctionSelectedBranch = new Dictionary<string, int>();
-        junctionsById = new Dictionary<string, Junction>();
-        catalog = new List<(string, string)>();
+        if (HasReadyCache || Pump.IsMapping)
+        {
+            return;
+        }
+
+        BeginMapping();
+    }
+
+    /// <summary>
+    /// Process up to <paramref name="maxItemsPerFrame"/> tracks/junctions this frame.
+    /// Returns true on the frame mapping finishes (ready or failed).
+    /// </summary>
+    public static bool TickMapping(int maxItemsPerFrame = DefaultMapBudgetPerFrame)
+    {
+        if (!Pump.IsMapping)
+        {
+            return false;
+        }
+
+        if (maxItemsPerFrame < 1)
+        {
+            maxItemsPerFrame = 1;
+        }
+
+        var budget = maxItemsPerFrame;
+        while (budget > 0 && Pump.IsMapping)
+        {
+            switch (_mapPhase)
+            {
+                case MapPhase.Tracks:
+                    budget = TickTracks(budget);
+                    break;
+                case MapPhase.Junctions:
+                    budget = TickJunctions(budget);
+                    break;
+                case MapPhase.Plains:
+                    budget = TickPlains(budget);
+                    break;
+                case MapPhase.Finalize:
+                    FinishMapping();
+                    return true;
+                default:
+                    CancelMapping();
+                    Pump.Fail();
+                    LastDiag = "map phase lost";
+                    return true;
+            }
+        }
+
+        return !Pump.IsMapping;
+    }
+
+    private static void BeginMapping()
+    {
+        CancelMapping();
 
         var tracks = ResolveRailTracks();
         var trackCount = tracks?.Length ?? 0;
         if (tracks == null || trackCount == 0)
         {
-            LastDiag = "reg=0 (no RailTracks)";
-            // Station catalog alone may still fill the desk.
+            var catalog = new List<(string YardId, string TrackId)>();
             AppendStationCatalog(catalog);
             if (catalog.Count == 0)
             {
-                return false;
+                Pump.Begin(1);
+                Pump.Fail();
+                LastDiag = "reg=0 (no RailTracks)";
+                return;
             }
 
-            _edges = edges;
-            _selected = junctionSelectedBranch;
-            _junctionsById = junctionsById;
-            _catalog = catalog;
-            _tracksByKey = new Dictionary<string, RailTrack>(System.StringComparer.Ordinal);
-            _builtAt = Time.unscaledTime;
+            PublishCache(
+                new List<PathEdge>(),
+                new Dictionary<string, int>(),
+                new Dictionary<string, Junction>(),
+                catalog,
+                new Dictionary<string, RailTrack>(System.StringComparer.Ordinal),
+                new Dictionary<string, PathTrackMeta>(System.StringComparer.Ordinal));
+            Pump.Begin(1);
+            Pump.Complete();
             LastDiag = $"reg=0 cat={catalog.Count} (stations only)";
-            return true;
+            return;
         }
 
-        var enterCost = new Dictionary<string, float>();
-        var tracksByKey = new Dictionary<string, RailTrack>(System.StringComparer.Ordinal);
-        var seenPlain = new HashSet<string>();
-        var seenJunctionHop = new HashSet<string>();
-        var keyed = 0;
-
-        foreach (var track in tracks)
+        Junction[]? junctions = null;
+        try
         {
+            junctions = RailTrackRegistry.Junctions;
+        }
+        catch
+        {
+            junctions = null;
+        }
+
+        var junctionCount = junctions?.Length ?? 0;
+        // Tracks + plains pass + junction pass + finalize unit.
+        Pump.Begin(trackCount + trackCount + junctionCount + 1);
+
+        _mapTracks = tracks;
+        _mapJunctions = junctions;
+        _mapTrackIndex = 0;
+        _mapJunctionIndex = 0;
+        _mapPlainIndex = 0;
+        _mapKeyed = 0;
+        _mapEdges = new List<PathEdge>();
+        _mapSelected = new Dictionary<string, int>();
+        _mapJunctionsById = new Dictionary<string, Junction>();
+        _mapCatalog = new List<(string, string)>();
+        _mapEnterCost = new Dictionary<string, float>(System.StringComparer.Ordinal);
+        _mapTracksByKey = new Dictionary<string, RailTrack>(System.StringComparer.Ordinal);
+        _mapMetaByKey = new Dictionary<string, PathTrackMeta>(System.StringComparer.Ordinal);
+        _mapSeenPlain = new HashSet<string>();
+        _mapSeenJunctionHop = new HashSet<string>();
+        _mapPhase = MapPhase.Tracks;
+        LastDiag = $"mapping reg={trackCount}…";
+    }
+
+    private static int TickTracks(int budget)
+    {
+        var tracks = _mapTracks!;
+        var enterCost = _mapEnterCost!;
+        var tracksByKey = _mapTracksByKey!;
+        var metaByKey = _mapMetaByKey!;
+        var catalog = _mapCatalog!;
+
+        while (budget > 0 && _mapTrackIndex < tracks.Length)
+        {
+            var track = tracks[_mapTrackIndex++];
+            budget--;
+            Pump.AddCompleted(1);
+
             if (track == null)
             {
                 continue;
@@ -116,56 +256,108 @@ internal static class PathGraphBuilder
                 continue;
             }
 
-            keyed++;
-            tracksByKey[key] = track;
-            enterCost[key] = EnterCostFor(track);
+            _mapKeyed++;
+            RegisterTrackKeys(tracksByKey, track, key);
+            var cls = ClassifyTrack(track);
+            var len = LengthMetersOf(track);
+            var geo = GeometryLimitKmh(track);
+            var meta = new PathTrackMeta(len, geo, cls);
+            metaByKey[key] = meta;
+            var hop = PathTrackCosts.TravelSeconds(len, geo, cls);
+            enterCost[key] = hop;
+            foreach (var alias in AlternateTrackKeys(track, key))
+            {
+                enterCost[alias] = hop;
+                metaByKey[alias] = meta;
+            }
+
             TryAddCatalogEntry(catalog, track, key);
         }
 
-        AppendStationCatalog(catalog);
-
-        var junctions = RailTrackRegistry.Junctions;
-        if (junctions != null)
+        if (_mapTrackIndex >= tracks.Length)
         {
-            foreach (var junction in junctions)
+            _mapPhase = MapPhase.Junctions;
+        }
+
+        return budget;
+    }
+
+    private static int TickJunctions(int budget)
+    {
+        var junctions = _mapJunctions;
+        if (junctions == null || junctions.Length == 0)
+        {
+            _mapPhase = MapPhase.Plains;
+            return budget;
+        }
+
+        var edges = _mapEdges!;
+        var enterCost = _mapEnterCost!;
+        var junctionsById = _mapJunctionsById!;
+        var selected = _mapSelected!;
+        var seenJunctionHop = _mapSeenJunctionHop!;
+
+        while (budget > 0 && _mapJunctionIndex < junctions.Length)
+        {
+            var junction = junctions[_mapJunctionIndex++];
+            budget--;
+            Pump.AddCompleted(1);
+
+            if (junction == null || junction.outBranches == null)
             {
-                if (junction == null || junction.outBranches == null)
+                continue;
+            }
+
+            var stemTrack = junction.inBranch.track;
+            if (stemTrack == null)
+            {
+                continue;
+            }
+
+            var jid = JunctionKey(junction);
+            junctionsById[jid] = junction;
+            selected[jid] = junction.selectedBranch;
+
+            var stemId = TrackKey(stemTrack);
+            if (stemId == null)
+            {
+                continue;
+            }
+
+            for (var i = 0; i < junction.outBranches.Count; i++)
+            {
+                var outId = TrackKey(junction.outBranches[i].track);
+                if (outId == null)
                 {
                     continue;
                 }
 
-                var stemTrack = junction.inBranch.track;
-                if (stemTrack == null)
-                {
-                    continue;
-                }
-
-                var jid = JunctionKey(junction);
-                junctionsById[jid] = junction;
-                junctionSelectedBranch[jid] = junction.selectedBranch;
-
-                var stemId = TrackKey(stemTrack);
-                if (stemId == null)
-                {
-                    continue;
-                }
-
-                for (var i = 0; i < junction.outBranches.Count; i++)
-                {
-                    var outId = TrackKey(junction.outBranches[i].track);
-                    if (outId == null)
-                    {
-                        continue;
-                    }
-
-                    AddJunctionHop(edges, seenJunctionHop, enterCost, stemId, outId, jid, i);
-                    AddJunctionHop(edges, seenJunctionHop, enterCost, outId, stemId, jid, i);
-                }
+                AddJunctionHop(edges, seenJunctionHop, enterCost, stemId, outId, jid, i);
+                AddJunctionHop(edges, seenJunctionHop, enterCost, outId, stemId, jid, i);
             }
         }
 
-        foreach (var track in tracks)
+        if (_mapJunctionIndex >= junctions.Length)
         {
+            _mapPhase = MapPhase.Plains;
+        }
+
+        return budget;
+    }
+
+    private static int TickPlains(int budget)
+    {
+        var tracks = _mapTracks!;
+        var edges = _mapEdges!;
+        var enterCost = _mapEnterCost!;
+        var seenPlain = _mapSeenPlain!;
+
+        while (budget > 0 && _mapPlainIndex < tracks.Length)
+        {
+            var track = tracks[_mapPlainIndex++];
+            budget--;
+            Pump.AddCompleted(1);
+
             if (track == null)
             {
                 continue;
@@ -190,23 +382,252 @@ internal static class PathGraphBuilder
             }
         }
 
+        if (_mapPlainIndex >= tracks.Length)
+        {
+            _mapPhase = MapPhase.Finalize;
+        }
+
+        return budget;
+    }
+
+    private static void FinishMapping()
+    {
+        var edges = _mapEdges!;
+        var catalog = _mapCatalog!;
+        var trackCount = _mapTracks?.Length ?? 0;
+
+        AppendStationCatalog(catalog);
         MarkStubApproachesAsReverse(edges);
 
-        LastDiag = $"reg={trackCount} keys={keyed} cat={catalog.Count} edges={edges.Count}";
+        LastDiag = $"reg={trackCount} keys={_mapKeyed} cat={catalog.Count} edges={edges.Count}";
+        Pump.AddCompleted(1);
 
-        // Desk needs catalog; pathfinding needs edges. Allow catalog-only success.
         if (catalog.Count == 0)
+        {
+            CancelMapping();
+            Pump.Fail();
+            LastDiag += " (empty catalog)";
+            return;
+        }
+
+        PublishCache(
+            edges,
+            _mapSelected!,
+            _mapJunctionsById!,
+            catalog,
+            _mapTracksByKey!,
+            _mapMetaByKey!);
+        ClearMapScratch();
+        Pump.Complete();
+    }
+
+    private static void PublishCache(
+        List<PathEdge> edges,
+        Dictionary<string, int> selected,
+        Dictionary<string, Junction> junctionsById,
+        List<(string YardId, string TrackId)> catalog,
+        Dictionary<string, RailTrack> tracksByKey,
+        Dictionary<string, PathTrackMeta> metaByKey)
+    {
+        _edges = edges;
+        _selected = selected;
+        _junctionsById = junctionsById;
+        _catalog = catalog;
+        _tracksByKey = tracksByKey;
+        _metaByKey = metaByKey;
+        _builtAt = Time.unscaledTime;
+    }
+
+    private static void CancelMapping()
+    {
+        ClearMapScratch();
+        if (Pump.IsMapping || Pump.Current == PathGraphBuildPump.State.Failed
+            || Pump.Current == PathGraphBuildPump.State.Ready)
+        {
+            Pump.Reset();
+        }
+    }
+
+    private static void ClearMapScratch()
+    {
+        _mapPhase = MapPhase.None;
+        _mapTracks = null;
+        _mapJunctions = null;
+        _mapTrackIndex = 0;
+        _mapJunctionIndex = 0;
+        _mapPlainIndex = 0;
+        _mapKeyed = 0;
+        _mapEdges = null;
+        _mapSelected = null;
+        _mapJunctionsById = null;
+        _mapCatalog = null;
+        _mapEnterCost = null;
+        _mapTracksByKey = null;
+        _mapMetaByKey = null;
+        _mapSeenPlain = null;
+        _mapSeenJunctionHop = null;
+    }
+
+    /// <summary>Planning meta for a graph node (length / geometry / class) — Align debug.</summary>
+    public static PathTrackMeta? TryGetTrackMeta(string? trackKey)
+    {
+        var key = trackKey?.Trim();
+        if (string.IsNullOrEmpty(key) || _metaByKey == null)
+        {
+            return null;
+        }
+
+        return _metaByKey.TryGetValue(key!, out var meta) ? meta : null;
+    }
+
+    /// <summary>
+    /// 0..1 progress along the current corridor track toward the next planned track
+    /// (Bezier span). False when unknown — caller should treat as 0.
+    /// </summary>
+    public static bool TryCorridorHopProgress(
+        PathPlanResult plan,
+        int corridorIndex,
+        out float progress01)
+    {
+        progress01 = 0f;
+        if (plan == null
+            || corridorIndex < 0
+            || corridorIndex >= plan.TrackIds.Count - 1
+            || _tracksByKey == null)
         {
             return false;
         }
 
-        _edges = edges;
-        _selected = junctionSelectedBranch;
-        _junctionsById = junctionsById;
-        _catalog = catalog;
-        _tracksByKey = tracksByKey;
-        _builtAt = Time.unscaledTime;
-        return true;
+        var curKey = plan.TrackIds[corridorIndex]?.Trim();
+        var nextKey = plan.TrackIds[corridorIndex + 1]?.Trim();
+        if (string.IsNullOrEmpty(curKey) || string.IsNullOrEmpty(nextKey))
+        {
+            return false;
+        }
+
+        if (!_tracksByKey.TryGetValue(curKey!, out var rail) || rail == null)
+        {
+            return false;
+        }
+
+        Vector3 world;
+        try
+        {
+            var car = PlayerManager.Car ?? PlayerManager.LastLoco;
+            var t = car != null ? car.transform : PlayerManager.PlayerTransform;
+            if (t == null)
+            {
+                return false;
+            }
+
+            world = t.position;
+        }
+        catch
+        {
+            return false;
+        }
+
+        try
+        {
+            var curve = rail.curve;
+            if (curve == null || curve.pointCount < 2)
+            {
+                return false;
+            }
+
+            var length = curve.length;
+            if (length <= 1f)
+            {
+                length = LengthMetersOf(rail);
+            }
+
+            if (length <= 1f)
+            {
+                return false;
+            }
+
+            var closest = RailTrack.GetClosestPoint(rail, world, 0f);
+            if (closest.Item1 is not { } point)
+            {
+                return false;
+            }
+
+            var span = (float)point.span;
+            if (span < 0f)
+            {
+                span = 0f;
+            }
+            else if (span > length)
+            {
+                span = length;
+            }
+
+            var alongIncreasingSpan = true;
+            if (_tracksByKey.TryGetValue(nextKey!, out var nextRail) && nextRail != null)
+            {
+                if (ReferenceEquals(rail.inBranch.track, nextRail)
+                    || string.Equals(TrackKey(rail.inBranch.track), nextKey, System.StringComparison.Ordinal))
+                {
+                    alongIncreasingSpan = false;
+                }
+                else if (ReferenceEquals(rail.outBranch.track, nextRail)
+                    || string.Equals(TrackKey(rail.outBranch.track), nextKey, System.StringComparison.Ordinal))
+                {
+                    alongIncreasingSpan = true;
+                }
+            }
+
+            progress01 = alongIncreasingSpan ? span / length : 1f - (span / length);
+            if (progress01 < 0f)
+            {
+                progress01 = 0f;
+            }
+            else if (progress01 > 1f)
+            {
+                progress01 = 1f;
+            }
+
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>Index of <paramref name="trackKey"/> (or alias) on the planned corridor, or -1.</summary>
+    public static int CorridorIndex(PathPlanResult? plan, string? trackKey)
+    {
+        if (plan == null || plan.TrackIds.Count == 0)
+        {
+            return -1;
+        }
+
+        var exact = PathRouteDebug.IndexOfTrack(plan.TrackIds, trackKey);
+        if (exact >= 0)
+        {
+            return exact;
+        }
+
+        var key = trackKey?.Trim();
+        if (string.IsNullOrEmpty(key) || _tracksByKey == null
+            || !_tracksByKey.TryGetValue(key!, out var rail) || rail == null)
+        {
+            return -1;
+        }
+
+        for (var i = 0; i < plan.TrackIds.Count; i++)
+        {
+            var id = plan.TrackIds[i];
+            if (id != null
+                && _tracksByKey.TryGetValue(id, out var planRail)
+                && ReferenceEquals(planRail, rail))
+            {
+                return i;
+            }
+        }
+
+        return -1;
     }
 
     private static RailTrack[]? ResolveRailTracks()
@@ -343,7 +764,7 @@ internal static class PathGraphBuilder
     }
 
     /// <summary>
-    /// Graph node id — keep internal <c>#…</c> keys so junctions/mainline connect.
+    /// Graph node id — prefer display (<c>FF-A1L</c>); FullID (<c>#…</c>) registered as alias.
     /// </summary>
     public static string? TrackKey(RailTrack? rail)
     {
@@ -378,6 +799,200 @@ internal static class PathGraphBuilder
 
         var full = id.FullID?.Trim();
         return string.IsNullOrEmpty(full) ? null : full;
+    }
+
+    /// <summary>
+    /// Expand occupancy keys with every alias of the same <see cref="RailTrack"/>
+    /// (FullDisplayID ↔ FullID / <c>#Y</c>). Cars often report HB-*; edges use #Y-*.
+    /// </summary>
+    public static HashSet<string> ExpandOccupiedAliases(IEnumerable<string>? occupiedKeys)
+    {
+        var set = new HashSet<string>(System.StringComparer.Ordinal);
+        if (occupiedKeys == null || _tracksByKey == null)
+        {
+            if (occupiedKeys != null)
+            {
+                foreach (var k in occupiedKeys)
+                {
+                    if (!string.IsNullOrWhiteSpace(k))
+                    {
+                        set.Add(k.Trim());
+                    }
+                }
+            }
+
+            return set;
+        }
+
+        foreach (var key in occupiedKeys)
+        {
+            var k = key?.Trim();
+            if (string.IsNullOrEmpty(k))
+            {
+                continue;
+            }
+
+            set.Add(k!);
+            if (!_tracksByKey.TryGetValue(k!, out var rail) || rail == null)
+            {
+                continue;
+            }
+
+            foreach (var kv in _tracksByKey)
+            {
+                if (ReferenceEquals(kv.Value, rail))
+                {
+                    set.Add(kv.Key);
+                }
+            }
+        }
+
+        return set;
+    }
+
+    /// <summary>
+    /// Resolve every graph key, including <c>#Y</c> aliases, to its named yard when the
+    /// same RailTrack also has a display id such as <c>HB-G3O</c>.
+    /// </summary>
+    public static Dictionary<string, string> BuildYardAliasMap()
+    {
+        var result = new Dictionary<string, string>(System.StringComparer.Ordinal);
+        if (_tracksByKey == null)
+        {
+            return result;
+        }
+
+        var yardByRail = new Dictionary<RailTrack, string>();
+        foreach (var kv in _tracksByKey)
+        {
+            var yard = PathRouteConstraints.YardIdOf(kv.Key);
+            if (yard != null && kv.Value != null)
+            {
+                yardByRail[kv.Value] = yard;
+            }
+        }
+
+        foreach (var kv in _tracksByKey)
+        {
+            if (kv.Value != null && yardByRail.TryGetValue(kv.Value, out var yard))
+            {
+                result[kv.Key] = yard;
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// True when <paramref name="trackKey"/> is on the plan, or an alias of a plan track
+    /// (FullID ↔ FullDisplayID) mapped to the same <see cref="RailTrack"/>.
+    /// </summary>
+    public static bool IsOnPlannedCorridor(PathPlanResult? plan, string? trackKey)
+    {
+        if (plan == null)
+        {
+            return false;
+        }
+
+        if (plan.ContainsTrack(trackKey))
+        {
+            return true;
+        }
+
+        var key = trackKey?.Trim();
+        if (string.IsNullOrEmpty(key) || _tracksByKey == null)
+        {
+            return false;
+        }
+
+        if (!_tracksByKey.TryGetValue(key!, out var rail) || rail == null)
+        {
+            return false;
+        }
+
+        foreach (var kv in _tracksByKey)
+        {
+            if (ReferenceEquals(kv.Value, rail) && plan.ContainsTrack(kv.Key))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static void RegisterTrackKeys(
+        Dictionary<string, RailTrack> tracksByKey,
+        RailTrack track,
+        string primaryKey)
+    {
+        tracksByKey[primaryKey] = track;
+        foreach (var alias in AlternateTrackKeys(track, primaryKey))
+        {
+            tracksByKey[alias] = track;
+        }
+    }
+
+    private static IEnumerable<string> AlternateTrackKeys(RailTrack track, string primaryKey)
+    {
+        string? display = null;
+        string? full = null;
+        try
+        {
+            var id = LogicTrackOf(track)?.ID;
+            display = id?.FullDisplayID?.Trim();
+            full = id?.FullID?.Trim();
+        }
+        catch
+        {
+            // ignore
+        }
+
+        if (!string.IsNullOrEmpty(display)
+            && !string.Equals(display, primaryKey, System.StringComparison.Ordinal))
+        {
+            yield return display!;
+        }
+
+        if (!string.IsNullOrEmpty(full)
+            && !string.Equals(full, primaryKey, System.StringComparison.Ordinal)
+            && !string.Equals(full, display, System.StringComparison.Ordinal))
+        {
+            yield return full!;
+        }
+    }
+
+    private static float LengthMetersOf(RailTrack track)
+    {
+        try
+        {
+            var curve = track.curve;
+            if (curve != null && curve.pointCount >= 2)
+            {
+                var len = curve.length;
+                if (len > 0f)
+                {
+                    return len;
+                }
+
+                var first = curve[0];
+                var last = curve[curve.pointCount - 1];
+                if (first != null && last != null)
+                {
+                    var chord = Vector3.Distance(first.position, last.position);
+                    if (chord > 0f)
+                    {
+                        return chord;
+                    }
+                }
+            }
+        }
+        catch
+        {
+            // fall through
+        }
+
+        return PathTrackCosts.MinLengthMeters;
     }
 
     private static string? PreferDisplayKey(RailTrack? rail)
@@ -496,22 +1111,113 @@ internal static class PathGraphBuilder
         }
     }
 
-    private static float EnterCostFor(RailTrack rail)
+    /// <summary>
+    /// Unique rails near world XZ (primary key per RailTrack), sorted by distance.
+    /// Used to match the visual "straight ahead" slice to a graph id.
+    /// </summary>
+    public static List<(string TrackId, float DistM, PathTrackClass Cls)> CollectNearbyTracks(
+        float worldX,
+        float worldZ,
+        float radiusMeters,
+        int max = 48)
+    {
+        var list = new List<(string, float, PathTrackClass)>();
+        if (_tracksByKey == null || radiusMeters <= 0f || max <= 0)
+        {
+            return list;
+        }
+
+        var seenRails = new HashSet<RailTrack>();
+        var r2 = radiusMeters * radiusMeters;
+        foreach (var kv in _tracksByKey)
+        {
+            var rail = kv.Value;
+            if (rail == null || !seenRails.Add(rail))
+            {
+                continue;
+            }
+
+            float dx;
+            float dz;
+            try
+            {
+                var p = rail.transform.position;
+                dx = p.x - worldX;
+                dz = p.z - worldZ;
+            }
+            catch
+            {
+                continue;
+            }
+
+            var d2 = dx * dx + dz * dz;
+            if (d2 > r2)
+            {
+                continue;
+            }
+
+            var key = PrimaryKeyOf(rail) ?? kv.Key;
+            if (string.IsNullOrEmpty(key))
+            {
+                continue;
+            }
+
+            var cls = _metaByKey != null && _metaByKey.TryGetValue(key!, out var meta)
+                ? meta.TrackClass
+                : PathTrackClass.Unknown;
+            list.Add((key!, Mathf.Sqrt(d2), cls));
+        }
+
+        list.Sort((a, b) => a.Item2.CompareTo(b.Item2));
+        if (list.Count > max)
+        {
+            list.RemoveRange(max, list.Count - max);
+        }
+
+        return list;
+    }
+
+    private static string? PrimaryKeyOf(RailTrack rail)
+    {
+        try
+        {
+            return TrackKey(rail);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static PathTrackClass ClassifyTrack(RailTrack rail)
     {
         try
         {
             var id = LogicTrackOf(rail)?.ID;
             if (id == null)
             {
-                return PathTrackCosts.Unknown;
+                return PathTrackClass.Unknown;
             }
 
             var typeToken = TryReadTrackType(id) ?? id.FullID ?? id.FullDisplayID;
-            return PathTrackCosts.EnterCost(PathTrackCosts.Classify(typeToken));
+            return PathTrackCosts.Classify(typeToken);
         }
         catch
         {
-            return PathTrackCosts.Unknown;
+            return PathTrackClass.Unknown;
+        }
+    }
+
+    private static float? GeometryLimitKmh(RailTrack track)
+    {
+        try
+        {
+            // Permanent cache in TelemetryReader — survives InvalidateCache / Align.
+            return TelemetryReader.GetOrComputeTrackGeometryLimitKmh(track);
+        }
+        catch
+        {
+            return null;
         }
     }
 
@@ -563,13 +1269,22 @@ internal static class PathGraphBuilder
             return;
         }
 
+        // enterCost = travel seconds into `to`; junctions add switch slowdown.
         enterCost.TryGetValue(to, out var cost);
         if (cost <= 0f)
         {
-            cost = PathTrackCosts.Unknown;
+            cost = PathTrackCosts.TravelSeconds(
+                PathTrackCosts.MinLengthMeters,
+                null,
+                PathTrackClass.Unknown);
         }
 
-        edges.Add(new PathEdge(from, to, junctionId, branch, cost));
+        edges.Add(new PathEdge(
+            from,
+            to,
+            junctionId,
+            branch,
+            cost + PathTrackCosts.JunctionPenaltySeconds));
     }
 
     private static void AddPlainPair(
@@ -604,7 +1319,10 @@ internal static class PathGraphBuilder
         enterCost.TryGetValue(to, out var cost);
         if (cost <= 0f)
         {
-            cost = PathTrackCosts.Unknown;
+            cost = PathTrackCosts.TravelSeconds(
+                PathTrackCosts.MinLengthMeters,
+                null,
+                PathTrackClass.Unknown);
         }
 
         edges.Add(new PathEdge(from, to, cost: cost));

@@ -31,11 +31,38 @@ public class RoutePlanSessionTests
         RoutePlanSession.SetPlan(plan, "A", "Exit NE");
         Assert.Equal("Exit NE", RoutePlanSession.ExitCue);
 
+        Assert.Equal(1f, RoutePlanSession.EtaCostSeconds);
+        RoutePlanSession.SetRemainingEta(0.4f, 800f, 1600f, 0.5f, 0.62f, "live");
+        Assert.Equal(0.4f, RoutePlanSession.EtaCostSeconds);
+        Assert.Equal(800f, RoutePlanSession.RemainingMeters);
+        Assert.Equal(0.5f, RoutePlanSession.TripProgress01);
+        Assert.Equal(0.62f, RoutePlanSession.HopProgress01);
+        Assert.Equal("live", RoutePlanSession.EtaMode);
+
         RoutePlanSession.MarkStale("left planned path");
         Assert.False(RoutePlanSession.HasPlan);
         Assert.True(RoutePlanSession.IsStale);
         Assert.Equal("left planned path", RoutePlanSession.StatusMessage);
         Assert.Null(RoutePlanSession.Plan);
+        Assert.Null(RoutePlanSession.EtaCostSeconds);
+    }
+
+    [Fact]
+    public void SetPlan_uses_physical_travel_eta_not_dijkstra_score()
+    {
+        var plan = new PathPlanResult(
+            PathCheckStatus.Aligned,
+            new[] { "A", "B" },
+            System.Array.Empty<PathJunctionEval>(),
+            0,
+            0,
+            false,
+            totalCost: 3982f);
+
+        RoutePlanSession.SetPlan(plan, "A", travelEtaSeconds: 2002f);
+
+        Assert.Equal(2002f, RoutePlanSession.PlannedTravelSeconds);
+        Assert.Equal(2002f, RoutePlanSession.EtaCostSeconds);
     }
 
     [Fact]

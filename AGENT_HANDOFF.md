@@ -117,8 +117,8 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 |--|--|
 | **Project** | *Yard Master Suite* (UMM / Harmony / net48) |
 | **MVP** | **Epic 1** System Monitor HUD |
-| **Version (`main`)** | **0.5.68** *(**1.16** corpus retune; Tier 2 held — next **3.5 Google Maps Align**)* |
-| **Active branch** | start `feature/3.5-google-maps-align` from `main` |
+| **Version (`main`)** | **0.5.101** *(**3.5** Align Route; Tier 2 PASS 2026-08-03)* |
+| **Active branch** | `main` — next **1.17** world speed cache |
 
 **Shipped on `main`**
 
@@ -138,8 +138,9 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 
 **Next**
 
-- [ ] **Epic 3** — **3.5 “Google Maps” Align** (shortest/fastest corridor + full switch throw incl. yard thru-tracks); then resume **1.16** Tier 2 if needed. Handoff: `.cursor/handoff/0001-handoff-2026-07-31_2215.md`
-- Backlog: session reset ~7AM hotkey; DM3 MU/reverser knowledge; AR loco ≤1 km / house hide (TECH_DEBT)
+1. **1.17 World speed cache** — board-scan stutter; bake posted boards into track-keyed index.
+2. Parking: 1.16 consist-ahead; flight-sim HUD; AR loco ≤1 km / house hide; DM3; session reset.
+3. Backlog: 1.16 consist-ahead; flight-sim HUD; AR loco ≤1 km / house hide; session reset ~7AM; DM3 notes.
 **Merge-ready:** `dotnet test YardMasterSuite.sln` · `dotnet build YardMasterSuite.sln -c Release` · **deploy to Mods** via `package.ps1 -NoArchive` (required before Tier 2 smoke — see [.cursor/rules/deploy-before-smoke.mdc](.cursor/rules/deploy-before-smoke.mdc))
 
 ## Run and test

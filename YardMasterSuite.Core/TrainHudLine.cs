@@ -3,6 +3,7 @@ namespace YardMasterSuite.Core;
 /// <summary>
 /// Loco-anchored train summary bar (totals as if standing in the locomotive).
 /// Chip order is center-weighted IA (4.7): peripherals outside, Speed/Limit at mid-string.
+/// Cab levers sit just before Speed (Throttle · Indy · TrainBrake).
 /// </summary>
 public static class TrainHudLine
 {
@@ -20,10 +21,17 @@ public static class TrainHudLine
         string? backup = null,
         string? freeMotion = null,
         string? brake = null,
-        string? drive = null) =>
+        string? drive = null,
+        string? throttle = null,
+        string? indy = null,
+        string? trainBrake = null) =>
         MonitorHudLine.Join(new[]
         {
-            fuel, oil, mass, grade, load, speed, limit,
+            fuel, oil, mass, grade, load,
+            throttle ?? string.Empty,
+            indy ?? string.Empty,
+            trainBrake ?? string.Empty,
+            speed, limit,
             // 1.16 sits beside Limit: it is the action for the number to its left.
             brake ?? string.Empty,
             motors,
@@ -45,5 +53,8 @@ public static class TrainHudLine
             SpeedLimitDisplay.Format(null),
             MotorDisplay.Format(null),
             HandbrakeDisplay.FormatTotal(null),
-            CarsDisplay.Format(null));
+            CarsDisplay.Format(null),
+            throttle: CabLeverDisplay.FormatThrottle(null),
+            indy: CabLeverDisplay.FormatIndy(null),
+            trainBrake: CabLeverDisplay.FormatTrainBrake(null));
 }

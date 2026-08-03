@@ -21,13 +21,50 @@ internal sealed class DispatchDeskPanel : MonoBehaviour
     private bool _trackDropOpen;
     private Vector2 _yardScroll;
     private Vector2 _trackScroll;
+    private bool _worldSessionActive;
 
     private void Update()
     {
-        if (!HudWorldSession.IsActive(PlayerManager.PlayerTransform != null))
+        var world = HudWorldSession.IsActive(PlayerManager.PlayerTransform != null);
+        if (!world)
         {
+            if (_worldSessionActive)
+            {
+                // Leave world → drop session graph; next load warms again.
+                PathGraphBuilder.InvalidateCache();
+                _worldSessionActive = false;
+            }
+
             _visible = false;
             return;
+        }
+
+        if (!_worldSessionActive)
+        {
+            _worldSessionActive = true;
+            // Warm cities/yards/topology once per world session (not waiting for Insert).
+            PathGraphBuilder.EnsureMappingStarted();
+            Main.Log("T2 path: session map warm started");
+        }
+
+        // Frame-pump even with desk closed — session warm + early Insert both stay interactive.
+        if (PathGraphBuilder.IsMapping)
+        {
+            var finished = PathGraphBuilder.TickMapping();
+            if (_visible)
+            {
+                _status = PathGraphBuilder.MappingBanner;
+            }
+
+            if (finished)
+            {
+                Main.Log("T2 path: session map ready · " + PathGraphBuilder.LastDiag);
+                if (_visible && PathGraphBuilder.HasReadyCache)
+                {
+                    RefreshCatalog(force: false);
+                    SyncIndicesFromSession();
+                }
+            }
         }
 
         if (Input.GetKeyDown(KeyCode.Insert))
@@ -35,8 +72,30 @@ internal sealed class DispatchDeskPanel : MonoBehaviour
             _visible = !_visible;
             if (_visible)
             {
-                RefreshCatalog(force: true);
-                SyncIndicesFromSession();
+                // Never InvalidateCache on open — Reload list is the only forced remap.
+                if (PathGraphBuilder.HasReadyCache)
+                {
+                    RefreshCatalog(force: false);
+                    SyncIndicesFromSession();
+                }
+                else
+                {
+                    _catalog = new List<(string, string)>();
+                    _yards = System.Array.Empty<string>();
+                    _tracks = System.Array.Empty<string>();
+                    PathGraphBuilder.EnsureMappingStarted();
+                    if (PathGraphBuilder.HasReadyCache)
+                    {
+                        RefreshCatalog(force: false);
+                        SyncIndicesFromSession();
+                    }
+                    else
+                    {
+                        _status = PathGraphBuilder.MappingBanner.Length > 0
+                            ? PathGraphBuilder.MappingBanner
+                            : "Station mapping…";
+                    }
+                }
             }
         }
 
@@ -54,13 +113,23 @@ internal sealed class DispatchDeskPanel : MonoBehaviour
 
     private void OnGUI()
     {
-        if (!_visible || !HudWorldSession.IsActive(PlayerManager.PlayerTransform != null))
+        if (!HudWorldSession.IsActive(PlayerManager.PlayerTransform != null))
+        {
+            return;
+        }
+
+        if (PathGraphBuilder.IsMapping)
+        {
+            DrawMappingBanner();
+        }
+
+        if (!_visible)
         {
             return;
         }
 
         const float w = 400f;
-        const float h = 280f;
+        var h = PathGraphBuilder.IsMapping ? 300f : 280f;
         var x = (Screen.width - w) * 0.5f;
         var y = Screen.height * 0.14f;
         GUI.Box(new Rect(x, y, w, h), "Dispatch desk (Dispatcher · Align Route)");
@@ -75,14 +144,23 @@ internal sealed class DispatchDeskPanel : MonoBehaviour
             ?? "Dispatcher ok";
 
         var row = y + 28f;
+        if (PathGraphBuilder.IsMapping)
+        {
+            GUI.Label(new Rect(x + 12, row, w - 24, 22), PathGraphBuilder.MappingBanner);
+            row += 26f;
+        }
+
         GUI.Label(new Rect(x + 12, row, 50, 22), "City");
         if (GUI.Button(new Rect(x + 70, row, 200, 24), yard + " ▼"))
         {
             _yardDropOpen = !_yardDropOpen;
             _trackDropOpen = false;
-            if (_yards.Count == 0)
+            if (_yards.Count == 0 && !PathGraphBuilder.IsMapping)
             {
-                RefreshCatalog(force: true);
+                PathGraphBuilder.EnsureMappingStarted();
+                _status = PathGraphBuilder.MappingBanner.Length > 0
+                    ? PathGraphBuilder.MappingBanner
+                    : "Station mapping…";
             }
         }
 
@@ -212,9 +290,16 @@ internal sealed class DispatchDeskPanel : MonoBehaviour
         if (GUI.Button(new Rect(x + 170, row, 90, 28), "Reload list"))
         {
             RefreshCatalog(force: true);
-            _status = _yards.Count > 0
-                ? $"{_yards.Count} cities · {PathGraphBuilder.LastDiag}"
-                : ("empty · " + PathGraphBuilder.LastDiag);
+            if (PathGraphBuilder.IsMapping)
+            {
+                _status = PathGraphBuilder.MappingBanner;
+            }
+            else
+            {
+                _status = _yards.Count > 0
+                    ? $"{_yards.Count} cities · {PathGraphBuilder.LastDiag}"
+                    : ("empty · " + PathGraphBuilder.LastDiag);
+            }
         }
 
         if (!string.IsNullOrEmpty(_status))
@@ -223,11 +308,46 @@ internal sealed class DispatchDeskPanel : MonoBehaviour
         }
     }
 
+    private static void DrawMappingBanner()
+    {
+        var banner = PathGraphBuilder.MappingBanner;
+        if (string.IsNullOrEmpty(banner))
+        {
+            banner = "Station mapping…";
+        }
+
+        const float bw = 420f;
+        const float bh = 48f;
+        var bx = (Screen.width - bw) * 0.5f;
+        var by = Screen.height * 0.06f;
+        GUI.Box(new Rect(bx, by, bw, bh), banner);
+    }
+
     private void RefreshCatalog(bool force)
     {
         if (force)
         {
             PathGraphBuilder.InvalidateCache();
+            PathGraphBuilder.EnsureMappingStarted();
+            _catalog = new List<(string, string)>();
+            _yards = System.Array.Empty<string>();
+            _tracks = System.Array.Empty<string>();
+            _status = PathGraphBuilder.MappingBanner.Length > 0
+                ? PathGraphBuilder.MappingBanner
+                : "Station mapping…";
+            return;
+        }
+
+        if (!PathGraphBuilder.HasReadyCache)
+        {
+            PathGraphBuilder.EnsureMappingStarted();
+            _catalog = new List<(string, string)>();
+            _yards = System.Array.Empty<string>();
+            _tracks = System.Array.Empty<string>();
+            _status = PathGraphBuilder.IsMapping
+                ? PathGraphBuilder.MappingBanner
+                : ("no cities · " + PathGraphBuilder.LastDiag);
+            return;
         }
 
         if (!PathGraphBuilder.TryBuild(out _, out _, out _, out var catalog) || catalog.Count == 0)

@@ -573,20 +573,27 @@ Cool/Dead → release. Player.log: `T2 thermal: soft-cap → … (Warning|Critic
 
 ## Epic 3 — Yard Master / Dispatcher
 
-### 3.5 Align Route (CTC) — smoke @ v0.5.33
+### 3.5 Align Route (CTC) — smoke @ **v0.5.101** — Tier 2 **PASS** (2026-08-03)
 
-**Keys / UI:** `Insert` = desk. Pathfinding on **Set dest** / **Recheck** / **Align Route** (or `End` pin). City/track dropdowns. **Recheck** = recompute from current track to saved dest (walk to a new start). Stale only when leaving the **planned corridor** (driving along the route stays Path OK).
+**Keys / UI:** `Insert` = desk. Pathfinding on **Set dest** / **Recheck** / **Align Route** (or `End` pin). City/track dropdowns. **Recheck** = recompute from current track to saved dest. Stale when leaving corridor **or** a planned switch is flipped. Chip: `Path OK | ETA … | rem … | trip …%` (`lag` mode).
 
-**License:** **Dispatcher** (`Dispatcher1` general). Topology cached in-session; routes memoized by origin→dest.
+**License:** **Dispatcher** (`Dispatcher1`). Dijkstra = **travel seconds**; Align re-evals frozen corridor (no full graph Invalidate after throw).
 
-**Sign-off**
+**Player.log:** `T2 path: detail` / `costcheck …` / `eta-refresh`; keep `T2 limit` Drive fields for 1.16 corpus.
 
-- [ ] UMM **0.5.33** Active
-- [ ] Set dest → Path N wrong / Facing / Exit; Align → threw N → Path OK
-- [ ] Drive along aligned path → stays Path OK (not stale); leave corridor → Path stale → Recheck
-- [ ] Recheck from a new track recalculates origin→dest
-- [ ] Dispatcher → Align throws; Path updates after
-- [ ] Mod Off → On; no exceptions
+**Slice smoke**
+
+- [x] **#1 Mapping:** cold Insert → mapping banner; world interactive; cities fill — Tier 2 **PASS** @ **0.5.80**
+- [x] **#3 ETA:** accel/brake gradual; `lag`; rem/trip sane — Tier 2 **PASS** @ **0.5.101**
+- [x] **#4 Transit:** HB Path OK on clear Through (not pocket) — Tier 2 **PASS** @ **0.5.101**. **Waived (player):** staged “no free I→O ⇒ skip whole city” / park-a-car Recheck — re-open if seen in normal play; Tier 1 still locks occupied Through + NoPath.
+
+**Full sign-off**
+
+- [x] UMM **0.5.101** Active
+- [x] Set dest → Path / Facing / Exit / **ETA**; Align → threw N → **Path OK**
+- [x] Drive Path OK; leave → Path stale → Recheck/Align (incl. W-0416 dual-branch fix; planned switch flip → stale)
+- [x] Dispatcher → Align throws; Align again → already clear / threw 0; Mod Off → On; no exceptions
+- [x] Arrival → `ETA 0s` / rem 0 / trip 100% (earlier haul)
 
 ### 3.4 Path tracer: manual check — **demoted** (engine only; see 3.5)
 

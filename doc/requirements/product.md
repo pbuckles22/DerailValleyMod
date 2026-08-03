@@ -33,7 +33,7 @@ Loco↔freight does not require MU. Incomplete link = not “drivable” for HUD
 
 Center-weighted IA (**4.7**): bar is **horizontally centered**; mid-string = Speed · Limit.
 
-`Fuel · Oil · Mass · Grade · Load · Speed · Limit · Motors · Handbrakes · Cars`
+`Fuel · Oil · Mass · Grade · Load · Throttle · Indy · TrainBrake · Speed · Limit · Motors · Handbrakes · Cars`
 
 | | |
 |--|--|
@@ -48,6 +48,9 @@ Center-weighted IA (**4.7**): bar is **horizontally centered**; mid-string = Spe
 | Mass | `Mass 240 t` | **1.2** |
 | Grade | `Grade +1.2 %` | **1.2** |
 | Load | `Load 42 %` | amps / max; yellow ≥80%, red ≥95% — **1.7** |
+| Throttle | `Throttle 42 %` | Cab throttle lever position (0–100%) |
+| Indy | `Indy 10 %` | Independent brake lever position |
+| TrainBrake | `TrainBrake 35 %` | Train/auto brake lever — not advisory `Brake N in …` |
 | Speed | `Speed 36 km/h` | **1.1** — visual center with Limit |
 | Limit | `Limit 60` | **one** badge — **1.10**; ↑↓ — **1.11** |
 | Motors | `Motors OK` / `Hot` / `Dead` | **1.8** current-state only |
@@ -63,6 +66,7 @@ Center-weighted IA (**4.7**): bar is **horizontally centered**; mid-string = Spe
 | Heading | `Heading NE` / `Heading ENE` | **1.12** — 16-point rose; no degrees; never `— Heading` on menus |
 | Pos | *(removed — Bundle B.1)* | Was **1.13**; `T2 pos` debug only |
 | Marked | `Marked NE 84m` / `Marked here` | **1.14** — return bearing + distance; omit when unmarked |
+| Clock | `Clock 14:30` | In-game world time (`DateTimeWrapper`); world session only |
 | Version | *(removed from HUD)* | Confirm ship # in **UMM Mod Manager** / `info.json` only |
 
 *(No mod version chip on the always-on bar.)*
