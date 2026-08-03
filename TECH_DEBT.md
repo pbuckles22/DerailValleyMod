@@ -10,7 +10,7 @@ Durable ranked backlog. Handoff notes may mention debt; **promote** anything tha
 
 
 
-**Last full pass:** **1.17** ship / CMPH — 2026-08-03.
+**Last full pass:** Stress RAG ship / handoff — 2026-08-03.
 
 
 
