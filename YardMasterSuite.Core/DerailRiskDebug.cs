@@ -4,26 +4,14 @@ using System.Collections.Generic;
 namespace YardMasterSuite.Core;
 
 /// <summary>
-/// Compact derail / tip-over risk fragment for <c>T2 limit</c> tuning.
-/// <para>
-/// Derail Valley exposes no dedicated rollover API. Live risk comes from coupler-joint
-/// <c>TrainStress</c> vs <c>GameParams.DerailStressThreshold</c> /
-/// <c>DerailBuildUpThreshold</c>. Predictive "upcoming" risk is the SignPlacer curve ladder
-/// we already mirror: current speed vs current / ahead geometry limits.
-/// </para>
+/// Compact derail / tip-over risk fragment for <c>T2 limit</c> (and future Stress chip).
+/// Live risk: coupler <c>TrainStress</c> vs game derail thresholds.
+/// Curve proxy: current speed vs ahead posted board (no geometry synthesis).
 /// </summary>
 public static class DerailRiskDebug
 {
-    /// <summary>
-    /// Thresholds below this are treated as unset (0.5.64 logged <c>thr=0/1</c> and bogus
-    /// four-digit stress percents — always keep the raw pair for calibration).
-    /// </summary>
     public const float MinUsableThreshold = 0.05f;
 
-    /// <summary>
-    /// <c>stress=raw/thr(pct) build=… curveNow=… curveAhead=…</c>
-    /// Missing inputs become <c>—</c>.
-    /// </summary>
     public static string Format(
         float? stress,
         float? derailBuildUp,
@@ -44,10 +32,7 @@ public static class DerailRiskDebug
         return $"stress={stressTag} build={buildTag} curveNow={curveNow} curveAhead={curveAhead}";
     }
 
-    /// <summary>
-    /// Tightest geometry-synthesized board ahead (SignPlacer ladder proxy for tip-over).
-    /// Falls back to the tightest posted board when no geometry board is in the scan.
-    /// </summary>
+    /// <summary>Tightest posted board ahead (for curveAhead debug).</summary>
     public static AheadBoard? SelectAheadCurveBoard(IReadOnlyList<AheadBoard>? aheadBoards)
     {
         if (aheadBoards == null || aheadBoards.Count == 0)
@@ -55,8 +40,7 @@ public static class DerailRiskDebug
             return null;
         }
 
-        AheadBoard? bestGeo = null;
-        AheadBoard? bestAny = null;
+        AheadBoard? best = null;
         for (var i = 0; i < aheadBoards.Count; i++)
         {
             var board = aheadBoards[i];
@@ -65,32 +49,18 @@ public static class DerailRiskDebug
                 continue;
             }
 
-            if (bestAny is null
-                || board.Kmh + 0.5f < bestAny.Value.Kmh
-                || (Math.Abs(board.Kmh - bestAny.Value.Kmh) < 0.5f
-                    && board.AlongMeters < bestAny.Value.AlongMeters))
+            if (best is null
+                || board.Kmh + 0.5f < best.Value.Kmh
+                || (Math.Abs(board.Kmh - best.Value.Kmh) < 0.5f
+                    && board.AlongMeters < best.Value.AlongMeters))
             {
-                bestAny = board;
-            }
-
-            if (!board.FromGeometry)
-            {
-                continue;
-            }
-
-            if (bestGeo is null
-                || board.Kmh + 0.5f < bestGeo.Value.Kmh
-                || (Math.Abs(board.Kmh - bestGeo.Value.Kmh) < 0.5f
-                    && board.AlongMeters < bestGeo.Value.AlongMeters))
-            {
-                bestGeo = board;
+                best = board;
             }
         }
 
-        return bestGeo ?? bestAny;
+        return best;
     }
 
-    /// <summary>speed / limit as a percent (100 = at the board; &gt;100 = over).</summary>
     public static string CurvePercent(float? speedKmh, float? limitKmh)
     {
         if (speedKmh is not float speed || limitKmh is not float limit || limit <= 0.5f)
@@ -102,7 +72,6 @@ public static class DerailRiskDebug
         return $"{pct}%";
     }
 
-    /// <summary>value / threshold as a percent (100 = at derail stress/build threshold).</summary>
     public static string RatioPercent(float? value, float? threshold)
     {
         if (value is not float v || threshold is not float thr || thr < MinUsableThreshold)
@@ -114,7 +83,6 @@ public static class DerailRiskDebug
         return $"{pct}%";
     }
 
-    /// <summary>Always keeps raw numbers; percent only when the threshold looks usable.</summary>
     public static string FormatPair(float? value, float? threshold)
     {
         if (value is not float v)

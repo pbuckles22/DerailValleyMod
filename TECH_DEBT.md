@@ -10,7 +10,7 @@ Durable ranked backlog. Handoff notes may mention debt; **promote** anything tha
 
 
 
-**Last full pass:** Epic 2 close / **2.3** — 2026-07-28.
+**Last full pass:** **1.17** ship / CMPH — 2026-08-03.
 
 
 
@@ -68,9 +68,11 @@ High ROI; frequent pain; not blocking.
 
 - [x] **3.5 Insert mapping freeze (#1)** — frame-pump + toast @ **0.5.80**. Tier 2 **PASS**.
 
-- [ ] **1.17 World speed cache (NEXT after 3.5 commit)** — cruise stutter from live `SignDebug` scan. Index boards on graph; Limit queries cache. **Do not start on dirty 3.5 tree.** Band-aids @ 0.5.79: Align no InvalidateCache, sign refresh 5 s, Drive Dist off HUD.
+- [x] **1.17 Posted + Next** — Recommended/Brake/geometry-ahead CUT; Limit + Next only @ **0.5.104**. Tier 2 **PASS** (2026-08-03). **Ice:** #4 blind behind-seed — reopen if Limit empty with posted board <600 m behind.
 
-- [ ] **1.16 / Brake: consist ahead obstruction** — parked (after **1.17**). Player hit occupied dest track too hot; want HUD cue + recommended-speed foresight for train/cars on the route ahead (not only boards/geometry). Area: `TrackPathAhead` / Brake advisory / loco radar.
+- [ ] **Stress RAG HUD chip** — **next.** Coupler stress vs derail thresholds; typical green/yellow/red.
+
+- [ ] **1.17 #4 behind-seed polish** — world index seed path; empty SignDebug may reuse stale PathAhead (code-review WARN). Only if smoke shows empty Limit with board behind.
 
 - [ ] **UX: Flight-sim style always-on HUD** — parked (player ref 2026-08-01). Clean corner telemetry (airspeed/engines/fuel AOA vs flaps/trim/alt/VS), destination progress bar + ETA, not a dense top strip. Revisit with ui-ux / DESIGN_SYSTEM when HUD layout is reopened (post–3.5). Ref: flight-sim HUD screenshot in session.
 

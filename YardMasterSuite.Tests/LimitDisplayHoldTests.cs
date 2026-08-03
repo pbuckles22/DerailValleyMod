@@ -9,12 +9,12 @@ public class LimitDisplayHoldTests
     {
         var next = LimitDisplayHold.Step(
             candidateKmh: 50f,
-            candidateAuthority: LimitAuthority.Recommended,
+            candidateAuthority: LimitAuthority.Posted,
             heldKmh: 90f,
             heldAuthority: LimitAuthority.Posted,
             heldAgeSeconds: 0.1f);
         Assert.Equal(50f, next.LimitKmh);
-        Assert.Equal(LimitAuthority.Recommended, next.Authority);
+        Assert.Equal(LimitAuthority.Posted, next.Authority);
     }
 
     [Fact]
@@ -24,40 +24,40 @@ public class LimitDisplayHoldTests
             candidateKmh: 90f,
             candidateAuthority: LimitAuthority.Posted,
             heldKmh: 50f,
-            heldAuthority: LimitAuthority.Recommended,
+            heldAuthority: LimitAuthority.Posted,
             heldAgeSeconds: 2f);
         Assert.Equal(50f, early.LimitKmh);
-        Assert.Equal(LimitAuthority.Recommended, early.Authority);
+        Assert.Equal(LimitAuthority.Posted, early.Authority);
 
         var later = LimitDisplayHold.Step(
             candidateKmh: 90f,
             candidateAuthority: LimitAuthority.Posted,
             heldKmh: 50f,
-            heldAuthority: LimitAuthority.Recommended,
+            heldAuthority: LimitAuthority.Posted,
             heldAgeSeconds: LimitDisplayHold.LoosenHoldSeconds);
         Assert.Equal(90f, later.LimitKmh);
         Assert.Equal(LimitAuthority.Posted, later.Authority);
     }
 
     [Fact]
-    public void Recommended_becomes_Posted_immediately_when_board_is_taken()
+    public void Geometry_becomes_Posted_immediately_for_same_number()
     {
         var next = LimitDisplayHold.Step(
             candidateKmh: 50f,
             candidateAuthority: LimitAuthority.Posted,
             heldKmh: 50f,
-            heldAuthority: LimitAuthority.Recommended,
+            heldAuthority: LimitAuthority.Geometry,
             heldAgeSeconds: 0f);
         Assert.Equal(50f, next.LimitKmh);
         Assert.Equal(LimitAuthority.Posted, next.Authority);
     }
 
     [Fact]
-    public void Posted_does_not_flip_back_to_Recommended_for_same_number()
+    public void Posted_does_not_flip_to_Geometry_for_same_number()
     {
         var next = LimitDisplayHold.Step(
             candidateKmh: 50f,
-            candidateAuthority: LimitAuthority.Recommended,
+            candidateAuthority: LimitAuthority.Geometry,
             heldKmh: 50f,
             heldAuthority: LimitAuthority.Posted,
             heldAgeSeconds: 0f);
@@ -76,16 +76,15 @@ public class LimitDisplayHoldTests
     [Fact]
     public void Standstill_keeps_held_limit_across_facing_flip()
     {
-        // Player.log Speed 0: travel/facing jitter 40 (Recommended) ↔ 80 (Posted).
         var next = LimitDisplayHold.Step(
             candidateKmh: 80f,
             candidateAuthority: LimitAuthority.Posted,
             heldKmh: 40f,
-            heldAuthority: LimitAuthority.Recommended,
+            heldAuthority: LimitAuthority.Posted,
             heldAgeSeconds: LimitDisplayHold.LoosenHoldSeconds,
             speedKmh: 0f);
         Assert.Equal(40f, next.LimitKmh);
-        Assert.Equal(LimitAuthority.Recommended, next.Authority);
+        Assert.Equal(LimitAuthority.Posted, next.Authority);
     }
 
     [Fact]
@@ -95,7 +94,7 @@ public class LimitDisplayHoldTests
             candidateKmh: 80f,
             candidateAuthority: LimitAuthority.Posted,
             heldKmh: 40f,
-            heldAuthority: LimitAuthority.Recommended,
+            heldAuthority: LimitAuthority.Posted,
             heldAgeSeconds: LimitDisplayHold.LoosenHoldSeconds,
             speedKmh: 20f);
         Assert.Equal(80f, next.LimitKmh);
@@ -106,13 +105,8 @@ public class LimitDisplayHoldTests
 public class SpeedLimitAuthorityFormatTests
 {
     [Fact]
-    public void Format_appends_posted_and_recommended_labels()
+    public void Format_is_plain_limit_number()
     {
-        Assert.Equal(
-            "Limit 90 (Posted)",
-            SpeedLimitDisplay.Format(90f, LimitTrend.None, LimitAuthority.Posted));
-        Assert.Equal(
-            "Limit 50 (Recommended)",
-            SpeedLimitDisplay.Format(50f, LimitTrend.None, LimitAuthority.Recommended));
+        Assert.Equal("Limit 90", SpeedLimitDisplay.Format(90f));
     }
 }

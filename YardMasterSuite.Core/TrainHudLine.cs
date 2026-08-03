@@ -20,7 +20,6 @@ public static class TrainHudLine
         string cars,
         string? backup = null,
         string? freeMotion = null,
-        string? brake = null,
         string? drive = null,
         string? throttle = null,
         string? indy = null,
@@ -32,13 +31,10 @@ public static class TrainHudLine
             indy ?? string.Empty,
             trainBrake ?? string.Empty,
             speed, limit,
-            // 1.16 sits beside Limit: it is the action for the number to its left.
-            brake ?? string.Empty,
             motors,
             freeMotion ?? string.Empty,
             handbrakes, cars,
             backup ?? string.Empty,
-            // Smoke-run odometer: how far this world session has driven.
             drive ?? string.Empty,
         });
 

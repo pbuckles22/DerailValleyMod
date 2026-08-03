@@ -117,15 +117,17 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 |--|--|
 | **Project** | *Yard Master Suite* (UMM / Harmony / net48) |
 | **MVP** | **Epic 1** System Monitor HUD |
-| **Version (`main`)** | **0.5.101** *(**3.5** Align Route; Tier 2 PASS 2026-08-03)* |
-| **Active branch** | `main` — next **1.17** world speed cache |
+| **Version (`main`)** | **0.5.104** *(**1.17** Posted + Next; Tier 2 PASS 2026-08-03)* |
+| **Active branch** | `main` |
 
 **Shipped on `main`**
 
 - [x] **Epic 0** Safe Boot *(0.4 scaffold)*
-- [x] **Epic 1** Diagnostic HUD — **1.1–1.15** complete (**1.15** @ **0.5.20**)
+- [x] **Epic 1** Diagnostic HUD — **1.1–1.15** complete (**1.15** @ **0.5.20**); **1.16** CUT; **1.17** @ **0.5.104**
 - [x] **Epic 4** HUD quality — **4.1–4.12** complete 2026-07-28 (**4.12** @ **0.5.17**)
 - [x] **Epic 2** Governor Mode — **2.1**–**2.3** complete 2026-07-28 (**2.3** @ **0.5.25**)
+- [x] **3.5** Align Route (**0.5.101**)
+- [x] **1.17** Posted Limit + Next (**0.5.104**, Tier 2 **PASS**; #4 behind-seed on ice)
 - [x] **Tier 2 debug inject** — F5–F10 / F11 + PgUp/PgDn turntable (**F10** motors @ **0.5.16**)
 - [x] Bundle E **#23** + freight/car confirm (**v0.4.80**, Tier 2 **PASS**); **#22** Load live hard-pull **waived**
 - [x] **2.1** Three-Gate helper (**v0.4.81**, Tier 1)
@@ -138,9 +140,9 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 
 **Next**
 
-1. **1.17 World speed cache** — board-scan stutter; bake posted boards into track-keyed index.
-2. Parking: 1.16 consist-ahead; flight-sim HUD; AR loco ≤1 km / house hide; DM3; session reset.
-3. Backlog: 1.16 consist-ahead; flight-sim HUD; AR loco ≤1 km / house hide; session reset ~7AM; DM3 notes.
+1. **Stress RAG HUD chip** — coupler/derail stress green/yellow/red (new feature branch from `main`).
+2. Then **3.1** / **3.1b** / **3.2**.
+3. Parking: flight-sim HUD; AR loco ≤1 km / house hide; DM3; session reset; 1.17 #4 behind-seed if Limit stays empty with board <600 m behind.
 **Merge-ready:** `dotnet test YardMasterSuite.sln` · `dotnet build YardMasterSuite.sln -c Release` · **deploy to Mods** via `package.ps1 -NoArchive` (required before Tier 2 smoke — see [.cursor/rules/deploy-before-smoke.mdc](.cursor/rules/deploy-before-smoke.mdc))
 
 ## Run and test

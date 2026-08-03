@@ -13,9 +13,9 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 | | |
 |--|--|
-| **Journey** | Stage 3 — **1.17** next (after **3.5** ship) |
+| **Journey** | Stage 3 — **Stress RAG chip** next (after **1.17**) |
 | **MVP** | Epic 1 System Monitor HUD |
-| **Version** | **0.5.101** *(**3.5** Align on `main`)* |
+| **Version** | **0.5.104** *(**1.17** Posted + Next on `main`)* |
 | **Active branch** | `main` |
 
 ---
@@ -24,7 +24,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 | Branch | Role |
 |--------|------|
-| **`main`** | Integration — **0.5.101** (**3.5** Align Tier 2 PASS) |
+| **`main`** | Integration — **0.5.104** (**1.17** Tier 2 PASS) |
 
 ---
 
@@ -33,7 +33,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 ### Epics
 
 - [x] **Epic 0** — Foundation & Safe Boot
-- [x] **Epic 1** — Diagnostic HUD *(**1.15** done; **1.16** paused; **1.17** next)*
+- [x] **Epic 1** — Diagnostic HUD *(**1.15** done; **1.16** CUT; **1.17** done @ **0.5.104**)*
 - [x] **Epic 2** — Governor Mode *(complete 2026-07-28; **2.3** @ **0.5.25**)*
 - [ ] **Epic 3** — Yard Master / Dispatcher *(**3.5** done @ **0.5.101**)*
 - [x] **Epic 4** — HUD quality *(complete 2026-07-28 incl. **4.12** @ **0.5.17**)*
@@ -41,5 +41,6 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 ### Next
 
-1. **[ ] 1.17** — world speed cache (board-scan stutter)  
-2. Parking: 1.16 consist-ahead; flight-sim HUD; AR loco ≤1 km / house hide; DM3; session reset
+1. **[ ] Stress RAG HUD chip** — coupler stress vs derail thresholds (G/Y/R)
+2. Then **3.1** / **3.1b** / **3.2**
+3. Parking: flight-sim HUD; AR loco ≤1 km / house hide; DM3; session reset; 1.17 #4 behind-seed ice

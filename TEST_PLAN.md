@@ -215,13 +215,27 @@ Top bar `Fuel N %` / `Oil N %` after Motors. Yellow (paired) if either &lt; 20%;
 - [x] Mod Off → On; no exceptions
 - [x] Load-time `GUI.skin` ArgumentException fixed (styles built only in `OnGUI`)
 
-### 1.16 Recommended Limit + soft brake — `T2 limit` — **paused** (T2 held @ v0.5.68)
+### 1.16 Recommended Limit — **CUT** (2026-08-03)
 
-Player priority shifted to **3.5 Google Maps Align**. Corpus retune shipped **0.5.68** (dial **0.80**, margin **10%**, Brake cap **4.5 km**) without a new Tier 2 ask. Resume 1.16 smoke after Align shortest-path.
+`(Recommended)` auto-adopt ruined QoL (80↔50↔80). Soft **Brake** cue may remain. Historical Tier 2 notes below are archive only.
+
+### 1.17 Posted Limit + Next look-ahead — `T2 limit` — **PASS @ 0.5.104**
+
+HUD: `Limit N | Next M (Xm)` (or `X.Xkm`). Limit = sticky posted only — no `(Posted)` / `(Recommended)`. Soft Brake chip **CUT**. Geometry-ahead boards **CUT**. World board index seeds Limit from behind only (not Next).
+
+**Sign-off — PASS @ 0.5.104 (player 2026-08-03)**
+
+- [x] Mod Manager shows **0.5.104** — `Limit N` stable (no brief Limit thrash; no `(Posted)` label)
+- [x] When a different board is on path: `Next M (distance)` appears with sensible meters/km
+- [x] No `(Recommended)`, no `Brake N in …` chip
+- [x] Mod Off → On; no exceptions
+- [ ] **#4 on ice** — blind behind-seed / empty Limit at startup if board &gt;600 m behind may be OK; reopen if Limit stays empty with board &lt;600 m behind
+
+### 1.16 archive (Recommended adopt — do not resume)
 
 Look-ahead boards come from the **route ahead** (`TrackPathAhead`, switches as thrown) with **arc** route distance (Bezier span, not chord). On-path facing uses the **route tangent at the board** (not loco heading — 0.5.52 late `fDot=-0.39`). On-path boards no longer need the right-hand gate (0.5.51). Braking has a soft budget (yellow + adopt) and a hard budget (red), both reduced by downhill gravity; grade beating hard braking shows `RUNAWAY`. Sticky Limit is released only by **passing** a board. Labels `(Posted)` / `(Recommended)` / `(Geometry)`; 5 s loosen-hold. Adopted Recommended uses release-lead hysteresis (0.5.54) so a far restriction does not 30↔60 chatter on grade wobble. **0.5.55:** speed-floor release + scan-drop + standstill freeze. **0.5.56:** adopt-time grade kept for sticky release; sticky never clobbered by looser Resolve. **0.5.57:** rich drive/brake debug. **0.5.58:** honest hard budgets + calmer color + no duplicate target. **0.5.59:** dynamic ≤6 km route scan; tightest severe board gets Brake at mass/grade/type slowdown time ×1.5, so an intermediate 60 cannot hide a farther 30. **0.5.60:** Brake target qualifies against **speed** (the Limit chip adopting it no longer silences it); window is the worse of comfortable slowdown and guaranteed heavy-application room **+50%**; planning grade is safety-biased and the on-screen target cannot blink out. **0.5.61 (root cause):** `T2 limit`'s new `scan=/path=/reach=` diagnostics proved the 0.5.60 warning-window math was correct but starved of data — `path=7seg reach=6971m` shows the route walk already knew the board was there, while `ahead=2 min=70@465m` shows the scan could not *see* it because its `SignDebug` prop had not streamed into the scene yet (Derail Valley streams sign decor near the train; the `RailTrack` graph/curve is not streamed). Fix bypasses sign streaming entirely for early detection: every walked route segment's own curve radius is scanned via the existing SignPlacer-ladder geometry math (`SpeedLimitGeometryZones.TryGoverningZone`), synthesizing an `AheadBoard` from geometry alone wherever a real sign has not loaded yet (`T2 limit` gains `geo=N`). Also fixes issue #2 from the same session: `MinTargetDeltaKmh` (Brake's own "close enough, don't nag" gate) now equals `SpeedLimitDisplay.NearAboveKmh` (5, was 3) so Brake cannot go red while the Limit chip is still only yellow.
 
-**Sign-off**
+**Archive sign-off (1.16 Recommended)**
 
 - [ ] Mod Manager shows `0.5.68` — Tier 2 **held** (dial **0.80**, margin 10%, Brake cap 4.5 km; Align Google Maps first)
 - [ ] Mod Manager shows `0.5.67` — superseded (Drive chip; corpus capture)

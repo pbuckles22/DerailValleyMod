@@ -3,10 +3,9 @@ using System;
 namespace YardMasterSuite.Core;
 
 /// <summary>
-/// Pure speed-limit formatting for the train HUD bar.
+/// Pure speed-limit formatting for the train HUD bar (**1.17**).
 /// Yellow from 10 km/h below through 5 km/h above the limit; red beyond that upper band.
-/// Optional ▲/▼ trend for the next posted change (**1.11**) — no second km/h chip.
-/// Authority suffix: (Posted) vs (Recommended) so look-ahead is never mistaken for the sign underfoot.
+/// Optional Next with distance — Limit number only (no Posted/Recommended labels).
 /// </summary>
 public static class SpeedLimitDisplay
 {
@@ -16,31 +15,41 @@ public static class SpeedLimitDisplay
     /// <summary>Yellow band extends this many km/h above the Limit (inclusive).</summary>
     public const float NearAboveKmh = 5f;
 
-    /// <summary>ASCII glyphs — Unity default GUI font often lacks ▲/▼.</summary>
-    public const string UpArrow = "^";
-    public const string DownArrow = "v";
+    /// <summary>Distances at or above this use km in the Next chip.</summary>
+    public const float NextKmThresholdMeters = 1000f;
 
     public const string WarningColor = "#FFD400";
     public const string CriticalColor = "#FF5555";
-    public const string UpColor = "#55FF55";
-    public const string DownColor = "#FFD400";
 
-    public const string PostedLabel = "(Posted)";
-    public const string RecommendedLabel = "(Recommended)";
-    public const string GeometryLabel = "(Geometry)";
-
+    /// <summary>
+    /// Optional Next with distance — meters only when close enough (<see cref="NextLimitReveal"/>).
+    /// </summary>
     public static string Format(
         float? limitKmh,
-        LimitTrend trend = LimitTrend.None,
-        LimitAuthority authority = LimitAuthority.None) =>
-        FormatCore(limitKmh, richText: false, severity: LimitSeverity.None, trend, authority);
+        float? nextKmh = null,
+        float? nextDistanceMeters = null,
+        float massTonnes = 40f) =>
+        FormatCore(
+            limitKmh,
+            richText: false,
+            severity: LimitSeverity.None,
+            nextKmh,
+            nextDistanceMeters,
+            massTonnes);
 
     public static string FormatHud(
         float? speedKmh,
         float? limitKmh,
-        LimitTrend trend = LimitTrend.None,
-        LimitAuthority authority = LimitAuthority.None) =>
-        FormatCore(limitKmh, richText: true, severity: Severity(speedKmh, limitKmh), trend, authority);
+        float? nextKmh = null,
+        float? nextDistanceMeters = null,
+        float massTonnes = 40f) =>
+        FormatCore(
+            limitKmh,
+            richText: true,
+            severity: Severity(speedKmh, limitKmh),
+            nextKmh,
+            nextDistanceMeters,
+            massTonnes);
 
     public static LimitSeverity Severity(float? speedKmh, float? limitKmh)
     {
@@ -86,52 +95,49 @@ public static class SpeedLimitDisplay
         return LimitTrend.None;
     }
 
-    public static string AuthoritySuffix(LimitAuthority authority) =>
-        authority switch
+    public static string FormatNextDistance(float meters)
+    {
+        if (meters >= NextKmThresholdMeters)
         {
-            LimitAuthority.Posted => $" {PostedLabel}",
-            LimitAuthority.Recommended => $" {RecommendedLabel}",
-            LimitAuthority.Geometry => $" {GeometryLabel}",
-            _ => string.Empty,
-        };
+            return $"{meters / 1000f:0.0}km";
+        }
+
+        return $"{Round(meters)}m";
+    }
 
     private static string FormatCore(
         float? limitKmh,
         bool richText,
         LimitSeverity severity,
-        LimitTrend trend,
-        LimitAuthority authority)
+        float? nextKmh,
+        float? nextDistanceMeters,
+        float massTonnes)
     {
         if (limitKmh is null)
         {
             return "— Limit";
         }
 
-        var text = $"Limit {Round(limitKmh.Value)}{AuthoritySuffix(authority)}";
+        var text = $"Limit {Round(limitKmh.Value)}";
         if (richText && severity != LimitSeverity.None)
         {
             var color = severity == LimitSeverity.Over ? CriticalColor : WarningColor;
             text = $"<color={color}>{text}</color>";
         }
 
-        return text + FormatTrendSuffix(trend, richText);
-    }
-
-    private static string FormatTrendSuffix(LimitTrend trend, bool richText)
-    {
-        if (trend == LimitTrend.None)
+        if (nextKmh is float next && nextDistanceMeters is float along && along > 0f)
         {
-            return string.Empty;
+            if (NextLimitReveal.ShowDistance(along, limitKmh.Value, next, massTonnes))
+            {
+                text += $" | Next {Round(next)} ({FormatNextDistance(along)})";
+            }
+            else
+            {
+                text += $" | Next {Round(next)}";
+            }
         }
 
-        var arrow = trend == LimitTrend.Up ? UpArrow : DownArrow;
-        if (!richText)
-        {
-            return $" {arrow}";
-        }
-
-        var color = trend == LimitTrend.Up ? UpColor : DownColor;
-        return $" <b><color={color}>{arrow}</color></b>";
+        return text;
     }
 
     private static int Round(float value) =>

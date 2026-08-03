@@ -1,4 +1,4 @@
-using YardMasterSuite.Core;
+﻿using YardMasterSuite.Core;
 
 namespace YardMasterSuite.Tests;
 
@@ -7,7 +7,7 @@ public class SessionDistanceTests
     [Fact]
     public void Step_integrates_speed_over_time()
     {
-        // 36 km/h = 10 m/s × 10 s = 100 m
+        // 36 km/h = 10 m/s Ã— 10 s = 100 m
         var meters = SessionDistance.Step(0f, speedKmh: 36f, deltaSeconds: 10f);
         Assert.Equal(100f, meters, precision: 2);
     }
@@ -38,7 +38,7 @@ public class SessionDistanceTests
             "Grade 0.0 %",
             "Load 0 %",
             "Speed 40 km/h",
-            "Limit 60 (Posted)",
+            "Limit 60",
             "Motors OK",
             "Handbrakes 0",
             "Cars 0",

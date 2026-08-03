@@ -87,22 +87,4 @@ public class SpeedLimitDisplayTests
         Assert.Equal(LimitTrend.Up, SpeedLimitDisplay.TrendFrom(60f, 80f));
         Assert.Equal(LimitTrend.Down, SpeedLimitDisplay.TrendFrom(80f, 60f));
     }
-
-    [Fact]
-    public void Format_appends_plain_trend_arrow()
-    {
-        Assert.Equal($"Limit 80 {SpeedLimitDisplay.UpArrow}", SpeedLimitDisplay.Format(80f, LimitTrend.Up));
-        Assert.Equal($"Limit 80 {SpeedLimitDisplay.DownArrow}", SpeedLimitDisplay.Format(80f, LimitTrend.Down));
-    }
-
-    [Fact]
-    public void FormatHud_appends_colored_trend_without_second_number()
-    {
-        Assert.Equal(
-            $"Limit 80 <b><color={SpeedLimitDisplay.UpColor}>{SpeedLimitDisplay.UpArrow}</color></b>",
-            SpeedLimitDisplay.FormatHud(40f, 80f, LimitTrend.Up));
-        Assert.Equal(
-            $"<color={SpeedLimitDisplay.WarningColor}>Limit 60</color> <b><color={SpeedLimitDisplay.DownColor}>{SpeedLimitDisplay.DownArrow}</color></b>",
-            SpeedLimitDisplay.FormatHud(58f, 60f, LimitTrend.Down));
-    }
 }

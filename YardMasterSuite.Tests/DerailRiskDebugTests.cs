@@ -26,7 +26,6 @@ public class DerailRiskDebugTests
     [Fact]
     public void Format_keeps_raw_stress_when_threshold_is_unusable()
     {
-        // 0.5.64 bug: thr=0 produced four-digit percents — raw pair + thr? marker instead.
         var text = DerailRiskDebug.Format(
             stress: 5f,
             derailBuildUp: 0.1f,
@@ -58,32 +57,17 @@ public class DerailRiskDebugTests
     }
 
     [Fact]
-    public void SelectAheadCurveBoard_prefers_tightest_geometry_board()
+    public void SelectAheadCurveBoard_picks_tightest_posted_board()
     {
         var board = DerailRiskDebug.SelectAheadCurveBoard(new[]
         {
             new AheadBoard(60f, 200f),
-            new AheadBoard(30f, 2500f, fromGeometry: true),
-            new AheadBoard(40f, 800f, fromGeometry: true),
+            new AheadBoard(30f, 2500f),
+            new AheadBoard(40f, 800f),
         });
 
         Assert.NotNull(board);
         Assert.Equal(30f, board!.Value.Kmh);
-        Assert.True(board.Value.FromGeometry);
-    }
-
-    [Fact]
-    public void SelectAheadCurveBoard_falls_back_to_posted_when_no_geometry()
-    {
-        var board = DerailRiskDebug.SelectAheadCurveBoard(new[]
-        {
-            new AheadBoard(70f, 100f),
-            new AheadBoard(40f, 900f),
-        });
-
-        Assert.NotNull(board);
-        Assert.Equal(40f, board!.Value.Kmh);
-        Assert.False(board.Value.FromGeometry);
     }
 
     [Fact]
