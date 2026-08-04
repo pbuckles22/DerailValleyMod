@@ -620,6 +620,23 @@ Cool/Dead → release. Player.log: `T2 thermal: soft-cap → … (Warning|Critic
 - [x] Dispatcher → Align throws; Align again → already clear / threw 0; Mod Off → On; no exceptions
 - [x] Arrival → `ETA 0s` / rem 0 / trip 100% (earlier haul)
 
+### 3.6 Digital Switch List — smoke @ **v0.6.2** — Tier 2 **PASS** (2026-08-03)
+
+**Keys / UI:** `Insert` → desk → **Switch List** tab. Job dropdown = taken (`currentJobs`) + held inventory tickets. **Load Switch List** → Prep / Transit / Delivery. **Align step** = set dest + Align Route for current leg. **Next** advances manually.
+
+**Player.log:** `T2 switch-list: loaded …` / `align step …` / `next` / `complete`; Align via `T2 align: threw N`
+
+**Sign-off**
+
+- [x] UMM **0.6.2** Active (Mod Manager Version — not HUD)
+- [x] Desk → Switch List → Refresh shows a taken or held job
+- [x] Load Switch List → ≥3 steps (Prep → Transit → Delivery) with real track IDs
+- [x] Align step → Path OK / Facing; switches throw (`threw 2` on Prep @ FF-C3O)
+- [x] Next advances steps (Transit / Delivery)
+- [x] Occupancy fix: Prep Align to track with job cars (no false “no free through / occupancy”)
+- [ ] Clear / Hide; Mod Off → On; no exceptions *(covered in Align smoke; optional recheck)*
+- [x] Fail closed: unreadable tracks → status error *(earlier 0.6.1 before `startingTrack` fix)*
+
 ### 3.4 Path tracer: manual check — **demoted** (engine only; see 3.5)
 
 ---

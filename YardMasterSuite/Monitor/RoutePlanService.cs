@@ -38,7 +38,8 @@ internal static class RoutePlanService
         // Same RailTrack may be HB-* (car) and #Y-* (edge) — union aliases first.
         var occupiedAliased = PathGraphBuilder.ExpandOccupiedAliases(occupiedNamed);
         // Then paint #Y stubs that only feed occupied named rails (free-lane barrier preserved).
-        var occupied = PathRouteConstraints.ExpandOccupiedThroughAnonymous(occupiedAliased, edges);
+        var occupied = PathRouteConstraints.ExpandOccupiedThroughAnonymous(
+            occupiedAliased, edges, origin, dest);
         PathTrackClass ClassFor(string id)
         {
             var meta = PathGraphBuilder.TryGetTrackMeta(id);

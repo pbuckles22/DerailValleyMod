@@ -4430,6 +4430,10 @@ internal static class TelemetryReader
         }
     }
 
+    /// <summary>Inventory-held jobs for Switch List (3.6) — same source as Preview prep.</summary>
+    internal static bool TryPeekInventoryJobs(out List<Job> jobs) =>
+        TryGetJobsFromPlayerInventory(out jobs);
+
     /// <summary>
     /// Any <see cref="JobOverview"/> or <see cref="JobBooklet"/> in backpack/hotbar/hands
     /// (including dropped-but-still-tracked slots when <c>includingDropped</c> is true).

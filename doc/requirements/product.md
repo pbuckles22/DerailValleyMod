@@ -158,7 +158,7 @@ Fail closed: no write unless every gate passes.
 | **0** | Foundation / Safe Boot | Empty UMM mod; fail-closed — **mostly done** |
 | **1** | Diagnostic HUD *(HIGH · Stage 1)* | Integrity → Power → Terrain alerts |
 | **2** | Governor Mode *(MEDIUM)* | Three-Gate → Thermal → Auto-Brake |
-| **3** | Yard Master / Dispatcher *(Stages 2–3)* | **3.5** city→track Align Route *(Dispatcher-gated)*; reverse cue; through-lane bias; **3.4** internal engine; **3.3 cut** |
+| **3** | Yard Master / Dispatcher *(Stages 2–3)* | **3.5** Align *(done)*; **3.6** Digital Switch List *(done @ 0.6.2)*; **3.2 cut**; next **3.1** / **3.1b** |
 | **4** | HUD quality | Targeting, cargo, hide gadget bar (**4.3**) |
 | **5** | Digital Catalog | Order keys/flags/tools to player (**5.1**) |
 

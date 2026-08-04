@@ -157,6 +157,30 @@ public class PathRouteConstraintsTests
     }
 
     [Fact]
+    public void ExpandOccupied_skips_dest_so_approach_stubs_stay_open()
+    {
+        // Job cars on dest FF-C3O must not paint #Y approach — Prep Align would NoPath.
+        var edges = new[]
+        {
+            new PathEdge("#Y-#S725#T", "#Y-#S900#T", cost: 2f),
+            new PathEdge("#Y-#S900#T", "#Y-#S725#T", cost: 2f),
+            new PathEdge("#Y-#S900#T", "FF-C3O", cost: 2f),
+            new PathEdge("FF-C3O", "#Y-#S900#T", cost: 2f),
+            new PathEdge("FF-A1S", "#Y-#S111#T", cost: 2f),
+            new PathEdge("#Y-#S111#T", "FF-A1S", cost: 2f),
+        };
+
+        var named = PathRouteConstraints.OccupiedSet(new[] { "FF-C3O", "FF-A1S" });
+        var expanded = PathRouteConstraints.ExpandOccupiedThroughAnonymous(
+            named, edges, excludeExpandFrom: "FF-C3O", excludeExpandFrom2: "#Y-#S725#T");
+
+        Assert.Contains("FF-C3O", expanded);
+        Assert.Contains("FF-A1S", expanded);
+        Assert.DoesNotContain("#Y-#S900#T", expanded); // dest approach stays clear
+        Assert.Contains("#Y-#S111#T", expanded); // other occupied named still paints
+    }
+
+    [Fact]
     public void ExpandOccupied_then_filter_forces_free_branch()
     {
         var edges = new[]

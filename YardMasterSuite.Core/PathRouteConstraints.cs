@@ -45,10 +45,17 @@ public static class PathRouteConstraints
     /// One-hop only: paint anonymous <c>#Y</c> stubs that directly touch an occupied
     /// <b>named</b> rail. No BFS through the #Y mesh — free unnamed pass-through lanes
     /// (also <c>#Y</c>, no Track chip) must stay usable.
+    /// <para>
+    /// Do not expand from <paramref name="excludeExpandFrom"/> (typically origin + dest):
+    /// cars already on the pickup/delivery track must not paint the approach stubs,
+    /// or Align/Prep cannot reach an occupied dest (Switch List / couple).
+    /// </para>
     /// </summary>
     public static HashSet<string> ExpandOccupiedThroughAnonymous(
         ISet<string>? occupied,
-        IReadOnlyList<PathEdge>? edges)
+        IReadOnlyList<PathEdge>? edges,
+        string? excludeExpandFrom = null,
+        string? excludeExpandFrom2 = null)
     {
         var set = new HashSet<string>(StringComparer.Ordinal);
         if (occupied != null)
@@ -66,6 +73,19 @@ public static class PathRouteConstraints
         if (edges == null || edges.Count == 0 || set.Count == 0)
         {
             return set;
+        }
+
+        var exclude = new HashSet<string>(StringComparer.Ordinal);
+        var ex1 = Normalize(excludeExpandFrom);
+        var ex2 = Normalize(excludeExpandFrom2);
+        if (ex1 != null)
+        {
+            exclude.Add(ex1);
+        }
+
+        if (ex2 != null)
+        {
+            exclude.Add(ex2);
         }
 
         var adj = new Dictionary<string, List<string>>(StringComparer.Ordinal);
@@ -94,10 +114,11 @@ public static class PathRouteConstraints
         }
 
         // Snapshot named occupied seeds — do not grow from newly painted #Y.
+        // Skip exclude tracks so dest/origin cars don't seal their own approaches.
         var namedSeeds = new List<string>();
         foreach (var id in set)
         {
-            if (!IsAnonymousTrack(id))
+            if (!IsAnonymousTrack(id) && !exclude.Contains(id))
             {
                 namedSeeds.Add(id);
             }

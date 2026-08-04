@@ -1,15 +1,24 @@
 using System.Collections.Generic;
+using DV.Logic.Job;
 using UnityEngine;
 using YardMasterSuite.Core;
 
 namespace YardMasterSuite.Monitor;
 
 /// <summary>
-/// Dispatch desk (3.5): city/track dropdowns. Path only on Set dest / Check / Align.
+/// Dispatch desk: city/track Align (3.5) + Digital Switch List (3.6).
+/// Path / Align only on button press.
 /// </summary>
 internal sealed class DispatchDeskPanel : MonoBehaviour
 {
+    private enum DeskMode
+    {
+        Route,
+        SwitchList,
+    }
+
     private bool _visible;
+    private DeskMode _mode = DeskMode.Route;
     private List<(string YardId, string TrackId)> _catalog = new();
     private IReadOnlyList<string> _yards = System.Array.Empty<string>();
     private IReadOnlyList<string> _tracks = System.Array.Empty<string>();
@@ -19,9 +28,15 @@ internal sealed class DispatchDeskPanel : MonoBehaviour
     private float _originWatchAt;
     private bool _yardDropOpen;
     private bool _trackDropOpen;
+    private bool _jobDropOpen;
     private Vector2 _yardScroll;
     private Vector2 _trackScroll;
+    private Vector2 _jobScroll;
+    private Vector2 _stepScroll;
     private bool _worldSessionActive;
+
+    private List<Job> _jobs = new();
+    private int _jobIndex;
 
     private void Update()
     {
@@ -30,7 +45,6 @@ internal sealed class DispatchDeskPanel : MonoBehaviour
         {
             if (_worldSessionActive)
             {
-                // Leave world → drop session graph; next load warms again.
                 PathGraphBuilder.InvalidateCache();
                 _worldSessionActive = false;
             }
@@ -42,12 +56,10 @@ internal sealed class DispatchDeskPanel : MonoBehaviour
         if (!_worldSessionActive)
         {
             _worldSessionActive = true;
-            // Warm cities/yards/topology once per world session (not waiting for Insert).
             PathGraphBuilder.EnsureMappingStarted();
             Main.Log("T2 path: session map warm started");
         }
 
-        // Frame-pump even with desk closed — session warm + early Insert both stay interactive.
         if (PathGraphBuilder.IsMapping)
         {
             var finished = PathGraphBuilder.TickMapping();
@@ -72,7 +84,6 @@ internal sealed class DispatchDeskPanel : MonoBehaviour
             _visible = !_visible;
             if (_visible)
             {
-                // Never InvalidateCache on open — Reload list is the only forced remap.
                 if (PathGraphBuilder.HasReadyCache)
                 {
                     RefreshCatalog(force: false);
@@ -95,6 +106,11 @@ internal sealed class DispatchDeskPanel : MonoBehaviour
                             ? PathGraphBuilder.MappingBanner
                             : "Station mapping…";
                     }
+                }
+
+                if (_mode == DeskMode.SwitchList)
+                {
+                    RefreshJobs();
                 }
             }
         }
@@ -128,12 +144,39 @@ internal sealed class DispatchDeskPanel : MonoBehaviour
             return;
         }
 
-        const float w = 400f;
-        var h = PathGraphBuilder.IsMapping ? 300f : 280f;
+        const float w = 420f;
+        var h = _mode == DeskMode.SwitchList ? 360f : (PathGraphBuilder.IsMapping ? 300f : 280f);
         var x = (Screen.width - w) * 0.5f;
-        var y = Screen.height * 0.14f;
-        GUI.Box(new Rect(x, y, w, h), "Dispatch desk (Dispatcher · Align Route)");
+        var y = Screen.height * 0.12f;
+        GUI.Box(new Rect(x, y, w, h), "Dispatch desk (Dispatcher)");
 
+        var row = y + 26f;
+        if (GUI.Button(new Rect(x + 12, row, 100, 22), _mode == DeskMode.Route ? "● Route" : "Route"))
+        {
+            _mode = DeskMode.Route;
+            _jobDropOpen = false;
+        }
+
+        if (GUI.Button(new Rect(x + 118, row, 120, 22), _mode == DeskMode.SwitchList ? "● Switch List" : "Switch List"))
+        {
+            _mode = DeskMode.SwitchList;
+            _yardDropOpen = _trackDropOpen = false;
+            RefreshJobs();
+        }
+
+        row += 28f;
+        if (_mode == DeskMode.SwitchList)
+        {
+            DrawSwitchList(x, ref row, w);
+        }
+        else
+        {
+            DrawRoute(x, ref row, w);
+        }
+    }
+
+    private void DrawRoute(float x, ref float row, float w)
+    {
         var yard = _yards.Count > 0 ? _yards[_yardIndex] : "— pick city —";
         var track = _tracks.Count > 0 ? _tracks[_trackIndex] : "— pick track —";
         var planChip = TelemetryReader.CurrentPathCheckLabel()
@@ -143,7 +186,6 @@ internal sealed class DispatchDeskPanel : MonoBehaviour
         var license = RouteAlignAccess.DeniedChip(RouteAlignGovernor.HasDispatcherLicense())
             ?? "Dispatcher ok";
 
-        var row = y + 28f;
         if (PathGraphBuilder.IsMapping)
         {
             GUI.Label(new Rect(x + 12, row, w - 24, 22), PathGraphBuilder.MappingBanner);
@@ -306,6 +348,199 @@ internal sealed class DispatchDeskPanel : MonoBehaviour
         {
             GUI.Label(new Rect(x + 270, row, w - 282, 28), _status);
         }
+    }
+
+    private void DrawSwitchList(float x, ref float row, float w)
+    {
+        var license = RouteAlignAccess.DeniedChip(RouteAlignGovernor.HasDispatcherLicense())
+            ?? "Dispatcher ok";
+        GUI.Label(new Rect(x + 12, row, w - 24, 20), license);
+        row += 22f;
+
+        var jobLabel = _jobs.Count > 0 && _jobIndex < _jobs.Count
+            ? (_jobs[_jobIndex].ID ?? "job")
+            : "— no jobs (taken / held) —";
+        GUI.Label(new Rect(x + 12, row, 40, 22), "Job");
+        if (GUI.Button(new Rect(x + 55, row, 240, 24), jobLabel + " ▼"))
+        {
+            _jobDropOpen = !_jobDropOpen;
+            RefreshJobs();
+        }
+
+        if (GUI.Button(new Rect(x + 300, row, 100, 24), "Refresh"))
+        {
+            RefreshJobs();
+            _status = $"{_jobs.Count} jobs";
+        }
+
+        row += 28f;
+        if (_jobDropOpen && _jobs.Count > 0)
+        {
+            var dropH = Mathf.Min(110f, 22f * _jobs.Count + 8f);
+            _jobScroll = GUI.BeginScrollView(
+                new Rect(x + 55, row, 240, dropH),
+                _jobScroll,
+                new Rect(0, 0, 220, 22f * _jobs.Count));
+            for (var i = 0; i < _jobs.Count; i++)
+            {
+                var id = _jobs[i].ID ?? $"job{i}";
+                if (GUI.Button(new Rect(0, i * 22f, 220, 22), id))
+                {
+                    _jobIndex = i;
+                    _jobDropOpen = false;
+                }
+            }
+
+            GUI.EndScrollView();
+            row += dropH + 4f;
+        }
+
+        if (GUI.Button(new Rect(x + 12, row, 130, 26), "Load Switch List"))
+        {
+            _jobDropOpen = false;
+            LoadSelectedJob();
+        }
+
+        if (GUI.Button(new Rect(x + 148, row, 100, 26), "Align step"))
+        {
+            AlignCurrentStep();
+        }
+
+        if (GUI.Button(new Rect(x + 254, row, 70, 26), "Next"))
+        {
+            if (SwitchListSession.TryAdvance())
+            {
+                var step = SwitchListSession.CurrentStep;
+                _status = step != null ? $"step {step.Index}: {step.Label}" : "advanced";
+                Main.Log("T2 switch-list: next · " + _status);
+            }
+            else if (SwitchListSession.IsComplete)
+            {
+                _status = "Switch List complete";
+                Main.Log("T2 switch-list: complete");
+            }
+            else
+            {
+                _status = "no Switch List";
+            }
+        }
+
+        if (GUI.Button(new Rect(x + 330, row, 70, 26), "Clear"))
+        {
+            SwitchListSession.Clear();
+            _status = "list cleared";
+            Main.Log("T2 switch-list: cleared");
+        }
+
+        row += 30f;
+
+        var steps = SwitchListSession.Steps;
+        if (steps != null && steps.Count > 0)
+        {
+            var active = SwitchListSession.JobId ?? "";
+            var cur = SwitchListSession.IsComplete
+                ? "done"
+                : (SwitchListSession.CurrentStep?.Label ?? "—");
+            GUI.Label(new Rect(x + 12, row, w - 24, 20), $"{active} · {cur}");
+            row += 22f;
+
+            var listH = Mathf.Min(120f, 20f * steps.Count + 4f);
+            _stepScroll = GUI.BeginScrollView(
+                new Rect(x + 12, row, w - 24, listH),
+                _stepScroll,
+                new Rect(0, 0, w - 48, 20f * steps.Count));
+            for (var i = 0; i < steps.Count; i++)
+            {
+                var mark = i == SwitchListSession.CurrentIndex && !SwitchListSession.IsComplete ? "▶ " : "  ";
+                GUI.Label(new Rect(0, i * 20f, w - 48, 20), mark + steps[i].Label);
+            }
+
+            GUI.EndScrollView();
+            row += listH + 4f;
+        }
+        else
+        {
+            GUI.Label(new Rect(x + 12, row, w - 24, 40), "Pick a taken or held job → Load Switch List → Align step per leg.");
+            row += 44f;
+        }
+
+        var planChip = TelemetryReader.CurrentPathCheckLabel() ?? "Path —";
+        var facing = TelemetryReader.CurrentFacingLabel() ?? "Facing —";
+        GUI.Label(new Rect(x + 12, row, w - 24, 20), $"{planChip}  |  {facing}");
+        row += 22f;
+
+        if (GUI.Button(new Rect(x + 12, row, 70, 26), "Hide"))
+        {
+            _visible = false;
+        }
+
+        if (!string.IsNullOrEmpty(_status))
+        {
+            GUI.Label(new Rect(x + 90, row, w - 102, 26), _status);
+        }
+    }
+
+    private void RefreshJobs()
+    {
+        _jobs = new List<Job>(SwitchListJobReader.ListCandidateJobs());
+        if (_jobIndex >= _jobs.Count)
+        {
+            _jobIndex = 0;
+        }
+    }
+
+    private void LoadSelectedJob()
+    {
+        RefreshJobs();
+        if (_jobs.Count == 0 || _jobIndex >= _jobs.Count)
+        {
+            _status = "no jobs";
+            Main.Log("T2 switch-list: no jobs");
+            return;
+        }
+
+        var job = _jobs[_jobIndex];
+        if (!SwitchListJobReader.TryBuildSummary(job, out var summary, out var error) || summary == null)
+        {
+            _status = error ?? "cannot read job tracks";
+            Main.Log("T2 switch-list: " + _status);
+            SwitchListSession.Clear();
+            return;
+        }
+
+        var steps = SwitchListPlanner.Build(summary);
+        if (steps == null || steps.Count == 0)
+        {
+            _status = "planner fail-closed";
+            Main.Log("T2 switch-list: planner fail-closed · " + summary.JobId);
+            SwitchListSession.Clear();
+            return;
+        }
+
+        SwitchListSession.Bind(summary.JobId, steps);
+        _status = $"loaded {steps.Count} steps · {summary.JobId}";
+        Main.Log($"T2 switch-list: loaded {summary.JobId} · {steps.Count} steps · {summary.OriginTrackId} → {summary.DestTrackId}");
+    }
+
+    private void AlignCurrentStep()
+    {
+        if (!SwitchListSession.HasActive || SwitchListSession.IsComplete)
+        {
+            _status = "no active step";
+            return;
+        }
+
+        var step = SwitchListSession.CurrentStep;
+        if (step == null || string.IsNullOrEmpty(step.DestTrackId))
+        {
+            _status = "no step track";
+            return;
+        }
+
+        RouteDestSession.Set(step.DestYardId, step.DestTrackId);
+        var line = RouteAlignGovernor.TryAlign();
+        _status = line ?? $"aligned → {step.DestTrackId}";
+        Main.Log($"T2 switch-list: align step {step.Index} {step.Kind} · {_status}");
     }
 
     private static void DrawMappingBanner()
