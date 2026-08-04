@@ -24,9 +24,15 @@ public static class LocoRadarSelection
 {
     public const int DefaultMaxResults = 3;
 
+    /// <summary>Yard-walk useful range — farther markers are noise.</summary>
+    public const float MaxRangeMeters = 600f;
+
+    public static float MaxRangeDistanceSq => MaxRangeMeters * MaxRangeMeters;
+
     /// <summary>
     /// Writes nearest-first ids into <paramref name="rankedIds"/> (up to its length and
-    /// <paramref name="maxResults"/>). Skips ids present in <paramref name="excludeIds"/>.
+    /// <paramref name="maxResults"/>). Skips ids present in <paramref name="excludeIds"/>
+    /// and candidates beyond <see cref="MaxRangeMeters"/>.
     /// </summary>
     public static int RankNearest(
         IReadOnlyList<LocoRadarCandidate> candidates,
@@ -41,6 +47,7 @@ public static class LocoRadarSelection
         }
 
         var cap = Math.Min(maxResults, rankedIds.Length);
+        var maxSq = MaxRangeDistanceSq;
         // Insertion into a small top-N buffer (N ≤ 3 typical) — avoids LINQ alloc in hot path.
         var bestIds = new int[cap];
         var bestDist = new float[cap];
@@ -50,6 +57,11 @@ public static class LocoRadarSelection
         {
             var c = candidates[i];
             if (excludeIds != null && excludeIds.Contains(c.Id))
+            {
+                continue;
+            }
+
+            if (c.DistanceSq > maxSq || float.IsNaN(c.DistanceSq) || c.DistanceSq < 0f)
             {
                 continue;
             }

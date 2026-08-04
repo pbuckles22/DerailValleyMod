@@ -82,6 +82,14 @@ public class ActiveJobHudLineTests
     }
 
     [Fact]
+    public void Format_taken_job_includes_consist_status_between_job_and_bonus()
+    {
+        Assert.Equal(
+            "Job SM-FH-12  |  GO  |  Bonus 14:32",
+            ActiveJobHudLine.Format("Job SM-FH-12", "GO", "Bonus 14:32"));
+    }
+
+    [Fact]
     public void Format_preview_only_bar()
     {
         Assert.Equal("Preview 180m", ActiveJobHudLine.FormatPreview("Preview 180m"));

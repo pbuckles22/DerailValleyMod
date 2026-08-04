@@ -92,6 +92,63 @@ internal static class JobCarsResolver
         }
     }
 
+    /// <summary>
+    /// HUD / AR: map as many task cars as possible. <see cref="ResolveResult.ExpectedLogicCars"/>
+    /// stays the full task count so GO/HOLD/RED stays honest on partial spawns.
+    /// </summary>
+    public static bool TryResolveBestEffort(Job? job, out ResolveResult? result, out string? error)
+    {
+        result = null;
+        error = null;
+        if (job == null)
+        {
+            error = "no job";
+            return false;
+        }
+
+        try
+        {
+            var logicCars = new List<Car>();
+            CollectLogicCars(job.tasks, logicCars, depth: 0);
+            if (logicCars.Count == 0)
+            {
+                error = "no job cars";
+                return false;
+            }
+
+            var trains = new List<TrainCar>(logicCars.Count);
+            var hazmat = false;
+            for (var i = 0; i < logicCars.Count; i++)
+            {
+                var logic = logicCars[i];
+                if (logic == null)
+                {
+                    continue;
+                }
+
+                if (IsHazmat(logic))
+                {
+                    hazmat = true;
+                }
+
+                var train = LogicCarExtensions.TrainCar(logic);
+                if (train != null)
+                {
+                    trains.Add(train);
+                }
+            }
+
+            result = new ResolveResult(job, trains, logicCars.Count, hazmat);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            error = "resolve failed";
+            Main.Log($"T2 job-cars: best-effort fail · {ex.GetType().Name}");
+            return false;
+        }
+    }
+
     public static float MaxAbsSpeedKmh(IReadOnlyList<TrainCar> cars)
     {
         var max = 0f;

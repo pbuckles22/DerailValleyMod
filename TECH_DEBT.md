@@ -82,7 +82,7 @@ High ROI; frequent pain; not blocking.
 
 - [ ] **AR: hide house outside office / city sense** — parked. `Station HMB … 1600m` + house icon still shown far from office; player expects hide once outside city/office. Today house hide = office AABB only (`ArProximityHide`), Station chip = nearest station (not “home city limits”). Clarify product: nearest-station always-on vs office-only house.
 
-- [ ] **AR: other-loco range ≤1 km** — parked. Screenshots show DE2/S060/S282A markers well over 1000 m. Later: type filter dropdown + optional paid fast-travel / re-rail teleport via comms. Cap range first.
+- [x] **AR: other-loco range ≤600 m** — done @ **0.6.15** (`LocoRadarSelection.MaxRangeMeters`). Was parked as ≤1 km; yard-walk cap is 600 m (0–3 markers).
 
 - [ ] **Cache speed-limit state per HUD tick** — `TryGetSpeedLimitState` / board scan can run twice per refresh (train bar + `T2 limit`). Cache in `BeginHudTick` like standing/loco.
 

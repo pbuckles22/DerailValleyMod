@@ -2,7 +2,7 @@
 
 Human-readable **snapshot**. Keep in sync with [AGENT_HANDOFF.md](../AGENT_HANDOFF.md) → *Current state* and checkbox truth in [PM_PLAN.md](../PM_PLAN.md).
 
-**Last updated:** 2026-08-03
+**Last updated:** 2026-08-04
 
 ---
 
@@ -13,9 +13,9 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 | | |
 |--|--|
-| **Journey** | Stage 3 — next **3.1b** |
+| **Journey** | Stage 3 — Maps / multi-step; **3.1b iced** |
 | **MVP** | Epic 1 System Monitor HUD |
-| **Version** | **0.6.5** *(F5 DH4/DE6 license debug; 3.1b helper)* |
+| **Version** | **0.6.19** *(path rem/ETA, job pickup AR, UMM loco radar option)* |
 | **Active branch** | `main` |
 
 ---
@@ -24,7 +24,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 | Branch | Role |
 |--------|------|
-| **`main`** | Integration — **0.6.5** (F5 loco-license debug Tier 2 PASS) |
+| **`main`** | Integration — **0.6.19** (Tier 2 PASS 2026-08-04) |
 
 ---
 
@@ -42,4 +42,4 @@ Stack: Unity / C# `net48` / UMM / Harmony
 ### Next
 
 1. **[ ] Maps / path integrity** — multi-step Maps routing; false **Path stale** (`planned switch changed` without player throws). **3.1b iced** (WIP ~0.6.12).
-2. Parking: 3.1b spawn/ghost; place ghost / Snap office polish; Switch List TurnAround / couple auto-advance; flight-sim HUD; AR loco ≤1 km / house hide; DM3; session reset; 1.17 #4 behind-seed ice
+2. Parking: 3.1b spawn/ghost; place ghost / Snap office polish; Switch List TurnAround / couple auto-advance; flight-sim HUD; AR house hide; DM3; session reset; 1.17 #4 behind-seed ice

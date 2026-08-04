@@ -192,7 +192,7 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
     - *Concept bridge:* `doc/GeminiDocs/Digital Switch List Spec.md` (local scratch).
     > As a licensed dispatcher, I want a job Switch List that tells me turn-around → pick up → transit → deliver and Aligns each leg so I am not manually re-picking city/track three times.
 
-  **Build order:** **Maps / path integrity** next; **3.1b iced** *(**3.1** @ **0.6.4**; **3.6** @ **0.6.2**; **3.2** cut)*.
+  **Build order:** **Maps / multi-step routing** next *(false Path stale @ **0.6.13**; rem/ETA + job AR + UMM options @ **0.6.19**)*; **3.1b iced** *(**3.1** @ **0.6.4**; **3.6** @ **0.6.2**; **3.2** cut)*.
 
 ---
 
@@ -222,7 +222,7 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
   - [x] **4.9 AR wayfinding markers** — Screen-space icons (distinct shapes; color secondary) for (1) last/active loco, (2) in-zone **station office** (not yard center), (3) custom pin (`Home` / `Shift+Home`). `WorldToScreenPoint` + edge clamp when behind; icon + distance only. Replaces foot-nav dependence on Heading/Pos text. **Done** — baseline + Bundles A/C (**v0.4.48**); sticky/on-object/edge through **v0.4.43**; loco radar **4.10**. Office proximity: same gate hides house AR and flips Station chip to **`here`** (~12–14 m apron = accepted “at office”, not a false-hide bug — product decision 2026-07-26).
     > As a yard worker, I want floating markers for my loco, the station office, and my pin so I can run toward them without reading compass math.
 
-  - [x] **4.10 Loco radar** — Nearest other locos as amber sticky AR markers (type · m · place). Place: `SM-…` / `FF-A2P` track alone, or `FF #Y-…` spur with city. Rigid AABB pack (no Venn). Unblocks Bundle E **#23**. *Done* — Tier 1 + Tier 2 **PASS** (v0.4.75).
+  - [x] **4.10 Loco radar** — Nearest other locos as amber sticky AR markers (type · m · place), **≤600 m** (up to 3). Place: `SM-…` / `FF-A2P` track alone, or `FF #Y-…` spur with city. Rigid AABB pack (no Venn). Unblocks Bundle E **#23**. *Done* — Tier 1 + Tier 2 **PASS** (v0.4.75); range cap **0.6.15**; UMM **Show nearest locos** toggle **0.6.19**.
     > As a yard master, I want to see where other locos are so I can walk to one and MU without searching the whole yard.
 
   - [x] **4.7 HUD strip IA reorder** — Horizontally **center** every HUD row; stack loco → look-at → always-on nav bar (same chrome as loco/look-at). Loco chip order: `Fuel · Oil · Mass · Grade · Load · Speed · Limit · Motors · Handbrakes · Cars`. **Done** — Tier 1 + Tier 2 **PASS** (v0.4.23).

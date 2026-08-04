@@ -18,6 +18,9 @@ public static class Main
     private static GameObject? _hudRoot;
     private static UnityModManager.ModEntry? _modEntry;
 
+    /// <summary>UMM options (Mod Manager gear). Always non-null after <see cref="Load"/>.</summary>
+    internal static ModSettings Settings { get; private set; } = new ModSettings();
+
     /// <summary>UMM logger → Player.log. Used for Tier 2 discrete debug lines.</summary>
     internal static void Log(string message) => _modEntry?.Logger.Log(message);
 
@@ -37,11 +40,14 @@ public static class Main
         try
         {
             _modEntry = modEntry;
+            Settings = UnityModManager.ModSettings.Load<ModSettings>(modEntry);
             _harmony = new Harmony(modEntry.Info.Id);
             _harmony.PatchAll(Assembly.GetExecutingAssembly());
 
             modEntry.OnToggle = OnToggle;
             modEntry.OnUnload = OnUnload;
+            modEntry.OnGUI = OnGUI;
+            modEntry.OnSaveGUI = OnSaveGUI;
 
             if (modEntry.Enabled)
             {
@@ -104,6 +110,12 @@ public static class Main
         _modEntry = null;
         return true;
     }
+
+    private static void OnGUI(UnityModManager.ModEntry modEntry) =>
+        Settings.Draw(modEntry);
+
+    private static void OnSaveGUI(UnityModManager.ModEntry modEntry) =>
+        Settings.Save(modEntry);
 
     private static void EnsureHud()
     {

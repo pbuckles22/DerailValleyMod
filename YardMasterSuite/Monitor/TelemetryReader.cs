@@ -125,11 +125,24 @@ internal static class TelemetryReader
     /// <summary>FindObjectsOfType throttle for other-loco AR radar (4.10).</summary>
     private const float LocoRadarCacheSeconds = 2.5f;
 
+    /// <summary>Job-car AR + consist status refresh.</summary>
+    private const float JobCarCacheSeconds = 1.0f;
+
     private static float _locoRadarCachedAt = -999f;
+    private static int _locoRadarCount;
     private static readonly TrainCar?[] _locoRadarCars = new TrainCar?[LocoRadarSelection.DefaultMaxResults];
     private static readonly string?[] _locoRadarTypeIds = new string?[LocoRadarSelection.DefaultMaxResults];
     private static readonly string?[] _locoRadarPlaceLabels = new string?[LocoRadarSelection.DefaultMaxResults];
-    private static int _locoRadarCount;
+
+    private static float _jobCarCachedAt = -999f;
+    private static string? _jobCarCachedJobId;
+    private static bool _jobCarCachedTaken;
+    private static int _jobArCount;
+    private static string? _jobArJobId;
+    private static readonly Vector3[] _jobArWorlds = new Vector3[JobCarMarkerDisplay.DefaultMaxMarkers];
+    private static readonly string?[] _jobArTrackLabels = new string?[JobCarMarkerDisplay.DefaultMaxMarkers];
+    private static readonly int[] _jobArCarCounts = new int[JobCarMarkerDisplay.DefaultMaxMarkers];
+    private static JobConsistStatus _jobConsistStatus = JobConsistStatus.Missing;
 
     /// <summary>Call once at the start of each Monitor HUD refresh.</summary>
     public static void BeginHudTick()
@@ -546,8 +559,10 @@ internal static class TelemetryReader
             }
 
             var remaining = BonusTimeDisplay.RemainingSeconds(job.TimeLimit, SafeTimeOnJob(job));
+            EnsureJobCarCache();
             return ActiveJobHudLine.Format(
                 ActiveJobHudLine.FormatJobId(job.ID, extraCount),
+                JobConsistStatusDisplay.FormatHud(_jobConsistStatus),
                 BonusTimeDisplay.Format(remaining, richText: true));
         }
 
@@ -649,9 +664,18 @@ internal static class TelemetryReader
     /// <summary>How many other-loco AR radar markers are available (4.10). Throttled scan.</summary>
     public static int GetArOtherLocoCount()
     {
+        if (!Main.Settings.ShowNearestLocos)
+        {
+            return 0;
+        }
+
         EnsureLocoRadarCache();
         return _locoRadarCount;
     }
+
+    /// <summary>Drop radar cache so UMM option changes apply immediately.</summary>
+    internal static void InvalidateLocoRadarCache() =>
+        _locoRadarCachedAt = -999f;
 
     /// <summary>
     /// Nearest other loco for AR radar (4.10). Excludes self / my-loco AR target / same consist.
@@ -663,6 +687,11 @@ internal static class TelemetryReader
         caption = "";
         try
         {
+            if (!Main.Settings.ShowNearestLocos)
+            {
+                return false;
+            }
+
             EnsureLocoRadarCache();
             if (index < 0 || index >= _locoRadarCount)
             {
@@ -699,6 +728,12 @@ internal static class TelemetryReader
 
     private static void EnsureLocoRadarCache()
     {
+        if (!Main.Settings.ShowNearestLocos)
+        {
+            _locoRadarCount = 0;
+            return;
+        }
+
         if (Time.unscaledTime - _locoRadarCachedAt < LocoRadarCacheSeconds)
         {
             return;
@@ -790,6 +825,290 @@ internal static class TelemetryReader
             _locoRadarTypeIds[_locoRadarCount] = TryGetLocoTypeId(car);
             _locoRadarPlaceLabels[_locoRadarCount] = TryGetLocoRadarPlaceLabel(car);
             _locoRadarCount++;
+        }
+    }
+
+    /// <summary>How many pickup-group job AR markers (0–N).</summary>
+    public static int GetArJobCarCount()
+    {
+        EnsureJobCarCache();
+        return _jobArCount;
+    }
+
+    /// <summary>Pickup-group world + caption for AR (taken or backpack).</summary>
+    public static bool TryGetArJobCar(int index, out Vector3 world, out string caption)
+    {
+        world = default;
+        caption = "";
+        try
+        {
+            EnsureJobCarCache();
+            if (index < 0 || index >= _jobArCount)
+            {
+                return false;
+            }
+
+            world = _jobArWorlds[index];
+            var dist = 0f;
+            if (TryGetPlayerPosition(out var px, out var py, out var pz))
+            {
+                var dx = world.x - px;
+                var dy = world.y - py;
+                var dz = world.z - pz;
+                dist = Mathf.Sqrt((dx * dx) + (dy * dy) + (dz * dz));
+            }
+
+            caption = JobCarMarkerDisplay.FormatCaption(
+                _jobArJobId,
+                _jobArTrackLabels[index],
+                _jobArCarCounts[index],
+                dist);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static void EnsureJobCarCache()
+    {
+        Job? job = null;
+        var jobTaken = false;
+        string? jobId = null;
+
+        if (TryGetPrimaryActiveJob(out var taken, out _) && taken != null
+            && !ActiveJobHudLine.IsCancelledState(taken.State.ToString()))
+        {
+            job = taken;
+            jobTaken = true;
+            jobId = taken.ID;
+        }
+        else if (TryPeekInventoryJobs(out var held) && held != null && held.Count > 0)
+        {
+            job = held[0];
+            jobTaken = false;
+            jobId = job?.ID;
+        }
+
+        if (Time.unscaledTime - _jobCarCachedAt < JobCarCacheSeconds
+            && string.Equals(_jobCarCachedJobId, jobId, StringComparison.Ordinal)
+            && _jobCarCachedTaken == jobTaken)
+        {
+            return;
+        }
+
+        _jobCarCachedAt = Time.unscaledTime;
+        _jobCarCachedJobId = jobId;
+        _jobCarCachedTaken = jobTaken;
+        _jobArCount = 0;
+        _jobArJobId = null;
+        _jobConsistStatus = JobConsistStatus.Missing;
+        for (var i = 0; i < _jobArWorlds.Length; i++)
+        {
+            _jobArTrackLabels[i] = null;
+            _jobArCarCounts[i] = 0;
+        }
+
+        if (job == null || string.IsNullOrEmpty(jobId))
+        {
+            return;
+        }
+
+        if (!JobCarsResolver.TryResolveBestEffort(job, out var resolved, out _) || resolved == null
+            || resolved.Cars.Count == 0)
+        {
+            return;
+        }
+
+        var jobSet = new HashSet<int>();
+        var allCars = new List<TrainCar>(resolved.Cars.Count);
+        for (var i = 0; i < resolved.Cars.Count; i++)
+        {
+            var car = resolved.Cars[i];
+            if (car == null)
+            {
+                continue;
+            }
+
+            try
+            {
+                jobSet.Add(car.GetInstanceID());
+                allCars.Add(car);
+            }
+            catch
+            {
+                // skip this car
+            }
+        }
+
+        if (allCars.Count == 0)
+        {
+            return;
+        }
+
+        var attachedIds = new HashSet<int>();
+        var foreign = 0;
+        if (jobTaken)
+        {
+            var seed = PlayerManager.Car
+                ?? TryGetStandingCar()
+                ?? PlayerManager.LastLoco;
+            if (seed != null)
+            {
+                var freight = CollectTrainsetFreight(seed);
+                for (var i = 0; i < freight.Count; i++)
+                {
+                    var c = freight[i];
+                    if (c == null)
+                    {
+                        continue;
+                    }
+
+                    int id;
+                    try
+                    {
+                        id = c.GetInstanceID();
+                    }
+                    catch
+                    {
+                        continue;
+                    }
+
+                    if (jobSet.Contains(id))
+                    {
+                        attachedIds.Add(id);
+                    }
+                    else
+                    {
+                        foreign++;
+                    }
+                }
+            }
+
+            _jobConsistStatus = JobConsistStatusEval.Evaluate(
+                allCars.Count, attachedIds.Count, foreign);
+        }
+
+        if (!JobCarMarkerDisplay.ShouldShowAr(jobTaken, _jobConsistStatus, allCars.Count))
+        {
+            return;
+        }
+
+        // One pin per track where unattached job cars still sit (multi-pickup shunt).
+        var groups = new Dictionary<string, PickupGroupAccum>(StringComparer.Ordinal);
+        for (var i = 0; i < allCars.Count; i++)
+        {
+            var car = allCars[i];
+            int id;
+            try
+            {
+                id = car.GetInstanceID();
+            }
+            catch
+            {
+                continue;
+            }
+
+            if (jobTaken && attachedIds.Contains(id))
+            {
+                continue;
+            }
+
+            Vector3 p;
+            try
+            {
+                p = car.transform.position;
+            }
+            catch
+            {
+                continue;
+            }
+
+            var spur = JobCarMarkerDisplay.ShortSpurLabel(TryGetJobCarTrackDisplay(car)) ?? "—";
+            if (!groups.TryGetValue(spur, out var g))
+            {
+                g = new PickupGroupAccum();
+                groups[spur] = g;
+            }
+
+            g.Count++;
+            g.SumX += p.x;
+            g.SumY += p.y;
+            g.SumZ += p.z;
+        }
+
+        if (groups.Count == 0)
+        {
+            return;
+        }
+
+        float px = 0f, py = 0f, pz = 0f;
+        var havePlayer = TryGetPlayerPosition(out px, out py, out pz);
+        var ordered = new List<KeyValuePair<string, PickupGroupAccum>>(groups.Count);
+        foreach (var kv in groups)
+        {
+            if (kv.Value.Count > 0)
+            {
+                ordered.Add(kv);
+            }
+        }
+
+        ordered.Sort((a, b) =>
+        {
+            if (!havePlayer)
+            {
+                return string.CompareOrdinal(a.Key, b.Key);
+            }
+
+            var ax = a.Value.SumX / a.Value.Count - px;
+            var ay = a.Value.SumY / a.Value.Count - py;
+            var az = a.Value.SumZ / a.Value.Count - pz;
+            var bx = b.Value.SumX / b.Value.Count - px;
+            var by = b.Value.SumY / b.Value.Count - py;
+            var bz = b.Value.SumZ / b.Value.Count - pz;
+            var da = (ax * ax) + (ay * ay) + (az * az);
+            var db = (bx * bx) + (by * by) + (bz * bz);
+            var cmp = da.CompareTo(db);
+            return cmp != 0 ? cmp : string.CompareOrdinal(a.Key, b.Key);
+        });
+
+        _jobArJobId = jobId;
+        for (var i = 0; i < ordered.Count && _jobArCount < _jobArWorlds.Length; i++)
+        {
+            var kv = ordered[i];
+            var g = kv.Value;
+            _jobArWorlds[_jobArCount] = new Vector3(g.SumX / g.Count, g.SumY / g.Count, g.SumZ / g.Count);
+            _jobArTrackLabels[_jobArCount] = kv.Key;
+            _jobArCarCounts[_jobArCount] = g.Count;
+            _jobArCount++;
+        }
+    }
+
+    private sealed class PickupGroupAccum
+    {
+        public int Count;
+        public float SumX;
+        public float SumY;
+        public float SumZ;
+    }
+
+    private static string? TryGetJobCarTrackDisplay(TrainCar car)
+    {
+        try
+        {
+            var id = car.logicCar?.CurrentTrack?.ID;
+            var display = id?.FullDisplayID?.Trim();
+            if (!string.IsNullOrEmpty(display))
+            {
+                return display;
+            }
+
+            return id?.FullID?.Trim();
+        }
+        catch
+        {
+            return null;
         }
     }
 
@@ -2198,7 +2517,8 @@ internal static class TelemetryReader
         var limit = TryGetSpeedLimitState();
         TryReadLeadCabLevers(out var throttlePct, out var indyPct, out var trainBrakePct);
         var massKg = TryGetConsistMassKilograms();
-        // 4.7 IA + cab levers: … Load · Throttle · Indy · TrainBrake · Speed · Limit …
+        var loco = TryGetUsableLoco();
+        // 4.7 IA + cab levers: … Load · Rev · Throttle · Indy · TrainBrake · Speed · Limit …
         // Drive odometer stays internal for Align rem/trip — not a HUD chip.
         return TrainHudLine.Format(
             FluidDisplay.FormatFuelHud(fuel, oil),
@@ -2218,6 +2538,7 @@ internal static class TelemetryReader
             CarsDisplay.Format(TryGetConsistCarCount()),
             TryGetBackupProximityHudChip(),
             TryGetConsistFreeMotionHudChip(),
+            reverser: ReverserDisplay.FormatHud(TryGetReverserValue(loco)),
             throttle: CabLeverDisplay.FormatThrottle(throttlePct),
             indy: CabLeverDisplay.FormatIndy(indyPct),
             trainBrake: CabLeverDisplay.FormatTrainBrake(trainBrakePct),
@@ -2476,7 +2797,7 @@ internal static class TelemetryReader
     }
 
     /// <summary>DV reverser 0‥1 (0.5 = neutral); null if control missing.</summary>
-    private static float? TryGetReverserValue(TrainCar loco)
+    private static float? TryGetReverserValue(TrainCar? loco)
     {
         try
         {

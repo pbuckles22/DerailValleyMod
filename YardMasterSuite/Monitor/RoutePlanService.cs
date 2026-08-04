@@ -452,13 +452,34 @@ internal static class RoutePlanService
         }
 
         var at = TelemetryReaderOrigin.TryGet();
+        var originCands = TelemetryReaderOrigin.TryGetCandidates();
         var dest = RouteDestSession.TrackId
             ?? (plan.TrackIds.Count > 0 ? plan.TrackIds[plan.TrackIds.Count - 1] : null);
         // Alias-aware arrival: FullID / FullDisplayID of the same RailTrack as dest.
-        var arrived = PathRouteDebug.IsAtDestination(at, dest, plan)
-            || (!string.IsNullOrEmpty(at)
-                && !string.IsNullOrEmpty(dest)
-                && PathGraphBuilder.ExpandOccupiedAliases(new[] { dest! }).Contains(at!));
+        var destAliases = !string.IsNullOrEmpty(dest)
+            ? PathGraphBuilder.ExpandOccupiedAliases(new[] { dest! })
+            : null;
+        var arrived = false;
+        if (destAliases != null)
+        {
+            if (PathRouteDebug.IsAtDestination(at, dest, plan)
+                || (!string.IsNullOrEmpty(at) && destAliases.Contains(at!)))
+            {
+                arrived = true;
+            }
+            else
+            {
+                for (var i = 0; i < originCands.Count; i++)
+                {
+                    var c = originCands[i];
+                    if (!string.IsNullOrEmpty(c) && destAliases.Contains(c!))
+                    {
+                        arrived = true;
+                        break;
+                    }
+                }
+            }
+        }
 
         // Dijkstra TotalCost includes lane-choice penalties. Those choose the route but are
         // not travel time. Once the corridor is frozen/aligned, ETA uses physical hop time.
@@ -472,8 +493,19 @@ internal static class RoutePlanService
         }
         else
         {
-            // Odometer seeds physical plan remaining; soft lag then forms displayed ETA.
-            driveRemM = PathRouteDebug.RemainingFromDrive(tot, driveSince);
+            // Odometer seeds rem; graph rem floors when planned length was short vs drive.
+            var driveRemRaw = PathRouteDebug.RemainingFromDrive(tot, driveSince);
+            float? graphRem = null;
+            PathTrackMeta? Meta(string id) => PathGraphBuilder.TryGetTrackMeta(id);
+            var corridorKeys = PathGraphBuilder.ExpandOccupiedAliases(originCands);
+            var idx = PathRouteDebug.EarliestCorridorIndex(plan.TrackIds, corridorKeys);
+            if (idx >= 0)
+            {
+                var hopProg = RoutePlanSession.HopProgress01 ?? 0f;
+                graphRem = PathRouteDebug.RemainingMeters(plan, idx, hopProg, Meta);
+            }
+
+            driveRemM = PathRouteDebug.EffectiveRemainingMeters(driveRemRaw, graphRem, atDestination: false);
             planSec = PathRouteDebug.PlanEtaFromDrive(fullTravelSec, tot, driveRemM);
         }
 

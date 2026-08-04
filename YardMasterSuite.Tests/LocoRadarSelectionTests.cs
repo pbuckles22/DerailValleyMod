@@ -90,6 +90,46 @@ public class LocoRadarSelectionTests
         Assert.Equal(1, n);
         Assert.Equal(1, dest[0]);
     }
+
+    [Fact]
+    public void MaxRange_is_600m_for_yard_walk()
+    {
+        Assert.Equal(600f, LocoRadarSelection.MaxRangeMeters);
+    }
+
+    [Fact]
+    public void RankNearest_drops_candidates_beyond_max_range()
+    {
+        var justIn = LocoRadarSelection.MaxRangeMeters;
+        var justOut = justIn + 1f;
+        var candidates = new[]
+        {
+            new LocoRadarCandidate(1, justIn * justIn),
+            new LocoRadarCandidate(2, justOut * justOut),
+            new LocoRadarCandidate(3, 100f),
+            new LocoRadarCandidate(4, 2500f * 2500f),
+        };
+        var dest = new int[3];
+        var n = LocoRadarSelection.RankNearest(candidates, null, 3, dest);
+        Assert.Equal(2, n);
+        Assert.Equal(3, dest[0]);
+        Assert.Equal(1, dest[1]);
+    }
+
+    [Fact]
+    public void RankNearest_can_return_zero_or_one_inside_range()
+    {
+        var far = (LocoRadarSelection.MaxRangeMeters + 50f);
+        var candidates = new[]
+        {
+            new LocoRadarCandidate(1, far * far),
+            new LocoRadarCandidate(2, 25f),
+        };
+        var dest = new int[3];
+        var n = LocoRadarSelection.RankNearest(candidates, null, 3, dest);
+        Assert.Equal(1, n);
+        Assert.Equal(2, dest[0]);
+    }
 }
 
 public class LocoRadarDisplayTests

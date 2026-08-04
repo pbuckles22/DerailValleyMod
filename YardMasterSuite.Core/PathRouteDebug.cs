@@ -502,14 +502,15 @@ public static class PathRouteDebug
     }
 
     /// <summary>
-    /// True when the loco is on the destination track or the last corridor hop
-    /// (arrival — rem/ETA should snap to 0).
+    /// True when the loco is on the destination track (arrival — rem/ETA snap to 0).
+    /// Does not treat an earlier corridor hop as arrived (avoids rem/ETA dying before park).
     /// </summary>
     public static bool IsAtDestination(
         string? currentTrackId,
         string? destTrackId,
         PathPlanResult? plan)
     {
+        _ = plan;
         var cur = currentTrackId?.Trim();
         if (string.IsNullOrEmpty(cur))
         {
@@ -517,20 +518,61 @@ public static class PathRouteDebug
         }
 
         var dest = destTrackId?.Trim();
-        if (!string.IsNullOrEmpty(dest)
-            && string.Equals(cur, dest, StringComparison.Ordinal))
+        return !string.IsNullOrEmpty(dest)
+            && string.Equals(cur, dest, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Rem for HUD/ETA: prefer the longer of odometer rem and graph rem while not at dest.
+    /// Floors to 1 m until arrived so trip% / ETA never report "done" early.
+    /// </summary>
+    public static float EffectiveRemainingMeters(
+        float driveRemMeters,
+        float? graphRemMeters,
+        bool atDestination)
+    {
+        if (atDestination)
         {
-            return true;
+            return 0f;
         }
 
-        if (plan == null || plan.TrackIds.Count == 0)
+        var rem = driveRemMeters < 0f ? 0f : driveRemMeters;
+        if (graphRemMeters is float g && g > rem)
         {
-            return false;
+            rem = g;
         }
 
-        var last = plan.TrackIds[plan.TrackIds.Count - 1]?.Trim();
-        return !string.IsNullOrEmpty(last)
-            && string.Equals(cur, last, StringComparison.Ordinal);
+        return rem < 1f ? 1f : rem;
+    }
+
+    /// <summary>
+    /// Earliest corridor index among candidates (more remaining meters — safer ETA floor).
+    /// </summary>
+    public static int EarliestCorridorIndex(
+        IReadOnlyList<string> trackIds,
+        IEnumerable<string?>? candidates)
+    {
+        if (trackIds == null || candidates == null)
+        {
+            return -1;
+        }
+
+        var best = -1;
+        foreach (var c in candidates)
+        {
+            var i = IndexOfTrack(trackIds, c);
+            if (i < 0)
+            {
+                continue;
+            }
+
+            if (best < 0 || i < best)
+            {
+                best = i;
+            }
+        }
+
+        return best;
     }
 
     /// <summary>

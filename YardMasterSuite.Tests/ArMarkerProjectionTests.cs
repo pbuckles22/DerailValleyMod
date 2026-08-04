@@ -245,6 +245,7 @@ public class ArMarkerDisplayTests
         Assert.Equal("▲ 50m", ArMarkerDisplay.FormatLabel(ArWaypointKind.OtherLoco, 50f));
         Assert.Equal("⌂ 15m", ArMarkerDisplay.FormatLabel(ArWaypointKind.Station, 15f));
         Assert.Equal("● 3m", ArMarkerDisplay.FormatLabel(ArWaypointKind.Pin, 2.6f));
+        Assert.Equal("■ 40m", ArMarkerDisplay.FormatLabel(ArWaypointKind.JobCar, 40f));
         Assert.Equal("▲", ArMarkerDisplay.FormatLabel(ArWaypointKind.Loco, null));
         Assert.Equal("120m", ArMarkerDisplay.FormatDistanceOnly(120.4f));
         Assert.Equal("", ArMarkerDisplay.FormatDistanceOnly(null));

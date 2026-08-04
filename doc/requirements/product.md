@@ -33,7 +33,7 @@ Loco↔freight does not require MU. Incomplete link = not “drivable” for HUD
 
 Center-weighted IA (**4.7**): bar is **horizontally centered**; mid-string = Speed · Limit.
 
-`Fuel · Oil · Mass · Grade · Load · Throttle · Indy · TrainBrake · Speed · Limit · Motors · Handbrakes · Cars`
+`Fuel · Oil · Mass · Grade · Load · Rev · Throttle · Indy · TrainBrake · Speed · Limit · Motors · Handbrakes · Cars`
 
 | | |
 |--|--|
@@ -104,7 +104,7 @@ Look-at wins; standing fallback when crosshair is not on a car. Hidden when no t
 
 **4.6 notes:** In job-generation zone — always-on `Station SM NE 84m` (or `here`) using the **station office** transform (not yard center). **Bundle B.2:** no map coords on the chip. Omit outside zones.
 
-**4.8 notes:** **Primary:** prep-before-validate — `currentJobs` empty + `availableJobs` → `Preview Nm` to `destroyGeneratedJobsSqrDistanceRegular` (warn / `OUT`). Taken jobs — `Job ID · Bonus` only (no Zone; distance does not cancel). Abandoned/Expired → red `Cancelled`. Details: [UX_SMOKE_FEEDBACK_2026-07-23.md](UX_SMOKE_FEEDBACK_2026-07-23.md) Bundle D.
+**4.8 notes:** **Primary:** prep-before-validate — `currentJobs` empty + `availableJobs` → `Preview Nm` to `destroyGeneratedJobsSqrDistanceRegular` (warn / `OUT`). Taken jobs — `Job ID · GO/HOLD/RED · Bonus` (consist vs task cars; purple ■ AR on job cars @ **0.6.16**). Abandoned/Expired → red `Cancelled`. Details: [UX_SMOKE_FEEDBACK_2026-07-23.md](UX_SMOKE_FEEDBACK_2026-07-23.md) Bundle D.
 
 **4.9 notes:** AR screen markers with PNG icons (loco / house / pin) under `Mods/.../Icons/`; tint color secondary. Edge-clamped when behind; caption = meters only. `T2 ar`. **Office proximity (A.4 / Bundle C):** one gate hides the house icon and flips the Station chip to `here`. Being ~12–14 m from the door (apron) and seeing `here` is **accepted** — not an outdoor false-hide bug.
 

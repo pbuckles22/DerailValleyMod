@@ -582,8 +582,21 @@ public class PathRouteDebugTests
         Assert.Equal(0f, PathRouteDebug.RemainingMetersFromEta(14000f, 1311f, 0f));
 
         Assert.True(PathRouteDebug.IsAtDestination("OWC-A1L", "OWC-A1L", plan));
-        Assert.True(PathRouteDebug.IsAtDestination("C", "OWC-A1L", plan)); // last corridor hop
+        // Last corridor hop ≠ dest: do not snap rem/ETA early.
+        Assert.False(PathRouteDebug.IsAtDestination("C", "OWC-A1L", plan));
         Assert.False(PathRouteDebug.IsAtDestination("A", "OWC-A1L", plan));
         Assert.False(PathRouteDebug.IsAtDestination(null, "OWC-A1L", plan));
+
+        // Odometer may exhaust a short planned length before the dest track —
+        // prefer graph rem and never report 0 until arrived.
+        Assert.Equal(0f, PathRouteDebug.EffectiveRemainingMeters(0f, null, atDestination: true));
+        Assert.Equal(420f, PathRouteDebug.EffectiveRemainingMeters(0f, 420f, atDestination: false));
+        Assert.Equal(500f, PathRouteDebug.EffectiveRemainingMeters(500f, 120f, atDestination: false));
+        Assert.Equal(1f, PathRouteDebug.EffectiveRemainingMeters(0f, 0f, atDestination: false));
+        Assert.Equal(1f, PathRouteDebug.EffectiveRemainingMeters(0f, null, atDestination: false));
+
+        Assert.Equal(0, PathRouteDebug.EarliestCorridorIndex(plan.TrackIds, new[] { "C", "A" }));
+        Assert.Equal(2, PathRouteDebug.EarliestCorridorIndex(plan.TrackIds, new[] { "C", "missing" }));
+        Assert.Equal(-1, PathRouteDebug.EarliestCorridorIndex(plan.TrackIds, new[] { "nope" }));
     }
 }

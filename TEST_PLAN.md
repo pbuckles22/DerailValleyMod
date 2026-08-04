@@ -512,9 +512,9 @@ Screen markers: loco / office / pin **PNG icons** (shape primary). Edge clamp wh
 - [x] Office proximity — house hide + `Station … here` same gate (**PASS** Bundle C v0.4.48; accepted 2026-07-26)
 - [x] `T2 ar` shows loco / office / pin set changes
 
-### 4.10 Loco radar — **PASS** v0.4.75
+### 4.10 Loco radar — **PASS** v0.4.75 · range cap **0.6.15**
 
-Nearest **other** locos as amber AR markers on the sticky locator bar. Place: `SM-T12P` / `FF-A2P` or `FF #Y-…` (city + spur). Rigid AABB pack. Unblocks Bundle E **#23**.
+Nearest **other** locos as amber AR markers on the sticky locator bar (**≤600 m**, up to 3; fewer or none is OK). Place: `SM-T12P` / `FF-A2P` or `FF #Y-…` (city + spur). Rigid AABB pack. Unblocks Bundle E **#23**.
 
 **Sign-off**
 
@@ -523,6 +523,8 @@ Nearest **other** locos as amber AR markers on the sticky locator bar. Place: `S
 - [x] Turntable / edge pair — two squares side-by-side, no Venn
 - [x] `SM-…` / `FF-A2P` track only; spur → **`FF #Y-…`** (city + track)
 - [x] No YardMaster exceptions in Player.log
+- [x] UMM **0.6.15** — markers beyond **600 m** omitted (0–3 shown)
+- [x] UMM **0.6.19** — Options **Show nearest locos** off → radar gone; on → returns (Tier 2 PASS 2026-08-04)
 
 ### 4.7 HUD strip IA — **PASS** v0.4.23
 

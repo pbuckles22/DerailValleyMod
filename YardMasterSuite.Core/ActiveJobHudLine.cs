@@ -2,14 +2,19 @@ namespace YardMasterSuite.Core;
 
 /// <summary>
 /// Active-job summary bar (4.8 / Bundle D):
-/// taken = job + bonus only; preview/prep = Preview edge; cancelled flash.
+/// taken = Job + GO/HOLD/RED + Bonus; Cancelled flash;
+/// not taken (backpack) = license warn + optional Preview edge (no job id / GO chip).
 /// Null from the reader means the bar is omitted.
 /// </summary>
 public static class ActiveJobHudLine
 {
     public const string CancelledColor = "#FF5555";
 
-    /// <summary>Taken job: id + bonus only (no distance — validated jobs are not wiped by Regular edge).</summary>
+    /// <summary>Taken job: id · GO/HOLD/RED · bonus.</summary>
+    public static string Format(string job, string status, string bonus) =>
+        MonitorHudLine.Join(new[] { job, status, bonus });
+
+    /// <summary>Taken job without status chip (tests / cancelled paths).</summary>
     public static string Format(string job, string bonus) =>
         MonitorHudLine.Join(new[] { job, bonus });
 

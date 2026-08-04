@@ -19,10 +19,12 @@ public sealed class ArWaypointOverlay : MonoBehaviour
 
     private static readonly Color LocoColor = new(0.31f, 0.76f, 0.97f, 1f);
     private static readonly Color OtherLocoColor = new(1f, 0.72f, 0.28f, 1f);
+    private static readonly Color JobCarColor = new(0.78f, 0.49f, 1f, 1f);
     private static readonly Color StationColor = new(0.51f, 0.78f, 0.52f, 1f);
     private static readonly Color PinColor = new(1f, 0.84f, 0.31f, 1f);
 
-    private const int MaxFrames = 3 + LocoRadarSelection.DefaultMaxResults;
+    private const int MaxFrames =
+        3 + LocoRadarSelection.DefaultMaxResults + JobCarMarkerDisplay.DefaultMaxMarkers;
 
     private GUIStyle? _labelStyle;
     private Texture2D? _locoIcon;
@@ -39,6 +41,7 @@ public sealed class ArWaypointOverlay : MonoBehaviour
     private MarkerMotion _stationMotion;
     private MarkerMotion _pinMotion;
     private readonly MarkerMotion[] _radarMotions = new MarkerMotion[LocoRadarSelection.DefaultMaxResults];
+    private readonly MarkerMotion[] _jobCarMotions = new MarkerMotion[JobCarMarkerDisplay.DefaultMaxMarkers];
 
     private readonly MarkerFrame[] _frames = new MarkerFrame[MaxFrames];
 
@@ -179,6 +182,42 @@ public sealed class ArWaypointOverlay : MonoBehaviour
             _radarMotions[r].HasObjectAnchor = false;
             _radarMotions[r].HasLastDraw = false;
             _radarMotions[r].WantedOnObject = false;
+        }
+
+        var jobCarCount = TelemetryReader.GetArJobCarCount();
+        for (var j = 0; j < jobCarCount && n < MaxFrames; j++)
+        {
+            if (!TelemetryReader.TryGetArJobCar(j, out var world, out var caption))
+            {
+                _jobCarMotions[j].Progress = 0f;
+                _jobCarMotions[j].HasObjectAnchor = false;
+                _jobCarMotions[j].HasLastDraw = false;
+                _jobCarMotions[j].WantedOnObject = false;
+                continue;
+            }
+
+            _jobCarMotions[j].RadarSlot = j;
+            if (TryPrepareWorldMarker(
+                    cam,
+                    playerPos,
+                    ArWaypointKind.JobCar,
+                    world,
+                    caption,
+                    JobCarColor,
+                    _pinIcon,
+                    ref _jobCarMotions[j],
+                    out _frames[n]))
+            {
+                n++;
+            }
+        }
+
+        for (var j = jobCarCount; j < _jobCarMotions.Length; j++)
+        {
+            _jobCarMotions[j].Progress = 0f;
+            _jobCarMotions[j].HasObjectAnchor = false;
+            _jobCarMotions[j].HasLastDraw = false;
+            _jobCarMotions[j].WantedOnObject = false;
         }
 
         ApplyEdgeStackOffsets(_frames, n);
@@ -591,6 +630,14 @@ public sealed class ArWaypointOverlay : MonoBehaviour
                 if (slot >= 0 && slot < _radarMotions.Length)
                 {
                     _radarMotions[slot] = motion;
+                }
+
+                break;
+            case ArWaypointKind.JobCar:
+                var jobSlot = motion.RadarSlot;
+                if (jobSlot >= 0 && jobSlot < _jobCarMotions.Length)
+                {
+                    _jobCarMotions[jobSlot] = motion;
                 }
 
                 break;

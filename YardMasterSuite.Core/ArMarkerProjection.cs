@@ -12,6 +12,8 @@ public enum ArWaypointKind
     Pin = 2,
     /// <summary>Other spawned loco for MU / yard find (4.10 radar).</summary>
     OtherLoco = 3,
+    /// <summary>Taken-job task car (find freight for the job in hand).</summary>
+    JobCar = 4,
 }
 
 /// <summary>
@@ -272,7 +274,7 @@ public static class ArMarkerDisplay
         return $"{meters}m";
     }
 
-    /// <summary>Distinct shapes (not color-only): loco ▲, station ⌂, pin ●; other loco same ▲.</summary>
+    /// <summary>Distinct shapes (not color-only): loco ▲, station ⌂, pin ●, job car ■.</summary>
     public static string Glyph(ArWaypointKind kind) =>
         kind switch
         {
@@ -280,6 +282,7 @@ public static class ArMarkerDisplay
             ArWaypointKind.OtherLoco => "▲",
             ArWaypointKind.Station => "⌂",
             ArWaypointKind.Pin => "●",
+            ArWaypointKind.JobCar => "■",
             _ => "•",
         };
 }
