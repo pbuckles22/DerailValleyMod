@@ -22,8 +22,8 @@ public sealed class MonitorHudDriver : MonoBehaviour
     /// <summary>Shift+F1 = toggle Tier 2 debug hotkeys (and bottom legend HUD).</summary>
     private const KeyCode DebugToggleKey = KeyCode.F1;
 
-    /// <summary>F5 = cycle lighter: give → Lost&amp;Found → real (not F12 — opens console).</summary>
-    private const KeyCode LighterDebugKey = KeyCode.F5;
+    /// <summary>F5 = cycle DH4/DE6 licenses: real → DH4 only → DH4+DE6 → real.</summary>
+    private const KeyCode LocoLicenseDebugKey = KeyCode.F5;
 
     /// <summary>F6 = cycle Load% for the loco you are in (off → 85% → 97% → off).</summary>
     private const KeyCode LoadDebugKey = KeyCode.F6;
@@ -190,7 +190,7 @@ public sealed class MonitorHudDriver : MonoBehaviour
             PollFluidDebugHotkeys();
             PollCargoDebugHotkeys();
             PollS282LicenseHotkey();
-            PollLighterDebugHotkey();
+            PollLocoLicenseDebugHotkey();
             PollLoadDebugHotkey();
             PollMotorDebugHotkey();
             PollCouplerDebugHotkey();
@@ -378,15 +378,15 @@ public sealed class MonitorHudDriver : MonoBehaviour
         Main.Log($"T2 license-debug: {(ok ? "ok" : "fail")} ({message})");
     }
 
-    private void PollLighterDebugHotkey()
+    private void PollLocoLicenseDebugHotkey()
     {
-        if (!Input.GetKeyDown(LighterDebugKey))
+        if (!Input.GetKeyDown(LocoLicenseDebugKey))
         {
             return;
         }
 
-        var ok = TelemetryReader.TryDebugCycleLighter(out var message);
-        Main.Log($"T2 lighter-debug: {(ok ? "ok" : "fail")} ({message})");
+        var ok = TelemetryReader.TryDebugCycleLocoLicenses(out var message);
+        Main.Log($"T2 loco-license-debug: {(ok ? "ok" : "fail")} ({message})");
     }
 
     private void PollLoadDebugHotkey()

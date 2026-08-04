@@ -7,5 +7,5 @@ public static class DebugHotkeyHudLine
 {
     /// <summary>One bar listing cycle keys (same chip style as other Monitor bars).</summary>
     public static string Format() =>
-        "Shift+F1 Debug | F5 Lighter | F6 Load | F7 Cargo | F8 Fluids | F9 Couplers | F10 Motors | F11 Licenses";
+        "Shift+F1 Debug | F5 DH4/DE6 | F6 Load | F7 Cargo | F8 Fluids | F9 Couplers | F10 Motors | F11 Licenses";
 }

@@ -15,7 +15,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 |--|--|
 | **Journey** | Stage 3 — next **3.1b** |
 | **MVP** | Epic 1 System Monitor HUD |
-| **Version** | **0.6.4** *(3.1 job-cars teleport + Station Snap)* |
+| **Version** | **0.6.5** *(F5 DH4/DE6 license debug; 3.1b helper)* |
 | **Active branch** | `main` |
 
 ---
@@ -24,7 +24,7 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 | Branch | Role |
 |--------|------|
-| **`main`** | Integration — **0.6.4** (3.1 Tier 2 PASS) |
+| **`main`** | Integration — **0.6.5** (F5 loco-license debug Tier 2 PASS) |
 
 ---
 
@@ -41,5 +41,5 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 ### Next
 
-1. **[ ] 3.1b** — License-gated re-rail / spawn
+1. **[ ] 3.1b** — License-gated re-rail / spawn *(F5 DH4/DE6 license cycle helper @ **0.6.5**)*
 2. Parking: place ghost / Snap office polish; Switch List TurnAround / couple auto-advance; flight-sim HUD; AR loco ≤1 km / house hide; DM3; session reset; 1.17 #4 behind-seed ice

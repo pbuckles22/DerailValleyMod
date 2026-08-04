@@ -3270,15 +3270,47 @@ internal static class TelemetryReader
         }
     }
 
-    /// <summary>Restore real licenses if F11 override is active (e.g. debug gate off).</summary>
+    /// <summary>Restore real licenses if F11 or F5 override is active (e.g. debug gate off).</summary>
     public static void RestoreLicenseDebugIfNeeded()
     {
-        if (_licenseDebugMode != LicenseDebugMode.AllGranted)
+        if (_licenseDebugMode == LicenseDebugMode.AllGranted)
+        {
+            TryDebugToggleAllLicenses(out _);
+        }
+
+        RestoreLocoLicenseDebugIfNeeded();
+    }
+
+    private static void RestoreLocoLicenseDebugIfNeeded()
+    {
+        if (_locoLicensePhase == LocoLicenseDebugPhase.Real && !_locoLicenseHasSnap)
         {
             return;
         }
 
-        TryDebugToggleAllLicenses(out _);
+        try
+        {
+            var lm = LicenseManager.Instance;
+            if (lm == null)
+            {
+                return;
+            }
+
+            var dh4 = TransitionHelpers.ToV2(GeneralLicenseType.DH4);
+            var de6 = TransitionHelpers.ToV2(GeneralLicenseType.DE6);
+            if (dh4 != null && de6 != null && _locoLicenseHasSnap)
+            {
+                ApplyLocoLicenseFlag(lm, dh4, _locoLicenseSnapDh4);
+                ApplyLocoLicenseFlag(lm, de6, _locoLicenseSnapDe6);
+            }
+        }
+        catch
+        {
+            // fail-closed restore
+        }
+
+        _locoLicenseHasSnap = false;
+        _locoLicensePhase = LocoLicenseDebugPhase.Real;
     }
 
     private static bool TrySnapshotLicenses(LicenseManager lm, out string message)
@@ -3436,183 +3468,80 @@ internal static class TelemetryReader
         }
     }
 
-    private static LighterDebugPhase _lighterDebugPhase = LighterDebugPhase.Real;
-    private static GameObject? _debugLighterGo;
+    private static LocoLicenseDebugPhase _locoLicensePhase = LocoLicenseDebugPhase.Real;
+    private static bool _locoLicenseSnapDh4;
+    private static bool _locoLicenseSnapDe6;
+    private static bool _locoLicenseHasSnap;
 
     /// <summary>
-    /// Tier 2 F5: cycle lighter inventory — give → remove (lost&amp;found) → real. Avoids F12 console.
+    /// Tier 2 F5: cycle DH4/DE6 licenses — real → DH4 only → DH4+DE6 → real.
+    /// Other licenses untouched. Snapshot restored on Real / debug-gate off.
     /// </summary>
-    public static bool TryDebugCycleLighter(out string message)
+    public static bool TryDebugCycleLocoLicenses(out string message)
     {
         message = "fail";
         try
         {
-            var next = LighterDebugCycle.Next(_lighterDebugPhase);
-            switch (next)
+            var lm = LicenseManager.Instance;
+            if (lm == null)
             {
-                case LighterDebugPhase.InInventory:
-                    if (!TryGiveDebugLighter(out message))
-                    {
-                        return false;
-                    }
-
-                    _lighterDebugPhase = LighterDebugPhase.InInventory;
-                    return true;
-
-                case LighterDebugPhase.Removed:
-                    TryRemoveDebugLighter(out message);
-                    _lighterDebugPhase = LighterDebugPhase.Removed;
-                    return true;
-
-                default:
-                    TryRemoveDebugLighter(out _);
-                    _lighterDebugPhase = LighterDebugPhase.Real;
-                    message = "lighter real";
-                    return true;
+                message = "no LicenseManager";
+                return false;
             }
-        }
-        catch (Exception ex)
-        {
-            message = ex.GetType().Name;
-            return false;
-        }
-    }
 
-    private static bool TryGiveDebugLighter(out string message)
-    {
-        message = "no inventory";
-        var inv = Inventory.Instance;
-        if (inv == null)
-        {
-            return false;
-        }
+            var dh4 = TransitionHelpers.ToV2(GeneralLicenseType.DH4);
+            var de6 = TransitionHelpers.ToV2(GeneralLicenseType.DE6);
+            if (dh4 == null || de6 == null)
+            {
+                message = "no DH4/DE6 type";
+                return false;
+            }
 
-        var existing = inv.GetItemByName("lighter", partialNameCheck: true, includeDropped: false);
-        if (existing != null)
-        {
-            _debugLighterGo = existing;
-            message = "lighter already present";
+            var next = LocoLicenseDebugCycle.Next(_locoLicensePhase);
+            if (next == LocoLicenseDebugPhase.Real)
+            {
+                if (_locoLicenseHasSnap)
+                {
+                    ApplyLocoLicenseFlag(lm, dh4, _locoLicenseSnapDh4);
+                    ApplyLocoLicenseFlag(lm, de6, _locoLicenseSnapDe6);
+                    _locoLicenseHasSnap = false;
+                }
+
+                _locoLicensePhase = LocoLicenseDebugPhase.Real;
+                message = LocoLicenseDebugCycle.StatusFragment(_locoLicensePhase);
+                return true;
+            }
+
+            if (_locoLicensePhase == LocoLicenseDebugPhase.Real && !_locoLicenseHasSnap)
+            {
+                _locoLicenseSnapDh4 = lm.IsGeneralLicenseAcquired(dh4);
+                _locoLicenseSnapDe6 = lm.IsGeneralLicenseAcquired(de6);
+                _locoLicenseHasSnap = true;
+            }
+
+            ApplyLocoLicenseFlag(lm, dh4, LocoLicenseDebugCycle.WantDh4(next));
+            ApplyLocoLicenseFlag(lm, de6, LocoLicenseDebugCycle.WantDe6(next));
+            _locoLicensePhase = next;
+            message = LocoLicenseDebugCycle.StatusFragment(_locoLicensePhase);
             return true;
         }
-
-        var prefab = Resources.Load<GameObject>("lighter");
-        if (prefab == null)
-        {
-            message = "no lighter prefab";
-            return false;
-        }
-
-        var go = Object.Instantiate(prefab);
-        go.name = "lighter";
-        var spec = go.GetComponent<InventoryItemSpec>();
-        if (spec != null)
-        {
-            spec.BelongsToPlayer = true;
-        }
-
-        var rb = go.GetComponent<Rigidbody>();
-        if (rb != null)
-        {
-            rb.isKinematic = true;
-        }
-
-        if (!inv.CanAddItem(go))
-        {
-            Object.Destroy(go);
-            message = "inventory full";
-            return false;
-        }
-
-        var slot = inv.AddItemToInventory(go);
-        if (slot < 0)
-        {
-            Object.Destroy(go);
-            message = "add failed";
-            return false;
-        }
-
-        _debugLighterGo = go;
-        message = "lighter given";
-        return true;
-    }
-
-    private static void TryRemoveDebugLighter(out string message)
-    {
-        message = "no lighter";
-        try
-        {
-            var inv = Inventory.Instance;
-            var go = _debugLighterGo;
-            if ((go == null || go.Equals(null)) && inv != null)
-            {
-                go = inv.GetItemByName("lighter", partialNameCheck: true, includeDropped: true);
-            }
-
-            if (go == null || go.Equals(null))
-            {
-                _debugLighterGo = null;
-                message = "lighter already gone";
-                return;
-            }
-
-            // Unequip first — DestroyItem while held NRE's in Lighter.OnDestroy.
-            if (inv != null)
-            {
-                try
-                {
-                    inv.UnequipItem(true, -1);
-                }
-                catch
-                {
-                    // best-effort
-                }
-
-                try
-                {
-                    inv.DropItemFromHandsOrInventory(go);
-                }
-                catch
-                {
-                    // continue to lost&found
-                }
-            }
-
-            var storage = StorageController.Instance;
-            if (storage != null)
-            {
-                var item = go.GetComponent<ItemBase>() ?? go.GetComponentInChildren<ItemBase>();
-                if (item != null)
-                {
-                    storage.AddItemToLostAndFound(item, true);
-                    message = "lighter → Lost&Found";
-                }
-                else if (inv != null)
-                {
-                    inv.DropItemFromHandsOrInventory(go);
-                    message = "lighter dropped (no ItemBase)";
-                }
-                else
-                {
-                    message = "no ItemBase";
-                }
-            }
-            else if (inv != null)
-            {
-                // Last resort: drop only (do not DestroyItem — leaves ghost UI + NRE).
-                inv.DropItemFromHandsOrInventory(go);
-                message = "lighter dropped";
-            }
-            else
-            {
-                message = "no storage";
-            }
-
-            _debugLighterGo = null;
-        }
         catch (Exception ex)
         {
             message = ex.GetType().Name;
-            _debugLighterGo = null;
+            return false;
+        }
+    }
+
+    private static void ApplyLocoLicenseFlag(LicenseManager lm, GeneralLicenseType_v2 lic, bool want)
+    {
+        var have = lm.IsGeneralLicenseAcquired(lic);
+        if (want && !have)
+        {
+            lm.AcquireGeneralLicense(lic);
+        }
+        else if (!want && have)
+        {
+            lm.RemoveGeneralLicense(lic);
         }
     }
 
