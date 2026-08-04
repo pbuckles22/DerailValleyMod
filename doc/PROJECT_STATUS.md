@@ -41,5 +41,5 @@ Stack: Unity / C# `net48` / UMM / Harmony
 
 ### Next
 
-1. **[ ] 3.1b** — License-gated re-rail / spawn *(F5 DH4/DE6 license cycle helper @ **0.6.5**)*
-2. Parking: place ghost / Snap office polish; Switch List TurnAround / couple auto-advance; flight-sim HUD; AR loco ≤1 km / house hide; DM3; session reset; 1.17 #4 behind-seed ice
+1. **[ ] Maps / path integrity** — multi-step Maps routing; false **Path stale** (`planned switch changed` without player throws). **3.1b iced** (WIP ~0.6.12).
+2. Parking: 3.1b spawn/ghost; place ghost / Snap office polish; Switch List TurnAround / couple auto-advance; flight-sim HUD; AR loco ≤1 km / house hide; DM3; session reset; 1.17 #4 behind-seed ice

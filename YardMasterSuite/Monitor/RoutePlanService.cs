@@ -87,8 +87,19 @@ internal static class RoutePlanService
         var travelEta = PathRouteDebug.RemainingCostSeconds(plan, 0, filtered)
             ?? plan.TotalCost;
         RoutePlanSession.SetPlan(plan, origin, exit, travelEta);
-        RoutePlanSession.SetJunctionSnapshot(
-            PathCorridorDrift.CaptureJunctionBranches(plan, selected));
+        var snap = PathCorridorDrift.CaptureJunctionBranches(plan, selected);
+        RoutePlanSession.SetJunctionSnapshot(snap);
+        Main.Log(
+            "T2 path: junction-freeze "
+            + reason
+            + " n="
+            + snap.Count
+            + " status="
+            + plan.Status
+            + (snap.Count == 0
+                ? ""
+                : " · "
+                  + PathCorridorDrift.FormatJunctionDrift(snap, selected)));
         RoutePlanSession.SetDriveBaseline(TelemetryReader.SessionDriveMeters);
         ResetEtaPace();
         RefreshRemainingEta();
@@ -129,8 +140,17 @@ internal static class RoutePlanService
         var travelEta = PathRouteDebug.RemainingCostSeconds(plan, 0, edges)
             ?? plan.TotalCost;
         RoutePlanSession.SetPlan(plan, origin, exit, travelEta);
-        RoutePlanSession.SetJunctionSnapshot(
-            PathCorridorDrift.CaptureJunctionBranches(plan, selected));
+        var snap = PathCorridorDrift.CaptureJunctionBranches(plan, selected);
+        RoutePlanSession.SetJunctionSnapshot(snap);
+        Main.Log(
+            "T2 path: junction-freeze post-align n="
+            + snap.Count
+            + " status="
+            + plan.Status
+            + (snap.Count == 0
+                ? ""
+                : " · "
+                  + PathCorridorDrift.FormatJunctionDrift(snap, selected)));
         RoutePlanSession.SetDriveBaseline(TelemetryReader.SessionDriveMeters);
         ResetEtaPace();
         RouteMemo.Clear();
@@ -264,8 +284,9 @@ internal static class RoutePlanService
     }
 
     /// <summary>
-    /// Stale only when the player leaves the planned corridor — not merely the origin
-    /// (driving along an aligned path must stay Path OK).
+    /// Stale when the player leaves the planned corridor, or (Path OK only) when a
+    /// corridor switch's live branch no longer matches the frozen required branch.
+    /// Cold / partial graph reads do not invent throws.
     /// </summary>
     public static string? WatchPathDrift()
     {
@@ -286,22 +307,29 @@ internal static class RoutePlanService
         }
 
         // Need live edges + junction branches for switch invalidation and fill-ins.
+        // Cold map ⇒ skip switch watch (do not MarkStale on unreadable state).
         System.Collections.Generic.IReadOnlyList<PathEdge>? edges = null;
         System.Collections.Generic.Dictionary<string, int>? selected = null;
-        if (PathGraphBuilder.TryBuild(out var built, out var liveSelected))
+        var graphReady = PathGraphBuilder.TryBuild(out var built, out var liveSelected);
+        if (graphReady)
         {
             edges = built;
             selected = liveSelected;
         }
 
-        // PRODUCT LOCK: planned switch throw ⇒ Path stale immediately (even while still
-        // sitting on a corridor rail). Do not re-order below the on-corridor early-outs.
-        if (PathCorridorDrift.PlannedJunctionChanged(
+        // PRODUCT: only Path OK watches throws. Misaligned already shows Path N wrong;
+        // Align mid-flight must not MarkStale while Switch() settles.
+        if (graphReady
+            && PathCorridorDrift.ShouldWatchJunctionDrift(plan.Status)
+            && PathCorridorDrift.PlannedJunctionChanged(
                 RoutePlanSession.JunctionSnapshot,
                 selected))
         {
+            var drift = PathCorridorDrift.FormatJunctionDrift(
+                RoutePlanSession.JunctionSnapshot,
+                selected);
             RoutePlanSession.MarkStale("planned switch changed — Recheck or Align again");
-            return "T2 path: planned switch changed (Recheck or Align)";
+            return "T2 path: planned switch changed (Recheck or Align) · " + drift;
         }
 
         var candidates = TelemetryReaderOrigin.TryGetCandidates();

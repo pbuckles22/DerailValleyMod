@@ -34,7 +34,7 @@ Legacy IDs (`CMD-01a`, `QOL-08`, …) stay in parentheses so older notes still r
 |-------|----------------|-----------|---------|
 | **1 — Apprentice** | Throttle, brakes, sander, don’t blow the fuse | Situational Awareness HUD | **Epic 1** *(done)* + **4.3** + **4.6** + **4.7**; Epic 2 done |
 | **2 — Junior Yardman** | Walk/throw switches (grind); earn **Shunting (SH)** | — | *(no remote throw — **3.3 cut**)* |
-| **3 — Yard Master** | City → track deliveries; don’t think about levers | CTC Align + **Digital Switch List** (job steps) | **3.5** / **3.6** / **3.1** *(done)*; next **3.1b**; **5.1** later |
+| **3 — Yard Master** | City → track deliveries; don’t think about levers | CTC Align + **Digital Switch List** (job steps) | **3.5** / **3.6** / **3.1** *(done)*; next **Maps / path**; **3.1b iced**; **5.1** later |
 
 Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 play is actually enjoyable — cab gadgets on the HUD, no dash wall in the yard.
 
@@ -146,7 +146,7 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
   - [x] **1.17 Posted Limit + Next look-ahead (+ world board index)** — HUD: `Limit 80 | Next 50 (50m)` (or `1.2km`). Limit = sticky **posted** only — no `(Posted)` / `(Recommended)` labels. Soft **Brake** chip **CUT**. Geometry-ahead boards **CUT**. World board index seeds Limit from behind (not Next). **Done** — Tier 1 + Tier 2 **PASS** @ **0.5.104** (2026-08-03). *(#4 blind behind-seed on ice — reopen if Limit stays empty when a board is <600 m behind.)*
     > As a driver, I want an honest posted Limit and a clear next-sign cue with distance — not a Limit that jumps or a Brake chip that invents 50 when Next shows 80.
 
-  **Build order:** **Stress RAG** / **3.6** / **3.1** done → **3.1b**. *(Do not reopen **1.8** HUD thermal prediction.)*
+  **Build order:** **Stress RAG** / **3.6** / **3.1** done → **Maps / path integrity** (resume) → **3.1b** *(iced)*. *(Do not reopen **1.8** HUD thermal prediction.)*
 
 ---
 
@@ -176,7 +176,7 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
   - [x] **3.3 Manual switch / turntable remote** — **Cut** (2026-07-28). Walking/throwing switches is the career grind. Licensed **3.5** Align Route is the CTC remote. *(PgUp/PgDn turntable = Epic 4 QOL only.)*
     > ~~As a shunter, I want to flip switches and turntables from my HUD…~~
 
-  - [ ] **3.1b License-gated re-rail / spawn** *(debug → product candidate)* — Hotkey: scroll liveries the player holds licenses for; place with same re-rail blue/red ghost box as native re-rail. Replace/extend any ad-hoc spawn debt. *After **3.1**.* *Helper: F5 DH4/DE6 license cycle @ **0.6.5** (Tier 2 PASS).*
+  - [ ] **3.1b License-gated re-rail / spawn** *(ICED 2026-08-04)* — Hotkey spawn of licensed liveries + native-style place ghost. WIP left uncommitted (~0.6.12: own `CarDestinationHighlighter` from prefab; scroll PASS; ghost still unconfirmed). *Do not resume until Maps / path integrity is done.* *Helper: F5 DH4/DE6 @ **0.6.5**.*
     > As a tester/yard master, I want to re-rail a licensed loco under the crosshair with clear place/no-place feedback.
 
   - [x] **3.4 Path tracer: manual check (player chore)** — **Demoted** (2026-07-28). Not a separate "check my math" grind. Path + alignment math is the **internal engine** for **3.5** (preview before throw). Look-at **End** pin may remain as a quick spur shortcut.
@@ -192,7 +192,7 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
     - *Concept bridge:* `doc/GeminiDocs/Digital Switch List Spec.md` (local scratch).
     > As a licensed dispatcher, I want a job Switch List that tells me turn-around → pick up → transit → deliver and Aligns each leg so I am not manually re-picking city/track three times.
 
-  **Build order:** **3.1b** *(**3.1** done @ **0.6.4**; **3.6** @ **0.6.2**; **3.2** cut)*.
+  **Build order:** **Maps / path integrity** next; **3.1b iced** *(**3.1** @ **0.6.4**; **3.6** @ **0.6.2**; **3.2** cut)*.
 
 ---
 
@@ -255,7 +255,8 @@ Not scheduled — discuss when Journey stage friction demands it:
 - [ ] Engine Temp Soft Governor *(if distinct from **2.2**)*
 - [ ] Speed-limit auto-throttle governor *(soft-cap to % of Limit — same pattern as **2.2**; candidate **2.4**)*
 - [ ] **Session reset hotkey** — e.g. Shift+F6: set time ~07:00, clear/reset weather board, invalidate active jobs, refresh available job board (Tier 2 / sandbox).
-- [ ] **License-gated re-rail scroll** — see **3.1b** (promoted from debug ask).
+- [ ] **License-gated re-rail scroll** — see **3.1b** *(iced 2026-08-04)*.
+- [ ] **Player headlamp (miner’s hat)** — camera-mounted spot Light toggle (concept: `L` key); hands-free vs holding flashlight while shunting. *Gemini scratch: `doc/GeminiDocs/player_headlamp_script.cs` — not scheduled.*
 - [ ] **AR markers — in-view only (no false edge-stick)** — Station house / loco / pin / radar: do **not** edge-clamp a marker onto nearby geometry when the world target is off-screen or occluded. Only pull to screen edge (or show) when the target is actually in view; otherwise omit or keep off-screen so the icon doesn’t look glued to a car beside you. *(Smoke note 2026-07-28: house @ 120 m appeared on freight car flank.)* Follow-on to **4.9** / **4.10**.
 - [x] **2.2 Thermal governor — Hot trigger** — cab yellow = MU Warning; HUD/governor use `MUChainTemperatureState`. Soft-roll Warning **75%** / Critical **55%**. **PASS** @ **0.5.15**. Gemini: `doc/GeminiDocs/A2_Thermal_Governor_TriggerMismatch.md`.
 

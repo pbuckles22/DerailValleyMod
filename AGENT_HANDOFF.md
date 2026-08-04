@@ -144,8 +144,8 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 
 **Next**
 
-1. **3.1b** — license-gated re-rail / spawn *(F5 DH4/DE6 helper done @ **0.6.5**; **3.1** @ **0.6.4**)*
-2. Parking: place ghost / Snap office under-mesh; Switch List TurnAround / couple auto-advance; flight-sim HUD; AR loco ≤1 km / house hide; DM3; session reset; 1.17 #4 behind-seed if Limit stays empty with board <600 m behind.
+1. **Maps / path integrity** — finish multi-step Maps routing; investigate false **Path stale** (`planned switch changed` while player did not throw). **3.1b iced** (WIP uncommitted ~0.6.12).
+2. Parking: 3.1b ghost/spawn; place ghost / Snap office under-mesh; Switch List TurnAround / couple auto-advance; flight-sim HUD; AR loco ≤1 km / house hide; DM3; session reset; 1.17 #4 behind-seed.
 **Merge-ready:** `dotnet test YardMasterSuite.sln` · `dotnet build YardMasterSuite.sln -c Release` · **deploy to Mods** via `package.ps1 -NoArchive` (required before Tier 2 smoke — see [.cursor/rules/deploy-before-smoke.mdc](.cursor/rules/deploy-before-smoke.mdc))
 
 ## Run and test

@@ -405,6 +405,20 @@ internal static class TelemetryReader
     {
         if (RoutePlanSession.IsStale)
         {
+            var reason = RoutePlanSession.StatusMessage;
+            if (!string.IsNullOrEmpty(reason))
+            {
+                if (reason!.StartsWith("planned switch", StringComparison.Ordinal))
+                {
+                    return "Path stale · switch";
+                }
+
+                if (reason.StartsWith("left planned", StringComparison.Ordinal))
+                {
+                    return "Path stale · off path";
+                }
+            }
+
             return "Path stale";
         }
 

@@ -188,8 +188,9 @@ public static class PathCorridorDrift
     }
 
     /// <summary>
-    /// Snapshot of plan-junction branches at Set dest / Align. Empty when the corridor
-    /// has no switches.
+    /// Snapshot of plan-junction <b>required</b> branches at Set dest / Align.
+    /// Freeze the corridor intent — not a live read that can flap before Switch settles.
+    /// Empty when the corridor has no switches.
     /// </summary>
     public static Dictionary<string, int> CaptureJunctionBranches(
         PathPlanResult plan,
@@ -201,7 +202,9 @@ public static class PathCorridorDrift
             return snap;
         }
 
-        var live = liveSelectedBranches ?? new Dictionary<string, int>();
+        // liveSelectedBranches kept for call-site compatibility / future diagnostics.
+        _ = liveSelectedBranches;
+
         foreach (var j in plan.Junctions)
         {
             if (string.IsNullOrEmpty(j.JunctionId) || snap.ContainsKey(j.JunctionId))
@@ -209,22 +212,25 @@ public static class PathCorridorDrift
                 continue;
             }
 
-            if (live.TryGetValue(j.JunctionId, out var branch))
-            {
-                snap[j.JunctionId] = branch;
-            }
-            else
-            {
-                snap[j.JunctionId] = j.ActualBranch;
-            }
+            // RequiredBranch is the Dijkstra hop intent; ActualBranch can be a defaulted 0
+            // when the live map briefly lacks the key.
+            snap[j.JunctionId] = j.RequiredBranch;
         }
 
         return snap;
     }
 
     /// <summary>
-    /// True when every snapshotted plan junction still has the same selectedBranch
-    /// (no throws since Align / Set dest). Empty snapshot ⇒ no corridor switches ⇒ true.
+    /// Watch corridor switch throws only while Path OK. Misaligned plans already show
+    /// <c>Path N wrong</c> — do not MarkStale while Align is still throwing.
+    /// </summary>
+    public static bool ShouldWatchJunctionDrift(PathCheckStatus status) =>
+        status == PathCheckStatus.Aligned;
+
+    /// <summary>
+    /// True when every <b>observable</b> snapshotted junction still matches.
+    /// Missing live keys are <b>not</b> throws (cold/partial map) — fail open.
+    /// Null / empty live ⇒ unchanged (cannot observe).
     /// </summary>
     public static bool JunctionsUnchanged(
         IReadOnlyDictionary<string, int>? snapshot,
@@ -235,15 +241,19 @@ public static class PathCorridorDrift
             return true;
         }
 
-        if (liveSelectedBranches == null)
+        if (liveSelectedBranches == null || liveSelectedBranches.Count == 0)
         {
-            return false;
+            return true;
         }
 
         foreach (var kv in snapshot)
         {
-            if (!liveSelectedBranches.TryGetValue(kv.Key, out var live)
-                || live != kv.Value)
+            if (!liveSelectedBranches.TryGetValue(kv.Key, out var live))
+            {
+                continue;
+            }
+
+            if (live != kv.Value)
             {
                 return false;
             }
@@ -254,7 +264,7 @@ public static class PathCorridorDrift
 
     /// <summary>
     /// True when a junction used by the frozen plan no longer has its frozen branch.
-    /// Unrelated world switches do not invalidate the route.
+    /// Unrelated world switches and unreadable keys do not invalidate the route.
     /// </summary>
     public static bool PlannedJunctionChanged(
         IReadOnlyDictionary<string, int>? snapshot,
@@ -263,6 +273,69 @@ public static class PathCorridorDrift
         return snapshot != null
             && snapshot.Count > 0
             && !JunctionsUnchanged(snapshot, liveSelectedBranches);
+    }
+
+    /// <summary>
+    /// Human drift list for Player.log: <c>Jid freeze→live</c> (missing live as <c>?</c>).
+    /// </summary>
+    public static string FormatJunctionDrift(
+        IReadOnlyDictionary<string, int>? snapshot,
+        IReadOnlyDictionary<string, int>? liveSelectedBranches,
+        int head = 12)
+    {
+        if (snapshot == null || snapshot.Count == 0)
+        {
+            return "—";
+        }
+
+        var parts = new List<string>();
+        foreach (var kv in snapshot)
+        {
+            string? piece = null;
+            if (liveSelectedBranches == null
+                || !liveSelectedBranches.TryGetValue(kv.Key, out var live))
+            {
+                piece = kv.Key + " " + kv.Value + "→?";
+            }
+            else if (live != kv.Value)
+            {
+                piece = kv.Key + " " + kv.Value + "→" + live;
+            }
+
+            if (piece == null)
+            {
+                continue;
+            }
+
+            if (parts.Count < head)
+            {
+                parts.Add(piece);
+            }
+        }
+
+        if (parts.Count == 0)
+        {
+            return "—";
+        }
+
+        var totalDiffs = 0;
+        foreach (var kv in snapshot)
+        {
+            if (liveSelectedBranches == null
+                || !liveSelectedBranches.TryGetValue(kv.Key, out var live)
+                || live != kv.Value)
+            {
+                totalDiffs++;
+            }
+        }
+
+        var joined = string.Join(" ", parts);
+        if (totalDiffs > parts.Count)
+        {
+            joined += " …+" + (totalDiffs - parts.Count);
+        }
+
+        return joined;
     }
 
     private static string? Normalize(string? trackId)
