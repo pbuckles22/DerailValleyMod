@@ -637,6 +637,20 @@ Cool/Dead → release. Player.log: `T2 thermal: soft-cap → … (Warning|Critic
 - [ ] Clear / Hide; Mod Off → On; no exceptions *(covered in Align smoke; optional recheck)*
 - [x] Fail closed: unreadable tracks → status error *(earlier 0.6.1 before `startingTrack` fix)*
 
+### 3.1 Job-cars teleport + Station Snap — smoke @ **v0.6.4** — Tier 2 **PASS** (2026-08-03)
+
+**Keys / UI:** `Insert` → **Switch List**. Select held/taken job → **Move … here** (place mode). **Look at** destination track → chip `PLACE OK · N cars · TRACK`. **Flip** · **Confirm place** → `TeleportTrainset`. **Snap office** / **Return**.
+
+**Player.log:** `T2 teleport: place · …` / `started · N cars → TRACK · aim=(x,z)` / `complete`; `T2 snap: …`
+
+**Sign-off**
+
+- [x] UMM **0.6.4** Active
+- [x] Move → PLACE chip; look-at target; Confirm → multi-car teleport complete (×3 in log)
+- [x] Snap office / Return logged; under-mesh spawn = known polish follow-on
+- [x] No place ghost yet (MVP chip-only — follow-on)
+- [x] Never deletes cars; no exceptions on confirm path
+
 ### 3.4 Path tracer: manual check — **demoted** (engine only; see 3.5)
 
 ---

@@ -75,6 +75,9 @@ public static class Main
             RouteDestSession.Clear();
             RoutePlanSession.Clear();
             RouteMemo.Clear();
+            SwitchListSession.Clear();
+            JobCarsPlaceSession.Clear();
+            StationSnapSession.Clear();
             modEntry.Logger.Log("Yard Master Suite disabled.");
         }
 
@@ -89,6 +92,9 @@ public static class Main
         RouteDestSession.Clear();
         RoutePlanSession.Clear();
         RouteMemo.Clear();
+        SwitchListSession.Clear();
+        JobCarsPlaceSession.Clear();
+        StationSnapSession.Clear();
         FluidDebugOverride.Clear();
         LoadDebugOverride.Clear();
         MotorDebugOverride.Clear();

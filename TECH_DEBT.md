@@ -10,7 +10,7 @@ Durable ranked backlog. Handoff notes may mention debt; **promote** anything tha
 
 
 
-**Last full pass:** Stress RAG ship / handoff — 2026-08-03.
+**Last full pass:** 3.1 ship / handoff — 2026-08-03.
 
 
 
@@ -41,6 +41,10 @@ Blocking, unsafe, or no-rollback.
 High ROI; frequent pain; not blocking.
 
 
+
+- [ ] **3.1 place ghost / facing cue** — MVP chip-only; players can’t preview landing until Confirm. Add re-rail-style ghost (and Flip cue) on look-at aim.
+
+- [ ] **3.1 Snap office under-mesh** — Station Snap can drop the player under the office floor / into water; needs a known-good office spawn (or offset up).
 
 - [x] **MU yellow smoke (2-loco)** — Bundle E **#23** **PASS** @ **0.4.80** (red / yellow / white / blue scheme; MU via `muModule`).
 

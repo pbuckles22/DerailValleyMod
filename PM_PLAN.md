@@ -34,7 +34,7 @@ Legacy IDs (`CMD-01a`, `QOL-08`, …) stay in parentheses so older notes still r
 |-------|----------------|-----------|---------|
 | **1 — Apprentice** | Throttle, brakes, sander, don’t blow the fuse | Situational Awareness HUD | **Epic 1** *(done)* + **4.3** + **4.6** + **4.7**; Epic 2 done |
 | **2 — Junior Yardman** | Walk/throw switches (grind); earn **Shunting (SH)** | — | *(no remote throw — **3.3 cut**)* |
-| **3 — Yard Master** | City → track deliveries; don’t think about levers | CTC Align + **Digital Switch List** (job steps) | **3.5** / **3.6** *(done)*; next **3.1** / **3.1b**; **5.1** later |
+| **3 — Yard Master** | City → track deliveries; don’t think about levers | CTC Align + **Digital Switch List** (job steps) | **3.5** / **3.6** / **3.1** *(done)*; next **3.1b**; **5.1** later |
 
 Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 play is actually enjoyable — cab gadgets on the HUD, no dash wall in the yard.
 
@@ -53,7 +53,7 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
 | **1.13** | *(new)* | Player map coordinates (always-on) |
 | **1.14** | *(new)* | Park / return mark (freeze “you parked here”) |
 | **2.x** | E2-S1, CMD-04/05 | Governor Mode |
-| **3.1** | CMD-06 | Consist teleport + Station Snap & Return |
+| **3.1** | CMD-06 | Job-cars teleport (re-rail place UX) + Station Snap & Return |
 | **3.2** | *(new)* | **Cut** — Comms overlay; Align helpers → **3.6** / Dispatch Desk; teleport UI with **3.1** |
 | **3.3** | *(was remote switch)* | **Cut** — walk/throw is the grind to SH / Align Route |
 | **3.4** | *(was check-my-math UX)* | **Internal** path engine only (no separate player chore) |
@@ -146,7 +146,7 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
   - [x] **1.17 Posted Limit + Next look-ahead (+ world board index)** — HUD: `Limit 80 | Next 50 (50m)` (or `1.2km`). Limit = sticky **posted** only — no `(Posted)` / `(Recommended)` labels. Soft **Brake** chip **CUT**. Geometry-ahead boards **CUT**. World board index seeds Limit from behind (not Next). **Done** — Tier 1 + Tier 2 **PASS** @ **0.5.104** (2026-08-03). *(#4 blind behind-seed on ice — reopen if Limit stays empty when a board is <600 m behind.)*
     > As a driver, I want an honest posted Limit and a clear next-sign cue with distance — not a Limit that jumps or a Brake chip that invents 50 when Next shows 80.
 
-  **Build order:** **Stress RAG** / **3.6** done → **3.1** / **3.1b**. *(Do not reopen **1.8** HUD thermal prediction.)*
+  **Build order:** **Stress RAG** / **3.6** / **3.1** done → **3.1b**. *(Do not reopen **1.8** HUD thermal prediction.)*
 
 ---
 
@@ -165,8 +165,10 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
 
 - [ ] **Epic 3 — Yard Master / Dispatcher** *(Journey Stages 2–3)* — CTC-style **Align Route** (**3.5** done) + **Digital Switch List** (**3.6**): job → multi-step Align (prep / turn-around / couple / transit / deliver). Never delete cars. Scope: **yard and inter-city**. Gate Align / Switch List on **Dispatcher** (Dispatcher1).
 
-  - [ ] **3.1 Manual consist management & teleport** *(was CMD-06)* — Teleport via native organizers and/or helper UI; abort on hazmat / jobs / coupler / speed / unknowns; fail closed. Includes **Station Snap & Return**. *After **3.6** — orthogonal to Switch List; host any teleport buttons on Dispatch Desk (no separate Comms overlay).*
-    > As a yard master, I want verified teleport helpers and station snap/return so I can reorganize consists and handle paperwork without long walks.
+  - [x] **3.1 Manual consist management & teleport** *(was CMD-06)* — Move **existing** job cars: Switch List **Move … here** → look-at place mode → **Confirm** → `TeleportTrainset`. Fail-closed (hazmat / moving / partial / busy). **Never delete cars.** Station Snap & Return on desk. **Done** — Tier 1 + Tier 2 **PASS** @ **0.6.4** (2026-08-03). *MVP: chip + Flip facing; no blue ghost yet.*
+    - **Not this story:** spawning a new licensed loco under crosshair = **3.1b**.
+    - **Follow-on:** place ghost / facing cue; Snap office spawn under mesh polish.
+    > As a yard master with a job in hand, I want “move my needed cars here,” then point-and-click place them behind my loco (with facing) like re-rail, so I don’t hunt the yard — and snap to the station office and back for paperwork.
 
   - [x] **3.2 Comms Radio Overlay** — **Cut** (2026-08-03). Align / yard routing helpers land on **3.6** Switch List + existing Dispatch Desk. Teleport / consist controls ship with **3.1** on that desk (or a thin panel then) — do not build a standalone Comms overlay just to host Align.
     > ~~As a yard master, I want a Comms-style helper panel so teleport and yard tools stay one click away.~~
@@ -174,7 +176,7 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
   - [x] **3.3 Manual switch / turntable remote** — **Cut** (2026-07-28). Walking/throwing switches is the career grind. Licensed **3.5** Align Route is the CTC remote. *(PgUp/PgDn turntable = Epic 4 QOL only.)*
     > ~~As a shunter, I want to flip switches and turntables from my HUD…~~
 
-  - [ ] **3.1b License-gated re-rail / spawn** *(debug → product candidate)* — Hotkey: scroll liveries the player holds licenses for; place with same re-rail blue/red ghost box as native re-rail. Replace/extend any ad-hoc spawn debt. *After **3.6**.*
+  - [ ] **3.1b License-gated re-rail / spawn** *(debug → product candidate)* — Hotkey: scroll liveries the player holds licenses for; place with same re-rail blue/red ghost box as native re-rail. Replace/extend any ad-hoc spawn debt. *After **3.1**.*
     > As a tester/yard master, I want to re-rail a licensed loco under the crosshair with clear place/no-place feedback.
 
   - [x] **3.4 Path tracer: manual check (player chore)** — **Demoted** (2026-07-28). Not a separate "check my math" grind. Path + alignment math is the **internal engine** for **3.5** (preview before throw). Look-at **End** pin may remain as a quick spur shortcut.
@@ -190,7 +192,7 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
     - *Concept bridge:* `doc/GeminiDocs/Digital Switch List Spec.md` (local scratch).
     > As a licensed dispatcher, I want a job Switch List that tells me turn-around → pick up → transit → deliver and Aligns each leg so I am not manually re-picking city/track three times.
 
-  **Build order:** **3.1** / **3.1b** *(**3.6** done @ **0.6.2**; **3.2** cut)*.
+  **Build order:** **3.1b** *(**3.1** done @ **0.6.4**; **3.6** @ **0.6.2**; **3.2** cut)*.
 
 ---
 

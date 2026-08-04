@@ -125,6 +125,119 @@ internal sealed class DispatchDeskPanel : MonoBehaviour
                 _status = RoutePlanSession.StatusMessage ?? drift;
             }
         }
+
+        if (JobCarsPlaceSession.IsActive)
+        {
+            PollPlaceTarget();
+        }
+    }
+
+    private void PollPlaceTarget()
+    {
+        // Look-at wins: camera ray → track near the hit (not "closest to feet").
+        const float maxLookMeters = 250f;
+        const float maxTrackSnapMeters = 12f;
+
+        try
+        {
+            var cam = PlayerManager.PlayerCamera;
+            if (cam == null)
+            {
+                cam = Camera.main;
+            }
+
+            if (cam == null)
+            {
+                JobCarsPlaceSession.ClearAim();
+                return;
+            }
+
+            var tracks = RailTrackRegistry.RailTracks;
+            if (tracks == null || tracks.Length == 0)
+            {
+                JobCarsPlaceSession.ClearAim();
+                return;
+            }
+
+            var ray = new Ray(cam.transform.position, cam.transform.forward);
+            Vector3 aim;
+            if (Physics.Raycast(ray, out var hit, maxLookMeters, ~0, QueryTriggerInteraction.Ignore))
+            {
+                aim = hit.point;
+            }
+            else
+            {
+                aim = ray.GetPoint(40f);
+            }
+
+            // Rank tracks by distance from aim; prefer named (FF-…) over anonymous #Y.
+            RailTrack? bestNamed = null;
+            var bestNamedDist = float.MaxValue;
+            RailTrack? bestAny = null;
+            var bestAnyDist = float.MaxValue;
+
+            for (var i = 0; i < tracks.Length; i++)
+            {
+                var rail = tracks[i];
+                if (rail == null)
+                {
+                    continue;
+                }
+
+                var pointDist = RailTrack.GetClosestPoint(rail, aim, 0f);
+                var dist = pointDist.Item2;
+                if (dist > maxTrackSnapMeters)
+                {
+                    continue;
+                }
+
+                if (dist < bestAnyDist)
+                {
+                    bestAnyDist = dist;
+                    bestAny = rail;
+                }
+
+                var key = PathGraphBuilder.TrackKey(rail);
+                if (key != null
+                    && !PathRouteConstraints.IsAnonymousTrack(key)
+                    && dist < bestNamedDist)
+                {
+                    bestNamedDist = dist;
+                    bestNamed = rail;
+                }
+            }
+
+            // Closest-to-aim wins. If that is anonymous (#Y) and a named track is nearly as close, prefer named.
+            RailTrack? pick;
+            if (bestAny != null)
+            {
+                var anyKey = PathGraphBuilder.TrackKey(bestAny);
+                var anyAnon = anyKey != null && PathRouteConstraints.IsAnonymousTrack(anyKey);
+                if (anyAnon
+                    && bestNamed != null
+                    && bestNamedDist <= bestAnyDist + 2.5f)
+                {
+                    pick = bestNamed;
+                }
+                else
+                {
+                    pick = bestAny;
+                }
+            }
+            else
+            {
+                JobCarsPlaceSession.ClearAim();
+                return;
+            }
+
+            var pickKey = PathGraphBuilder.TrackKey(pick);
+            JobCarsPlaceSession.SetTargetTrack(pickKey);
+            JobCarsPlaceSession.SetAimPoint(aim.x, aim.y, aim.z);
+        }
+        catch
+        {
+            JobCarsPlaceSession.ClearAim();
+        }
     }
 
     private void OnGUI()
@@ -145,7 +258,7 @@ internal sealed class DispatchDeskPanel : MonoBehaviour
         }
 
         const float w = 420f;
-        var h = _mode == DeskMode.SwitchList ? 360f : (PathGraphBuilder.IsMapping ? 300f : 280f);
+        var h = _mode == DeskMode.SwitchList ? 420f : (PathGraphBuilder.IsMapping ? 300f : 280f);
         var x = (Screen.width - w) * 0.5f;
         var y = Screen.height * 0.12f;
         GUI.Box(new Rect(x, y, w, h), "Dispatch desk (Dispatcher)");
@@ -434,6 +547,64 @@ internal sealed class DispatchDeskPanel : MonoBehaviour
 
         row += 30f;
 
+        // 3.1 — move existing job cars (re-rail-style place)
+        if (GUI.Button(new Rect(x + 12, row, 150, 26), "Move job cars here"))
+        {
+            _jobDropOpen = false;
+            RefreshJobs();
+            var job = _jobs.Count > 0 && _jobIndex < _jobs.Count ? _jobs[_jobIndex] : null;
+            _status = JobCarsTeleportGovernor.BeginPlaceForJob(job);
+        }
+
+        if (GUI.Button(new Rect(x + 168, row, 90, 26), "Confirm place"))
+        {
+            _status = JobCarsTeleportGovernor.ConfirmPlace(this);
+        }
+
+        if (GUI.Button(new Rect(x + 264, row, 70, 26), "Flip"))
+        {
+            if (JobCarsPlaceSession.IsActive)
+            {
+                JobCarsPlaceSession.ToggleFacing();
+                _status = JobCarsPlaceSession.ForceRegularDirection ? "facing regular" : "facing flipped";
+            }
+        }
+
+        if (GUI.Button(new Rect(x + 340, row, 60, 26), "Cancel"))
+        {
+            _status = JobCarsTeleportGovernor.CancelPlace();
+        }
+
+        row += 28f;
+        if (JobCarsPlaceSession.IsActive)
+        {
+            var abort = JobCarsTeleportAbort.None;
+            if (string.IsNullOrEmpty(JobCarsPlaceSession.TargetTrackId))
+            {
+                abort = JobCarsTeleportAbort.NoTarget;
+            }
+
+            var chip = JobCarsTeleportPolicy.FormatPlaceChip(
+                true,
+                JobCarsPlaceSession.ExpectedCars,
+                JobCarsPlaceSession.TargetTrackId,
+                abort);
+            GUI.Label(new Rect(x + 12, row, w - 24, 20), chip);
+            row += 22f;
+        }
+
+        if (GUI.Button(new Rect(x + 12, row, 100, 26), "Snap office"))
+        {
+            _status = TryStationSnap();
+        }
+
+        if (GUI.Button(new Rect(x + 118, row, 100, 26), "Return"))
+        {
+            _status = TryStationReturn();
+        }
+
+        row += 30f;
+
         var steps = SwitchListSession.Steps;
         if (steps != null && steps.Count > 0)
         {
@@ -541,6 +712,60 @@ internal sealed class DispatchDeskPanel : MonoBehaviour
         var line = RouteAlignGovernor.TryAlign();
         _status = line ?? $"aligned → {step.DestTrackId}";
         Main.Log($"T2 switch-list: align step {step.Index} {step.Kind} · {_status}");
+    }
+
+    private static string TryStationSnap()
+    {
+        try
+        {
+            var player = PlayerManager.PlayerTransform;
+            if (player == null)
+            {
+                return "T2 snap: no player";
+            }
+
+            if (!TelemetryReader.TryGetArStationOfficeWorldPosition(out var office))
+            {
+                return "T2 snap: no office in zone";
+            }
+
+            StationSnapSession.CaptureReturn(player.position.x, player.position.y, player.position.z);
+            player.position = office;
+            Main.Log("T2 snap: to office");
+            return "snapped to office";
+        }
+        catch (System.Exception ex)
+        {
+            Main.Log("T2 snap: fail · " + ex.GetType().Name);
+            return "snap failed";
+        }
+    }
+
+    private static string TryStationReturn()
+    {
+        try
+        {
+            var player = PlayerManager.PlayerTransform;
+            if (player == null)
+            {
+                return "T2 snap: no player";
+            }
+
+            if (!StationSnapSession.TryGetReturn(out var x, out var y, out var z))
+            {
+                return "T2 snap: no return point";
+            }
+
+            player.position = new Vector3(x, y, z);
+            StationSnapSession.Clear();
+            Main.Log("T2 snap: returned");
+            return "returned";
+        }
+        catch (System.Exception ex)
+        {
+            Main.Log("T2 snap: return fail · " + ex.GetType().Name);
+            return "return failed";
+        }
     }
 
     private static void DrawMappingBanner()

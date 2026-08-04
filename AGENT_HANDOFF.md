@@ -117,7 +117,7 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 |--|--|
 | **Project** | *Yard Master Suite* (UMM / Harmony / net48) |
 | **MVP** | **Epic 1** System Monitor HUD |
-| **Version (`main`)** | **0.6.2** *(**3.6** Switch List; Tier 2 PASS 2026-08-03)* |
+| **Version (`main`)** | **0.6.4** *(**3.1** job-cars teleport; Tier 2 PASS 2026-08-03)* |
 | **Active branch** | `main` |
 
 **Shipped on `main`**
@@ -128,6 +128,7 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 - [x] **Epic 2** Governor Mode — **2.1**–**2.3** complete 2026-07-28 (**2.3** @ **0.5.25**)
 - [x] **3.5** Align Route (**0.5.101**)
 - [x] **3.6** Digital Switch List (**0.6.2**, Tier 2 **PASS**)
+- [x] **3.1** Job-cars teleport + Station Snap (**0.6.4**, Tier 2 **PASS** — look-at place; Flip; Snap/Return)
 - [x] **1.17** Posted Limit + Next (**0.5.104**, Tier 2 **PASS**; #4 behind-seed on ice)
 - [x] **Stress RAG HUD chip** (**0.5.105**, Tier 2 **PASS** — coupler/derail % RAG)
 - [x] **Tier 2 debug inject** — F5–F10 / F11 + PgUp/PgDn turntable (**F10** motors @ **0.5.16**)
@@ -142,8 +143,8 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 
 **Next**
 
-1. **3.1** / **3.1b** — teleport / license re-rail *(**3.6** done @ **0.6.2**; **3.2** cut)*
-2. Parking: Switch List TurnAround / couple auto-advance; flight-sim HUD; AR loco ≤1 km / house hide; DM3; session reset; 1.17 #4 behind-seed if Limit stays empty with board <600 m behind.
+1. **3.1b** — license-gated re-rail / spawn *(**3.1** done @ **0.6.4**)*
+2. Parking: place ghost / Snap office under-mesh; Switch List TurnAround / couple auto-advance; flight-sim HUD; AR loco ≤1 km / house hide; DM3; session reset; 1.17 #4 behind-seed if Limit stays empty with board <600 m behind.
 **Merge-ready:** `dotnet test YardMasterSuite.sln` · `dotnet build YardMasterSuite.sln -c Release` · **deploy to Mods** via `package.ps1 -NoArchive` (required before Tier 2 smoke — see [.cursor/rules/deploy-before-smoke.mdc](.cursor/rules/deploy-before-smoke.mdc))
 
 ## Run and test
