@@ -656,6 +656,20 @@ Cool/Dead → release. Player.log: `T2 thermal: soft-cap → … (Warning|Critic
 - [x] No place ghost yet (MVP chip-only — follow-on)
 - [x] Never deletes cars; no exceptions on confirm path
 
+### 3.1b License-gated loco spawn — smoke @ **v0.6.12**
+
+**Keys:** **`/`** enter/exit · mouse wheel or **[ ]** scroll · **R** flip · **Enter** confirm · Shift+/ cancel.
+
+**Expect:** blue/red re-rail ghost on rails, drawn by our own `CarDestinationHighlighter` built from the game's highlighter prefab + place materials; scroll HandCar + licensed (no Spug); chip matches.
+
+**Sign-off**
+
+- [x] Wheel scrolls car type (PASS @ 0.6.11)
+- [ ] UMM **0.6.12** Active
+- [ ] `/` → visible blue/red ghost on track
+- [ ] Enter spawns; cancel clears ghost
+- [ ] Player.log: `ghost built from CommsRadioCrewVehicle` (or `RerailController`), **no** `no highlighter template`
+
 ### 3.4 Path tracer: manual check — **demoted** (engine only; see 3.5)
 
 ---

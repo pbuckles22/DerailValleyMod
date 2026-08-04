@@ -20,6 +20,7 @@
     <Reference Include="DV.Simulation" />
     <Reference Include="DV.ThingTypes" />
     <Reference Include="DV.Utils" />
+    <Reference Include="net.smkd.vector3d" />
   </ItemGroup>
 
   <!-- Unity -->

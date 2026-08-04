@@ -77,6 +77,8 @@ public static class Main
             RouteMemo.Clear();
             SwitchListSession.Clear();
             JobCarsPlaceSession.Clear();
+            LocoSpawnPlaceSession.Clear();
+            LocoSpawnGovernor.DisposeGhost();
             StationSnapSession.Clear();
             modEntry.Logger.Log("Yard Master Suite disabled.");
         }
@@ -94,6 +96,8 @@ public static class Main
         RouteMemo.Clear();
         SwitchListSession.Clear();
         JobCarsPlaceSession.Clear();
+        LocoSpawnPlaceSession.Clear();
+        LocoSpawnGovernor.DisposeGhost();
         StationSnapSession.Clear();
         FluidDebugOverride.Clear();
         LoadDebugOverride.Clear();

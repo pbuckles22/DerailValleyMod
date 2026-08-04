@@ -19,6 +19,17 @@ public sealed class MonitorHudDriver : MonoBehaviour
     /// <summary>End = set path destination from look-at track; Shift+End = clear (3.4).</summary>
     private const KeyCode PathDestKey = KeyCode.End;
 
+    /// <summary>/ = toggle license-gated loco spawn place (3.1b). Not F3 — DV video mode.</summary>
+    private const KeyCode LocoSpawnKey = KeyCode.Slash;
+
+    /// <summary>R = flip spawn facing while loco-spawn place is active.</summary>
+    private const KeyCode LocoSpawnFlipKey = KeyCode.R;
+
+    /// <summary>[ ] = scroll licensed liveries (avoid mouse wheel — steals DV hotbar).</summary>
+    private const KeyCode LocoSpawnPrevKey = KeyCode.LeftBracket;
+
+    private const KeyCode LocoSpawnNextKey = KeyCode.RightBracket;
+
     /// <summary>Shift+F1 = toggle Tier 2 debug hotkeys (and bottom legend HUD).</summary>
     private const KeyCode DebugToggleKey = KeyCode.F1;
 
@@ -77,6 +88,7 @@ public sealed class MonitorHudDriver : MonoBehaviour
     private string? _stationLabel;
     private string? _pathLabel;
     private string? _facingLabel;
+    private string? _spawnLabel;
     private string _alwaysOnLabel = "—";
     private GUIStyle? _trainStyle;
     private GUIStyle? _localStyle;
@@ -175,13 +187,20 @@ public sealed class MonitorHudDriver : MonoBehaviour
             _stationLabel = null;
             _pathLabel = null;
             _facingLabel = null;
+            _spawnLabel = null;
             _alwaysOnLabel = "";
             LastStackBottomGuiY = 0f;
+            if (LocoSpawnPlaceSession.IsActive)
+            {
+                LocoSpawnGovernor.Cancel();
+            }
+
             return;
         }
 
         PollParkMarkHotkey();
         PollPathDestHotkey();
+        PollLocoSpawnHotkeys();
         PollDebugToggleHotkey();
         // QOL: turntable always available in-world (Epic 4), not behind debug gate.
         PollTurntableHotkeys();
@@ -194,6 +213,16 @@ public sealed class MonitorHudDriver : MonoBehaviour
             PollLoadDebugHotkey();
             PollMotorDebugHotkey();
             PollCouplerDebugHotkey();
+        }
+
+        if (LocoSpawnPlaceSession.IsActive)
+        {
+            LocoSpawnGovernor.PollAimAndGhost();
+            _spawnLabel = LocoSpawnGovernor.CurrentChip();
+        }
+        else
+        {
+            _spawnLabel = null;
         }
 
         _elapsed += Time.unscaledDeltaTime;
@@ -272,6 +301,62 @@ public sealed class MonitorHudDriver : MonoBehaviour
         }
 
         TelemetryReader.TrySetParkMarkAtPlayer();
+    }
+
+    private void PollLocoSpawnHotkeys()
+    {
+        if (Input.GetKeyDown(LocoSpawnKey))
+        {
+            var shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+            if (shift && LocoSpawnPlaceSession.IsActive)
+            {
+                Main.Log(LocoSpawnGovernor.Cancel());
+                _spawnLabel = null;
+                return;
+            }
+
+            Main.Log(LocoSpawnGovernor.ToggleMode());
+            _spawnLabel = LocoSpawnPlaceSession.IsActive ? LocoSpawnGovernor.CurrentChip() : null;
+            return;
+        }
+
+        if (!LocoSpawnPlaceSession.IsActive)
+        {
+            return;
+        }
+
+        // Keyboard + mouse wheel scroll (cursor lock removed — wheel OK again).
+        if (Input.GetKeyDown(LocoSpawnNextKey) || Input.GetKeyDown(KeyCode.Equals) || Input.GetKeyDown(KeyCode.Plus))
+        {
+            LocoSpawnGovernor.Scroll(+1);
+        }
+        else if (Input.GetKeyDown(LocoSpawnPrevKey) || Input.GetKeyDown(KeyCode.Minus))
+        {
+            LocoSpawnGovernor.Scroll(-1);
+        }
+        else
+        {
+            var scroll = Input.mouseScrollDelta.y;
+            if (scroll > 0.1f)
+            {
+                LocoSpawnGovernor.Scroll(+1);
+            }
+            else if (scroll < -0.1f)
+            {
+                LocoSpawnGovernor.Scroll(-1);
+            }
+        }
+
+        if (Input.GetKeyDown(LocoSpawnFlipKey))
+        {
+            LocoSpawnGovernor.FlipFacing();
+        }
+
+        if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
+        {
+            Main.Log(LocoSpawnGovernor.ConfirmSpawn());
+            _spawnLabel = LocoSpawnPlaceSession.IsActive ? LocoSpawnGovernor.CurrentChip() : null;
+        }
     }
 
     private void PollPathDestHotkey()
@@ -798,6 +883,11 @@ public sealed class MonitorHudDriver : MonoBehaviour
         if (_jobLabel != null)
         {
             y = DrawCenteredBar(_jobLabel, _jobStyle!, y) + MonitorHudStackLayout.Gap;
+        }
+
+        if (!string.IsNullOrEmpty(_spawnLabel))
+        {
+            y = DrawCenteredBar(_spawnLabel!, _alwaysOnStyle!, y) + MonitorHudStackLayout.Gap;
         }
 
         y = DrawCenteredBar(_alwaysOnLabel, _alwaysOnStyle!, y);
