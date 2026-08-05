@@ -117,7 +117,7 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 |--|--|
 | **Project** | *Yard Master Suite* (UMM / Harmony / net48) |
 | **MVP** | **Epic 1** System Monitor HUD |
-| **Version (`main`)** | **0.6.19** *(path rem/ETA + job pickup AR + UMM loco-radar option; Tier 2 PASS 2026-08-04)* |
+| **Version (`main`)** | **0.6.21** *(motors heat inject parked; 3.7 Multi-step Maps next)* |
 | **Active branch** | `main` |
 
 **Shipped on `main`**
@@ -133,7 +133,7 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 - [x] **Maps path rem/ETA + job AR + UMM options** (**0.6.19**, Tier 2 **PASS** — rem until dest; pickup-track pins; Show nearest locos; false Path stale @ **0.6.13**)
 - [x] **1.17** Posted Limit + Next (**0.5.104**, Tier 2 **PASS**; #4 behind-seed on ice)
 - [x] **Stress RAG HUD chip** (**0.5.105**, Tier 2 **PASS** — coupler/derail % RAG)
-- [x] **Tier 2 debug inject** — F5–F10 / F11 + PgUp/PgDn turntable (**F5** = DH4/DE6 @ **0.6.5**; **F10** motors @ **0.5.16**)
+- [x] **Tier 2 debug inject** — F5–F9 / F11 + PgUp/PgDn turntable (**F5** = DH4/DE6 @ **0.6.5**; **Motors** heat inject *parked* @ **0.6.21**)
 - [x] Bundle E **#23** + freight/car confirm (**v0.4.80**, Tier 2 **PASS**); **#22** Load live hard-pull **waived**
 - [x] **2.1** Three-Gate helper (**v0.4.81**, Tier 1)
 - [x] Version line **0.5.x** opened (Governor era) — **0.5.0**
@@ -145,8 +145,8 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 
 **Next**
 
-1. **Maps / multi-step routing** — remaining Maps integrity (multi-leg). False **Path stale** fixed @ **0.6.13**. **3.1b iced** (WIP parked ~0.6.12 — do not resume yet).
-2. Parking: 3.1b ghost/spawn; place ghost / Snap office under-mesh; Switch List TurnAround / couple auto-advance; flight-sim HUD; AR house hide; DM3; session reset; 1.17 #4 behind-seed.
+1. **3.7 Multi-step Maps** — Switch List legs: auto TurnAround inject, reverse-into, current-leg AR; eliminate false NoPath for valid jobs (facing wrong way). Spec: `doc/GeminiDocs/Multi-step Maps Specification.md`. **3.1b iced** (WIP parked ~0.6.12 — do not resume yet).
+2. Parking: 3.1b ghost/spawn; place ghost / Snap office under-mesh; Switch List couple auto-advance / arrival-track split; flight-sim HUD; AR house hide; DM3; session reset; 1.17 #4 behind-seed.
 **Merge-ready:** `dotnet test YardMasterSuite.sln` · `dotnet build YardMasterSuite.sln -c Release` · **deploy to Mods** via `package.ps1 -NoArchive` (required before Tier 2 smoke — see [.cursor/rules/deploy-before-smoke.mdc](.cursor/rules/deploy-before-smoke.mdc))
 
 ## Run and test

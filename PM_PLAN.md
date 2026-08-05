@@ -34,7 +34,7 @@ Legacy IDs (`CMD-01a`, `QOL-08`, …) stay in parentheses so older notes still r
 |-------|----------------|-----------|---------|
 | **1 — Apprentice** | Throttle, brakes, sander, don’t blow the fuse | Situational Awareness HUD | **Epic 1** *(done)* + **4.3** + **4.6** + **4.7**; Epic 2 done |
 | **2 — Junior Yardman** | Walk/throw switches (grind); earn **Shunting (SH)** | — | *(no remote throw — **3.3 cut**)* |
-| **3 — Yard Master** | City → track deliveries; don’t think about levers | CTC Align + **Digital Switch List** (job steps) | **3.5** / **3.6** / **3.1** *(done)*; next **Maps / path**; **3.1b iced**; **5.1** later |
+| **3 — Yard Master** | City → track deliveries; don’t think about levers | CTC Align + **Digital Switch List** (job steps) | **3.5** / **3.6** / **3.1** *(done)*; next **3.7** Maps multi-step; **3.1b iced**; **5.1** later |
 
 Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 play is actually enjoyable — cab gadgets on the HUD, no dash wall in the yard.
 
@@ -59,6 +59,7 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
 | **3.4** | *(was check-my-math UX)* | **Internal** path engine only (no separate player chore) |
 | **3.5** | *(was parking-lot path tracer)* | City→track Align Route (Dispatcher-gated); reverse cue; through-lane bias |
 | **3.6** | *(Gemini Switch List)* | Digital Switch List — job → multi-step Align workflow |
+| **3.7** | *(Gemini Multi-step Maps)* | Job Switch List legs: turnaround inject + reverse-into + current-leg AR |
 | **4.4** | *(new)* | Look-at Track ID |
 | **4.5** | *(was 4.4)* | Next station distance (fluids) |
 | **4.6** | *(was Project Plan 3.2)* | Station waypoint (foot) + in-zone station coords |
@@ -146,7 +147,7 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
   - [x] **1.17 Posted Limit + Next look-ahead (+ world board index)** — HUD: `Limit 80 | Next 50 (50m)` (or `1.2km`). Limit = sticky **posted** only — no `(Posted)` / `(Recommended)` labels. Soft **Brake** chip **CUT**. Geometry-ahead boards **CUT**. World board index seeds Limit from behind (not Next). **Done** — Tier 1 + Tier 2 **PASS** @ **0.5.104** (2026-08-03). *(#4 blind behind-seed on ice — reopen if Limit stays empty when a board is <600 m behind.)*
     > As a driver, I want an honest posted Limit and a clear next-sign cue with distance — not a Limit that jumps or a Brake chip that invents 50 when Next shows 80.
 
-  **Build order:** **Stress RAG** / **3.6** / **3.1** done → **Maps / path integrity** (resume) → **3.1b** *(iced)*. *(Do not reopen **1.8** HUD thermal prediction.)*
+  **Build order:** **Stress RAG** / **3.6** / **3.1** done → **3.7** Multi-step Maps → **3.1b** *(iced)*. *(Do not reopen **1.8** HUD thermal prediction.)*
 
 ---
 
@@ -163,7 +164,7 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
 
 ---
 
-- [ ] **Epic 3 — Yard Master / Dispatcher** *(Journey Stages 2–3)* — CTC-style **Align Route** (**3.5** done) + **Digital Switch List** (**3.6**): job → multi-step Align (prep / turn-around / couple / transit / deliver). Never delete cars. Scope: **yard and inter-city**. Gate Align / Switch List on **Dispatcher** (Dispatcher1).
+- [ ] **Epic 3 — Yard Master / Dispatcher** *(Journey Stages 2–3)* — CTC-style **Align Route** (**3.5** done) + **Digital Switch List** (**3.6** done) + **Maps multi-step** (**3.7** next): job → auto turnaround / reverse-into / transit / deliver with current-leg finder. Never delete cars. Scope: **yard and inter-city**. Gate Align / Switch List on **Dispatcher** (Dispatcher1).
 
   - [x] **3.1 Manual consist management & teleport** *(was CMD-06)* — Move **existing** job cars: Switch List **Move … here** → look-at place mode → **Confirm** → `TeleportTrainset`. Fail-closed (hazmat / moving / partial / busy). **Never delete cars.** Station Snap & Return on desk. **Done** — Tier 1 + Tier 2 **PASS** @ **0.6.4** (2026-08-03). *MVP: chip + Flip facing; no blue ghost yet.*
     - **Not this story:** spawning a new licensed loco under crosshair = **3.1b**.
@@ -176,7 +177,7 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
   - [x] **3.3 Manual switch / turntable remote** — **Cut** (2026-07-28). Walking/throwing switches is the career grind. Licensed **3.5** Align Route is the CTC remote. *(PgUp/PgDn turntable = Epic 4 QOL only.)*
     > ~~As a shunter, I want to flip switches and turntables from my HUD…~~
 
-  - [ ] **3.1b License-gated re-rail / spawn** *(ICED 2026-08-04)* — Hotkey spawn of licensed liveries + native-style place ghost. WIP left uncommitted (~0.6.12: own `CarDestinationHighlighter` from prefab; scroll PASS; ghost still unconfirmed). *Do not resume until Maps / path integrity is done.* *Helper: F5 DH4/DE6 @ **0.6.5**.*
+  - [ ] **3.1b License-gated re-rail / spawn** *(ICED 2026-08-04)* — Hotkey spawn of licensed liveries + native-style place ghost. WIP left uncommitted (~0.6.12: own `CarDestinationHighlighter` from prefab; scroll PASS; ghost still unconfirmed). *Do not resume until **3.7** Multi-step Maps is done.* *Helper: F5 DH4/DE6 @ **0.6.5**.*
     > As a tester/yard master, I want to re-rail a licensed loco under the crosshair with clear place/no-place feedback.
 
   - [x] **3.4 Path tracer: manual check (player chore)** — **Demoted** (2026-07-28). Not a separate "check my math" grind. Path + alignment math is the **internal engine** for **3.5** (preview before throw). Look-at **End** pin may remain as a quick spur shortcut.
@@ -188,11 +189,16 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
     > As a licensed shunter/dispatcher, I want to pick a city and track, see if I'll need to reverse, and Align Route so switches are set for the delivery — modern desk, not hiking levers.
 
   - [x] **3.6 Digital Switch List** *(promoted from Gemini concept 2026-08-03)* — Dispatch Desk **Switch List** tab: taken/held job → Prep / Transit / Delivery checklist; **Align step** + manual **Next**. Dispatcher-gated. **Done** — Tier 1 + Tier 2 **PASS** @ **0.6.2** (2026-08-03). *Occupancy: do not expand #Y approach from origin/dest (Prep Align to cars).*
-    - **Follow-on (same story family, not blocking):** auto TurnAround inject; couple auto-advance; arrival-track split vs Delivery.
-    - *Concept bridge:* `doc/GeminiDocs/Digital Switch List Spec.md` (local scratch).
+    - **Follow-on → 3.7:** auto TurnAround inject; current-leg AR; reverse-into as a leg; couple auto-advance / arrival-track split still parking.
+    - *Concept bridge:* `doc/GeminiDocs/` Multi-step Maps Specification (local scratch).
     > As a licensed dispatcher, I want a job Switch List that tells me turn-around → pick up → transit → deliver and Aligns each leg so I am not manually re-picking city/track three times.
 
-  **Build order:** **Maps / multi-step routing** next *(false Path stale @ **0.6.13**; rem/ETA + job AR + UMM options @ **0.6.19**)*; **3.1b iced** *(**3.1** @ **0.6.4**; **3.6** @ **0.6.2**; **3.2** cut)*.
+  - [ ] **3.7 Multi-step Maps (Switch List legs)** *(promoted from Gemini 2026-08-04)* — Job-only multi-leg routing on the **Switch List** tab (Route tab stays manual single dest). When orientation is wrong for the required exit, **auto-inject TurnAround** with a concrete turntable track (prefer origin yard; allow dest/intermediate if that yields a valid path). Treat **reverse-into** (e.g. MF-B4O) as its own Align leg when needed. **AR finder:** one mark for the **active leg only** (turntable / reverse spur / transit / delivery), works facing F or R. Final leg is always the job destination. Pathfind must solve via turntable/reverse so valid jobs do not die on false **NoPath** (`#Y… → named spur`) merely because the loco faces the wrong way. Manual **Next** after each completed leg (incl. after 180°). Dispatcher-gated. *Evidence: SM transfer facing south → B4O → SM-B3I screenshots.*
+    - **Build slices (suggested):** (1) Core `NeedsTurnAround` + `TurntableTrackId` resolution + planner tests; (2) `SwitchListJobReader` inject; (3) AR `RouteLeg` bound to `SwitchListSession.CurrentAlignTrackId`; (4) Tier 2 smoke MF/SM reverse case.
+    - **Out of scope:** multi-leg on Route tab; desk remote turntable (3.3 cut — PgUp/PgDn remain); showing all future legs on AR at once.
+    > As an engineer facing the wrong way for delivery, I want Switch List to send me to the turntable, mark it on the finder, then reverse into the spur and Align each leg to the job dest — not a single Set dest that fails with occupancy/NoPath.
+
+  **Build order:** **3.7 Multi-step Maps** next *(false Path stale @ **0.6.13**; rem/ETA + job AR + UMM options @ **0.6.19**)*; **3.1b iced** *(**3.1** @ **0.6.4**; **3.6** @ **0.6.2**; **3.2** cut)*.
 
 ---
 

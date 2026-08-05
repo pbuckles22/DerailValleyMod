@@ -37,8 +37,10 @@ public sealed class MonitorHudDriver : MonoBehaviour
     /// <summary>F9 = cycle coupler MU-yellow for the look-at / target car.</summary>
     private const KeyCode CouplerDebugKey = KeyCode.F9;
 
-    /// <summary>F10 = cycle motor heat debug (off → 50% Warning → Critical → off).</summary>
-    private const KeyCode MotorDebugKey = KeyCode.F10;
+    /// <summary>
+    /// Parked: was F10 (OS often eats) then F4. Re-enable <see cref="PollMotorDebugHotkey"/> when thermal smoke returns.
+    /// </summary>
+    private const KeyCode MotorDebugKey = KeyCode.F4;
 
     /// <summary>F11 = toggle all licenses ↔ restore real snapshot.</summary>
     private const KeyCode S282LicenseKey = KeyCode.F11;
@@ -192,7 +194,13 @@ public sealed class MonitorHudDriver : MonoBehaviour
             PollS282LicenseHotkey();
             PollLocoLicenseDebugHotkey();
             PollLoadDebugHotkey();
-            PollMotorDebugHotkey();
+            // Motor heat debug parked — not needed for Maps/3.7; F10 was OS-eaten.
+            // Resume PollMotorDebugHotkey when thermal Tier 2 is back on the menu.
+            if (MotorDebugOverride.HasAnyOverride)
+            {
+                MotorDebugOverride.Clear();
+            }
+
             PollCouplerDebugHotkey();
         }
 

@@ -384,12 +384,13 @@ Former `Next: … [N km]` on loco bar when fluids low — **removed**. Smoke A1�
 
 **Cargo / Load / Coupler / license / turntable / loco-license debug:** one key per concern (cycle). Look-at or stand on a car in the consist for F7:
 - **F5** — loco licenses: **real → DH4 only → DH4+DE6 → real** *(replaces lighter; game id DH4 not DE4)*
-- **F6** — loco **Load %** HUD: off → **85%** yellow → **97%** red → off *(F10 remapped — Windows often eats F10)*
+- **F6** — loco **Load %** HUD: off → **85%** yellow → **97%** red → off *(was F10 — Windows often eats F10)*
   *(Load % is traction amps, not car Mass — sit in DE2/DE6.)*
 - **F7** — **all freight** in the coupled trainset: **unload (tare) ↔ full load** (game UnloadCargo/LoadCargo events)
 - **F9** — coupler HUD for #23: off → front `F*` yellow → rear `R*` yellow → both → off
 - **F11** — grant **all** obtainable general + job licenses ↔ restore pre-press snapshot (**real**)
 - **PgUp / PgDn** — within turntable **SearchRadius + 15 m** (or look-at); hold = bar/lever rate; tap = assist if ≤2 m from lock
+- **Motors heat debug** — *parked* (was F10/F4; not needed until thermal Tier 2). Leftover inject clears while debug is on.
 - Player.log: `T2 cargo-debug …` / `T2 load-debug: …` / `T2 coupler-debug: …` / `T2 turntable …` / `T2 loco-license-debug …` / `T2 license-debug …`
 
 **F5 DH4/DE6 license cycle — smoke @ v0.6.5 — Tier 2 PASS (2026-08-03)**
@@ -573,18 +574,18 @@ Cool/Dead → release. Player.log: `T2 thermal: soft-cap → … (Warning|Critic
 - [x] Cool again — `cap release`; throttle free
 - [x] Mod Off → On; no exceptions / no stuck throttle (iterative smoke)
 
-### 2.2b Thermal debug inject + GOV flash — **PASS** v0.5.16
+### 2.2b Thermal debug inject + GOV flash — **PASS** v0.5.16 · inject *parked* @ **0.6.21**
 
-**Shift+F1** debug on, sit in loco, **F10** cycles: off → **Motors Hot 50%** (Warning) → Critical → off. Governor soft-rolls as usual. While capping, Motors chip flashes **▼GOV**.
+**Shift+F1** debug on — **Motors heat inject parked** (was F10, briefly F4; OS often eats F10). Soft-cap / ▼GOV behavior still valid from live heat; resume inject when thermal Tier 2 is needed again.
 
-**Sign-off**
+**Sign-off** *(historical @ 0.5.16)*
 
 - [x] UMM **0.5.16** Active
-- [x] F10 → `Motors Hot 50%`; soft-cap `0.75 (Warning)` (Player.log)
-- [x] F10 → Critical → soft-cap `0.55` (Player.log)
+- [x] F10 → `Motors Hot 50%`; soft-cap `0.75 (Warning)` (Player.log) *(legacy)*
+- [x] F10 → Critical → soft-cap `0.55` (Player.log) *(legacy)*
 - [x] Real heat (debug off) → `soft-cap → 0.75 (Warning)` (Player.log)
 - [x] Cap release on cool / off; iterative smoke **PASS** 2026-07-28
-
+- [x] UMM **0.6.21** — Motors not on debug legend; leftover inject clears
 ### 2.3 Auto-brake governor — **PASS** v0.5.25
 
 **Trigger:** engine **on → off** (falling edge) on lead usable loco — **stopped or moving**.
