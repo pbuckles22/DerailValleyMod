@@ -46,6 +46,14 @@ High ROI; frequent pain; not blocking.
 
 - [ ] **3.1 Snap office under-mesh** — Station Snap can drop the player under the office floor / into water; needs a known-good office spawn (or offset up).
 
+- [ ] **3.7 NeedsTurnAround + turntable resolution** — `SwitchListPlanner` supports TurnAround but `SwitchListJobReader` never sets `NeedsTurnAround` / `TurntableTrackId`; no turntable catalog in graph. Blocks 3.7 slice 1.
+
+- [ ] **3.7 Reverse-into as Switch List leg** — `RouteFacingDisplay` is informational only; need explicit reverse-into Align leg (e.g. MF-B4O). 3.7 slice 2.
+
+- [ ] **3.7 Job AR vs Switch List leg AR** — pickup-group pins (0.6.19) vs “active leg only”; when Switch List active, bind AR to leg track and suppress/dim job pickup pins. 3.7 slice 3.
+
+- [ ] **3.6 follow-on (post-3.7)** — couple auto-advance; arrival-track split vs Delivery. Do **not** fold into 3.7.
+
 - [x] **MU yellow smoke (2-loco)** — Bundle E **#23** **PASS** @ **0.4.80** (red / yellow / white / blue scheme; MU via `muModule`).
 
 - [x] **Coupler plain `*` vs yellow `*`** — plain/log uses `*Y` for MU-open; HUD color distinguishes red mid-couple vs yellow MU.

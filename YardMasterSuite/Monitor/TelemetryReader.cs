@@ -986,11 +986,17 @@ internal static class TelemetryReader
                 }
             }
 
+            var expected = resolved.ExpectedLogicCars > 0
+                ? resolved.ExpectedLogicCars
+                : allCars.Count;
             _jobConsistStatus = JobConsistStatusEval.Evaluate(
-                allCars.Count, attachedIds.Count, foreign);
+                expected, attachedIds.Count, foreign);
         }
 
-        if (!JobCarMarkerDisplay.ShouldShowAr(jobTaken, _jobConsistStatus, allCars.Count))
+        var expectedForAr = resolved.ExpectedLogicCars > 0
+            ? resolved.ExpectedLogicCars
+            : allCars.Count;
+        if (!JobCarMarkerDisplay.ShouldShowAr(jobTaken, _jobConsistStatus, expectedForAr))
         {
             return;
         }

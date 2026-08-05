@@ -117,7 +117,7 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 |--|--|
 | **Project** | *Yard Master Suite* (UMM / Harmony / net48) |
 | **MVP** | **Epic 1** System Monitor HUD |
-| **Version (`main`)** | **0.6.21** *(motors heat inject parked; 3.7 Multi-step Maps next)* |
+| **Version (`main`)** | **0.6.22** *(GO/HOLD uses ExpectedLogicCars; 3.7 next)* |
 | **Active branch** | `main` |
 
 **Shipped on `main`**
