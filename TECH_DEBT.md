@@ -10,7 +10,7 @@ Durable ranked backlog. Handoff notes may mention debt; **promote** anything tha
 
 
 
-**Last full pass:** 3.1 ship / handoff — 2026-08-03.
+**Last full pass:** handoff — 2026-08-04 (0.6.21 / pre-3.7).
 
 
 
@@ -77,6 +77,8 @@ High ROI; frequent pain; not blocking.
 - [x] **Stress RAG HUD chip** — train-bar `Stress N %` RAG @ **0.5.105**. Tier 2 **PASS** (2026-08-03). Coupler/derail physics only — not consist-in-zone.
 
 - [ ] **1.17 #4 behind-seed polish** — world index seed path; empty SignDebug may reuse stale PathAhead (code-review WARN). Only if smoke shows empty Limit with board behind.
+
+- [ ] **2.2b Motors heat debug inject** — *parked* @ **0.6.21** (F10 OS-eaten; F4 unused). `PollMotorDebugHotkey` disabled; leftover inject clears while debug gate on. Re-enable when thermal Tier 2 is needed again.
 
 - [ ] **UX: Flight-sim style always-on HUD** — parked (player ref 2026-08-01). Clean corner telemetry (airspeed/engines/fuel AOA vs flaps/trim/alt/VS), destination progress bar + ETA, not a dense top strip. Revisit with ui-ux / DESIGN_SYSTEM when HUD layout is reopened (post–3.5). Ref: flight-sim HUD screenshot in session.
 
