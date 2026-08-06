@@ -123,7 +123,7 @@ internal static class TelemetryReader
     private static string? _lastBoardScanDetail;
 
     /// <summary>FindObjectsOfType throttle for other-loco AR radar (4.10).</summary>
-    private const float LocoRadarCacheSeconds = 2.5f;
+    private const float LocoRadarCacheSeconds = 1f;
 
     /// <summary>Job-car AR + consist status refresh.</summary>
     private const float JobCarCacheSeconds = 1.0f;
@@ -133,6 +133,7 @@ internal static class TelemetryReader
     private static readonly TrainCar?[] _locoRadarCars = new TrainCar?[LocoRadarSelection.DefaultMaxResults];
     private static readonly string?[] _locoRadarTypeIds = new string?[LocoRadarSelection.DefaultMaxResults];
     private static readonly string?[] _locoRadarPlaceLabels = new string?[LocoRadarSelection.DefaultMaxResults];
+    private static readonly List<string> _inZoneYardsScratch = new(8);
 
     private static float _jobCarCachedAt = -999f;
     private static string? _jobCarCachedJobId;
@@ -729,6 +730,14 @@ internal static class TelemetryReader
     private static void EnsureLocoRadarCache()
     {
         if (!Main.Settings.ShowNearestLocos)
+        {
+            _locoRadarCount = 0;
+            return;
+        }
+
+        // Only show other-loco AR while in a station/job zone (out-of-area = noise).
+        CollectInZoneYardIds(_inZoneYardsScratch);
+        if (_inZoneYardsScratch.Count == 0)
         {
             _locoRadarCount = 0;
             return;
@@ -3108,15 +3117,11 @@ internal static class TelemetryReader
         }
 
         return LocalCarHudLine.Format(
-            BrakePipeDisplay.FormatBar(TryGetBrakePipePressureBar()),
             HandbrakeDisplay.FormatCount(TryGetHandbrakeAppliedCount()),
             CouplingDisplay.FormatHud(TryGetFrontLinkStatus(), TryGetRearLinkStatus()),
-            FormatCarNumber(car),
             JobDisplay.Format(TryGetJobId()),
             TrackDisplay.Format(TryGetTrackId()),
-            TryGetCargoLabel(car),
-            TryGetLocoTypeLabel(car),
-            TryGetCarMassLabel(car));
+            TryGetInspectIdentityChip(car));
     }
 
     public static string CurrentHudLine()
@@ -3225,24 +3230,18 @@ internal static class TelemetryReader
         // Callers only pass the active target, so TryGet* helpers that read TryGetTargetCar() match.
         return new LocalCarDebugSnapshot(
             visible: true,
-            BrakePipeDisplay.FormatBar(TryGetBrakePipePressureBar()),
             HandbrakeDisplay.FormatCount(TryGetHandbrakeAppliedCount()),
             CouplingDisplay.Format(TryGetFrontLinkStatus(), TryGetRearLinkStatus()),
-            FormatCarNumber(car),
             JobDisplay.Format(TryGetJobId()),
             TrackDisplay.Format(TryGetTrackId()),
-            TryGetCargoLabel(car),
-            TryGetLocoTypeLabel(car),
-            TryGetCarMassLabel(car));
+            TryGetInspectIdentityChip(car));
     }
 
     private static LocalCarDebugSnapshot HiddenLocalCarSnapshot() =>
         new(
             visible: false,
-            pipe: "— Pipe",
             handbrake: "— Handbrake",
             coupling: "— Couplers",
-            carNumber: CarNumberDisplay.NotOnTrainLabel,
             job: null,
             track: null);
 
@@ -3270,6 +3269,75 @@ internal static class TelemetryReader
         }
     }
 
+    /// <summary>Look-at identity chip (loco+mass or freight mass). Cached until couple/cargo mass changes.</summary>
+    private static string? TryGetInspectIdentityChip(TrainCar car)
+    {
+        try
+        {
+            if (car.massController == null)
+            {
+                return car.IsLoco ? TryGetLocoTypeLabel(car) : null;
+            }
+
+            var carKg = car.massController.TotalMass;
+            if (carKg <= 0f)
+            {
+                return car.IsLoco ? TryGetLocoTypeLabel(car) : null;
+            }
+
+            var consistKg = TryGetTrainsetMassKilogramsCached(car, carKg);
+            return TonnageDisplay.FormatInspectIdentity(
+                car.IsLoco,
+                TryGetLocoTypeLabel(car),
+                carKg,
+                consistKg);
+        }
+        catch
+        {
+            return car.IsLoco ? TryGetLocoTypeLabel(car) : null;
+        }
+    }
+
+    private static int _inspectMassCarId;
+    private static int _inspectMassConsistCount;
+    private static float _inspectMassCarKg;
+    private static float? _inspectMassConsistKg;
+    private static bool _inspectMassReady;
+
+    /// <summary>
+    /// Consist mass walk cached by car id + consist count + car kg (couple / load / unload).
+    /// </summary>
+    private static float? TryGetTrainsetMassKilogramsCached(TrainCar car, float carKg)
+    {
+        var carId = 0;
+        var count = 1;
+        try
+        {
+            carId = car.GetInstanceID();
+            count = car.trainset?.cars?.Count ?? 1;
+        }
+        catch
+        {
+            // fall through to recompute
+        }
+
+        if (_inspectMassReady
+            && _inspectMassCarId == carId
+            && _inspectMassConsistCount == count
+            && Math.Abs(_inspectMassCarKg - carKg) < 0.5f)
+        {
+            return _inspectMassConsistKg;
+        }
+
+        var consist = TryGetTrainsetMassKilograms(car);
+        _inspectMassCarId = carId;
+        _inspectMassConsistCount = count;
+        _inspectMassCarKg = carKg;
+        _inspectMassConsistKg = consist;
+        _inspectMassReady = true;
+        return consist;
+    }
+
     /// <summary>Single-car mass (+ Consist total when coupled) for look-at / standing bar.</summary>
     private static string? TryGetCarMassLabel(TrainCar car)
     {
@@ -3288,7 +3356,7 @@ internal static class TelemetryReader
 
             return TonnageDisplay.FormatCarAndConsistFromKilograms(
                 carKg,
-                TryGetTrainsetMassKilograms(car));
+                TryGetTrainsetMassKilogramsCached(car, carKg));
         }
         catch
         {
@@ -5117,19 +5185,24 @@ internal static class TelemetryReader
     }
 
     /// <summary>
-    /// Usable cars = fully-linked component containing the target car and at least one loco.
-    /// Incomplete links (loose chain, missing hose, closed cock) break the train.
-    /// Missing loco↔loco MU is a yellow warning only and does not break this component.
+    /// Usable cars = fully-linked component containing the <b>standing</b> car and at least one loco.
+    /// Seed is standing only (not look-at): glance at a loco must not cold-start Speed/Limit scan.
+    /// Look-at still drives the second inspect bar via <see cref="TryGetTargetCar"/>.
     /// </summary>
     private static HashSet<TrainCar>? TryGetUsableConsist()
     {
-        var target = TryGetTargetCar();
-        if (target == null)
+        if (!UsableLocoTrainGate.AllowLocoGadgetBar(TryGetStandingCar() != null))
         {
             return null;
         }
 
-        var component = CollectFullyLinkedComponent(target);
+        var seed = TryGetStandingCar();
+        if (seed == null)
+        {
+            return null;
+        }
+
+        var component = CollectFullyLinkedComponent(seed);
         foreach (var c in component)
         {
             if (c != null && c.IsLoco)
@@ -5152,9 +5225,9 @@ internal static class TelemetryReader
         TrainCar? best = null;
         try
         {
-            var target = TryGetTargetCar();
+            var seed = TryGetStandingCar();
             var usable = TryGetUsableConsist();
-            if (target != null && usable != null)
+            if (seed != null && usable != null)
             {
                 var bestDist = int.MaxValue;
                 foreach (var c in usable)
@@ -5164,7 +5237,7 @@ internal static class TelemetryReader
                         continue;
                     }
 
-                    var dist = c.indexInTrainset - target.indexInTrainset;
+                    var dist = c.indexInTrainset - seed.indexInTrainset;
                     if (dist < 0)
                     {
                         dist = -dist;

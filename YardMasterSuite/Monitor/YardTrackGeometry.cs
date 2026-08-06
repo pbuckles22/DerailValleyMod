@@ -8,7 +8,7 @@ namespace YardMasterSuite.Monitor;
 internal static class YardTrackGeometry
 {
     /// <summary>Approximate sample spacing along the curve (meters).</summary>
-    public const float DefaultSampleSpacingMeters = 20f;
+    public const float DefaultSampleSpacingMeters = 8f;
 
     public static bool TrySampleTrackXZ(
         RailTrack? rail,

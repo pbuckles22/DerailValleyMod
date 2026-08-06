@@ -92,9 +92,10 @@ public class LocoRadarSelectionTests
     }
 
     [Fact]
-    public void MaxRange_is_600m_for_yard_walk()
+    public void MaxRange_is_600m_and_default_cap_is_2()
     {
         Assert.Equal(600f, LocoRadarSelection.MaxRangeMeters);
+        Assert.Equal(2, LocoRadarSelection.DefaultMaxResults);
     }
 
     [Fact]

@@ -76,7 +76,7 @@ Top bar = loco-train totals; second bar = car under feet. Look-at = **1.6**.
 | When | Log |
 |------|-----|
 | On foot (hidden) | `T2 local-car init (hidden)` |
-| Climb onto a car | `T2 local-car appear: Pipe …  \|  Handbrake N  \|  Couplers …  \|  Car #  \|  Job …` |
+| Climb onto a car | `T2 local-car appear: Handbrake N  \|  Couplers …  \|  Job …  \|  Track …  \|  {mass/loco chip}` |
 | Step off | `T2 local-car hide` |
 | Fields change on car | `T2 local-car change: …` |
 
@@ -86,7 +86,7 @@ Top bar = loco-train totals; second bar = car under feet. Look-at = **1.6**.
 - [ ] No loco — top bar **hidden** (**4.3**; was red dash wall)
 - [x] On loco train — live Speed/Grade/Mass/Cars/Handbrakes
 - [x] On foot — no second bar
-- [x] Stand on car — second bar Pipe / Handbrake / Couplers / Car # / Job #
+- [ ] Stand on car — second bar Handbrake / Couplers / Job / Track / identity (**no** Pipe / Car # / Cargo) — **0.6.35**
 - [x] Couplers `+` only when fully linked; `-` if incomplete
 - [x] Mod Off → On; no exceptions
 
@@ -94,7 +94,7 @@ Top bar = loco-train totals; second bar = car under feet. Look-at = **1.6**.
 
 ### 1.6 Look-at inspect *(was CMD-01d)* — `T2 look-at`
 
-Look-at **wins** over standing. Locos append `Loco DE6`-style type. **4.1:** spherecast 0.15 m / 250 m *(PASS\*)*.
+Look-at **wins** over standing. Locos fold type+mass into identity chip. **4.1:** spherecast 0.15 m / 250 m *(PASS\*)*. **0.6.35:** no Pipe / Car # / cargo type.
 
 **Expected `T2 look-at`**
 
@@ -110,12 +110,12 @@ Look-at **wins** over standing. Locos append `Loco DE6`-style type. **4.1:** sph
 - [x] Mod loads; Active
 - [x] On foot, not looking — no second bar
 - [x] Point at car — second bar for that car
-- [x] Car not on usable train — `Car XX`; top bar per **4.3** (hide when no loco)
-- [x] Car on usable train — Car # from loco; top bar can show totals
+- [x] Car not on usable train — no Car #; identity mass/loco only (**0.6.35**); top bar per **4.3**
+- [x] Car on usable train — mass/loco identity; top bar can show totals when boarded
 - [x] Stand on A, look at B — bar shows B; look at sky — A
-- [x] Point at loco — `Loco …`; freight omits
+- [x] Point at loco — `Loco … · Nt` mass fold (**0.6.35**); freight mass chip, no Cargo type
 - [x] Distant car ~80–250 m resolves *(PASS\*)*
-- [x] Freight `Cargo …` / `Empty Cargo` — load PASS; Empty Cargo **PASS** @ 0.4.56 (F6 dump)
+- [x] Freight load/dump still works (F6/F7); **HUD omits cargo type** — **0.6.35**
 
 ---
 
@@ -172,13 +172,15 @@ Top bar `Load N %` after Handbrakes. Yellow ≥80%, red ≥95%.
 
 ---
 
-### 4.3 Hide loco gadget top bar *(was QOL-08)* — **PASS** v0.4.14+
+### 4.3 Hide loco gadget top bar *(was QOL-08)* — **PASS** v0.4.14+ · look-at gate **0.6.34**
 
 **Sign-off**
 
-- [x] Sky / on foot / freight-only — **no** top bar, **no** red dash wall; `v…` chip still visible
-- [x] In loco or look-at usable loco train — top bar live (Speed…Load)
+- [x] Sky / on foot / freight-only — **no** top bar, **no** red dash wall
+- [x] In/on usable loco train — top bar live (Speed…Load)
+- [x] On foot look-at loco — top bar **hidden**; second bar may show `Loco DE2` (**0.6.34** — no cold `T2 limit loco` / `scan=1600m`)
 - [x] Look-at freight with no loco path — top bar hidden; second bar can still show
+- [x] Tier 1: `UsableLocoTrainGateTests`
 - [x] Mod Off → On; no exceptions
 
 ### 1.8 Motor status *(was CMD-02b)* — `T2 power` — **PASS** v0.4.16
@@ -406,16 +408,16 @@ Former `Next: … [N km]` on loco bar when fluids low — **removed**. Smoke A1�
 - [x] F9 Fuel 5% — no `Next:`
 - [x] Mainline low fluid — no `Next:`
 
-### 4.6 Station waypoint (foot) — `T2 station` — Bundle **C** **PASS** v0.4.48
+### 4.6 Station waypoint (foot) — `T2 station` — Bundle **C** + declutter **0.6.35**
 
-Always-on: in job-generation zone show `Station {YardID} {bearing} {m}m` (or `here`). **No** map coords. Omit outside zones. **`here`** = same office gate as house AR hide (AABB / 20 m fallback). Apron flip to `here` (~12–14 m) is **accepted**.
+Always-on: in job-generation zone show `Curr, Area - {YardID}`. **No** bearing/meters (AR has distance). Omit outside zones. House AR hide gate unchanged (apron ~12–14 m accepted).
 
 **Sign-off**
 
 - [ ] Outside station zone — Station chip absent
-- [x] Enter station/city zone — Station chip with yard id + bearing/distance (**no** `· x, z`) — `v0.4.32`
-- [x] Walk to office — house icon hides **and** chip flips to `Station … here` at the same moment (v0.4.48)
-- [ ] `T2 station` on enter/leave / bearing change
+- [ ] Enter station/city zone — `Curr, Area - SM` (yard id only) — **0.6.35**
+- [x] Walk to office — house icon hides (v0.4.48); chip stays yard-only (no `here`)
+- [ ] `T2 station` on enter/leave
 
 ### 4.8 Active Job HUD + preview-prep edge — `T2 job` — Bundle **D** v0.4.52 · pending B re-smoke
 
@@ -528,30 +530,46 @@ Nearest **other** locos as amber AR markers on the sticky locator bar (**≤600 
 - [x] UMM **0.6.15** — markers beyond **600 m** omitted (0–3 shown)
 - [x] UMM **0.6.19** — Options **Show nearest locos** off → radar gone; on → returns (Tier 2 PASS 2026-08-04)
 
-### 4.13 Yard mini-map — `T2 minimap` — smoke **PASS @ 0.6.28** (fence); ship pending
+### 4.13 Yard mini-map — `T2 minimap` — smoke **PASS @ 0.6.28** (fence); `#Y` rails
 
-In-world **`M`** toggle; track schematic + pin/heading + Office/TT; off-map edge arrow. **MFMB** only when nearest is MFMB **and** within temp **5 m** office fence (smoke: switched near ~9 m of MB home). Else sticky **Yard MF** / hide. Detail: `T2 minimap: detail … distMFMB=…`.
+**0.6.29 FAIL (2026-08-06):** UMM 0.6.29; Yard MF schematic = dotted/fragmented stubs (Office OK). Log: `nearest=MF in=[MFMB,MF] fence=[-] distMFMB=140m → MF`. Cause: usable `#Y` mesh inflated AABB → rails projected under OnGUI `DrawLine` 0.5px cull. Tier 1: `YardMiniMapSchematicFocusTests`.
 
-**Follow-on:** unnamed/`#Y` rails on schematic; retune fence after map coverage improves.
+**0.6.30:** focus zoom = named + landmarks + nearby extras only; denser samples (8 m); thicker strokes; build diag `T2 minimap: build yard=… span=…`. **PASS** (readable tracks; panel felt small).
+
+**0.6.31:** square panel **560×560** — **FAIL** (still too small on smoke display).
+
+**0.6.32:** target **1120×1120** (2× again), clamped to `min(screen)-2*margin`; Tier 1 `YardMiniMapPanelLayoutTests`.
+
+**0.6.33 PERF:** Player.log spam `T2 minimap: build … polys=616 extra=596` (~196×). Rebuild gate + log-once; draw only focus-window `#Y`; hop cap 8. Tier 1 `YardMiniMapRebuildGateTests`.
+
+**0.6.34 PERF:** look-at loco froze ~2 s — `T2 power/limit loco` + `scan=1600m` because look-at seeded usable loco train. Top loco bar now **standing/on-train only**; look-at stays second bar. Tier 1 `UsableLocoTrainGateTests`.
 
 **Sign-off**
 
 - [x] UMM **0.6.28** — Station MF approach stays **Yard MF**; MFMB only near MB office (**PASS** 2026-08-05)
 - [x] Off-map arrow **PASS** (@ 0.6.25+)
 - [x] Tier 1: `YardMiniMapSmokeRegressionTests` / office-fence gates
-- [ ] Ship commit when asked → **done** (CMPH 2026-08-05)
+- [x] Ship commit CMPH 2026-08-05 @ 0.6.28
+- [x] UMM **0.6.29** — FAIL (dotted MF schematic; `#Y` zoom inflate)
+- [x] Tier 1: `YardMiniMapTrackSetTests` + `YardMiniMapSchematicFocusTests` (MF 0.6.29 FAIL lock)
+- [x] UMM **0.6.30** — continuous readable track lines on MF (**PASS** 2026-08-06)
+- [x] UMM **0.6.31** — FAIL (560 panel still too small)
+- [ ] UMM **0.6.32** — ~1120px square (or max fit); readable size
+- [ ] UMM **0.6.33** — no build spam; smoother with map open / look-at
+- [ ] UMM **0.6.34** — on-foot look-at loco: **no** freeze; no `T2 limit loco` until boarded
+- [ ] UMM **0.6.35** — HUD declutter: `Curr, Area - …`; look-at no Pipe/Car#/Cargo; AR max 2 in-zone @ 1s; always-on top
 
-### 4.7 HUD strip IA — **PASS** v0.4.23
+### 4.7 HUD strip IA — **PASS** v0.4.23 · stack **0.6.35**
 
-All rows centered. Stack: loco → look-at → always-on bar (same chrome).
+All rows centered. Stack: **always-on (top)** → loco → look-at → job.
 
 **Sign-off**
 
 - [x] Usable train — loco bar centered; Speed/Limit mid-string
-- [x] Look-at bar centered under loco
-- [x] Always-on bar centered under the lowest other bar (or alone when others hidden)
+- [ ] Always-on is **top** of stack and stays put when look-at appears — **0.6.35**
+- [x] Look-at bar centered
 - [x] Always-on readable (dark bar background)
-- [x] Chip `v0.4.23`
+- [ ] Chip UMM **0.6.35**
 
 Recovery: [modding.md](doc/requirements/modding.md).
 

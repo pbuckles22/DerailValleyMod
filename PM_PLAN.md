@@ -240,7 +240,7 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
   - [x] **4.12 Direction-gated proximity** — Reverser gate: **Reverse** → `Rear …`; **Forward** → `Front …` (same ranging/colors); **Neutral** → omit. Tip jumps to new free end after couple. **Done** — Tier 1 + Tier 2 smoke **PASS** (v**0.5.17**).
     > As an engineer, I only want rear proximity when I’m backing; when I’m going forward, show front clearance instead.
 
-  - [x] **4.13 Yard mini-map (“you are here”)** — Hotkey **`M`**: in-world one-yard schematic (named tracks) + pin/heading + Office/TT; off-map edge arrow. **MFMB** satellite: temp **5 m** office fence + nearest MFMB. Tier 1 smoke regressions + Tier 2 **PASS** @ **0.6.28** (2026-08-05). *Follow-on: `#Y`/unnamed rails on map; fence retune.*
+  - [x] **4.13 Yard mini-map (“you are here”)** — Hotkey **`M`**: in-world one-yard schematic (named + usable `#Y` connectors @ **0.6.29**) + pin/heading + Office/TT; off-map edge arrow. **MFMB** satellite: temp **5 m** office fence + nearest MFMB. Tier 1 smoke regressions + Tier 2 **PASS** @ **0.6.28** (2026-08-05). *Follow-on: fence retune after `#Y` coverage smoke.*
     > As a yard worker who gets lost on paper maps, I want a mini-map of only this yard showing where I am so I can orient without leaving the cab.
 
 ---

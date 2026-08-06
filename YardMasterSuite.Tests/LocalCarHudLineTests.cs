@@ -5,72 +5,33 @@ namespace YardMasterSuite.Tests;
 public class LocalCarHudLineTests
 {
     [Fact]
-    public void Format_joins_local_car_segments()
+    public void Format_joins_inspect_segments_without_pipe_or_car_number()
     {
         var line = LocalCarHudLine.Format(
-            "Pipe 2.0 bar",
             "Handbrake 1",
             "Couplers F+ R-",
-            "Car 3",
             "Job FH-12",
-            "Track SM-O6I");
+            "Track SM-O6I",
+            "46t · train 184t");
         Assert.Equal(
-            "Pipe 2.0 bar  |  Handbrake 1  |  Couplers F+ R-  |  Car 3  |  Job FH-12  |  Track SM-O6I",
+            "Handbrake 1  |  Couplers F+ R-  |  Job FH-12  |  Track SM-O6I  |  46t · train 184t",
             line);
+        Assert.DoesNotContain("Pipe", line);
+        Assert.DoesNotContain("Car XX", line);
+        Assert.DoesNotContain("Cargo", line);
     }
 
     [Fact]
-    public void Format_appends_cargo_and_loco_when_present()
+    public void Format_loco_identity_chip()
     {
-        var freight = LocalCarHudLine.Format(
-            "Pipe 1.0 bar",
-            "Handbrake 0",
-            "Couplers F+ R+",
-            "Car XX",
-            "Job SM-SU-46",
-            "Track C-06S",
-            cargo: "Cargo Steel Rails");
-        Assert.Equal(
-            "Pipe 1.0 bar  |  Handbrake 0  |  Couplers F+ R+  |  Car XX  |  Job SM-SU-46  |  Track C-06S  |  Cargo Steel Rails",
-            freight);
-
-        var withMass = LocalCarHudLine.Format(
-            "Pipe 1.0 bar",
-            "Handbrake 0",
-            "Couplers F+ R+",
-            "Car XX",
-            "Job SM-FH-97",
-            "Track SM-B2O",
-            cargo: "Empty Cargo",
-            mass: "Mass 28 t");
-        Assert.Equal(
-            "Pipe 1.0 bar  |  Handbrake 0  |  Couplers F+ R+  |  Car XX  |  Job SM-FH-97  |  Track SM-B2O  |  Mass 28 t  |  Empty Cargo",
-            withMass);
-
-        var withConsist = LocalCarHudLine.Format(
-            "Pipe 1.0 bar",
-            "Handbrake 0",
-            "Couplers F+ R+",
-            "Car XX",
-            "Job SM-SU-07",
-            "Track SM-B3I",
-            cargo: "Empty Cargo",
-            mass: "Car 17 t  |  all cars 153 t");
-        Assert.Equal(
-            "Pipe 1.0 bar  |  Handbrake 0  |  Couplers F+ R+  |  Car XX  |  Job SM-SU-07  |  Track SM-B3I  |  Car 17 t  |  all cars 153 t  |  Empty Cargo",
-            withConsist);
-
         var loco = LocalCarHudLine.Format(
-            "Pipe 5.0 bar",
             "Handbrake 0",
             "Couplers F- R-",
-            "Car N/A",
             job: null,
-            track: null,
-            cargo: null,
-            locoType: "Loco DE6");
+            track: "Track MF-C3I",
+            identityChip: "Loco DE2 · 38t");
         Assert.Equal(
-            "Pipe 5.0 bar  |  Handbrake 0  |  Couplers F- R-  |  Car N/A  |  Loco DE6",
+            "Handbrake 0  |  Couplers F- R-  |  Track MF-C3I  |  Loco DE2 · 38t",
             loco);
     }
 
@@ -78,15 +39,13 @@ public class LocalCarHudLineTests
     public void Format_omits_blank_job_and_track_segments()
     {
         var line = LocalCarHudLine.Format(
-            "Pipe 5.0 bar",
             "Handbrake 0",
             "Couplers F- R-",
-            "Car N/A",
             job: null,
             track: null,
-            locoType: "Loco DE2");
+            identityChip: "Loco DE2 · 38t");
         Assert.Equal(
-            "Pipe 5.0 bar  |  Handbrake 0  |  Couplers F- R-  |  Car N/A  |  Loco DE2",
+            "Handbrake 0  |  Couplers F- R-  |  Loco DE2 · 38t",
             line);
         Assert.DoesNotContain("Job", line);
         Assert.DoesNotContain("Track", line);

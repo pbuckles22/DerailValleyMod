@@ -42,7 +42,9 @@ High ROI; frequent pain; not blocking.
 
 
 
-- [ ] **4.13 follow-on — unnamed/`#Y` rails on mini-map** — schematic currently named catalog only; retune MFMB office fence after coverage improves.
+- [ ] **4.13 follow-on — MFMB fence retune** — after panel/perf smoke; temp **5 m** office fence.
+- [ ] **4.13 follow-on — mini-map resize** — end-of-story: UMM/hotkey size. Temp: **1120** screen-clamped square.
+- [ ] **Loco finder (ask)** — “What loco are you looking for?” + museum checkbox; not always-on radar.
 
 - [ ] **3.1 place ghost / facing cue** — MVP chip-only; players can’t preview landing until Confirm. Add re-rail-style ghost (and Flip cue) on look-at aim.
 

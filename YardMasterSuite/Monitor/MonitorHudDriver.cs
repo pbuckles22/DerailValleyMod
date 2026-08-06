@@ -98,27 +98,19 @@ public sealed class MonitorHudDriver : MonoBehaviour
 
     private bool _hasLocalDebug;
     private bool _lastLocalVisible;
-    private string _lastPipe = "";
     private string _lastHandbrake = "";
     private string _lastCoupling = "";
-    private string _lastCarNumber = "";
     private string? _lastJob;
     private string? _lastTrack;
-    private string? _lastCargo;
-    private string? _lastLocoType;
-    private string? _lastMass;
+    private string? _lastIdentityChip;
 
     private bool _hasLookAtDebug;
     private bool _lastLookAtVisible;
-    private string _lastLookAtPipe = "";
     private string _lastLookAtHandbrake = "";
     private string _lastLookAtCoupling = "";
-    private string _lastLookAtCarNumber = "";
     private string? _lastLookAtJob;
     private string? _lastLookAtTrack;
-    private string? _lastLookAtCargo;
-    private string? _lastLookAtLocoType;
-    private string? _lastLookAtMass;
+    private string? _lastLookAtIdentityChip;
 
     private bool _hasCouplerDebug;
     private bool _lastCouplerVisible;
@@ -695,28 +687,20 @@ public sealed class MonitorHudDriver : MonoBehaviour
         {
             previous = new LocalCarDebugSnapshot(
                 _lastLocalVisible,
-                _lastPipe,
                 _lastHandbrake,
                 _lastCoupling,
-                _lastCarNumber,
                 _lastJob,
                 _lastTrack,
-                _lastCargo,
-                _lastLocoType,
-                _lastMass);
+                _lastIdentityChip);
         }
 
         var line = Tier2LocalCarDebug.NextLogMessage(previous, snap);
         _lastLocalVisible = snap.Visible;
-        _lastPipe = snap.Pipe;
         _lastHandbrake = snap.Handbrake;
         _lastCoupling = snap.Coupling;
-        _lastCarNumber = snap.CarNumber;
         _lastJob = snap.Job;
         _lastTrack = snap.Track;
-        _lastCargo = snap.Cargo;
-        _lastLocoType = snap.LocoType;
-        _lastMass = snap.Mass;
+        _lastIdentityChip = snap.IdentityChip;
         _hasLocalDebug = true;
         if (line != null)
         {
@@ -732,28 +716,20 @@ public sealed class MonitorHudDriver : MonoBehaviour
         {
             previous = new LocalCarDebugSnapshot(
                 _lastLookAtVisible,
-                _lastLookAtPipe,
                 _lastLookAtHandbrake,
                 _lastLookAtCoupling,
-                _lastLookAtCarNumber,
                 _lastLookAtJob,
                 _lastLookAtTrack,
-                _lastLookAtCargo,
-                _lastLookAtLocoType,
-                _lastLookAtMass);
+                _lastLookAtIdentityChip);
         }
 
         var line = Tier2LookAtDebug.NextLogMessage(previous, snap);
         _lastLookAtVisible = snap.Visible;
-        _lastLookAtPipe = snap.Pipe;
         _lastLookAtHandbrake = snap.Handbrake;
         _lastLookAtCoupling = snap.Coupling;
-        _lastLookAtCarNumber = snap.CarNumber;
         _lastLookAtJob = snap.Job;
         _lastLookAtTrack = snap.Track;
-        _lastLookAtCargo = snap.Cargo;
-        _lastLookAtLocoType = snap.LocoType;
-        _lastLookAtMass = snap.Mass;
+        _lastLookAtIdentityChip = snap.IdentityChip;
         _hasLookAtDebug = true;
         if (line != null)
         {
@@ -790,8 +766,10 @@ public sealed class MonitorHudDriver : MonoBehaviour
 
         EnsureStyles();
 
-        // Stack top → bottom, all centered: loco → look-at → active job → always-on nav.
+        // Stack top → bottom: always-on fixed first, then loco → look-at → job.
         var y = MonitorHudStackLayout.Pad;
+
+        y = DrawCenteredBar(_alwaysOnLabel, _alwaysOnStyle!, y) + MonitorHudStackLayout.Gap;
 
         if (_trainLabel != null)
         {
@@ -808,7 +786,6 @@ public sealed class MonitorHudDriver : MonoBehaviour
             y = DrawCenteredBar(_jobLabel, _jobStyle!, y) + MonitorHudStackLayout.Gap;
         }
 
-        y = DrawCenteredBar(_alwaysOnLabel, _alwaysOnStyle!, y);
         LastStackBottomGuiY = y;
 
         if (_debugHotkeyLabel != null)

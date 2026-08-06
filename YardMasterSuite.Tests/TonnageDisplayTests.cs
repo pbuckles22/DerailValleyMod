@@ -33,4 +33,26 @@ public class TonnageDisplayTests
             "Car 17 t  |  all cars 153 t",
             TonnageDisplay.FormatCarAndConsistFromKilograms(17000f, 153000f));
     }
+
+    [Fact]
+    public void FormatInspectIdentity_loco_folds_mass()
+    {
+        Assert.Equal(
+            "Loco DE2 · 38t",
+            TonnageDisplay.FormatInspectIdentity(true, "Loco DE2", 38000f, 38000f));
+        Assert.Equal(
+            "Loco DE2 · 38t · train 184t",
+            TonnageDisplay.FormatInspectIdentity(true, "Loco DE2", 38000f, 184000f));
+    }
+
+    [Fact]
+    public void FormatInspectIdentity_freight_mass_only()
+    {
+        Assert.Equal(
+            "46t",
+            TonnageDisplay.FormatInspectIdentity(false, null, 46000f, 46000f));
+        Assert.Equal(
+            "46t · train 184t",
+            TonnageDisplay.FormatInspectIdentity(false, null, 46000f, 184000f));
+    }
 }

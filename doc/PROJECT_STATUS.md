@@ -1,13 +1,13 @@
 # Project status
 
-**Updated:** 2026-08-05
+**Updated:** 2026-08-06
 
 | | |
 |--|--|
-| **Journey** | Stage 3 — **4.13** mini-map @ **0.6.28**; next **3.7** (WIP stash) or `#Y` map follow-on; **3.1b iced** |
+| **Journey** | Stage 3 — **4.13** on `main` @ **0.6.28**; branch WIP **0.6.35** (`#Y` + HUD declutter) pending smoke |
 | **MVP** | Epic 1 System Monitor HUD |
-| **Version** | **0.6.28** |
-| **Active branch** | `main` |
+| **Version** | **0.6.28** on `main` · WIP **0.6.35** on feature branch |
+| **Active branch** | `feature/4.13-unnamed-y-rails` |
 
 ---
 
@@ -16,7 +16,8 @@
 | Branch | Role |
 |--------|------|
 | **`main`** | Integration — **0.6.28** |
-| **`feature/3.7-multi-step-maps`** | 3.7 WIP — stash `park 3.7 WIP 0.6.28` (do not mix with next story) |
+| **`feature/4.13-unnamed-y-rails`** | WIP **0.6.35** — CPH’d; smoke then CMPH |
+| **`feature/3.7-multi-step-maps`** | 3.7 WIP — stash `park 3.7 WIP 0.6.28` (do not mix) |
 
 ---
 

@@ -7,53 +7,37 @@ public readonly struct LocalCarDebugSnapshot
 {
     public LocalCarDebugSnapshot(
         bool visible,
-        string pipe,
         string handbrake,
         string coupling,
-        string carNumber,
         string? job,
         string? track,
-        string? cargo = null,
-        string? locoType = null,
-        string? mass = null)
+        string? identityChip = null)
     {
         Visible = visible;
-        Pipe = pipe;
         Handbrake = handbrake;
         Coupling = coupling;
-        CarNumber = carNumber;
         Job = job;
         Track = track;
-        Cargo = cargo;
-        LocoType = locoType;
-        Mass = mass;
+        IdentityChip = identityChip;
     }
 
     public bool Visible { get; }
-    public string Pipe { get; }
     public string Handbrake { get; }
     public string Coupling { get; }
-    public string CarNumber { get; }
     public string? Job { get; }
     public string? Track { get; }
-    public string? Cargo { get; }
-    public string? LocoType { get; }
-    public string? Mass { get; }
+    public string? IdentityChip { get; }
 
     public string FormatFragment() =>
-        LocalCarHudLine.Format(Pipe, Handbrake, Coupling, CarNumber, Job, Track, Cargo, LocoType, Mass);
+        LocalCarHudLine.Format(Handbrake, Coupling, Job, Track, IdentityChip);
 
     public bool SameAs(LocalCarDebugSnapshot other) =>
         Visible == other.Visible
-        && Pipe == other.Pipe
         && Handbrake == other.Handbrake
         && Coupling == other.Coupling
-        && CarNumber == other.CarNumber
         && Job == other.Job
         && Track == other.Track
-        && Cargo == other.Cargo
-        && LocoType == other.LocoType
-        && Mass == other.Mass;
+        && IdentityChip == other.IdentityChip;
 }
 
 /// <summary>
@@ -83,7 +67,7 @@ public static class Tier2LocalCarDebug
             return $"{Prefix} hide";
         }
 
-        if (current.Visible && !prior.SameAs(current))
+        if (prior.Visible && current.Visible && !prior.SameAs(current))
         {
             return $"{Prefix} change: {current.FormatFragment()}";
         }

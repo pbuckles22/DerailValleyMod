@@ -7,28 +7,25 @@ public class Tier2LocalCarDebugTests
     private static LocalCarDebugSnapshot Hidden() =>
         new(
             visible: false,
-            pipe: "— Pipe",
             handbrake: "— Handbrake",
             coupling: "— Couplers",
-            carNumber: "Car XX",
             job: null,
             track: null);
 
     private static LocalCarDebugSnapshot Visible(
-        string pipe = "Pipe 2.0 bar",
         string handbrake = "Handbrake 1",
         string coupling = "Couplers F+ R-",
-        string carNumber = "Car 3",
         string job = "Job FH-12",
-        string track = "Track SM-O6I") =>
-        new(visible: true, pipe, handbrake, coupling, carNumber, job, track);
+        string track = "Track SM-O6I",
+        string? identity = "46t") =>
+        new(visible: true, handbrake, coupling, job, track, identity);
 
     [Fact]
     public void NextLogMessage_logs_init_when_first_visible()
     {
         var msg = Tier2LocalCarDebug.NextLogMessage(null, Visible());
         Assert.Equal(
-            "T2 local-car init: Pipe 2.0 bar  |  Handbrake 1  |  Couplers F+ R-  |  Car 3  |  Job FH-12  |  Track SM-O6I",
+            "T2 local-car init: Handbrake 1  |  Couplers F+ R-  |  Job FH-12  |  Track SM-O6I  |  46t",
             msg);
     }
 
@@ -36,7 +33,7 @@ public class Tier2LocalCarDebugTests
     public void NextLogMessage_logs_appear_and_hide()
     {
         Assert.Equal(
-            "T2 local-car appear: Pipe 2.0 bar  |  Handbrake 1  |  Couplers F+ R-  |  Car 3  |  Job FH-12  |  Track SM-O6I",
+            "T2 local-car appear: Handbrake 1  |  Couplers F+ R-  |  Job FH-12  |  Track SM-O6I  |  46t",
             Tier2LocalCarDebug.NextLogMessage(Hidden(), Visible()));
         Assert.Equal(
             "T2 local-car hide",
@@ -50,7 +47,7 @@ public class Tier2LocalCarDebugTests
         var after = Visible(coupling: "Couplers F+ R+");
         var msg = Tier2LocalCarDebug.NextLogMessage(before, after);
         Assert.Equal(
-            "T2 local-car change: Pipe 2.0 bar  |  Handbrake 1  |  Couplers F+ R+  |  Car 3  |  Job FH-12  |  Track SM-O6I",
+            "T2 local-car change: Handbrake 1  |  Couplers F+ R+  |  Job FH-12  |  Track SM-O6I  |  46t",
             msg);
     }
 

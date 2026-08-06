@@ -53,4 +53,40 @@ public static class TonnageDisplay
             MidpointRounding.AwayFromZero);
         return $"{carChip}  |  all cars {consistTonnes:0} t";
     }
+
+    /// <summary>
+    /// Look-at identity: <c>Loco DE2 · 38t · train 184t</c> or freight <c>46t · train 184t</c>.
+    /// </summary>
+    public static string? FormatInspectIdentity(
+        bool isLoco,
+        string? locoTypeLabel,
+        float? carKilograms,
+        float? consistKilograms)
+    {
+        if (carKilograms is null || carKilograms.Value <= 0f)
+        {
+            return isLoco ? locoTypeLabel : null;
+        }
+
+        var carTonnes = Math.Round(
+            KilogramsToTonnes(carKilograms.Value),
+            MidpointRounding.AwayFromZero);
+        var hasTrain = consistKilograms is float ck
+            && ck > carKilograms.Value * 1.01f + 1f;
+        var trainTonnes = hasTrain
+            ? Math.Round(KilogramsToTonnes(consistKilograms!.Value), MidpointRounding.AwayFromZero)
+            : 0;
+
+        if (isLoco)
+        {
+            var loco = string.IsNullOrWhiteSpace(locoTypeLabel) ? "Loco" : locoTypeLabel!.Trim();
+            return hasTrain
+                ? $"{loco} · {carTonnes:0}t · train {trainTonnes:0}t"
+                : $"{loco} · {carTonnes:0}t";
+        }
+
+        return hasTrain
+            ? $"{carTonnes:0}t · train {trainTonnes:0}t"
+            : $"{carTonnes:0}t";
+    }
 }

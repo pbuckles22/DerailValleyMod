@@ -4,23 +4,20 @@ namespace YardMasterSuite.Core;
 
 /// <summary>
 /// Single-car HUD bar (look-at preferred; standing fallback when not looking at a car).
+/// No Pipe / Car # / cargo-type — declutter + perf.
 /// </summary>
 public static class LocalCarHudLine
 {
     public static string Format(
-        string pipe,
         string handbrake,
         string couplers,
-        string carNumber,
         string? job,
         string? track,
-        string? cargo = null,
-        string? locoType = null,
-        string? mass = null)
+        string? identityChip)
     {
         var parts = new List<string>
         {
-            pipe, handbrake, couplers, carNumber,
+            handbrake, couplers,
         };
         if (!string.IsNullOrWhiteSpace(job))
         {
@@ -32,19 +29,9 @@ public static class LocalCarHudLine
             parts.Add(track!.Trim());
         }
 
-        if (!string.IsNullOrEmpty(mass))
+        if (!string.IsNullOrEmpty(identityChip))
         {
-            parts.Add(mass!);
-        }
-
-        if (!string.IsNullOrEmpty(cargo))
-        {
-            parts.Add(cargo!);
-        }
-
-        if (!string.IsNullOrEmpty(locoType))
-        {
-            parts.Add(locoType!);
+            parts.Add(identityChip!);
         }
 
         return MonitorHudLine.Join(parts);

@@ -22,7 +22,7 @@ public readonly struct LocoRadarCandidate
 /// </summary>
 public static class LocoRadarSelection
 {
-    public const int DefaultMaxResults = 3;
+    public const int DefaultMaxResults = 2;
 
     /// <summary>Yard-walk useful range — farther markers are noise.</summary>
     public const float MaxRangeMeters = 600f;

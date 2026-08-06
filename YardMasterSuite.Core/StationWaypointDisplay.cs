@@ -3,18 +3,14 @@ using System;
 namespace YardMasterSuite.Core;
 
 /// <summary>
-/// Pure in-zone station waypoint formatting for the always-on nav chip (4.6 / Bundle C).
-/// Bearing/distance are flat-map from the player to the station office.
-/// <c>here</c> uses the same office gate as AR house hide (<see cref="ArProximityHide.IsAtOffice"/>).
+/// Pure in-zone station waypoint formatting for the always-on nav chip (4.6).
+/// HUD shows area id only — bearing/meters live on office AR (declutter / perf).
 /// </summary>
 public static class StationWaypointDisplay
 {
     /// <summary>
     /// Zone waypoint chip, or null when outside a station zone (omit from HUD join).
     /// </summary>
-    /// <param name="atOffice">
-    /// True when player is inside the office footprint / radius — same predicate as house AR hide.
-    /// </param>
     public static string? Format(
         bool inZone,
         string? yardId,
@@ -30,31 +26,13 @@ public static class StationWaypointDisplay
         }
 
         var label = string.IsNullOrWhiteSpace(yardId) ? "—" : yardId!.Trim();
-        if (stationX is null || stationZ is null)
-        {
-            return "— Station";
-        }
-
-        if (playerX is null || playerZ is null)
-        {
-            return "— Station";
-        }
-
-        var point = TryGetWalkPoint(stationX.Value, stationZ.Value, playerX.Value, playerZ.Value, atOffice);
-        if (point is null)
-        {
-            return "— Station";
-        }
-
-        if (point == "here")
-        {
-            return $"Station {label} here";
-        }
-
-        var dx = stationX.Value - playerX.Value;
-        var dz = stationZ.Value - playerZ.Value;
-        var meters = (int)Math.Round(Math.Sqrt(dx * dx + dz * dz), MidpointRounding.AwayFromZero);
-        return $"Station {label} {point} {meters}m";
+        // station/player coords unused for HUD text — kept for API compatibility with callers.
+        _ = stationX;
+        _ = stationZ;
+        _ = playerX;
+        _ = playerZ;
+        _ = atOffice;
+        return "Curr, Area - " + label;
     }
 
     /// <summary>16-point walk bearing toward station, <c>here</c> when <paramref name="atOffice"/>, or null.</summary>

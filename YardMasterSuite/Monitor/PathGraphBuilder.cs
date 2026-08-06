@@ -884,6 +884,83 @@ internal static class PathGraphBuilder
     }
 
     /// <summary>
+    /// Graph keys tagged to <paramref name="yardId"/> for mini-map seeds (named + yard-tagged <c>#Y</c>).
+    /// Prefer primary <see cref="TrackKey"/> so keys match edge nodes.
+    /// </summary>
+    public static List<string> CollectYardSeedTrackKeys(string? yardId)
+    {
+        var list = new List<string>(64);
+        var yard = yardId?.Trim();
+        if (string.IsNullOrEmpty(yard) || _tracksByKey == null)
+        {
+            return list;
+        }
+
+        var seen = new HashSet<string>(System.StringComparer.Ordinal);
+        var seenRails = new HashSet<RailTrack>();
+        var aliasMap = BuildYardAliasMap();
+
+        foreach (var kv in _tracksByKey)
+        {
+            var rail = kv.Value;
+            if (rail == null || !seenRails.Add(rail))
+            {
+                continue;
+            }
+
+            var primary = PrimaryKeyOf(rail) ?? kv.Key;
+            if (string.IsNullOrEmpty(primary))
+            {
+                continue;
+            }
+
+            var y = YardIdOf(rail)
+                ?? YardIdFromTrackKey(primary)
+                ?? (aliasMap.TryGetValue(primary!, out var ay) ? ay : null);
+            if (!string.Equals(y, yard, System.StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            if (seen.Add(primary!))
+            {
+                list.Add(primary!);
+            }
+        }
+
+        return list;
+    }
+
+    /// <summary>Yard for a graph key (display prefix, rail LogicTrack, or alias map).</summary>
+    public static string? ResolveTrackYard(string? trackKey)
+    {
+        var key = trackKey?.Trim();
+        if (string.IsNullOrEmpty(key))
+        {
+            return null;
+        }
+
+        var fromKey = YardIdFromTrackKey(key);
+        if (fromKey != null)
+        {
+            return fromKey;
+        }
+
+        if (TryGetRailTrack(key, out var rail) && rail != null)
+        {
+            var fromRail = YardIdOf(rail);
+            if (fromRail != null)
+            {
+                return fromRail;
+            }
+        }
+
+        // One-shot alias lookup (callers that BFS should cache BuildYardAliasMap themselves).
+        var aliasMap = BuildYardAliasMap();
+        return aliasMap.TryGetValue(key!, out var yard) ? yard : null;
+    }
+
+    /// <summary>
     /// True when <paramref name="trackKey"/> is on the plan, or an alias of a plan track
     /// (FullID ↔ FullDisplayID) mapped to the same <see cref="RailTrack"/>.
     /// </summary>

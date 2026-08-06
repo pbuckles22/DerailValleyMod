@@ -18,26 +18,10 @@ public class StationWaypointDisplayTests
     }
 
     [Fact]
-    public void Format_in_zone_without_player_is_placeholder()
+    public void Format_in_zone_is_curr_area_only()
     {
         Assert.Equal(
-            "— Station",
-            StationWaypointDisplay.Format(
-                inZone: true,
-                yardId: "SM",
-                stationX: 100f,
-                stationZ: 200f,
-                playerX: null,
-                playerZ: null,
-                atOffice: false));
-    }
-
-    [Fact]
-    public void Format_in_zone_shows_bearing_and_distance_without_coords()
-    {
-        // Player east of station → walk west back to station.
-        Assert.Equal(
-            "Station SM W 100m",
+            "Curr, Area - SM",
             StationWaypointDisplay.Format(
                 inZone: true,
                 yardId: "SM",
@@ -49,11 +33,10 @@ public class StationWaypointDisplayTests
     }
 
     [Fact]
-    public void Format_at_office_shows_here_even_when_meters_from_anchor()
+    public void Format_at_office_still_area_only_no_bearing_or_meters()
     {
-        // Bundle C: "here" shares A.4 office footprint — not a 1 m point.
         Assert.Equal(
-            "Station HB here",
+            "Curr, Area - HB",
             StationWaypointDisplay.Format(
                 inZone: true,
                 yardId: "HB",
@@ -65,25 +48,10 @@ public class StationWaypointDisplayTests
     }
 
     [Fact]
-    public void Format_near_anchor_but_not_at_office_still_shows_bearing()
-    {
-        Assert.Equal(
-            "Station SM E 1m",
-            StationWaypointDisplay.Format(
-                inZone: true,
-                yardId: "SM",
-                stationX: 10f,
-                stationZ: 20f,
-                playerX: 9f,
-                playerZ: 20f,
-                atOffice: false));
-    }
-
-    [Fact]
     public void Format_missing_yard_uses_placeholder_id()
     {
         Assert.Equal(
-            "Station — here",
+            "Curr, Area - —",
             StationWaypointDisplay.Format(
                 inZone: true,
                 yardId: null,

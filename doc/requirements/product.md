@@ -37,7 +37,7 @@ Center-weighted IA (**4.7**): bar is **horizontally centered**; mid-string = Spe
 
 | | |
 |--|--|
-| **Show when** | Target is on a **usable loco train** (in/on it, looking at the loco, or looking at a car linked to one) |
+| **Show when** | Player is **in/on** a usable loco train (standing/`PlayerManager.Car`). Look-at alone does **not** open the loco bar (perf: avoids cold Speed/Limit scan). |
 | **Hide when** | Sky, ground, freight-only / no loco path — **no** red dash wall |
 | **Story** | **4.3** hide + **4.7** IA |
 
@@ -64,7 +64,7 @@ Center-weighted IA (**4.7**): bar is **horizontally centered**; mid-string = Spe
 | Word | Example live | Notes |
 |------|----------------|-------|
 | Heading | `Heading NE` / `Heading ENE` | **1.12** — 16-point rose; no degrees; never `— Heading` on menus |
-| Pos | *(removed — Bundle B.1)* | Was **1.13**; `T2 pos` debug only |
+| Station | `Curr, Area - MF` | **4.6** — yard id only in zone; no bearing/meters (AR has distance) |
 | Marked | `Marked NE 84m` / `Marked here` | **1.14** — return bearing + distance; omit when unmarked |
 | Clock | `Clock 14:30` | In-game world time (`DateTimeWrapper`); world session only |
 | Version | *(removed from HUD)* | Confirm ship # in **UMM Mod Manager** / `info.json` only |
@@ -76,17 +76,17 @@ Always-on is a full HUD bar (same chrome as loco/look-at).
 ### Second bar — that car only
 
 Look-at wins; standing fallback when crosshair is not on a car. Hidden when no target.
+Stack: **always-on (top)** → loco cab → look-at → job.
 
-| Word | Example live | Unknown / omit |
-|------|----------------|----------------|
-| Pipe | `Pipe 2.0 bar` | `— Pipe` |
-| Handbrake | `Handbrake 1` | `— Handbrake` |
-| Couplers | `F-` clear · **red** `F*` tow not ready (any unfinished step) · **yellow** `F*` loco↔loco tow-ready, MU open · white `F+` tow-ready (car/freight) · **blue** `F+` loco↔loco with MU (logs: `*` / `*Y` / `+`) | `— Couplers` |
-| Car | `Car 3` · `Car N/A` on loco · `Car XX` if not usable train | — |
-| Job | `Job FH-12` | omit when none — Bundle **B.4** |
-| Track | `Track SM-O6I` | omit when unknown/mainline — **4.4** / Bundle **B.3** |
-| Cargo | `Cargo Steel Rails` | `Empty Cargo` — **4.2** |
-| Loco | `Loco DE6` | *(omit if not a loco)* — **1.6** |
+| Word | Example live | Notes |
+|------|----------------|-------|
+| Handbrake | `Handbrake 1` | omit Pipe (**0.6.35**) |
+| Couplers | `F-` / `F+` … | same marks as before |
+| Job | `Job FH-12` | omit when none |
+| Track | `Track SM-O6I` | omit when unknown |
+| Identity | `Loco DE2 · 38t · train 184t` / `46t · train 184t` | mass folded; no Car XX/N/A; no cargo type |
+
+**Removed from second bar (0.6.35):** Pipe · Car # · cargo type name.
 
 **Build order (power):** **1.7**–**1.9** done → **1.10** speed-limit alerts (grade already in **1.2**).
 
@@ -102,11 +102,13 @@ Look-at wins; standing fallback when crosshair is not on a car. Hidden when no t
 
 **4.5 notes:** **Cut** (2026-07-25). Former fluid-gated `Next: Name [N km]` (nearest other yard) removed from loco bar — wrong UX for mainland range. Fluid HUD debug inject kept (F8/F9 / Shift+F8 clear / Shift+F9 both 100%).
 
-**4.6 notes:** In job-generation zone — always-on `Station SM NE 84m` (or `here`) using the **station office** transform (not yard center). **Bundle B.2:** no map coords on the chip. Omit outside zones.
+**4.6 notes:** In job-generation zone — always-on `Curr, Area - SM` (yard id only). Bearing/meters on office AR. Omit outside zones.
 
 **4.8 notes:** **Primary:** prep-before-validate — `currentJobs` empty + `availableJobs` → `Preview Nm` to `destroyGeneratedJobsSqrDistanceRegular` (warn / `OUT`). Taken jobs — `Job ID · GO/HOLD/RED · Bonus` (consist vs task cars; purple ■ AR on job cars @ **0.6.16**). Abandoned/Expired → red `Cancelled`. Details: [UX_SMOKE_FEEDBACK_2026-07-23.md](UX_SMOKE_FEEDBACK_2026-07-23.md) Bundle D.
 
-**4.9 notes:** AR screen markers with PNG icons (loco / house / pin) under `Mods/.../Icons/`; tint color secondary. Edge-clamped when behind; caption = meters only. `T2 ar`. **Office proximity (A.4 / Bundle C):** one gate hides the house icon and flips the Station chip to `here`. Being ~12–14 m from the door (apron) and seeing `here` is **accepted** — not an outdoor false-hide bug.
+**4.9 notes:** AR screen markers with PNG icons (loco / house / pin) under `Mods/.../Icons/`; tint color secondary. Edge-clamped when behind; caption = meters only. `T2 ar`. **Office proximity (A.4 / Bundle C):** one gate hides the house icon; Station chip is yard-only (`Curr, Area - …`). Being ~12–14 m from the door (apron) is **accepted** for house hide.
+
+**4.10 notes:** Other-loco AR — max **2**, **≤600 m**, **only in station/job zone**; refresh **1 s**. UMM toggle.
 
 **4.11 notes:** Rear-camera chip — check-point clearance, tenths. **Green** ≤0.5 m + couple-scan; **yellow** through **30 m**; plain farther. No “Couple ready”. Clearance can vary by car coupler geometry (fixed −0.25 m inset, not per-type table).
 
@@ -115,7 +117,7 @@ Look-at wins; standing fallback when crosshair is not on a car. Hidden when no t
 **1.15 notes:** Loco-bar `MU idle` (yellow) / `MU desync` (red). Quiet when synced. Yellow if either unit off/Neutral (brakes match). Red on brake/ind-brake fight or both on+in-gear control mismatch. MU cable syncs reverser/throttle — unplug to test desync.
 
 
-**4.7 notes:** All HUD rows centered. Stack: loco (if any) → look-at (if any) → active job (if any) → always-on nav. Chip order on loco bar as above.
+**4.7 notes:** All HUD rows centered. Stack: **always-on (top, stable)** → loco (if any) → look-at (if any) → active job. Chip order on loco bar as above.
 
 ---
 

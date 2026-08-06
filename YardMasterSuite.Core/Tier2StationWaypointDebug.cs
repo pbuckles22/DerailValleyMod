@@ -26,7 +26,7 @@ public readonly struct StationWaypointDebugSnapshot
         }
 
         var label = string.IsNullOrWhiteSpace(YardId) ? "—" : YardId!.Trim();
-        return WalkPoint is null ? $"Station {label}" : $"Station {label} {WalkPoint}";
+        return "Curr, Area - " + label;
     }
 }
 

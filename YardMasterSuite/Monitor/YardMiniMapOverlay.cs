@@ -11,12 +11,10 @@ namespace YardMasterSuite.Monitor;
 internal sealed class YardMiniMapOverlay : MonoBehaviour
 {
     private const KeyCode ToggleKey = KeyCode.M;
-    private const float PanelWidth = 280f;
-    private const float PanelHeight = 280f;
     private const float PanelMargin = 16f;
     private const float TitleHeight = 22f;
     private const float MapPadding = 8f;
-    private const float RebuildIntervalSeconds = 2.5f;
+    private const float RebuildIntervalSeconds = YardMiniMapRebuildGate.DefaultRebuildIntervalSeconds;
     private const float PinRadius = 5f;
     private const float LandmarkRadius = 4f;
     private const float HeadingTickLength = 14f;
@@ -42,6 +40,7 @@ internal sealed class YardMiniMapOverlay : MonoBehaviour
     private readonly List<string> _inZoneYards = new(8);
     private readonly List<string> _fenceSatellites = new(4);
     private float _fenceCheckAt = -999f;
+    private string? _lastBuildLog;
 
     private void OnDestroy()
     {
@@ -100,9 +99,13 @@ internal sealed class YardMiniMapOverlay : MonoBehaviour
         EnsureStyles();
         EnsureSnapshot(yardId!);
 
-        var panelX = Screen.width - PanelWidth - PanelMargin;
-        var panelY = Screen.height - PanelHeight - PanelMargin;
-        var panel = new Rect(panelX, panelY, PanelWidth, PanelHeight);
+        var panelSize = YardMiniMapPanelLayout.ResolveSquarePanelSize(
+            Screen.width,
+            Screen.height,
+            PanelMargin);
+        var panelX = Screen.width - panelSize - PanelMargin;
+        var panelY = Screen.height - panelSize - PanelMargin;
+        var panel = new Rect(panelX, panelY, panelSize, panelSize);
         GUI.color = Color.white;
         DrawFill(panel, PanelBg);
 
@@ -205,32 +208,40 @@ internal sealed class YardMiniMapOverlay : MonoBehaviour
     private void EnsureSnapshot(string yardId)
     {
         var now = Time.unscaledTime;
-        if (_snapshot != null
-            && string.Equals(_snapshotYard, yardId, System.StringComparison.OrdinalIgnoreCase)
-            && now < _nextRebuildAt)
+        // Claim cooldown even when snapshot is null — OnGUI thrash was rebuilding every frame.
+        if (!YardMiniMapRebuildGate.ShouldRebuild(now, _nextRebuildAt, _snapshotYard, yardId))
         {
             return;
         }
+
+        _snapshotYard = yardId;
+        _nextRebuildAt = now + RebuildIntervalSeconds;
 
         if (!PathGraphBuilder.HasReadyCache)
         {
             PathGraphBuilder.EnsureMappingStarted();
             _snapshot = null;
-            _snapshotYard = yardId;
             return;
         }
 
         if (YardMiniMapBuilder.TryBuild(yardId, out var snap) && snap != null)
         {
             _snapshot = snap;
-            _snapshotYard = yardId;
-            _nextRebuildAt = now + RebuildIntervalSeconds;
+            var line =
+                "T2 minimap: build yard=" + snap.YardId
+                + " polys=" + snap.Polylines.Count
+                + " named=" + snap.NamedRailCount
+                + " extra=" + snap.ExtraRailCount
+                + " span=" + snap.FocusSpanMeters.ToString("0") + "m";
+            if (!string.Equals(line, _lastBuildLog, System.StringComparison.Ordinal))
+            {
+                _lastBuildLog = line;
+                Main.Log(line);
+            }
         }
         else
         {
             _snapshot = null;
-            _snapshotYard = yardId;
-            _nextRebuildAt = now + 0.5f;
         }
     }
 
@@ -256,7 +267,7 @@ internal sealed class YardMiniMapOverlay : MonoBehaviour
                     continue;
                 }
 
-                DrawLine(x0, y0, x1, y1, TrackColor, 1.5f);
+                DrawLine(x0, y0, x1, y1, TrackColor, 2.5f);
             }
         }
     }
