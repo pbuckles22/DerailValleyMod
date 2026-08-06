@@ -131,6 +131,7 @@ public static class Main
             _hudRoot.AddComponent<MonitorHudDriver>();
             _hudRoot.AddComponent<ArWaypointOverlay>();
             _hudRoot.AddComponent<DispatchDeskPanel>();
+            _hudRoot.AddComponent<YardMiniMapOverlay>();
         }
         catch (Exception ex)
         {

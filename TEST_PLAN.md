@@ -390,8 +390,9 @@ Former `Next: … [N km]` on loco bar when fluids low — **removed**. Smoke A1�
 - **F9** — coupler HUD for #23: off → front `F*` yellow → rear `R*` yellow → both → off
 - **F11** — grant **all** obtainable general + job licenses ↔ restore pre-press snapshot (**real**)
 - **PgUp / PgDn** — within turntable **SearchRadius + 15 m** (or look-at); hold = bar/lever rate; tap = assist if ≤2 m from lock
+- **M** — yard mini-map toggle (in-world, in job zone) — **4.13**
 - **Motors heat debug** — *parked* (was F10/F4; not needed until thermal Tier 2). Leftover inject clears while debug is on.
-- Player.log: `T2 cargo-debug …` / `T2 load-debug: …` / `T2 coupler-debug: …` / `T2 turntable …` / `T2 loco-license-debug …` / `T2 license-debug …`
+- Player.log: `T2 cargo-debug …` / `T2 load-debug: …` / `T2 coupler-debug: …` / `T2 turntable …` / `T2 loco-license-debug …` / `T2 license-debug …` / `T2 minimap: …`
 
 **F5 DH4/DE6 license cycle — smoke @ v0.6.5 — Tier 2 PASS (2026-08-03)**
 
@@ -526,6 +527,19 @@ Nearest **other** locos as amber AR markers on the sticky locator bar (**≤600 
 - [x] No YardMaster exceptions in Player.log
 - [x] UMM **0.6.15** — markers beyond **600 m** omitted (0–3 shown)
 - [x] UMM **0.6.19** — Options **Show nearest locos** off → radar gone; on → returns (Tier 2 PASS 2026-08-04)
+
+### 4.13 Yard mini-map — `T2 minimap` — smoke **PASS @ 0.6.28** (fence); ship pending
+
+In-world **`M`** toggle; track schematic + pin/heading + Office/TT; off-map edge arrow. **MFMB** only when nearest is MFMB **and** within temp **5 m** office fence (smoke: switched near ~9 m of MB home). Else sticky **Yard MF** / hide. Detail: `T2 minimap: detail … distMFMB=…`.
+
+**Follow-on:** unnamed/`#Y` rails on schematic; retune fence after map coverage improves.
+
+**Sign-off**
+
+- [x] UMM **0.6.28** — Station MF approach stays **Yard MF**; MFMB only near MB office (**PASS** 2026-08-05)
+- [x] Off-map arrow **PASS** (@ 0.6.25+)
+- [x] Tier 1: `YardMiniMapSmokeRegressionTests` / office-fence gates
+- [ ] Ship commit when asked → **done** (CMPH 2026-08-05)
 
 ### 4.7 HUD strip IA — **PASS** v0.4.23
 

@@ -117,20 +117,21 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 |--|--|
 | **Project** | *Yard Master Suite* (UMM / Harmony / net48) |
 | **MVP** | **Epic 1** System Monitor HUD |
-| **Version (`main`)** | **0.6.22** *(GO/HOLD uses ExpectedLogicCars; 3.7 next)* |
+| **Version (`main`)** | **0.6.28** *(4.13 yard mini-map; Tier 2 PASS)* |
 | **Active branch** | `main` |
 
 **Shipped on `main`**
 
 - [x] **Epic 0** Safe Boot *(0.4 scaffold)*
 - [x] **Epic 1** Diagnostic HUD — **1.1–1.15** complete (**1.15** @ **0.5.20**); **1.16** CUT; **1.17** @ **0.5.104**
-- [x] **Epic 4** HUD quality — **4.1–4.12** complete 2026-07-28 (**4.12** @ **0.5.17**)
+- [x] **Epic 4** HUD quality — **4.1–4.12** complete 2026-07-28 (**4.12** @ **0.5.17**); backlog **4.13** @ **0.6.28**
 - [x] **Epic 2** Governor Mode — **2.1**–**2.3** complete 2026-07-28 (**2.3** @ **0.5.25**)
 - [x] **3.5** Align Route (**0.5.101**)
 - [x] **3.6** Digital Switch List (**0.6.2**, Tier 2 **PASS**)
 - [x] **3.1** Job-cars teleport + Station Snap (**0.6.4**, Tier 2 **PASS** — look-at place; Flip; Snap/Return)
 - [x] **F5 DH4/DE6 license debug** (**0.6.5**, Tier 2 **PASS** — real → DH4 only → DH4+DE6 → real; replaces lighter)
 - [x] **Maps path rem/ETA + job AR + UMM options** (**0.6.19**, Tier 2 **PASS** — rem until dest; pickup-track pins; Show nearest locos; false Path stale @ **0.6.13**)
+- [x] **4.13 Yard mini-map** (**0.6.28**, Tier 2 **PASS** — `M` toggle; MFMB 5 m office fence; off-map arrow; smoke-gates Tier 1 CI)
 - [x] **1.17** Posted Limit + Next (**0.5.104**, Tier 2 **PASS**; #4 behind-seed on ice)
 - [x] **Stress RAG HUD chip** (**0.5.105**, Tier 2 **PASS** — coupler/derail % RAG)
 - [x] **Tier 2 debug inject** — F5–F9 / F11 + PgUp/PgDn turntable (**F5** = DH4/DE6 @ **0.6.5**; **Motors** heat inject *parked* @ **0.6.21**)
@@ -145,8 +146,9 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 
 **Next**
 
-1. **3.7 Multi-step Maps** — Switch List legs: auto TurnAround inject, reverse-into, current-leg AR; eliminate false NoPath for valid jobs (facing wrong way). Spec: `doc/GeminiDocs/Multi-step Maps Specification.md`. **3.1b iced** (WIP parked ~0.6.12 — do not resume yet).
-2. Parking: 3.1b ghost/spawn; place ghost / Snap office under-mesh; Switch List couple auto-advance / arrival-track split; flight-sim HUD; AR house hide; DM3; session reset; 1.17 #4 behind-seed.
+1. **4.13 follow-on** — unnamed/`#Y` rails on mini-map schematic; then retune MFMB fence. *Or* resume **3.7** from stash `park 3.7 WIP 0.6.28` on `feature/3.7-multi-step-maps` (user pick).
+2. **3.7 Multi-step Maps** — Switch List TurnAround inject (WIP parked). **3.1b iced**.
+3. Parking: 3.1b ghost/spawn; place ghost / Snap office under-mesh; Switch List couple auto-advance / arrival-track split; flight-sim HUD; AR house hide; DM3; session reset; 1.17 #4 behind-seed.
 **Merge-ready:** `dotnet test YardMasterSuite.sln` · `dotnet build YardMasterSuite.sln -c Release` · **deploy to Mods** via `package.ps1 -NoArchive` (required before Tier 2 smoke — see [.cursor/rules/deploy-before-smoke.mdc](.cursor/rules/deploy-before-smoke.mdc))
 
 ## Run and test

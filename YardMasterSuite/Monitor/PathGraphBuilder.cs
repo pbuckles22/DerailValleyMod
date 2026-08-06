@@ -1079,23 +1079,9 @@ internal static class PathGraphBuilder
     public static bool TryGetTrackWorldXZ(string? trackKey, out float x, out float z)
     {
         x = z = 0f;
-        var key = trackKey?.Trim();
-        if (string.IsNullOrEmpty(key))
+        if (!TryGetRailTrack(trackKey, out var rail) || rail == null)
         {
             return false;
-        }
-
-        if (_tracksByKey == null || !_tracksByKey.TryGetValue(key!, out var rail) || rail == null)
-        {
-            if (!TryBuild(out _, out _, out _, out _))
-            {
-                return false;
-            }
-
-            if (_tracksByKey == null || !_tracksByKey.TryGetValue(key!, out rail) || rail == null)
-            {
-                return false;
-            }
         }
 
         try
@@ -1109,6 +1095,32 @@ internal static class PathGraphBuilder
         {
             return false;
         }
+    }
+
+    /// <summary>Resolve a cached rail by primary track key (after mapping warm).</summary>
+    public static bool TryGetRailTrack(string? trackKey, out RailTrack? rail)
+    {
+        rail = null;
+        var key = trackKey?.Trim();
+        if (string.IsNullOrEmpty(key))
+        {
+            return false;
+        }
+
+        if (_tracksByKey == null || !_tracksByKey.TryGetValue(key!, out rail) || rail == null)
+        {
+            if (!TryBuild(out _, out _, out _, out _))
+            {
+                return false;
+            }
+
+            if (_tracksByKey == null || !_tracksByKey.TryGetValue(key!, out rail) || rail == null)
+            {
+                return false;
+            }
+        }
+
+        return rail != null;
     }
 
     /// <summary>

@@ -198,11 +198,11 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
     - **Out of scope:** multi-leg on Route tab; desk remote turntable (3.3 cut — PgUp/PgDn remain); showing all future legs on AR at once.
     > As an engineer facing the wrong way for delivery, I want Switch List to send me to the turntable, mark it on the finder, then reverse into the spur and Align each leg to the job dest — not a single Set dest that fails with occupancy/NoPath.
 
-  **Build order:** **3.7 Multi-step Maps** next *(false Path stale @ **0.6.13**; rem/ETA + job AR + UMM options @ **0.6.19**)*; **3.1b iced** *(**3.1** @ **0.6.4**; **3.6** @ **0.6.2**; **3.2** cut)*.
+  **Build order:** **3.7 Multi-step Maps** next *(false Path stale @ **0.6.13**; rem/ETA + job AR + UMM options @ **0.6.19**)*; **4.13** yard mini-map @ **0.6.28**; **3.1b iced** *(**3.1** @ **0.6.4**; **3.6** @ **0.6.2**; **3.2** cut)*.
 
 ---
 
-- [x] **Epic 4 — HUD quality (QOL)** — Small UX polish on the Diagnostic HUD. *Supports Stage 1 playability.* **Status: complete 2026-07-28** *(incl. **4.12** @ **0.5.17**)*
+- [x] **Epic 4 — HUD quality (QOL)** — Small UX polish on the Diagnostic HUD. *Supports Stage 1 playability.* **Status: complete 2026-07-28** *(incl. **4.12** @ **0.5.17**)*; backlog **4.13** @ **0.6.28**
 
   - [x] **4.1 Enhanced targeting** *(was QOL-06)* — Look-at spherecast **0.15 m**, max **250 m**. *PASS\*; slight sky-stickiness accepted.*
     > As a yard scout, I want distant cars to resolve under the crosshair so I can inspect from farther away.
@@ -239,6 +239,9 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
 
   - [x] **4.12 Direction-gated proximity** — Reverser gate: **Reverse** → `Rear …`; **Forward** → `Front …` (same ranging/colors); **Neutral** → omit. Tip jumps to new free end after couple. **Done** — Tier 1 + Tier 2 smoke **PASS** (v**0.5.17**).
     > As an engineer, I only want rear proximity when I’m backing; when I’m going forward, show front clearance instead.
+
+  - [x] **4.13 Yard mini-map (“you are here”)** — Hotkey **`M`**: in-world one-yard schematic (named tracks) + pin/heading + Office/TT; off-map edge arrow. **MFMB** satellite: temp **5 m** office fence + nearest MFMB. Tier 1 smoke regressions + Tier 2 **PASS** @ **0.6.28** (2026-08-05). *Follow-on: `#Y`/unnamed rails on map; fence retune.*
+    > As a yard worker who gets lost on paper maps, I want a mini-map of only this yard showing where I am so I can orient without leaving the cab.
 
 ---
 

@@ -8,4 +8,5 @@ alwaysApply: false
 - **Tier 1:** Fast feedback (unit tests, headless checks, local runs). Document the exact command in TEST_PLAN.md. Keep green after any logic or test change.
 - **Tier 2:** Integration, browser, device, or E2E tests when behavior spans a real runtime. Document commands in TEST_PLAN.md.
 - **New behavior:** If the behavior needs Tier 2 to validate, add tests and run them before considering the feature done. See TEST_TDD.md and the tester skill.
+- **Smoke → CI:** When Tier 2 smoke finds a product lock, extract the gate to Core and lock it in Tier 1 with a smoke-named test — see [.cursor/rules/smoke-gates-tier1-ci.mdc](smoke-gates-tier1-ci.mdc).
 - **Merge-ready:** If AGENT_HANDOFF.md documents a single **CI** or **merge-ready** command, run it before merge when your team uses that gate; keep it aligned with CI (if any).

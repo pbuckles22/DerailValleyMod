@@ -10,7 +10,7 @@ Durable ranked backlog. Handoff notes may mention debt; **promote** anything tha
 
 
 
-**Last full pass:** handoff — 2026-08-04 (0.6.21 / pre-3.7).
+**Last full pass:** handoff — 2026-08-05 (4.13 @ 0.6.28).
 
 
 
@@ -41,6 +41,8 @@ Blocking, unsafe, or no-rollback.
 High ROI; frequent pain; not blocking.
 
 
+
+- [ ] **4.13 follow-on — unnamed/`#Y` rails on mini-map** — schematic currently named catalog only; retune MFMB office fence after coverage improves.
 
 - [ ] **3.1 place ghost / facing cue** — MVP chip-only; players can’t preview landing until Confirm. Add re-rail-style ghost (and Flip cue) on look-at aim.
 

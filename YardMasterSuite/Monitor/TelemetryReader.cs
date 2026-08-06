@@ -4276,6 +4276,185 @@ internal static class TelemetryReader
             : new NextStationDebugSnapshot(true, chip);
     }
 
+    /// <summary>
+    /// Active job-generation zone yard + office XZ (4.13 mini-map). False outside any zone.
+    /// Nearest station when multiple zones overlap — prefer <see cref="YardMiniMapYardStick"/> for sticky pick.
+    /// </summary>
+    public static bool TryGetInZoneYardAndOffice(out string? yardId, out float officeX, out float officeZ) =>
+        TryGetStationInPlayerZone(out yardId, out officeX, out officeZ);
+
+    /// <summary>True when the player is inside the named station's job-generation zone.</summary>
+    public static bool IsPlayerInYardJobZone(string? yardId)
+    {
+        var want = yardId?.Trim();
+        if (string.IsNullOrEmpty(want))
+        {
+            return false;
+        }
+
+        try
+        {
+            var stations = StationController.allStations;
+            if (stations == null || stations.Count == 0)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < stations.Count; i++)
+            {
+                var candidate = stations[i];
+                if (candidate == null || !candidate.StationInfoValid)
+                {
+                    continue;
+                }
+
+                var id = candidate.stationInfo?.YardID?.Trim();
+                if (string.IsNullOrEmpty(id))
+                {
+                    id = candidate.stationInfo?.Name?.Trim();
+                }
+
+                if (!string.Equals(id, want, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                var range = candidate.GetComponent<StationJobGenerationRange>();
+                if (range == null)
+                {
+                    continue;
+                }
+
+                var sqr = range.PlayerSqrDistanceFromStationCenter;
+                if (range.IsPlayerInJobGenerationZone(sqr))
+                {
+                    return true;
+                }
+            }
+        }
+        catch
+        {
+            return false;
+        }
+
+        return false;
+    }
+
+    /// <summary>Office XZ for a yard id (whether or not it is the nearest overlapping zone).</summary>
+    public static bool TryGetOfficeForYard(string? yardId, out float officeX, out float officeZ)
+    {
+        officeX = officeZ = 0f;
+        var want = yardId?.Trim();
+        if (string.IsNullOrEmpty(want))
+        {
+            return false;
+        }
+
+        try
+        {
+            var stations = StationController.allStations;
+            if (stations == null || stations.Count == 0)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < stations.Count; i++)
+            {
+                var candidate = stations[i];
+                if (candidate == null || !candidate.StationInfoValid)
+                {
+                    continue;
+                }
+
+                var id = candidate.stationInfo?.YardID?.Trim();
+                if (string.IsNullOrEmpty(id))
+                {
+                    id = candidate.stationInfo?.Name?.Trim();
+                }
+
+                if (!string.Equals(id, want, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                var range = candidate.GetComponent<StationJobGenerationRange>();
+                if (range == null)
+                {
+                    continue;
+                }
+
+                var p = range.transform.position;
+                officeX = p.x;
+                officeZ = p.z;
+                return true;
+            }
+        }
+        catch
+        {
+            return false;
+        }
+
+        return false;
+    }
+
+    /// <summary>All usable city YardIDs whose job-generation zone currently contains the player.</summary>
+    public static void CollectInZoneYardIds(List<string> into)
+    {
+        if (into == null)
+        {
+            return;
+        }
+
+        into.Clear();
+        try
+        {
+            var stations = StationController.allStations;
+            if (stations == null || stations.Count == 0)
+            {
+                return;
+            }
+
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            for (var i = 0; i < stations.Count; i++)
+            {
+                var candidate = stations[i];
+                if (candidate == null || !candidate.StationInfoValid)
+                {
+                    continue;
+                }
+
+                var range = candidate.GetComponent<StationJobGenerationRange>();
+                if (range == null)
+                {
+                    continue;
+                }
+
+                var sqr = range.PlayerSqrDistanceFromStationCenter;
+                if (!range.IsPlayerInJobGenerationZone(sqr))
+                {
+                    continue;
+                }
+
+                var id = candidate.stationInfo?.YardID?.Trim();
+                if (string.IsNullOrEmpty(id))
+                {
+                    id = candidate.stationInfo?.Name?.Trim();
+                }
+
+                if (string.IsNullOrEmpty(id) || !LocoRadarDisplay.IsUsableCityYardId(id) || !seen.Add(id!))
+                {
+                    continue;
+                }
+
+                into.Add(id!);
+            }
+        }
+        catch
+        {
+            // leave list empty
+        }
+    }
+
     private static bool TryGetStationInPlayerZone(
         out string? yardId,
         out float stationX,
