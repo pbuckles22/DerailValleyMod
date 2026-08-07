@@ -117,7 +117,7 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 |--|--|
 | **Project** | *Yard Master Suite* (UMM / Harmony / net48) |
 | **MVP** | **Epic 1** System Monitor HUD |
-| **Version (`main`)** | **0.6.28** *(4.13)* — branch WIP **0.6.35** (`feature/4.13-unnamed-y-rails`, CPH pending smoke) |
+| **Version (`main`)** | **0.6.28** *(4.13)* — branch WIP **0.6.49** (`feature/4.13-unnamed-y-rails`, cab Limit cache-only) |
 | **Active branch** | `feature/4.13-unnamed-y-rails` |
 
 **Shipped on `main`**
@@ -146,7 +146,7 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 
 **Next**
 
-1. **Tier 2 smoke @ UMM 0.6.35** (FIRST) — `Curr, Area - …`; always-on top; look-at declutter; AR max 2 in-zone; mini-map; no look-at cab freeze. Then CMPH or fix.
+1. **Tier 2 @ UMM 0.6.48** — Align blocks ≤500 ms for ≤8 on-route board attaches **before** OK. Log `align sync attached=… in …ms`. No async remainder after Align.
 2. **4.13 follow-ons** — MFMB fence retune; mini-map UMM resize; loco finder (ask). *3.7 stash:* `park 3.7 WIP 0.6.28`.
 3. **3.7 Multi-step Maps** — Switch List TurnAround inject (WIP parked). **3.1b iced**.
 4. Parking: 3.1b ghost/spawn; place ghost / Snap office under-mesh; Switch List couple auto-advance / arrival-track split; flight-sim HUD; AR house hide; DM3; session reset; 1.17 #4 behind-seed.

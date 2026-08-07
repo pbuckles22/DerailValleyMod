@@ -10,7 +10,7 @@ Durable ranked backlog. Handoff notes may mention debt; **promote** anything tha
 
 
 
-**Last full pass:** handoff — 2026-08-05 (4.13 @ 0.6.28).
+**Last full pass:** handoff — 2026-08-07 (4.13 WIP @ 0.6.49; cab Limit cache-only; look-around choppy).
 
 
 
@@ -45,6 +45,10 @@ High ROI; frequent pain; not blocking.
 - [ ] **4.13 follow-on — MFMB fence retune** — after panel/perf smoke; temp **5 m** office fence.
 - [ ] **4.13 follow-on — mini-map resize** — end-of-story: UMM/hotkey size. Temp: **1120** screen-clamped square.
 - [ ] **Loco finder (ask)** — “What loco are you looking for?” + museum checkbox; not always-on radar.
+
+- [ ] **Limit scan hitch (0.6.33+)** — **0.6.49:** cab never FoT / never cold GetClosest (`LimitCabDiscoveryPolicy`); Align `WarmForPlan` sync ≤500 ms / ≤8 on-route owns discovery. Cab enter Limit clean in log; **look-around still choppy** (suspect Tier 2 `heading change` Main.Log spam — may be the long-running hitch). No Align ⇒ sticky/seed / `— Limit`. Next: gate/kill heading debug I/O; motion-gated discovery without Align; after PASS strip `BoardCachePump` dead stubs.
+
+- [ ] **Dead code after declutter / cuts** — HUD no longer shows or calls these; helpers remain (not commented-out). Delete on a cleanup pass (or dead-code-remover): `TryGetCargoLabel`, `FormatCarNumber`, `TryGetCarMassLabel` (orphans); `CurrentIntegrityDebugSnapshot` / `Tier2IntegrityDebug` + Pipe read (no Emit); `TryGetNextStationChip` / `CurrentNextStationDebugSnapshot` (4.5 cut; no HUD emit). Keep Core display types only if tests still lock formatters.
 
 - [ ] **3.1 place ghost / facing cue** — MVP chip-only; players can’t preview landing until Confirm. Add re-rail-style ghost (and Flip cue) on look-at aim.
 
@@ -122,7 +126,7 @@ Isolated + workaround + revisit trigger.
 
 - [ ] **Core sources linked into `YardMasterSuite.dll`** — Unity Mono failed to load sibling `YardMasterSuite.Core.dll`; csproj compiles Core `*.cs` into the mod assembly. *Revisit if UMM/Unity can load a sibling Core DLL.*
 
-- [ ] **Dead integrity Tier-2 helpers** — `CurrentIntegrityDebugSnapshot` / `Tier2IntegrityDebug` superseded by `T2 consist` / `local-car` / `look-at` / `coupler`. Delete on a cleanup pass.
+- [x] **Dead integrity Tier-2 helpers** — *superseded by broader declutter dead-code item under Fix soon (2026-08-07).*
 
 - [x] **Per-tick target cache** — standing / look-at / target / loco cached per HUD refresh *(landed with **1.7** WIP)*. Re-open only if profiling shows leftover cost.
 

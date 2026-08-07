@@ -4,9 +4,9 @@ using System.Collections.Generic;
 namespace YardMasterSuite.Core;
 
 /// <summary>
-/// Persistent track-keyed posted boards (**1.17**). Used to <b>seed</b> Limit from a board
-/// already behind the loco (cold start). Not re-injected into Next (that caused opposite-travel
-/// / streamed ghosts with no facing check).
+/// Session-scoped track-keyed posted boards (**1.17** + dual-path warm).
+/// Pins seed Limit from behind on cold start; <see cref="SpeedZone"/> lists support
+/// background board-cache pumps. Survives cab leave — clear on world reload only.
 /// </summary>
 public sealed class WorldSpeedBoardIndex
 {
@@ -41,15 +41,34 @@ public sealed class WorldSpeedBoardIndex
         public float TravelZ { get; }
     }
 
+    /// <summary>Ordered speed board along a track span (session index from BoardCachePump).</summary>
+    public readonly struct SpeedZone
+    {
+        public SpeedZone(float alongMeters, float kmh, bool governsForward)
+        {
+            AlongMeters = alongMeters;
+            Kmh = kmh;
+            GovernsForward = governsForward;
+        }
+
+        public float AlongMeters { get; }
+        public float Kmh { get; }
+        public bool GovernsForward { get; }
+    }
+
     private readonly Dictionary<long, Pin> _byKey = new Dictionary<long, Pin>();
     private readonly Dictionary<int, List<long>> _keysByTrack = new Dictionary<int, List<long>>();
+    private readonly Dictionary<int, List<SpeedZone>> _zonesByTrack = new Dictionary<int, List<SpeedZone>>();
 
     public int Count => _byKey.Count;
+
+    public int ZoneTrackCount => _zonesByTrack.Count;
 
     public void Clear()
     {
         _byKey.Clear();
         _keysByTrack.Clear();
+        _zonesByTrack.Clear();
     }
 
     public void Remember(
@@ -92,6 +111,41 @@ public sealed class WorldSpeedBoardIndex
         }
 
         list.Add(key);
+    }
+
+    public void AddZone(int trackId, float alongMeters, float kmh, bool governsForward)
+    {
+        if (trackId == 0 || !IsFinite(kmh) || kmh <= 0f || !IsFinite(alongMeters))
+        {
+            return;
+        }
+
+        if (!_zonesByTrack.TryGetValue(trackId, out var zones))
+        {
+            zones = new List<SpeedZone>(4);
+            _zonesByTrack[trackId] = zones;
+        }
+
+        var zone = new SpeedZone(alongMeters, kmh, governsForward);
+        var index = zones.FindIndex(z => z.AlongMeters > alongMeters);
+        if (index < 0)
+        {
+            zones.Add(zone);
+        }
+        else
+        {
+            zones.Insert(index, zone);
+        }
+    }
+
+    public IReadOnlyList<SpeedZone> GetZonesForTrack(int trackId)
+    {
+        if (!_zonesByTrack.TryGetValue(trackId, out var zones) || zones.Count == 0)
+        {
+            return Array.Empty<SpeedZone>();
+        }
+
+        return zones;
     }
 
     public IReadOnlyList<Pin> ForTrack(int trackId)

@@ -12,7 +12,7 @@ public class Tier2StationWaypointDebugTests
 
         var inZone = new StationWaypointDebugSnapshot(true, "SM", "NE");
         Assert.Equal(
-            "T2 station change: Curr, Area - SM",
+            "T2 station change: Curr. Area - SM",
             Tier2StationWaypointDebug.NextLogMessage(outOfZone, inZone));
         Assert.Null(Tier2StationWaypointDebug.NextLogMessage(inZone, inZone));
     }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using DV;
@@ -43,9 +44,8 @@ internal static class TelemetryReader
     /// <summary>Cached motor-status fields for private <see cref="TractionMotorSet"/> members.</summary>
     private static MotorSetFieldMap? _motorSetFields;
 
-    /// <summary>Refresh loaded <see cref="SignDebug"/> boards periodically (streaming scenes).</summary>
-    /// <summary>FindObjectsOfType&lt;SignDebug&gt; is expensive — keep well below HUD tick rate.</summary>
-    private const float SignDebugRefreshSeconds = 5f;
+    /// <summary>Refresh loaded <see cref="SignDebug"/> boards — gated by <see cref="LimitSignCachePolicy"/>.</summary>
+    /// <summary>FindObjectsOfType&lt;SignDebug&gt; is expensive; skip when session board-cache is warm.</summary>
 
     /// <summary>How far behind the loco (m) to look for the governing posted board.</summary>
     private const float BoardLookbackMeters = 600f;
@@ -93,13 +93,59 @@ internal static class TelemetryReader
     private static int _limitStateFrame = -1;
     private static SpeedLimitState _limitStateCache;
 
+    /// <summary>Derail stress read once per loco per frame (Limit + Stress chip).</summary>
+    private static int _derailRiskFrame = -1;
+    private static int _derailRiskLocoId;
+    private static float? _derailRiskStress;
+    private static float? _derailRiskBuildUp;
+    private static float? _derailRiskStressThr;
+    private static float? _derailRiskBuildThr;
+
+    /// <summary>HUD ticks while usable loco train is active (LimitScanStartup deferral).</summary>
+    private static int _usableLimitHudTicks;
+    private static bool _hadUsableLocoForLimit;
+
+    /// <summary>Log at most one train-bar perf line per usable session unless slow again.</summary>
+    private static bool _loggedTrainPerfForUsable;
+
+    /// <summary>Last full Limit scan — steady HUD ticks coast Next distance (no board walk).</summary>
+    private static bool _hasPersistedLimit;
+    private static SpeedLimitState _persistedLimit;
+    private static float? _persistedNextAlong;
+    private static AheadBoard[] _persistedAhead = Array.Empty<AheadBoard>();
+    private static float _metersCoastedSinceScan;
+    private static float _lastLocoPosX;
+    private static float _lastLocoPosZ;
+    private static bool _hasLastLocoPos;
+    private static int _lastLimitRouteFingerprint;
+
+    /// <summary>Paced Limit discovery (1–2 evals / 100 ms; stop ≤8 — never finish FoT dump).</summary>
+    private static bool _walkInProgress;
+    private static int _walkSignIndex;
+    private static int _walkEvaluatedCount;
+    private static float _walkLastBurstAt = -999f;
+    private static bool _walkHasPath;
+    private static Vector3 _walkPos;
+    private static Vector3 _walkFwd;
+    private static float _walkLookahead;
+    private static float _walkSearchRadius;
+    private static float _walkSpeedKmh;
+    private static RailTrack? _walkLocoTrack;
+    private static float? _walkCurrentKmh;
+    private static float _walkBestBehindAlong = float.NegativeInfinity;
+    private static float? _walkNextKmh;
+    private static float _walkBestAheadAlong = float.PositiveInfinity;
+    private static float? _walkTakenKmh;
+    private static string? _walkBehindDetail;
+    private static string? _walkAheadDetail;
+
     /// <summary>Displayed Limit after loosen-hold (anti-flash). Age resets when the number changes.</summary>
     private static float? _heldDisplayLimitKmh;
     private static LimitAuthority _heldDisplayAuthority = LimitAuthority.None;
     private static float _heldDisplaySince = -999f;
 
-    /// <summary>Track-keyed posted boards that survive SignDebug streaming (**1.17**).</summary>
-    private static readonly WorldSpeedBoardIndex WorldBoards = new();
+    /// <summary>Track-keyed posted boards — shared with <see cref="BoardCachePump"/> (session).</summary>
+    private static WorldSpeedBoardIndex WorldBoards => BoardCachePump.Index;
 
     /// <summary>Per-track sustained geometry limit (km/h), zone-filtered to ignore micro-kinks.</summary>
     private static readonly Dictionary<int, float?> TrackGeometryLimitCache = new();
@@ -488,6 +534,12 @@ internal static class TelemetryReader
             var yard = track?.ID?.yardId;
             RouteDestSession.Set(yard, key);
             message = RoutePlanService.Compute("end-pin");
+            var plan = RoutePlanSession.Plan;
+            if (plan != null && plan.TrackIds.Count > 0)
+            {
+                BoardCachePump.WarmForPlan(plan);
+            }
+
             return true;
         }
         catch
@@ -1466,12 +1518,45 @@ internal static class TelemetryReader
                 _hasStickyTravel = false;
                 _lastBoardScanDetail = null;
                 BoardTraceSide.Clear();
-                BoardTrackCache.Clear();
+                // Keep BoardTrackCache + WorldBoards for session (dual-path warm) — clear on Reload only.
                 BoardTakes.Reset();
                 PathAhead.Clear();
-                WorldBoards.Clear();
                 ClearLimitDisplayHold();
+                ClearPersistedLimitScan();
+                _hadUsableLocoForLimit = false;
+                _usableLimitHudTicks = 0;
+                _loggedTrainPerfForUsable = false;
                 return new SpeedLimitState(null, LimitTrend.None, null);
+            }
+
+            if (!_hadUsableLocoForLimit)
+            {
+                _hadUsableLocoForLimit = true;
+                _usableLimitHudTicks = 0;
+            }
+            else
+            {
+                _usableLimitHudTicks++;
+            }
+
+            // Stage 1: paint loco bar — no Limit heavy work.
+            if (!LimitScanStartup.AllowSignCacheRefresh(_usableLimitHudTicks))
+            {
+                return new SpeedLimitState(
+                    null,
+                    LimitTrend.None,
+                    "limit-startup-defer",
+                    authority: LimitAuthority.None);
+            }
+
+            // Stage 2: Align owns FoT — cab never FindObjectsOfType (0.6.48 FAIL).
+            if (!LimitScanStartup.AllowBoardWalk(_usableLimitHudTicks))
+            {
+                return new SpeedLimitState(
+                    null,
+                    LimitTrend.None,
+                    LimitCabDiscoveryPolicy.AllowCabLimitFoT ? "limit-fot-tick" : "limit-fot-skip",
+                    authority: LimitAuthority.None);
             }
 
             var speedMps = loco.GetAbsSpeed();
@@ -1479,7 +1564,59 @@ internal static class TelemetryReader
             var travel = TravelForward(loco);
             ClearStickyIfTravelReversed(travel, speedKmh);
 
+            var locoPos = loco.transform.position;
+            var metersMoved = 0f;
+            if (_hasLastLocoPos)
+            {
+                var dx = locoPos.x - _lastLocoPosX;
+                var dz = locoPos.z - _lastLocoPosZ;
+                metersMoved = Mathf.Sqrt((dx * dx) + (dz * dz));
+            }
+
+            _lastLocoPosX = locoPos.x;
+            _lastLocoPosZ = locoPos.z;
+            _hasLastLocoPos = true;
+
+            var routeFp = LimitRouteFingerprint(loco);
+            var junctionChanged = _hasPersistedLimit && routeFp != _lastLimitRouteFingerprint;
+            var coastedNext = LimitScanPolicy.CoastNextAlong(_persistedNextAlong, metersMoved);
+            if (_hasPersistedLimit)
+            {
+                _metersCoastedSinceScan += metersMoved;
+            }
+
+            if (!_walkInProgress
+                && LimitScanPolicy.PreferCache(
+                    _hasPersistedLimit,
+                    boardTakenThisTick: false,
+                    junctionChanged,
+                    coastedNext,
+                    _metersCoastedSinceScan))
+            {
+                CoastPersistedAhead(metersMoved);
+                _persistedNextAlong = coastedNext;
+                return BuildCoastedLimitState(speedKmh, coastedNext);
+            }
+
+            // No Align track cache → sticky/seed only; never unlock cold FoT/GetClosest walk.
+            if (!LimitScanStartup.AllowBoardWalkWithCache(
+                    _usableLimitHudTicks,
+                    BoardCachePump.HasTrackCacheReady))
+            {
+                return BuildCacheMissLimitState(speedKmh, travel);
+            }
+
+            if (junctionChanged && _walkInProgress)
+            {
+                ClearBoardWalkSession();
+            }
+
             var boards = ScanPostedBoards(loco, speedKmh, travel, warningLookaheadMeters: 0f);
+            if (boards.Incomplete)
+            {
+                return BuildIncompleteWalkLimitState(speedKmh, boards);
+            }
+
             var seedBehind = boards.CurrentKmh
                 ?? TrySeedBehindFromIndex(travel);
             var sticky = PostedStickyLimit.Resolve(
@@ -1525,18 +1662,211 @@ internal static class TelemetryReader
                 aheadCurve?.AlongMeters);
             detail = detail == null ? derail : detail + " ; " + derail;
             _lastBoardScanDetail = detail;
-            return new SpeedLimitState(
+            var state = new SpeedLimitState(
                 display,
                 trend,
                 detail,
                 nextBoard?.Kmh,
                 nextBoard?.AlongMeters,
                 displayAuthority);
+            PersistLimitScan(state, boards.AheadBoards, nextBoard?.AlongMeters, routeFp);
+            return state;
         }
         catch
         {
             return new SpeedLimitState(null, LimitTrend.None, null);
         }
+    }
+
+    private static SpeedLimitState BuildIncompleteWalkLimitState(float speedKmh, PostedBoardScan boards)
+    {
+        if (boards.TakenKmh is float taken)
+        {
+            var sticky = PostedStickyLimit.Resolve(_stickyBoardLimitKmh, taken, seedKmh: null);
+            if (sticky is not null)
+            {
+                _stickyBoardLimitKmh = sticky;
+                _hasStickyTravel = true;
+            }
+        }
+
+        var posted = _stickyBoardLimitKmh;
+        var authority = posted is null ? LimitAuthority.None : LimitAuthority.Posted;
+        var held = ApplyLimitDisplayHold(posted, authority, speedKmh);
+        const string sliceDetail = "limit-walk-slice";
+        _lastBoardScanDetail = sliceDetail;
+        return new SpeedLimitState(
+            held.LimitKmh,
+            LimitTrend.None,
+            sliceDetail,
+            nextKmh: null,
+            nextDistanceMeters: null,
+            held.Authority);
+    }
+
+    private static void ClearPersistedLimitScan()
+    {
+        _hasPersistedLimit = false;
+        _persistedLimit = default;
+        _persistedNextAlong = null;
+        _persistedAhead = Array.Empty<AheadBoard>();
+        _metersCoastedSinceScan = 0f;
+        _hasLastLocoPos = false;
+        _lastLimitRouteFingerprint = 0;
+        ClearBoardWalkSession();
+    }
+
+    private static void ClearBoardWalkSession()
+    {
+        _walkInProgress = false;
+        _walkSignIndex = 0;
+        _walkEvaluatedCount = 0;
+        _walkLastBurstAt = -999f;
+        _walkHasPath = false;
+        _walkLocoTrack = null;
+        _walkCurrentKmh = null;
+        _walkBestBehindAlong = float.NegativeInfinity;
+        _walkNextKmh = null;
+        _walkBestAheadAlong = float.PositiveInfinity;
+        _walkTakenKmh = null;
+        _walkBehindDetail = null;
+        _walkAheadDetail = null;
+        AheadBoardsScratch.Clear();
+    }
+
+    private static void PersistLimitScan(
+        SpeedLimitState state,
+        AheadBoard[] ahead,
+        float? nextAlong,
+        int routeFingerprint)
+    {
+        _hasPersistedLimit = true;
+        _persistedLimit = state;
+        _persistedAhead = ahead ?? Array.Empty<AheadBoard>();
+        _persistedNextAlong = nextAlong;
+        _metersCoastedSinceScan = 0f;
+        _lastLimitRouteFingerprint = routeFingerprint;
+    }
+
+    /// <summary>
+    /// Cheap route key: loco track + nearest junction throw. Switch change forces a rescan.
+    /// </summary>
+    private static int LimitRouteFingerprint(TrainCar loco)
+    {
+        var trackId = 0;
+        try
+        {
+            var track = TryGetLocoTrack(loco);
+            if (track != null)
+            {
+                trackId = track.GetInstanceID();
+            }
+        }
+        catch
+        {
+            // ignore
+        }
+
+        var branch = -1;
+        try
+        {
+            var junction = FindNearestJunction(loco.transform.position);
+            if (junction != null)
+            {
+                branch = junction.selectedBranch;
+            }
+        }
+        catch
+        {
+            // ignore
+        }
+
+        unchecked
+        {
+            return (trackId * 397) ^ branch;
+        }
+    }
+
+    private static void CoastPersistedAhead(float metersMoved)
+    {
+        if (metersMoved <= 0f || _persistedAhead.Length == 0)
+        {
+            return;
+        }
+
+        var updated = new AheadBoard[_persistedAhead.Length];
+        for (var i = 0; i < _persistedAhead.Length; i++)
+        {
+            var board = _persistedAhead[i];
+            updated[i] = new AheadBoard(board.Kmh, board.AlongMeters - metersMoved);
+        }
+
+        _persistedAhead = updated;
+    }
+
+    private static SpeedLimitState BuildCoastedLimitState(float speedKmh, float? nextAlong)
+    {
+        var posted = _stickyBoardLimitKmh;
+        var authority = posted is null ? LimitAuthority.None : LimitAuthority.Posted;
+        var held = ApplyLimitDisplayHold(posted, authority, speedKmh);
+        var display = held.LimitKmh;
+        var displayAuthority = held.Authority;
+        var nextBoard = AheadBoards.NextDifferent(display, _persistedAhead);
+        var nextKmh = nextBoard?.Kmh;
+        var along = nextAlong ?? nextBoard?.AlongMeters;
+        var trend = SpeedLimitDisplay.TrendFrom(display, nextKmh);
+        var detail = _persistedLimit.ScanDetail;
+        if (detail != null && detail.IndexOf("coast", StringComparison.Ordinal) < 0)
+        {
+            detail += " ; coast";
+        }
+        else if (detail == null)
+        {
+            detail = "coast";
+        }
+
+        _lastBoardScanDetail = detail;
+        var state = new SpeedLimitState(
+            display,
+            trend,
+            detail,
+            nextKmh,
+            along,
+            displayAuthority);
+        _persistedLimit = state;
+        return state;
+    }
+
+    /// <summary>
+    /// Align has not warmed track attaches — paint sticky/index seed only (no FoT / GetClosest).
+    /// </summary>
+    private static SpeedLimitState BuildCacheMissLimitState(float speedKmh, Vector3 travel)
+    {
+        var seedBehind = TrySeedBehindFromIndex(travel);
+        var sticky = PostedStickyLimit.Resolve(_stickyBoardLimitKmh, null, seedBehind);
+        if (sticky is not null)
+        {
+            _stickyBoardLimitKmh = sticky;
+            _stickyTravelX = travel.x;
+            _stickyTravelZ = travel.z;
+            _hasStickyTravel = true;
+        }
+
+        var posted = sticky;
+        var authority = posted is null ? LimitAuthority.None : LimitAuthority.Posted;
+        var held = ApplyLimitDisplayHold(posted, authority, speedKmh);
+        var display = held.LimitKmh;
+        var displayAuthority = held.Authority;
+        var trend = SpeedLimitDisplay.TrendFrom(display, nextKmh: null);
+        var detail = display is null ? "limit-board-cache" : "limit-board-cache ; sticky";
+        _lastBoardScanDetail = detail;
+        return new SpeedLimitState(
+            display,
+            trend,
+            detail,
+            nextKmh: null,
+            nextDistanceMeters: null,
+            displayAuthority);
     }
 
     private static LimitDisplayHold.State ApplyLimitDisplayHold(
@@ -1792,6 +2122,17 @@ internal static class TelemetryReader
         buildUpThreshold = null;
         try
         {
+            var frame = Time.frameCount;
+            var locoId = loco.GetInstanceID();
+            if (frame == _derailRiskFrame && locoId == _derailRiskLocoId)
+            {
+                stress = _derailRiskStress;
+                derailBuildUp = _derailRiskBuildUp;
+                stressThreshold = _derailRiskStressThr;
+                buildUpThreshold = _derailRiskBuildThr;
+                return;
+            }
+
             var trainStress = loco.stress;
             if (trainStress != null)
             {
@@ -1812,6 +2153,13 @@ internal static class TelemetryReader
 
                 buildUpThreshold = gameParams.DerailBuildUpThreshold;
             }
+
+            _derailRiskFrame = frame;
+            _derailRiskLocoId = locoId;
+            _derailRiskStress = stress;
+            _derailRiskBuildUp = derailBuildUp;
+            _derailRiskStressThr = stressThreshold;
+            _derailRiskBuildThr = buildUpThreshold;
         }
         catch
         {
@@ -1852,8 +2200,8 @@ internal static class TelemetryReader
         {
             _stickyBoardLimitKmh = null;
             _hasStickyTravel = false;
-            WorldBoards.Clear();
             BoardTakes.Reset();
+            ClearPersistedLimitScan();
         }
     }
 
@@ -1865,7 +2213,8 @@ internal static class TelemetryReader
             string? detail,
             float? nextAlongMeters,
             AheadBoard[] aheadBoards,
-            float? takenKmh = null)
+            float? takenKmh = null,
+            bool incomplete = false)
         {
             CurrentKmh = currentKmh;
             NextKmh = nextKmh;
@@ -1873,6 +2222,7 @@ internal static class TelemetryReader
             NextAlongMeters = nextAlongMeters;
             AheadBoards = aheadBoards;
             TakenKmh = takenKmh;
+            Incomplete = incomplete;
         }
 
         public float? CurrentKmh { get; }
@@ -1887,12 +2237,15 @@ internal static class TelemetryReader
 
         /// <summary>All governing boards ahead within lookahead (**1.16** tightest-adopt).</summary>
         public AheadBoard[] AheadBoards { get; }
+
+        /// <summary>True while paced discovery has not warmed enough (not “finished all FoT signs”).</summary>
+        public bool Incomplete { get; }
     }
 
     /// <summary>
     /// Current = closest board behind; next = nearest different board ahead within lookahead.
-    /// Distances follow the <b>route ahead</b> (<see cref="TrackPathAhead"/>) when topology resolves,
-    /// so boards on other branches never enter the Limit decision (**1.16**).
+    /// Distances follow the <b>route ahead</b> (<see cref="TrackPathAhead"/>) when topology resolves.
+    /// Discovery is paced: 1–2 evals per ~100 ms, stop at a small cushion — never walk the full FoT dump.
     /// </summary>
     private static PostedBoardScan ScanPostedBoards(
         TrainCar loco,
@@ -1900,32 +2253,85 @@ internal static class TelemetryReader
         Vector3 fwd,
         float warningLookaheadMeters)
     {
-        RefreshSignDebugCacheIfNeeded();
-        AheadBoardsScratch.Clear();
-        if (_signDebugCache.Length == 0)
+        var totalSw = Stopwatch.StartNew();
+        long fotMs = 0;
+        long pathMs = 0;
+
+        if (!_walkInProgress)
         {
-            return new PostedBoardScan(null, null, "no-signs", null, Array.Empty<AheadBoard>());
+            // Cab never FoT — use signs Align adopted into session cache.
+            fotMs = 0;
+
+            ClearBoardWalkSession();
+            if (_signDebugCache.Length == 0)
+            {
+                totalSw.Stop();
+                LogLimitScanIfNeeded(totalSw.ElapsedMilliseconds, fotMs, 0, 0, evaluated: 0);
+                return new PostedBoardScan(null, null, "no-signs", null, Array.Empty<AheadBoard>());
+            }
+
+            _walkPos = loco.transform.position;
+            _walkFwd = fwd;
+            _walkSpeedKmh = speedKmh;
+            _walkLocoTrack = TryGetLocoTrack(loco);
+            _walkLookahead = Mathf.Max(
+                Mathf.Max(BoardLookaheadMinMeters, speedKmh * BoardLookaheadSecondsOfSpeed),
+                warningLookaheadMeters);
+            _walkSearchRadius = Mathf.Max(BoardLookbackMeters, _walkLookahead);
+
+            var pathSw = Stopwatch.StartNew();
+            _walkHasPath = TrackPathAhead.TryBuild(
+                _walkLocoTrack, _walkPos, _walkFwd, _walkLookahead, PathAhead);
+            pathSw.Stop();
+            pathMs = pathSw.ElapsedMilliseconds;
+
+            _walkSignIndex = 0;
+            _walkEvaluatedCount = 0;
+            _walkLastBurstAt = -999f;
+            _walkInProgress = true;
         }
 
-        var pos = loco.transform.position;
-        var locoTrack = TryGetLocoTrack(loco);
-        var lookahead = Mathf.Max(
-            Mathf.Max(BoardLookaheadMinMeters, speedKmh * BoardLookaheadSecondsOfSpeed),
-            warningLookaheadMeters);
-        var searchRadius = Mathf.Max(BoardLookbackMeters, lookahead);
-        var hasPath = TrackPathAhead.TryBuild(locoTrack, pos, fwd, lookahead, PathAhead);
-
-        float? currentKmh = null;
-        var bestBehindAlong = float.NegativeInfinity;
-        float? nextKmh = null;
-        var bestAheadAlong = float.PositiveInfinity;
-        float? takenKmh = null;
-        string? behindDetail = null;
-        string? aheadDetail = null;
-
-        foreach (var sign in _signDebugCache)
+        var now = Time.unscaledTime;
+        if (!LimitDiscoveryPace.AllowBurst(now - _walkLastBurstAt))
         {
+            totalSw.Stop();
+            return new PostedBoardScan(
+                _walkCurrentKmh,
+                _walkNextKmh,
+                "limit-walk-slice",
+                float.IsPositiveInfinity(_walkBestAheadAlong) ? null : _walkBestAheadAlong,
+                Array.Empty<AheadBoard>(),
+                _walkTakenKmh,
+                incomplete: true);
+        }
+
+        var pos = _walkPos;
+        var walkFwd = _walkFwd;
+        var lookahead = _walkLookahead;
+        var searchRadius = _walkSearchRadius;
+        var locoTrack = _walkLocoTrack;
+        var hasPath = _walkHasPath;
+        var sliceSpeedKmh = _walkSpeedKmh;
+
+        var walkSw = Stopwatch.StartNew();
+        var signs = _signDebugCache;
+        var burstEvals = 0;
+        while (_walkSignIndex < signs.Length
+               && LimitDiscoveryPace.ContinueBurst(burstEvals)
+               && !LimitDiscoveryPace.IsWarmEnough(
+                   _walkCurrentKmh is not null,
+                   AheadBoardsScratch.Count,
+                   _walkEvaluatedCount))
+        {
+            var sign = signs[_walkSignIndex];
+            _walkSignIndex++;
             if (sign == null)
+            {
+                continue;
+            }
+
+            // Align-warmed attaches only — skip uncached (no GetClosest).
+            if (!BoardTrackCache.ContainsKey(sign.GetInstanceID()))
             {
                 continue;
             }
@@ -1936,9 +2342,12 @@ internal static class TelemetryReader
                 continue;
             }
 
+            burstEvals++;
+            _walkEvaluatedCount++;
+
             var boardTrack = ResolveBoardTrack(sign);
             var pathAlong = 0f;
-            var routeTravel = fwd;
+            var routeTravel = walkFwd;
             var onPath = hasPath
                 && TrackPathAhead.TrySample(
                     PathAhead,
@@ -1946,12 +2355,10 @@ internal static class TelemetryReader
                     sign.transform.position,
                     out pathAlong,
                     out routeTravel);
-            var along = onPath ? pathAlong : Vector3.Dot(delta, fwd);
-            // Facing uses route tangent at the board when on-path — loco heading on curves
-            // rejects boards (0.5.52: fDot=-0.39 at ~12 m).
-            var travelForFacing = onPath ? routeTravel : fwd;
+            var along = onPath ? pathAlong : Vector3.Dot(delta, walkFwd);
+            var travelForFacing = onPath ? routeTravel : walkFwd;
             var eval = EvaluateBoardFacing(sign, travelForFacing, delta, locoTrack, onPath, hasPath);
-            TraceBoardPass(sign, loco, along, eval);
+            TraceBoardPass(sign, loco, along, eval, sliceSpeedKmh);
             if (!eval.Governs)
             {
                 continue;
@@ -1963,19 +2370,27 @@ internal static class TelemetryReader
                 parsed = ResolveSignBoardKmh(sign, loco, forAhead: false);
                 if (parsed is not null)
                 {
-                    takenKmh ??= BoardTakes.Observe(sign.GetInstanceID(), parsed.Value, along);
-                    RememberWorldBoard(boardTrack, parsed.Value, sign.transform.position, fwd);
-                    if (along > bestBehindAlong)
+                    _walkTakenKmh ??= BoardTakes.Observe(sign.GetInstanceID(), parsed.Value, along);
+                    RememberWorldBoard(boardTrack, parsed.Value, sign.transform.position, walkFwd);
+                    if (along > _walkBestBehindAlong)
                     {
-                        bestBehindAlong = along;
-                        currentKmh = parsed;
-                        behindDetail = FormatBoardHit("behind", sign, parsed.Value, along, eval);
+                        _walkBestBehindAlong = along;
+                        _walkCurrentKmh = parsed;
+                        _walkBehindDetail = FormatBoardHit("behind", sign, parsed.Value, along, eval);
                     }
                 }
             }
             else if (along > 0f && along <= lookahead)
             {
-                // Ahead duals: through or diverge from junction.selectedBranch.
+                if (AheadBoardsScratch.Count >= LimitAheadQueue.MaxDepth)
+                {
+                    var farthestKept = FarthestAheadAlong(AheadBoardsScratch);
+                    if (along >= farthestKept)
+                    {
+                        continue;
+                    }
+                }
+
                 parsed = ResolveSignBoardKmh(sign, loco, forAhead: true);
                 if (parsed is null)
                 {
@@ -1983,17 +2398,61 @@ internal static class TelemetryReader
                 }
 
                 BoardTakes.Observe(sign.GetInstanceID(), parsed.Value, along);
-                RememberWorldBoard(boardTrack, parsed.Value, sign.transform.position, fwd);
+                RememberWorldBoard(boardTrack, parsed.Value, sign.transform.position, walkFwd);
                 AheadBoardsScratch.Add(new AheadBoard(parsed.Value, along));
-                if (along < bestAheadAlong)
+                if (AheadBoardsScratch.Count > LimitAheadQueue.MaxDepth)
                 {
-                    bestAheadAlong = along;
-                    nextKmh = parsed;
-                    aheadDetail = FormatBoardHit("ahead", sign, parsed.Value, along, eval);
+                    TrimFarthestAhead(AheadBoardsScratch);
+                }
+
+                if (along < _walkBestAheadAlong)
+                {
+                    _walkBestAheadAlong = along;
+                    _walkNextKmh = parsed;
+                    _walkAheadDetail = FormatBoardHit("ahead", sign, parsed.Value, along, eval);
                 }
             }
         }
 
+        _walkLastBurstAt = now;
+        walkSw.Stop();
+        totalSw.Stop();
+        LogLimitScanIfNeeded(
+            totalSw.ElapsedMilliseconds,
+            fotMs,
+            pathMs,
+            walkSw.ElapsedMilliseconds,
+            _walkEvaluatedCount);
+
+        var warmEnough = LimitDiscoveryPace.IsWarmEnough(
+            _walkCurrentKmh is not null,
+            AheadBoardsScratch.Count,
+            _walkEvaluatedCount);
+        var exhaustedList = _walkSignIndex >= signs.Length;
+
+        if (!warmEnough && !exhaustedList)
+        {
+            return new PostedBoardScan(
+                _walkCurrentKmh,
+                _walkNextKmh,
+                "limit-walk-slice",
+                float.IsPositiveInfinity(_walkBestAheadAlong) ? null : _walkBestAheadAlong,
+                Array.Empty<AheadBoard>(),
+                _walkTakenKmh,
+                incomplete: true);
+        }
+
+        return FinishPostedBoardScan();
+    }
+
+    private static PostedBoardScan FinishPostedBoardScan()
+    {
+        var currentKmh = _walkCurrentKmh;
+        var nextKmh = _walkNextKmh;
+        var bestAheadAlong = _walkBestAheadAlong;
+        var takenKmh = _walkTakenKmh;
+        var behindDetail = _walkBehindDetail;
+        var aheadDetail = _walkAheadDetail;
         var aheadBoards = AheadBoardsScratch.Count == 0
             ? Array.Empty<AheadBoard>()
             : AheadBoardsScratch.ToArray();
@@ -2013,6 +2472,16 @@ internal static class TelemetryReader
             detail = behindDetail + " ; " + aheadDetail;
         }
 
+        if (detail == null)
+        {
+            detail = "limit-discovery-warm";
+        }
+        else if (detail.IndexOf("limit-discovery", StringComparison.Ordinal) < 0)
+        {
+            detail += " ; limit-discovery-warm";
+        }
+
+        ClearBoardWalkSession();
         return new PostedBoardScan(
             currentKmh,
             nextKmh,
@@ -2020,6 +2489,25 @@ internal static class TelemetryReader
             float.IsPositiveInfinity(bestAheadAlong) ? null : bestAheadAlong,
             aheadBoards,
             takenKmh);
+    }
+
+    private static void LogLimitScanIfNeeded(
+        long totalMs,
+        long fotMs,
+        long pathMs,
+        long walkMs,
+        int evaluated)
+    {
+        if (totalMs >= 16 || fotMs >= 16 || walkMs >= 8 || !_loggedTrainPerfForUsable)
+        {
+            Main.Log(HudPerfLog.FormatLimitScan(
+                totalMs,
+                fotMs,
+                pathMs,
+                walkMs,
+                evaluated,
+                PathAhead.Count));
+        }
     }
 
     private static string FormatBoardHit(
@@ -2045,13 +2533,20 @@ internal static class TelemetryReader
     /// <summary>
     /// One Player.log line per board per side while it is within the trace window, so a board that
     /// never takes ownership shows why (corridor, right-hand, forward align, or parse).
+    /// Suppressed at standstill — facing wobble re-flips side and storms the log (0.6.36).
     /// </summary>
     private static void TraceBoardPass(
         SignDebug sign,
         TrainCar loco,
         float along,
-        SpeedLimitBoardFacing.Eval eval)
+        SpeedLimitBoardFacing.Eval eval,
+        float speedKmh)
     {
+        if (!BoardTraceLogGate.ShouldEmit(speedKmh, LimitDisplayHold.StandstillMaxSpeedKmh))
+        {
+            return;
+        }
+
         var id = sign.GetInstanceID();
         if (along > BoardTraceWindowMeters || along < -BoardTraceWindowMeters)
         {
@@ -2133,9 +2628,30 @@ internal static class TelemetryReader
         }
     }
 
+    /// <summary>Session warm: FoT result from <see cref="BoardCachePump"/>.</summary>
+    internal static void AdoptSignDebugCache(SignDebug[] signs)
+    {
+        _signDebugCache = signs ?? System.Array.Empty<SignDebug>();
+        _signDebugCacheAt = Time.unscaledTime;
+    }
+
+    /// <summary>Current SignDebug array without FoT (may be empty).</summary>
+    internal static SignDebug[] PeekSignDebugCache() => _signDebugCache;
+
+    /// <summary>Session warm: pre-fill track attach cache (boards never move).</summary>
+    internal static void RememberBoardTrack(int signInstanceId, RailTrack? track) =>
+        BoardTrackCache[signInstanceId] = track;
+
+    /// <summary>How many sign→track attaches are cached this session.</summary>
+    internal static int SessionBoardTrackCacheCount => BoardTrackCache.Count;
+
+    /// <summary>World reload — drop session track attaches.</summary>
+    internal static void ClearSessionBoardTrackCache() => BoardTrackCache.Clear();
+
     /// <summary>
     /// Track a board is planted beside. Answers "is this board on my track" exactly, where lateral
     /// distance cannot (it inflates with range on curves). Cached per sign — boards never move.
+    /// Cab Limit never cold-attaches (GetClosest) — Align <c>WarmForPlan</c> fills the cache.
     /// </summary>
     private static RailTrack? ResolveBoardTrack(SignDebug sign)
     {
@@ -2143,6 +2659,11 @@ internal static class TelemetryReader
         if (BoardTrackCache.TryGetValue(id, out var cached))
         {
             return cached;
+        }
+
+        if (!LimitCabDiscoveryPolicy.AllowCabColdTrackAttach)
+        {
+            return null;
         }
 
         RailTrack? track = null;
@@ -2294,12 +2815,48 @@ internal static class TelemetryReader
         }
     }
 
+    private static float FarthestAheadAlong(List<AheadBoard> ahead)
+    {
+        var farthest = float.NegativeInfinity;
+        for (var i = 0; i < ahead.Count; i++)
+        {
+            if (ahead[i].AlongMeters > farthest)
+            {
+                farthest = ahead[i].AlongMeters;
+            }
+        }
+
+        return farthest;
+    }
+
+    private static void TrimFarthestAhead(List<AheadBoard> ahead)
+    {
+        var farthestIdx = 0;
+        var farthest = ahead[0].AlongMeters;
+        for (var i = 1; i < ahead.Count; i++)
+        {
+            if (ahead[i].AlongMeters > farthest)
+            {
+                farthest = ahead[i].AlongMeters;
+                farthestIdx = i;
+            }
+        }
+
+        ahead.RemoveAt(farthestIdx);
+    }
+
     private static int RoundLimit(float kmh) =>
         (int)Math.Round(kmh, MidpointRounding.AwayFromZero);
 
     private static void RefreshSignDebugCacheIfNeeded()
     {
-        if (Time.unscaledTime - _signDebugCacheAt < SignDebugRefreshSeconds)
+        var age = _signDebugCacheAt < 0f
+            ? float.MaxValue
+            : Time.unscaledTime - _signDebugCacheAt;
+        if (!LimitSignCachePolicy.ShouldRunFoT(
+                BoardCachePump.HasTrackCacheReady,
+                _signDebugCache.Length,
+                age))
         {
             return;
         }
@@ -2517,8 +3074,12 @@ internal static class TelemetryReader
             return null;
         }
 
+        var totalSw = Stopwatch.StartNew();
+        var fluidsSw = Stopwatch.StartNew();
         var fuel = TryGetFuelPercent();
         var oil = TryGetOilPercent();
+        fluidsSw.Stop();
+
         var speedMps = TryGetAbsSpeedMetersPerSecond();
         var speedKmh = speedMps is null
             ? (float?)null
@@ -2529,18 +3090,27 @@ internal static class TelemetryReader
                 _sessionDriveMeters, spd, Time.unscaledDeltaTime);
         }
 
+        var limitSw = Stopwatch.StartNew();
         var limit = TryGetSpeedLimitState();
+        limitSw.Stop();
+
+        var massSw = Stopwatch.StartNew();
         TryReadLeadCabLevers(out var throttlePct, out var indyPct, out var trainBrakePct);
         var massKg = TryGetConsistMassKilograms();
         var loco = TryGetUsableLoco();
+        var grade = GradeDisplay.FormatPercent(TryGetGradePercent());
+        var load = LoadDisplay.FormatHud(TryGetLoadPercent());
+        massSw.Stop();
+
+        var restSw = Stopwatch.StartNew();
         // 4.7 IA + cab levers: … Load · Rev · Throttle · Indy · TrainBrake · Speed · Limit …
         // Drive odometer stays internal for Align rem/trip — not a HUD chip.
-        return TrainHudLine.Format(
+        var line = TrainHudLine.Format(
             FluidDisplay.FormatFuelHud(fuel, oil),
             FluidDisplay.FormatOilHud(fuel, oil),
             TonnageDisplay.FormatFromKilograms(massKg),
-            GradeDisplay.FormatPercent(TryGetGradePercent()),
-            LoadDisplay.FormatHud(TryGetLoadPercent()),
+            grade,
+            load,
             SpeedDisplay.FormatFromMetersPerSecond(speedMps),
             SpeedLimitDisplay.FormatHud(
                 speedKmh,
@@ -2558,6 +3128,21 @@ internal static class TelemetryReader
             indy: CabLeverDisplay.FormatIndy(indyPct),
             trainBrake: CabLeverDisplay.FormatTrainBrake(trainBrakePct),
             stress: FormatStressHudChip());
+        restSw.Stop();
+        totalSw.Stop();
+
+        if (!_loggedTrainPerfForUsable || totalSw.ElapsedMilliseconds >= 50)
+        {
+            _loggedTrainPerfForUsable = true;
+            Main.Log(HudPerfLog.FormatTrainBar(
+                totalSw.ElapsedMilliseconds,
+                fluidsSw.ElapsedMilliseconds,
+                limitSw.ElapsedMilliseconds,
+                massSw.ElapsedMilliseconds,
+                restSw.ElapsedMilliseconds));
+        }
+
+        return line;
     }
 
     /// <summary>Coupler derail-stress RAG chip — fail-closed to <c>— Stress</c>.</summary>

@@ -32,7 +32,7 @@ public static class StationWaypointDisplay
         _ = playerX;
         _ = playerZ;
         _ = atOffice;
-        return "Curr, Area - " + label;
+        return "Curr. Area - " + label;
     }
 
     /// <summary>16-point walk bearing toward station, <c>here</c> when <paramref name="atOffice"/>, or null.</summary>

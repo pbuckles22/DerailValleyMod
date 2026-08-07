@@ -49,6 +49,21 @@ public class WorldSpeedBoardIndexTests
     }
 
     [Fact]
+    public void AddZone_orders_by_along_meters()
+    {
+        var index = new WorldSpeedBoardIndex();
+        index.AddZone(9, alongMeters: 100f, kmh: 60f, governsForward: true);
+        index.AddZone(9, alongMeters: 40f, kmh: 40f, governsForward: true);
+        index.AddZone(9, alongMeters: 70f, kmh: 50f, governsForward: false);
+
+        var zones = index.GetZonesForTrack(9);
+        Assert.Equal(3, zones.Count);
+        Assert.Equal(40f, zones[0].AlongMeters);
+        Assert.Equal(70f, zones[1].AlongMeters);
+        Assert.Equal(100f, zones[2].AlongMeters);
+    }
+
+    [Fact]
     public void SameTravel_rejects_opposite_direction()
     {
         var index = new WorldSpeedBoardIndex();

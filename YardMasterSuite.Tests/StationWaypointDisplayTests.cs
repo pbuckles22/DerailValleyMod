@@ -21,7 +21,7 @@ public class StationWaypointDisplayTests
     public void Format_in_zone_is_curr_area_only()
     {
         Assert.Equal(
-            "Curr, Area - SM",
+            "Curr. Area - SM",
             StationWaypointDisplay.Format(
                 inZone: true,
                 yardId: "SM",
@@ -36,7 +36,7 @@ public class StationWaypointDisplayTests
     public void Format_at_office_still_area_only_no_bearing_or_meters()
     {
         Assert.Equal(
-            "Curr, Area - HB",
+            "Curr. Area - HB",
             StationWaypointDisplay.Format(
                 inZone: true,
                 yardId: "HB",
@@ -51,7 +51,7 @@ public class StationWaypointDisplayTests
     public void Format_missing_yard_uses_placeholder_id()
     {
         Assert.Equal(
-            "Curr, Area - —",
+            "Curr. Area - —",
             StationWaypointDisplay.Format(
                 inZone: true,
                 yardId: null,

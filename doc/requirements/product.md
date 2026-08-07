@@ -64,7 +64,7 @@ Center-weighted IA (**4.7**): bar is **horizontally centered**; mid-string = Spe
 | Word | Example live | Notes |
 |------|----------------|-------|
 | Heading | `Heading NE` / `Heading ENE` | **1.12** — 16-point rose; no degrees; never `— Heading` on menus |
-| Station | `Curr, Area - MF` | **4.6** — yard id only in zone; no bearing/meters (AR has distance) |
+| Station | `Curr. Area - MF` | **4.6** — yard id only in zone; no bearing/meters (AR has distance) |
 | Marked | `Marked NE 84m` / `Marked here` | **1.14** — return bearing + distance; omit when unmarked |
 | Clock | `Clock 14:30` | In-game world time (`DateTimeWrapper`); world session only |
 | Version | *(removed from HUD)* | Confirm ship # in **UMM Mod Manager** / `info.json` only |
@@ -102,11 +102,11 @@ Stack: **always-on (top)** → loco cab → look-at → job.
 
 **4.5 notes:** **Cut** (2026-07-25). Former fluid-gated `Next: Name [N km]` (nearest other yard) removed from loco bar — wrong UX for mainland range. Fluid HUD debug inject kept (F8/F9 / Shift+F8 clear / Shift+F9 both 100%).
 
-**4.6 notes:** In job-generation zone — always-on `Curr, Area - SM` (yard id only). Bearing/meters on office AR. Omit outside zones.
+**4.6 notes:** In job-generation zone — always-on `Curr. Area - SM` (yard id only). Bearing/meters on office AR. Omit outside zones.
 
 **4.8 notes:** **Primary:** prep-before-validate — `currentJobs` empty + `availableJobs` → `Preview Nm` to `destroyGeneratedJobsSqrDistanceRegular` (warn / `OUT`). Taken jobs — `Job ID · GO/HOLD/RED · Bonus` (consist vs task cars; purple ■ AR on job cars @ **0.6.16**). Abandoned/Expired → red `Cancelled`. Details: [UX_SMOKE_FEEDBACK_2026-07-23.md](UX_SMOKE_FEEDBACK_2026-07-23.md) Bundle D.
 
-**4.9 notes:** AR screen markers with PNG icons (loco / house / pin) under `Mods/.../Icons/`; tint color secondary. Edge-clamped when behind; caption = meters only. `T2 ar`. **Office proximity (A.4 / Bundle C):** one gate hides the house icon; Station chip is yard-only (`Curr, Area - …`). Being ~12–14 m from the door (apron) is **accepted** for house hide.
+**4.9 notes:** AR screen markers with PNG icons (loco / house / pin) under `Mods/.../Icons/`; tint color secondary. Edge-clamped when behind; caption = meters only. `T2 ar`. **Office proximity (A.4 / Bundle C):** one gate hides the house icon; Station chip is yard-only (`Curr. Area - …`). Being ~12–14 m from the door (apron) is **accepted** for house hide.
 
 **4.10 notes:** Other-loco AR — max **2**, **≤600 m**, **only in station/job zone**; refresh **1 s**. UMM toggle.
 

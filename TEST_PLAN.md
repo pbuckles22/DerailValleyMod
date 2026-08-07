@@ -410,12 +410,12 @@ Former `Next: … [N km]` on loco bar when fluids low — **removed**. Smoke A1�
 
 ### 4.6 Station waypoint (foot) — `T2 station` — Bundle **C** + declutter **0.6.35**
 
-Always-on: in job-generation zone show `Curr, Area - {YardID}`. **No** bearing/meters (AR has distance). Omit outside zones. House AR hide gate unchanged (apron ~12–14 m accepted).
+Always-on: in job-generation zone show `Curr. Area - {YardID}`. **No** bearing/meters (AR has distance). Omit outside zones. House AR hide gate unchanged (apron ~12–14 m accepted).
 
 **Sign-off**
 
 - [ ] Outside station zone — Station chip absent
-- [ ] Enter station/city zone — `Curr, Area - SM` (yard id only) — **0.6.35**
+- [ ] Enter station/city zone — `Curr. Area - SM` (yard id only) — **0.6.36**
 - [x] Walk to office — house icon hides (v0.4.48); chip stays yard-only (no `here`)
 - [ ] `T2 station` on enter/leave
 
@@ -540,9 +540,31 @@ Nearest **other** locos as amber AR markers on the sticky locator bar (**≤600 
 
 **0.6.32:** target **1120×1120** (2× again), clamped to `min(screen)-2*margin`; Tier 1 `YardMiniMapPanelLayoutTests`.
 
-**0.6.33 PERF:** Player.log spam `T2 minimap: build … polys=616 extra=596` (~196×). Rebuild gate + log-once; draw only focus-window `#Y`; hop cap 8. Tier 1 `YardMiniMapRebuildGateTests`.
+**0.6.33 PERF:** Player.log spam `T2 minimap: build … polys=616 extra=596` (~196×). Rebuild gate + log-once; draw only focus-window `#Y`; hop cap 8. Tier 1 `YardMiniMapRebuildGateTests`. **Same smoke session — first HUD freeze report:** look-at loco → `T2 power/limit loco` + `scan=1600m` → ~2 s (not the later look-at/cab gate).
 
-**0.6.34 PERF:** look-at loco froze ~2 s — `T2 power/limit loco` + `scan=1600m` because look-at seeded usable loco train. Top loco bar now **standing/on-train only**; look-at stays second bar. Tier 1 `UsableLocoTrainGateTests`.
+**0.6.34 PERF:** relocated that cost — top loco bar **standing/on-train only**; look-at stays second bar. Tier 1 `UsableLocoTrainGateTests`. Did **not** invent the freeze; only moved when it fires.
+
+**0.6.35 smoke FAIL:** cab entry ~2 s freeze (deferred cold Limit). Look-at snappy.
+
+**0.6.36 FAIL:** look-at warm re-ran full `ScanPostedBoards` → freeze back on look. Reverted warm.
+
+**0.6.37:** no look-at Limit warm; keep `Curr. Area` + standstill TraceBoardPass mute + derail frame-cache. Cab entry may still hitch until Limit is frame-sliced.
+
+**0.6.38:** defer heavy `ScanPostedBoards` for first **2** usable HUD ticks (`LimitScanStartup`) so cab chips paint before `scan=1600m`. Declutter never removed Limit cost — only look-at Pipe/Car#/Cargo display.
+
+**0.6.39:** `T2 perf train/limit` phases — freeze owned by per-sign **walk** (~2 s cold) + repeating **fot≈100+** every refresh.
+
+**0.6.40:** Limit **cache/coast** — FAIL cab freeze: cold walk still `1636ms` one tick.
+
+**0.6.41:** frame-slice full FoT walk — wrong goal (still aimed at all 31).
+
+**0.6.42 hard:** paced discovery — FAIL jerky ~100 ms × 4 (cold GetClosest ~50–60 ms/sign).
+
+**0.6.43:** dual-path `BoardCachePump` on session map warm (FoT + GetClosest ≤5 ms/frame); retain track cache/index across leave-cab; discovery burst=1.
+
+**0.6.48 FAIL:** Align sync absent; cab still `fot=122ms` + 8× `walk≈60ms` after wait budget unlocked cold discovery.
+
+**0.6.49:** cab never FoT / never GetClosest; board walk only when Align left track cache (`LimitCabDiscoveryPolicy`). No Align → sticky/seed / `— Limit`.
 
 **Sign-off**
 
@@ -557,7 +579,15 @@ Nearest **other** locos as amber AR markers on the sticky locator bar (**≤600 
 - [ ] UMM **0.6.32** — ~1120px square (or max fit); readable size
 - [ ] UMM **0.6.33** — no build spam; smoother with map open / look-at
 - [ ] UMM **0.6.34** — on-foot look-at loco: **no** freeze; no `T2 limit loco` until boarded
-- [ ] UMM **0.6.35** — HUD declutter: `Curr, Area - …`; look-at no Pipe/Car#/Cargo; AR max 2 in-zone @ 1s; always-on top
+- [x] UMM **0.6.35** — HUD declutter PASS; **FAIL** cab-entry ~2 s Limit cold start
+- [x] UMM **0.6.36** — **FAIL** look-at freeze (sync warm)
+- [x] UMM **0.6.37** — look-at snappy; cab hitch remained
+- [ ] UMM **0.6.38** — enter cab paints immediately; Limit may fill ~0.2 s later without enter freeze
+- [x] UMM **0.6.40** — **FAIL** cold walk still ~1.6 s one tick
+- [ ] UMM **0.6.41** — frame-slice (superseded by 0.6.42 paced discovery)
+- [x] UMM **0.6.42** — **FAIL** jerky ~100 ms bursts (cold GetClosest)
+- [x] UMM **0.6.48** — **FAIL** cab FoT+walk without Align warm
+- [ ] UMM **0.6.49** — cab entry: no `fot=` / no cold `walk≈5x ms`; Align first for Limit boards; Tier 1 `LimitCabDiscoveryPolicyTests`
 
 ### 4.7 HUD strip IA — **PASS** v0.4.23 · stack **0.6.35**
 
@@ -569,7 +599,7 @@ All rows centered. Stack: **always-on (top)** → loco → look-at → job.
 - [ ] Always-on is **top** of stack and stays put when look-at appears — **0.6.35**
 - [x] Look-at bar centered
 - [x] Always-on readable (dark bar background)
-- [ ] Chip UMM **0.6.35**
+- [ ] Chip UMM **0.6.36** (`Curr. Area`)
 
 Recovery: [modding.md](doc/requirements/modding.md).
 

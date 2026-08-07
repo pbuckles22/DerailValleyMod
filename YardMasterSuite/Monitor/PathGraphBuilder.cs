@@ -110,6 +110,7 @@ internal static class PathGraphBuilder
         _tracksByKey = null;
         _metaByKey = null;
         CancelMapping();
+        BoardCachePump.ResetSession();
     }
 
     /// <summary>Begin frame-pumped rebuild when cache is cold (no-op if warm or already mapping).</summary>

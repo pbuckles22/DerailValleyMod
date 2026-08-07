@@ -44,6 +44,7 @@ internal static class RouteAlignGovernor
         var flips = PathPlan.RequiredFlips(plan);
         if (flips.Count == 0)
         {
+            BoardCachePump.WarmForPlan(plan);
             return "T2 align: already clear";
         }
 
@@ -84,6 +85,8 @@ internal static class RouteAlignGovernor
         RouteMemo.Clear();
         // Re-eval the same corridor (do not re-Dijkstra — origin churn was causing Path-wrong).
         Main.Log(RoutePlanService.ReevaluateAfterAlign(plan));
+        // Block up to ~0.5 s attaching ≤8 on-route boards before telling the player OK.
+        BoardCachePump.WarmForPlan(plan);
         return $"T2 align: threw {applied}";
     }
 

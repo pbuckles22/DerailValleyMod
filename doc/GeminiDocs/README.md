@@ -20,5 +20,4 @@ Promote decisions into tracked docs (`PM_PLAN.md`, `doc/requirements/*`, `TEST_P
 
 | Pack | Topic |
 |------|--------|
-| [`Multi-step Maps Specification.md`](./Multi-step%20Maps%20Specification.md) | **3.7** — Gemini decisions + acceptance (promoted into `PM_PLAN` 2026-08-04) |
-| [`GMaps_MultiStep.md`](./GMaps_MultiStep.md) | Bridge pack + screenshots / code excerpts (input to that spec) |
+| [`Limit_Board_Discovery_Stutter.md`](./Limit_Board_Discovery_Stutter.md) | Limit stutter: cold GetClosest ~50–60 ms/sign; 0.6.42 paced FAIL; dual-path session board cache vs station map; clean era `d1250ff` vs standing-only 0.6.34 |
