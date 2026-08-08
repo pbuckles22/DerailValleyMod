@@ -49,6 +49,12 @@ internal static class TelemetryReader
     /// <summary>How far behind the loco (m) to look for the governing posted board.</summary>
     private const float BoardLookbackMeters = 300f;
 
+    /// <summary>Minimum ahead search (m) for next different board (**1.11** trend).</summary>
+    private const float BoardLookaheadMinMeters = 500f;
+
+    /// <summary>Lookahead scale: meters ≈ speed(km/h) × this.</summary>
+    private const float BoardLookaheadSecondsOfSpeed = 6f;
+
     private static SignDebug[] _signDebugCache = Array.Empty<SignDebug>();
     private static float _signDebugCacheAt = -999f;
 
@@ -212,48 +218,86 @@ internal static class TelemetryReader
     /// Governing speed limit (km/h): last posted board behind the loco when available;
     /// otherwise current-track geometry (SignPlacer ladder).
     /// </summary>
-    public static float? TryGetSpeedLimitKmh()
+    public static float? TryGetSpeedLimitKmh() => TryGetSpeedLimitState().CurrentKmh;
+
+    /// <summary>↑/↓ vs next different posted board ahead (**1.11**).</summary>
+    public static LimitTrend TryGetSpeedLimitTrend() => TryGetSpeedLimitState().Trend;
+
+    private readonly struct SpeedLimitState
+    {
+        public SpeedLimitState(float? currentKmh, LimitTrend trend)
+        {
+            CurrentKmh = currentKmh;
+            Trend = trend;
+        }
+
+        public float? CurrentKmh { get; }
+        public LimitTrend Trend { get; }
+    }
+
+    private static SpeedLimitState TryGetSpeedLimitState()
     {
         try
         {
             var loco = TryGetUsableLoco();
             if (loco == null)
             {
-                return null;
+                return new SpeedLimitState(null, LimitTrend.None);
             }
 
-            var fromBoard = TryGetPostedBoardSpeedLimitKmh(loco);
-            if (fromBoard != null)
+            var speedMps = loco.GetAbsSpeed();
+            var speedKmh = SpeedDisplay.ToKilometersPerHour(speedMps);
+            var boards = ScanPostedBoards(loco, speedKmh);
+            var current = boards.CurrentKmh;
+            if (current is null)
             {
-                return fromBoard;
+                var bogie = loco.FrontBogie ?? loco.RearBogie;
+                var track = bogie?.track;
+                current = track == null ? null : GetOrComputeTrackSpeedLimitKmh(track);
             }
 
-            var bogie = loco.FrontBogie ?? loco.RearBogie;
-            var track = bogie?.track;
-            return track == null ? null : GetOrComputeTrackSpeedLimitKmh(track);
+            var trend = SpeedLimitDisplay.TrendFrom(current, boards.NextKmh);
+            return new SpeedLimitState(current, trend);
         }
         catch
         {
-            return null;
+            return new SpeedLimitState(null, LimitTrend.None);
         }
     }
 
+    private readonly struct PostedBoardScan
+    {
+        public PostedBoardScan(float? currentKmh, float? nextKmh)
+        {
+            CurrentKmh = currentKmh;
+            NextKmh = nextKmh;
+        }
+
+        public float? CurrentKmh { get; }
+        public float? NextKmh { get; }
+    }
+
     /// <summary>
-    /// Most recent speed board behind the loco (travel direction), within lookback.
+    /// Current = closest board behind; next = nearest different board ahead within lookahead.
     /// Uses streamed <see cref="SignDebug"/> text (digit × 10), same convention as dv-hud.
     /// </summary>
-    private static float? TryGetPostedBoardSpeedLimitKmh(TrainCar loco)
+    private static PostedBoardScan ScanPostedBoards(TrainCar loco, float speedKmh)
     {
         RefreshSignDebugCacheIfNeeded();
         if (_signDebugCache.Length == 0)
         {
-            return null;
+            return new PostedBoardScan(null, null);
         }
 
         var pos = loco.transform.position;
         var fwd = TravelForward(loco);
-        SignDebug? best = null;
-        var bestAlong = float.NegativeInfinity;
+        var lookahead = Mathf.Max(BoardLookaheadMinMeters, speedKmh * BoardLookaheadSecondsOfSpeed);
+        var searchRadius = Mathf.Max(BoardLookbackMeters, lookahead);
+
+        float? currentKmh = null;
+        var bestBehindAlong = float.NegativeInfinity;
+        float? nextKmh = null;
+        var bestAheadAlong = float.PositiveInfinity;
 
         foreach (var sign in _signDebugCache)
         {
@@ -263,34 +307,76 @@ internal static class TelemetryReader
             }
 
             var delta = sign.transform.position - pos;
-            if (delta.sqrMagnitude > BoardLookbackMeters * BoardLookbackMeters)
+            if (delta.sqrMagnitude > searchRadius * searchRadius)
+            {
+                continue;
+            }
+
+            var parsed = SpeedLimitBoardParser.ParseKmh(sign.text);
+            if (parsed is null)
             {
                 continue;
             }
 
             var along = Vector3.Dot(delta, fwd);
-            // Behind the loco in travel direction (just passed).
-            if (along >= 0f || along < -BoardLookbackMeters)
+            if (along < 0f && along >= -BoardLookbackMeters && along > bestBehindAlong)
+            {
+                bestBehindAlong = along;
+                currentKmh = parsed;
+            }
+            else if (along > 0f && along <= lookahead && along < bestAheadAlong)
+            {
+                bestAheadAlong = along;
+                nextKmh = parsed;
+            }
+        }
+
+        if (currentKmh is not null && nextKmh is not null
+            && RoundLimit(currentKmh.Value) == RoundLimit(nextKmh.Value))
+        {
+            nextKmh = FindNextDifferentBoardAhead(pos, fwd, lookahead, currentKmh.Value);
+        }
+
+        return new PostedBoardScan(currentKmh, nextKmh);
+    }
+
+    private static float? FindNextDifferentBoardAhead(
+        Vector3 pos,
+        Vector3 fwd,
+        float lookahead,
+        float currentKmh)
+    {
+        var currentWhole = RoundLimit(currentKmh);
+        float? best = null;
+        var bestAlong = float.PositiveInfinity;
+        foreach (var sign in _signDebugCache)
+        {
+            if (sign == null)
             {
                 continue;
             }
 
-            if (along <= bestAlong)
+            var parsed = SpeedLimitBoardParser.ParseKmh(sign.text);
+            if (parsed is null || RoundLimit(parsed.Value) == currentWhole)
             {
                 continue;
             }
 
-            if (SpeedLimitBoardParser.ParseKmh(sign.text) == null)
+            var along = Vector3.Dot(sign.transform.position - pos, fwd);
+            if (along <= 0f || along > lookahead || along >= bestAlong)
             {
                 continue;
             }
 
             bestAlong = along;
-            best = sign;
+            best = parsed;
         }
 
-        return best == null ? null : SpeedLimitBoardParser.ParseKmh(best.text);
+        return best;
     }
+
+    private static int RoundLimit(float kmh) =>
+        (int)Math.Round(kmh, MidpointRounding.AwayFromZero);
 
     private static void RefreshSignDebugCacheIfNeeded()
     {
@@ -502,10 +588,10 @@ internal static class TelemetryReader
         var speedKmh = speedMps is null
             ? (float?)null
             : SpeedDisplay.ToKilometersPerHour(speedMps.Value);
-        var limitKmh = TryGetSpeedLimitKmh();
+        var limit = TryGetSpeedLimitState();
         return TrainHudLine.Format(
             SpeedDisplay.FormatFromMetersPerSecond(speedMps),
-            SpeedLimitDisplay.FormatHud(speedKmh, limitKmh),
+            SpeedLimitDisplay.FormatHud(speedKmh, limit.CurrentKmh, limit.Trend),
             GradeDisplay.FormatPercent(TryGetGradePercent()),
             TonnageDisplay.FormatFromKilograms(TryGetConsistMassKilograms()),
             CarsDisplay.Format(TryGetConsistCarCount()),
@@ -629,12 +715,15 @@ internal static class TelemetryReader
     internal static SpeedLimitDebugSnapshot CurrentSpeedLimitDebugSnapshot()
     {
         var usable = HasUsableLocoTrain();
+        var limit = TryGetSpeedLimitState();
         return new SpeedLimitDebugSnapshot(
             usable,
             usable
                 ? SpeedDisplay.FormatFromMetersPerSecond(TryGetAbsSpeedMetersPerSecond())
                 : SpeedDisplay.FormatFromMetersPerSecond(null),
-            usable ? SpeedLimitDisplay.Format(TryGetSpeedLimitKmh()) : SpeedLimitDisplay.Format(null));
+            usable
+                ? SpeedLimitDisplay.Format(limit.CurrentKmh, limit.Trend)
+                : SpeedLimitDisplay.Format(null));
     }
 
     private static float? GetOrComputeTrackSpeedLimitKmh(RailTrack track)
