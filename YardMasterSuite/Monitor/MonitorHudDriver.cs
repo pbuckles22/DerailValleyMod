@@ -74,6 +74,16 @@ public sealed class MonitorHudDriver : MonoBehaviour
 
     private void Update()
     {
+        // Shift+F3 — hide/show OnGUI paint; Update/telemetry keep running (OnGUI jitter A/B).
+        if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
+        {
+            if (Input.GetKeyDown(KeyCode.F3))
+            {
+                HudDrawGate.Toggle();
+                Main.Log($"T2 hud-draw: {(HudDrawGate.DrawVisuals ? "on" : "off")}");
+            }
+        }
+
         _elapsed += Time.unscaledDeltaTime;
         if (_elapsed < RefreshSeconds)
         {
@@ -253,6 +263,12 @@ public sealed class MonitorHudDriver : MonoBehaviour
 
     private void OnGUI()
     {
+        // Diagnostic: skip all IMGUI work when visuals off — Update still gathers telemetry.
+        if (!HudDrawGate.DrawVisuals)
+        {
+            return;
+        }
+
         EnsureStyles();
 
         // Compact version chip — always visible so deploys are confirmable without a loco bar.
