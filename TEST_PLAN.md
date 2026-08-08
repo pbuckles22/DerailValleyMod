@@ -560,9 +560,20 @@ Goal was: prove `9e00493` / **0.6.28** cadence-clean. **Player 2026-08-08:** hit
 | Mid | **0.5.101** `ccc724c` Align | **FAIL** (2026-08-08) |
 | Older | **0.4.66** `6690acd` pre–loco radar 4.10 | **FAIL** (2026-08-08) |
 | Older | **0.4.29** `703cbc4` Epic 4 HUD/AR baseline | **FAIL** (2026-08-08; YMS-only, others Off) |
-| Older | **0.4.23** `7601aee` centered IA | **FAIL** (2026-08-08; YMS-only) |
+| Older | **0.4.23** `7601aee` centered IA + Heading/Pos + Limit trend | **FAIL** (2026-08-08; YMS-only) |
+| Aggressive | **0.4.2** `7131fe9` dual HUD | **PASS** (2026-08-08) |
+| Last good | **0.4.20** `ee92f62` posted Limit GYR | **PASS** (player + Gemini video 2026-08-08) |
 
-**Verdict after 0.4.23 FAIL:** hitch is in foundational Monitor HUD (≤ July 23), not mini-map / Limit hunt / radar. Further rollback has diminishing returns; one aggressive hop (**`ee92f62` / 0.4.20** or **`7131fe9` / 0.4.2** dual-bar) only if hunting a PASS. Else stop bisect and fix 10 Hz HUD allocs on a modern tip using park archaeology.
+**Introduce window:** `ee92f62` (0.4.20) → `7601aee` (0.4.23) — one feature commit (plus docs). No 0.4.21/0.4.22 ships.
+
+**Re-intro (from 0.4.20):**
+
+| Step | Probe | Status |
+|------|-------|--------|
+| A | Limit trend only → UMM **0.4.56** (`fix/hitch-reintro-a-limit-trend`) | **deployed — awaiting smoke** |
+| B | Centered IA only | pending |
+| C | Heading | pending |
+| D | Pos | pending |
 
 Archaeology still on park + `feature/4.13-unnamed-y-rails` @ `55347ae`.
 
