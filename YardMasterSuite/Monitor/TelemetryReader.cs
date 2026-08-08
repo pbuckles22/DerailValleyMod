@@ -49,7 +49,11 @@ internal static class TelemetryReader
     /// <summary>How far behind the loco (m) to look for the governing posted board.</summary>
     private const float BoardLookbackMeters = 300f;
 
-    private static SignDebug[] _signDebugCache = Array.Empty<SignDebug>();
+    /// <summary>Parsed nearby boards for the 10 Hz Limit pick (strings parsed on refresh only).</summary>
+    private static ParsedPostedBoard[] _activeBoardRoster = Array.Empty<ParsedPostedBoard>();
+
+    private static readonly List<ParsedPostedBoard> ActiveBoardScratch = new(32);
+
     private static float _signDebugCacheAt = -999f;
 
     /// <summary>Call once at the start of each Monitor HUD refresh.</summary>
@@ -240,59 +244,34 @@ internal static class TelemetryReader
 
     /// <summary>
     /// Most recent speed board behind the loco (travel direction), within lookback.
-    /// Uses streamed <see cref="SignDebug"/> text (digit × 10), same convention as dv-hud.
+    /// Uses the Active Roster (parse-once / spatially filtered) — no per-tick string reads.
     /// </summary>
     private static float? TryGetPostedBoardSpeedLimitKmh(TrainCar loco)
     {
-        RefreshSignDebugCacheIfNeeded();
-        if (_signDebugCache.Length == 0)
+        var origin = loco.transform.position;
+        RefreshActiveBoardRosterIfNeeded(origin);
+        if (_activeBoardRoster.Length == 0)
         {
             return null;
         }
 
-        var pos = loco.transform.position;
         var fwd = TravelForward(loco);
-        SignDebug? best = null;
-        var bestAlong = float.NegativeInfinity;
-
-        foreach (var sign in _signDebugCache)
-        {
-            if (sign == null)
-            {
-                continue;
-            }
-
-            var delta = sign.transform.position - pos;
-            if (delta.sqrMagnitude > BoardLookbackMeters * BoardLookbackMeters)
-            {
-                continue;
-            }
-
-            var along = Vector3.Dot(delta, fwd);
-            // Behind the loco in travel direction (just passed).
-            if (along >= 0f || along < -BoardLookbackMeters)
-            {
-                continue;
-            }
-
-            if (along <= bestAlong)
-            {
-                continue;
-            }
-
-            if (SpeedLimitBoardParser.ParseKmh(sign.text) == null)
-            {
-                continue;
-            }
-
-            bestAlong = along;
-            best = sign;
-        }
-
-        return best == null ? null : SpeedLimitBoardParser.ParseKmh(best.text);
+        return PostedBoardActiveRoster.SelectGoverningBehindKmh(
+            _activeBoardRoster,
+            origin.x,
+            origin.y,
+            origin.z,
+            fwd.x,
+            fwd.y,
+            fwd.z,
+            BoardLookbackMeters);
     }
 
-    private static void RefreshSignDebugCacheIfNeeded()
+    /// <summary>
+    /// Slow path (~1.5 s): FoT SignDebug, keep within <see cref="PostedBoardActiveRoster.ActiveRadiusMeters"/>,
+    /// parse km/h once into <see cref="_activeBoardRoster"/>.
+    /// </summary>
+    private static void RefreshActiveBoardRosterIfNeeded(Vector3 origin)
     {
         if (Time.unscaledTime - _signDebugCacheAt < SignDebugRefreshSeconds)
         {
@@ -300,13 +279,51 @@ internal static class TelemetryReader
         }
 
         _signDebugCacheAt = Time.unscaledTime;
+        ActiveBoardScratch.Clear();
         try
         {
-            _signDebugCache = Object.FindObjectsOfType<SignDebug>() ?? Array.Empty<SignDebug>();
+            var rawSigns = Object.FindObjectsOfType<SignDebug>();
+            if (rawSigns == null || rawSigns.Length == 0)
+            {
+                _activeBoardRoster = Array.Empty<ParsedPostedBoard>();
+                return;
+            }
+
+            foreach (var sign in rawSigns)
+            {
+                if (sign == null)
+                {
+                    continue;
+                }
+
+                var p = sign.transform.position;
+                if (!PostedBoardActiveRoster.WithinActiveRadius(
+                        p.x,
+                        p.y,
+                        p.z,
+                        origin.x,
+                        origin.y,
+                        origin.z))
+                {
+                    continue;
+                }
+
+                var parsed = SpeedLimitBoardParser.ParseKmh(sign.text);
+                if (parsed is null)
+                {
+                    continue;
+                }
+
+                ActiveBoardScratch.Add(new ParsedPostedBoard(p.x, p.y, p.z, parsed.Value));
+            }
+
+            _activeBoardRoster = ActiveBoardScratch.Count == 0
+                ? Array.Empty<ParsedPostedBoard>()
+                : ActiveBoardScratch.ToArray();
         }
         catch
         {
-            _signDebugCache = Array.Empty<SignDebug>();
+            _activeBoardRoster = Array.Empty<ParsedPostedBoard>();
         }
     }
 
