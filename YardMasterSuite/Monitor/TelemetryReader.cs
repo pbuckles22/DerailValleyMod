@@ -46,6 +46,13 @@ internal static class TelemetryReader
     /// <summary>Refresh loaded <see cref="SignDebug"/> boards periodically (streaming scenes).</summary>
     private const float SignDebugRefreshSeconds = 1.5f;
 
+    /// <summary>
+    /// Hitch A/B (0.4.20.3): when false, never call <c>FindObjectsOfType&lt;SignDebug&gt;</c>;
+    /// posted Limit is empty and TryGetSpeedLimitKmh falls back to track geometry only.
+    /// Re-enable after smoke PASS/FAIL is recorded.
+    /// </summary>
+    private const bool PostedBoardFotEnabled = false;
+
     /// <summary>How far behind the loco (m) to look for the governing posted board.</summary>
     private const float BoardLookbackMeters = 300f;
 
@@ -55,6 +62,8 @@ internal static class TelemetryReader
     private static readonly List<ParsedPostedBoard> ActiveBoardScratch = new(32);
 
     private static float _signDebugCacheAt = -999f;
+
+    private static bool _postedBoardFotKillLogged;
 
     /// <summary>Call once at the start of each Monitor HUD refresh.</summary>
     public static void BeginHudTick()
@@ -273,6 +282,18 @@ internal static class TelemetryReader
     /// </summary>
     private static void RefreshActiveBoardRosterIfNeeded(Vector3 origin)
     {
+        if (!PostedBoardFotEnabled)
+        {
+            _activeBoardRoster = Array.Empty<ParsedPostedBoard>();
+            if (!_postedBoardFotKillLogged)
+            {
+                _postedBoardFotKillLogged = true;
+                Main.Log("T2 hitch: PostedBoard FoT DISABLED — Limit uses track geometry only");
+            }
+
+            return;
+        }
+
         if (Time.unscaledTime - _signDebugCacheAt < SignDebugRefreshSeconds)
         {
             return;
