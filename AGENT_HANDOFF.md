@@ -148,7 +148,7 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 
 **Next**
 
-1. **Hitch walk-back — FAIL through 0.4.29** (YMS-only) — next smoke **UMM 0.4.23**. Quit fully so other mods’ “Need restart” clears. See `TEST_PLAN` *Hitch walk-back*. Park do not merge.
+1. **Hitch walk-back — FAIL through 0.4.23** (YMS-only) — foundational Monitor HUD. Prefer stop-bisect → fix 10 Hz allocs (park keepers); optional one hop **0.4.20** / **0.4.2**. Park do not merge.
 2. **4.13 follow-on** — unnamed/`#Y` rails on mini-map schematic; then retune MFMB fence. *Or* resume **3.7** from stash `park 3.7 WIP 0.6.28` on `feature/3.7-multi-step-maps` (user pick).
 3. **3.7 Multi-step Maps** — Switch List TurnAround inject (WIP parked). **3.1b iced**.
 4. Parking: 3.1b ghost/spawn; place ghost / Snap office under-mesh; Switch List couple auto-advance / arrival-track split; flight-sim HUD; AR house hide; DM3; session reset; 1.17 #4 behind-seed.

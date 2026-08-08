@@ -560,10 +560,9 @@ Goal was: prove `9e00493` / **0.6.28** cadence-clean. **Player 2026-08-08:** hit
 | Mid | **0.5.101** `ccc724c` Align | **FAIL** (2026-08-08) |
 | Older | **0.4.66** `6690acd` pre–loco radar 4.10 | **FAIL** (2026-08-08) |
 | Older | **0.4.29** `703cbc4` Epic 4 HUD/AR baseline | **FAIL** (2026-08-08; YMS-only, others Off) |
-| Older | **0.4.23** `7601aee` centered IA | **deployed — awaiting smoke** |
+| Older | **0.4.23** `7601aee` centered IA | **FAIL** (2026-08-08; YMS-only) |
 
-If 0.4.23 FAIL → next **`ee92f62` / 0.4.20** (posted Limit) or earliest Monitor ship.  
-If 0.4.23 PASS → hitch introduced between **0.4.23 and 0.4.29** (Epic 4 Track/Station/Job/AR).
+**Verdict after 0.4.23 FAIL:** hitch is in foundational Monitor HUD (≤ July 23), not mini-map / Limit hunt / radar. Further rollback has diminishing returns; one aggressive hop (**`ee92f62` / 0.4.20** or **`7131fe9` / 0.4.2** dual-bar) only if hunting a PASS. Else stop bisect and fix 10 Hz HUD allocs on a modern tip using park archaeology.
 
 Archaeology still on park + `feature/4.13-unnamed-y-rails` @ `55347ae`.
 
