@@ -42,7 +42,7 @@ High ROI; frequent pain; not blocking.
 
 
 
-- [ ] **Rhythmic hitch walk-back — DEFERRED** — Mod-off proved ours @ 0.6.54. Park `wip/hitch-park-0.6.54` @ `06528bd`; bisect branch `fix/hitch-bisect-from-0.6.28` deployed **0.6.28**. Baseline smoke + slices A–D not run. Resume per `TEST_PLAN` *Hitch walk-back*. Do not merge park.
+- [ ] **Rhythmic hitch walk-back — 0.6.28 FAIL** — Hitch present on `9e00493` / UMM 0.6.28 (2026-08-08); not introduced by post-0.6.28 WIP. Park `wip/hitch-park-0.6.54` @ `06528bd`. Next: binary-search older `main` (first probe **0.5.101** / `ccc724c`). See `TEST_PLAN` *Hitch walk-back*.
 
 - [ ] **4.13 follow-on — unnamed/`#Y` rails on mini-map** — schematic currently named catalog only; retune MFMB office fence after coverage improves. (Also parked on `feature/4.13-unnamed-y-rails` @ `55347ae` / 0.6.49 + park tip.)
 

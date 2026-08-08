@@ -120,7 +120,7 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 | **Version (`main`)** | **0.6.28** *(4.13 yard mini-map; Tier 2 PASS)* |
 | **Active branch** | `fix/hitch-bisect-from-0.6.28` @ `9e00493` (Mods deployed **0.6.28**) |
 | **Hitch park** | `wip/hitch-park-0.6.54` @ `06528bd` — 0.6.50–0.6.54 GC hunt (**do not merge**) |
-| **Walk-back** | **DEFERRED** — baseline smoke + slices A–D + Limit policy not run; resume when ready |
+| **Walk-back** | **0.6.28 FAIL** (hitch present) — slices aborted; deeper bisect on `main` (next probe **0.5.101**) |
 
 **Shipped on `main`**
 
@@ -148,7 +148,7 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 
 **Next**
 
-1. **Hitch walk-back — DEFERRED** — Park done; Mods @ 0.6.28. Resume: smoke baseline cadence → slices A mini-map → B rebuild gate → C HUD declutter → D settings/log/radar keepers. First FAIL = suspect. Do not merge park. See `TEST_PLAN` *Hitch walk-back*.
+1. **Hitch walk-back — 0.6.28 FAIL** — hitch predated mini-map ship. Next: deploy older `main` checkpoints (start **`ccc724c` / 0.5.101**). See `TEST_PLAN` *Hitch walk-back*. Park `wip/hitch-park-0.6.54` do not merge.
 2. **4.13 follow-on** — unnamed/`#Y` rails on mini-map schematic; then retune MFMB fence. *Or* resume **3.7** from stash `park 3.7 WIP 0.6.28` on `feature/3.7-multi-step-maps` (user pick).
 3. **3.7 Multi-step Maps** — Switch List TurnAround inject (WIP parked). **3.1b iced**.
 4. Parking: 3.1b ghost/spawn; place ghost / Snap office under-mesh; Switch List couple auto-advance / arrival-track split; flight-sim HUD; AR house hide; DM3; session reset; 1.17 #4 behind-seed.

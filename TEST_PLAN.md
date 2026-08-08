@@ -541,22 +541,25 @@ In-world **`M`** toggle; track schematic + pin/heading + Office/TT; off-map edge
 - [x] Tier 1: `YardMiniMapSmokeRegressionTests` / office-fence gates
 - [ ] Ship commit when asked → **done** (CMPH 2026-08-05)
 
-### Hitch walk-back (rhythmic ~2.5 s) — **DEFERRED** 2026-08-08
+### Hitch walk-back (rhythmic ~2.5 s) — baseline **FAIL** @ 0.6.28; deeper bisect
 
-Goal: prove `9e00493` / **0.6.28** cadence-clean, then re-land product slices until the hitch returns. Stay off `main`; do not merge hitch park.
+Goal was: prove `9e00493` / **0.6.28** cadence-clean. **Player 2026-08-08:** hitch **still present** on UMM **0.6.28** — last-good theory wrong; slices A–D aborted.
 
 | Step | Status |
 |------|--------|
 | Park `wip/hitch-park-0.6.54` @ `06528bd` (0.6.50–0.6.54) | **done** — do not merge |
 | Branch `fix/hitch-bisect-from-0.6.28` @ `9e00493`; deploy UMM **0.6.28** | **done** |
-| Baseline smoke (walk / look-around / drive / map toggle) | **DEFERRED** |
-| Slice A — mini-map product (`#Y` / focus / panel) | **DEFERRED** |
-| Slice B — `YardMiniMapRebuildGate` | **DEFERRED** |
-| Slice C — HUD declutter (no Limit pump) | **DEFERRED** |
-| Slice D — Settings XML + Tier2 log gate + radar town policy (+ GC probe) | **DEFERRED** |
-| LimitCabDiscoveryPolicy only if cab 2 s freeze returns | **DEFERRED** |
+| Baseline smoke (walk / look-around / drive / map toggle) | **FAIL** — hitch present |
+| Slices A–D / LimitCabDiscoveryPolicy re-entry | **aborted** (baseline not clean) |
 
-Resume: confirm UMM **0.6.28** → baseline smoke PASS → one slice per deploy/smoke. First FAIL = primary suspect. Archaeology: park branch + `feature/4.13-unnamed-y-rails` @ `55347ae` (0.6.49).
+**Deeper bisect (next):** binary-search `main` commits older than 0.6.28. Suggested order (~3–4 smokes):
+
+1. **`ccc724c` / 0.5.101** (Align) — before Limit 1.17, stress, Switch List, mini-map  
+2. If FAIL → **`6690acd` / 0.4.66`** (pre–loco radar 4.10)  
+3. If FAIL → **`703cbc4` / 0.4.29`** (Epic 4 HUD/AR baseline) or **`7601aee` / 0.4.23`** (centered IA)  
+4. If 0.5.101 PASS → bisect forward: `0.5.104` Limit → `0.6.2` Switch List → `0.6.19` maps/AR → `0.6.28` mini-map  
+
+Archaeology still on park + `feature/4.13-unnamed-y-rails` @ `55347ae`.
 
 ### 4.7 HUD strip IA — **PASS** v0.4.23
 
