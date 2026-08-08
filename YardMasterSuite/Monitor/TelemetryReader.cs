@@ -168,20 +168,34 @@ internal static class TelemetryReader
     /// <summary>Last scan attribution for T2 limit change logs.</summary>
     private static string? _lastBoardScanDetail;
 
-    /// <summary>FindObjectsOfType throttle for other-loco AR radar (4.10).</summary>
-    private const float LocoRadarCacheSeconds = 1f;
+    /// <summary>Log a <c>T2 perf radar</c> line when one scene scan costs at least this long.</summary>
+    private const long RadarScanSlowMs = 8;
 
     /// <summary>Job-car AR + consist status refresh.</summary>
     private const float JobCarCacheSeconds = 1.0f;
 
     private static float _locoRadarCachedAt = -999f;
+    private static bool _locoRadarScannedThisVisit;
     private static int _locoRadarCount;
     private static readonly TrainCar?[] _locoRadarCars = new TrainCar?[LocoRadarSelection.DefaultMaxResults];
     private static readonly string?[] _locoRadarTypeIds = new string?[LocoRadarSelection.DefaultMaxResults];
     private static readonly string?[] _locoRadarPlaceLabels = new string?[LocoRadarSelection.DefaultMaxResults];
-    private static readonly List<string> _inZoneYardsScratch = new(8);
+
+    // AR asks for captions every frame; only re-format when the shown meters (or the car) change.
+    private static readonly string?[] _locoRadarCaptions = new string?[LocoRadarSelection.DefaultMaxResults];
+    private static readonly int[] _locoRadarCaptionMeters = new int[LocoRadarSelection.DefaultMaxResults];
+
+    // Radar scan ran once a second and rebuilt these every time — reuse so it costs no GC.
+    private static readonly HashSet<int> _locoRadarExcludeScratch = new();
+    private static readonly List<LocoRadarCandidate> _locoRadarCandidateScratch = new(8);
+    private static readonly Dictionary<int, TrainCar> _locoRadarByIdScratch = new(8);
+    private static readonly int[] _locoRadarRankedScratch = new int[LocoRadarSelection.DefaultMaxResults];
 
     private static float _jobCarCachedAt = -999f;
+    private static float _jobCarProbedAt = -999f;
+    private static float _arLocoFallbackProbedAt = -999f;
+    private static TrainCar? _arLocoFallback;
+    private static float _locoRadarProbedAt = -999f;
     private static string? _jobCarCachedJobId;
     private static bool _jobCarCachedTaken;
     private static int _jobArCount;
@@ -189,6 +203,8 @@ internal static class TelemetryReader
     private static readonly Vector3[] _jobArWorlds = new Vector3[JobCarMarkerDisplay.DefaultMaxMarkers];
     private static readonly string?[] _jobArTrackLabels = new string?[JobCarMarkerDisplay.DefaultMaxMarkers];
     private static readonly int[] _jobArCarCounts = new int[JobCarMarkerDisplay.DefaultMaxMarkers];
+    private static readonly string?[] _jobArCaptions = new string?[JobCarMarkerDisplay.DefaultMaxMarkers];
+    private static readonly int[] _jobArCaptionMeters = new int[JobCarMarkerDisplay.DefaultMaxMarkers];
     private static JobConsistStatus _jobConsistStatus = JobConsistStatus.Missing;
 
     /// <summary>Call once at the start of each Monitor HUD refresh.</summary>
@@ -691,7 +707,17 @@ internal static class TelemetryReader
             var loco = PlayerManager.LastLoco;
             if (loco == null)
             {
-                loco = TryGetUsableLoco();
+                // AR runs this every frame; the consist walk is only cheap inside a HUD tick.
+                var probeNow = Time.unscaledTime;
+                if (PerFrameProbeThrottle.Due(
+                        probeNow - _arLocoFallbackProbedAt,
+                        PerFrameProbeThrottle.ConsistResolveSeconds))
+                {
+                    _arLocoFallbackProbedAt = probeNow;
+                    _arLocoFallback = TryGetUsableLoco();
+                }
+
+                loco = _arLocoFallback;
             }
 
             if (loco == null)
@@ -727,8 +753,13 @@ internal static class TelemetryReader
     }
 
     /// <summary>Drop radar cache so UMM option changes apply immediately.</summary>
-    internal static void InvalidateLocoRadarCache() =>
+    internal static void InvalidateLocoRadarCache()
+    {
         _locoRadarCachedAt = -999f;
+        _locoRadarProbedAt = -999f;
+        _locoRadarScannedThisVisit = false;
+        _locoRadarCount = 0;
+    }
 
     /// <summary>
     /// Nearest other loco for AR radar (4.10). Excludes self / my-loco AR target / same consist.
@@ -767,10 +798,20 @@ internal static class TelemetryReader
                 dist = Mathf.Sqrt((dx * dx) + (dy * dy) + (dz * dz));
             }
 
-            caption = LocoRadarDisplay.FormatCaption(
-                _locoRadarTypeIds[index],
-                dist,
-                _locoRadarPlaceLabels[index]);
+            var meters = ArDistanceLabelCache.RoundMeters(dist);
+            if (ArDistanceLabelCache.NeedsRebuild(
+                    _locoRadarCaptions[index],
+                    _locoRadarCaptionMeters[index],
+                    meters))
+            {
+                _locoRadarCaptions[index] = LocoRadarDisplay.FormatCaption(
+                    _locoRadarTypeIds[index],
+                    dist,
+                    _locoRadarPlaceLabels[index]);
+                _locoRadarCaptionMeters[index] = meters;
+            }
+
+            caption = _locoRadarCaptions[index]!;
             return true;
         }
         catch
@@ -781,25 +822,33 @@ internal static class TelemetryReader
 
     private static void EnsureLocoRadarCache()
     {
-        if (!Main.Settings.ShowNearestLocos)
+        // One FoT per town visit — periodic 1–3 s rescans caused the rhythmic driving hitch (0.6.52).
+        // The town-proximity probe itself walks every station, so it is throttled too (0.6.54).
+        var probeNow = Time.unscaledTime;
+        if (!PerFrameProbeThrottle.Due(probeNow - _locoRadarProbedAt, PerFrameProbeThrottle.TownProximitySeconds))
+        {
+            return;
+        }
+
+        _locoRadarProbedAt = probeNow;
+
+        var optionOn = Main.Settings.ShowNearestLocos;
+        var insideTown = optionOn
+            && TryGetNearestTownSqrDistance(out var townSqr)
+            && LocoRadarScanPolicy.IsInsideTown(townSqr);
+        if (!insideTown)
         {
             _locoRadarCount = 0;
+            _locoRadarScannedThisVisit = false;
             return;
         }
 
-        // Only show other-loco AR while in a station/job zone (out-of-area = noise).
-        CollectInZoneYardIds(_inZoneYardsScratch);
-        if (_inZoneYardsScratch.Count == 0)
-        {
-            _locoRadarCount = 0;
-            return;
-        }
-
-        if (Time.unscaledTime - _locoRadarCachedAt < LocoRadarCacheSeconds)
+        if (!LocoRadarScanPolicy.ShouldScan(optionOn, insideTown, _locoRadarScannedThisVisit))
         {
             return;
         }
 
+        _locoRadarScannedThisVisit = true;
         _locoRadarCachedAt = Time.unscaledTime;
         _locoRadarCount = 0;
         for (var i = 0; i < _locoRadarCars.Length; i++)
@@ -807,6 +856,7 @@ internal static class TelemetryReader
             _locoRadarCars[i] = null;
             _locoRadarTypeIds[i] = null;
             _locoRadarPlaceLabels[i] = null;
+            _locoRadarCaptions[i] = null;
         }
 
         if (!TryGetPlayerPosition(out var px, out var py, out var pz))
@@ -815,6 +865,7 @@ internal static class TelemetryReader
         }
 
         TrainCar[] allCars;
+        var scanSw = System.Diagnostics.Stopwatch.StartNew();
         try
         {
             allCars = Object.FindObjectsOfType<TrainCar>() ?? Array.Empty<TrainCar>();
@@ -824,11 +875,14 @@ internal static class TelemetryReader
             return;
         }
 
-        var exclude = new HashSet<int>();
+        var exclude = _locoRadarExcludeScratch;
+        exclude.Clear();
         CollectLocoRadarExclusions(exclude);
 
-        var candidates = new List<LocoRadarCandidate>(8);
-        var byId = new Dictionary<int, TrainCar>(8);
+        var candidates = _locoRadarCandidateScratch;
+        candidates.Clear();
+        var byId = _locoRadarByIdScratch;
+        byId.Clear();
         for (var i = 0; i < allCars.Length; i++)
         {
             var car = allCars[i];
@@ -869,7 +923,7 @@ internal static class TelemetryReader
             byId[id] = car;
         }
 
-        var ranked = new int[LocoRadarSelection.DefaultMaxResults];
+        var ranked = _locoRadarRankedScratch;
         var n = LocoRadarSelection.RankNearest(
             candidates,
             excludeIds: null,
@@ -887,6 +941,70 @@ internal static class TelemetryReader
             _locoRadarPlaceLabels[_locoRadarCount] = TryGetLocoRadarPlaceLabel(car);
             _locoRadarCount++;
         }
+
+        scanSw.Stop();
+        if (scanSw.ElapsedMilliseconds >= RadarScanSlowMs)
+        {
+            Main.Log(HudPerfLog.FormatRadarScan(
+                scanSw.ElapsedMilliseconds,
+                allCars.Length,
+                _locoRadarCount));
+        }
+    }
+
+    /// <summary>
+    /// Squared XZ+Y distance to the nearest city station center, for the radar town gate.
+    /// Cheap: walks the small station list and reads each range's cached player distance.
+    /// </summary>
+    private static bool TryGetNearestTownSqrDistance(out float sqrDistance)
+    {
+        sqrDistance = float.MaxValue;
+        try
+        {
+            var stations = StationController.allStations;
+            if (stations == null || stations.Count == 0)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < stations.Count; i++)
+            {
+                var candidate = stations[i];
+                if (candidate == null || !candidate.StationInfoValid)
+                {
+                    continue;
+                }
+
+                var id = candidate.stationInfo?.YardID?.Trim();
+                if (string.IsNullOrEmpty(id))
+                {
+                    id = candidate.stationInfo?.Name?.Trim();
+                }
+
+                if (!LocoRadarDisplay.IsUsableCityYardId(id))
+                {
+                    continue;
+                }
+
+                var range = candidate.GetComponent<StationJobGenerationRange>();
+                if (range == null)
+                {
+                    continue;
+                }
+
+                var sqr = range.PlayerSqrDistanceFromStationCenter;
+                if (sqr < sqrDistance)
+                {
+                    sqrDistance = sqr;
+                }
+            }
+        }
+        catch
+        {
+            return false;
+        }
+
+        return sqrDistance < float.MaxValue;
     }
 
     /// <summary>How many pickup-group job AR markers (0–N).</summary>
@@ -919,11 +1037,21 @@ internal static class TelemetryReader
                 dist = Mathf.Sqrt((dx * dx) + (dy * dy) + (dz * dz));
             }
 
-            caption = JobCarMarkerDisplay.FormatCaption(
-                _jobArJobId,
-                _jobArTrackLabels[index],
-                _jobArCarCounts[index],
-                dist);
+            var meters = ArDistanceLabelCache.RoundMeters(dist);
+            if (ArDistanceLabelCache.NeedsRebuild(
+                    _jobArCaptions[index],
+                    _jobArCaptionMeters[index],
+                    meters))
+            {
+                _jobArCaptions[index] = JobCarMarkerDisplay.FormatCaption(
+                    _jobArJobId,
+                    _jobArTrackLabels[index],
+                    _jobArCarCounts[index],
+                    dist);
+                _jobArCaptionMeters[index] = meters;
+            }
+
+            caption = _jobArCaptions[index]!;
             return true;
         }
         catch
@@ -934,6 +1062,16 @@ internal static class TelemetryReader
 
     private static void EnsureJobCarCache()
     {
+        // Resolving job identity walks the player inventory (list + set + closure), so it may not
+        // run once per AR marker per frame — that was a top GC-cadence source (0.6.54).
+        var probeNow = Time.unscaledTime;
+        if (!PerFrameProbeThrottle.Due(probeNow - _jobCarProbedAt, PerFrameProbeThrottle.JobIdentitySeconds))
+        {
+            return;
+        }
+
+        _jobCarProbedAt = probeNow;
+
         Job? job = null;
         var jobTaken = false;
         string? jobId = null;
@@ -969,6 +1107,7 @@ internal static class TelemetryReader
         {
             _jobArTrackLabels[i] = null;
             _jobArCarCounts[i] = 0;
+            _jobArCaptions[i] = null;
         }
 
         if (job == null || string.IsNullOrEmpty(jobId))
@@ -2533,7 +2672,8 @@ internal static class TelemetryReader
     /// <summary>
     /// One Player.log line per board per side while it is within the trace window, so a board that
     /// never takes ownership shows why (corridor, right-hand, forward align, or parse).
-    /// Suppressed at standstill — facing wobble re-flips side and storms the log (0.6.36).
+    /// Suppressed at standstill — facing wobble re-flips side and storms the log (0.6.36) — and
+    /// behind the Tier 2 telemetry-log opt-in, since each line re-parses the board (0.6.50).
     /// </summary>
     private static void TraceBoardPass(
         SignDebug sign,
@@ -2542,8 +2682,15 @@ internal static class TelemetryReader
         SpeedLimitBoardFacing.Eval eval,
         float speedKmh)
     {
-        if (!BoardTraceLogGate.ShouldEmit(speedKmh, LimitDisplayHold.StandstillMaxSpeedKmh))
+        var logsOn = Tier2TelemetryLogGate.Enabled;
+        if (!BoardTraceLogGate.ShouldEmit(speedKmh, LimitDisplayHold.StandstillMaxSpeedKmh, logsOn))
         {
+            if (!logsOn && BoardTraceSide.Count > 0)
+            {
+                // Sides went stale while logs were off; re-trace from scratch on the next opt-in.
+                BoardTraceSide.Clear();
+            }
+
             return;
         }
 

@@ -52,22 +52,40 @@ public static class ArEdgeStackLayout
         float outermostX,
         float separationPixels,
         float[] sortKeys,
-        float[] outXs)
+        float[] outXs) =>
+        AssignStackedXs(edge, outermostX, separationPixels, sortKeys, outXs, sortKeys?.Length ?? 0);
+
+    /// <summary>
+    /// Count-taking overload so per-frame callers can pass reusable buffers instead of exact-size
+    /// arrays. Ranks in place (n is a handful of markers) — no order buffer, no comparison delegate,
+    /// because this runs inside OnGUI on the GC-cadence path.
+    /// </summary>
+    public static void AssignStackedXs(
+        ArHorizontalEdge edge,
+        float outermostX,
+        float separationPixels,
+        float[] sortKeys,
+        float[] outXs,
+        int count)
     {
         if (sortKeys == null || outXs == null)
         {
             throw new ArgumentNullException(sortKeys == null ? nameof(sortKeys) : nameof(outXs));
         }
 
-        var n = sortKeys.Length;
-        if (outXs.Length < n)
+        if (count < 0 || count > sortKeys.Length)
+        {
+            throw new ArgumentOutOfRangeException(nameof(count));
+        }
+
+        if (outXs.Length < count)
         {
             throw new ArgumentException("outXs shorter than sortKeys.", nameof(outXs));
         }
 
-        if (edge == ArHorizontalEdge.None || n == 0)
+        if (edge == ArHorizontalEdge.None || count == 0)
         {
-            for (var i = 0; i < n; i++)
+            for (var i = 0; i < count; i++)
             {
                 outXs[i] = outermostX;
             }
@@ -76,22 +94,25 @@ public static class ArEdgeStackLayout
         }
 
         var inward = edge == ArHorizontalEdge.Left ? 1f : -1f;
-        var order = new int[n];
-        for (var i = 0; i < n; i++)
+        for (var i = 0; i < count; i++)
         {
-            order[i] = i;
-        }
+            // Slot = how many markers sort ahead of this one (higher key first; lower index wins ties).
+            var slot = 0;
+            for (var j = 0; j < count; j++)
+            {
+                if (j == i)
+                {
+                    continue;
+                }
 
-        Array.Sort(order, (a, b) =>
-        {
-            var cmp = sortKeys[b].CompareTo(sortKeys[a]); // higher key first (outer)
-            return cmp != 0 ? cmp : a.CompareTo(b);
-        });
+                var cmp = sortKeys[j].CompareTo(sortKeys[i]);
+                if (cmp > 0 || (cmp == 0 && j < i))
+                {
+                    slot++;
+                }
+            }
 
-        for (var slot = 0; slot < n; slot++)
-        {
-            var index = order[slot];
-            outXs[index] = outermostX + slot * separationPixels * inward;
+            outXs[i] = outermostX + slot * separationPixels * inward;
         }
     }
 }

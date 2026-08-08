@@ -26,6 +26,12 @@ public sealed class ArWaypointOverlay : MonoBehaviour
     private const int MaxFrames =
         3 + LocoRadarSelection.DefaultMaxResults + JobCarMarkerDisplay.DefaultMaxMarkers;
 
+    private const int LocoSlot = 0;
+    private const int StationSlot = 1;
+    private const int PinSlot = 2;
+    private const int RadarSlotBase = 3;
+    private const int JobCarSlotBase = RadarSlotBase + LocoRadarSelection.DefaultMaxResults;
+
     private GUIStyle? _labelStyle;
     private Texture2D? _locoIcon;
     private Texture2D? _stationIcon;
@@ -44,6 +50,29 @@ public sealed class ArWaypointOverlay : MonoBehaviour
     private readonly MarkerMotion[] _jobCarMotions = new MarkerMotion[JobCarMarkerDisplay.DefaultMaxMarkers];
 
     private readonly MarkerFrame[] _frames = new MarkerFrame[MaxFrames];
+
+    // OnGUI runs every frame for every marker: measuring and packing must not allocate.
+    private readonly GUIContent _measureContent = new("");
+    private readonly string?[] _measuredLabels = new string?[MaxFrames];
+    private readonly Vector2[] _measuredSizes = new Vector2[MaxFrames];
+    private readonly string?[] _distLabels = new string?[MaxFrames];
+    private readonly int[] _distLabelMeters = new int[MaxFrames];
+    private readonly float[] _packXs = new float[MaxFrames];
+    private readonly float[] _packYs = new float[MaxFrames];
+    private readonly float[] _packHalfWidths = new float[MaxFrames];
+    private readonly float[] _packHalfHeights = new float[MaxFrames];
+    private readonly int[] _edgeIndices = new int[MaxFrames];
+    private readonly float[] _edgeKeys = new float[MaxFrames];
+    private readonly float[] _edgeXs = new float[MaxFrames];
+
+    private static readonly TryGetWorldPosition LocoPositionGetter =
+        TelemetryReader.TryGetArLocoWorldPosition;
+
+    private static readonly TryGetWorldPosition StationPositionGetter =
+        TelemetryReader.TryGetArStationOfficeWorldPosition;
+
+    private static readonly TryGetWorldPosition PinPositionGetter =
+        TelemetryReader.TryGetArPinWorldPosition;
 
     private struct MarkerMotion
     {
@@ -68,6 +97,7 @@ public sealed class ArWaypointOverlay : MonoBehaviour
         public Color Color;
         public Texture2D? Icon;
         public string DistLabel;
+        public Vector2 LabelSize;
         public bool Behind;
         public float BehindBearing;
         public float StickyX;
@@ -110,7 +140,8 @@ public sealed class ArWaypointOverlay : MonoBehaviour
                 cam,
                 playerPos,
                 ArWaypointKind.Loco,
-                TelemetryReader.TryGetArLocoWorldPosition,
+                LocoSlot,
+                LocoPositionGetter,
                 LocoColor,
                 _locoIcon,
                 ref _locoMotion,
@@ -124,7 +155,8 @@ public sealed class ArWaypointOverlay : MonoBehaviour
                 cam,
                 playerPos,
                 ArWaypointKind.Station,
-                TelemetryReader.TryGetArStationOfficeWorldPosition,
+                StationSlot,
+                StationPositionGetter,
                 StationColor,
                 _stationIcon,
                 ref _stationMotion,
@@ -138,7 +170,8 @@ public sealed class ArWaypointOverlay : MonoBehaviour
                 cam,
                 playerPos,
                 ArWaypointKind.Pin,
-                TelemetryReader.TryGetArPinWorldPosition,
+                PinSlot,
+                PinPositionGetter,
                 PinColor,
                 _pinIcon,
                 ref _pinMotion,
@@ -165,6 +198,7 @@ public sealed class ArWaypointOverlay : MonoBehaviour
                     cam,
                     playerPos,
                     ArWaypointKind.OtherLoco,
+                    RadarSlotBase + r,
                     world,
                     caption,
                     OtherLocoColor,
@@ -201,6 +235,7 @@ public sealed class ArWaypointOverlay : MonoBehaviour
                     cam,
                     playerPos,
                     ArWaypointKind.JobCar,
+                    JobCarSlotBase + j,
                     world,
                     caption,
                     JobCarColor,
@@ -250,6 +285,7 @@ public sealed class ArWaypointOverlay : MonoBehaviour
         Camera cam,
         Vector3 playerPos,
         ArWaypointKind kind,
+        int slot,
         TryGetWorldPosition getter,
         Color color,
         Texture2D? icon,
@@ -271,6 +307,7 @@ public sealed class ArWaypointOverlay : MonoBehaviour
             cam,
             playerPos,
             kind,
+            slot,
             world,
             labelOverride,
             color,
@@ -283,6 +320,7 @@ public sealed class ArWaypointOverlay : MonoBehaviour
         Camera cam,
         Vector3 playerPos,
         ArWaypointKind kind,
+        int slot,
         Vector3 world,
         string? labelOverride,
         Color color,
@@ -304,11 +342,9 @@ public sealed class ArWaypointOverlay : MonoBehaviour
         var dy = world.y - playerPos.y;
         var dz = world.z - playerPos.z;
         var dist = Mathf.Sqrt(dx * dx + dy * dy + dz * dz);
-        var distLabel = labelOverride ?? ArMarkerDisplay.FormatDistanceOnly(dist);
+        var distLabel = labelOverride ?? DistanceLabel(slot, dist);
 
-        var labelSize = string.IsNullOrEmpty(distLabel)
-            ? Vector2.zero
-            : _labelStyle!.CalcSize(new GUIContent(distLabel));
+        var labelSize = MeasureLabel(slot, distLabel);
         var iconH = icon != null ? IconPixels : 22f;
         var iconW = icon != null ? IconPixels : 22f;
         var contentW = Mathf.Max(iconW, labelSize.x) + 8f + 8f;
@@ -411,6 +447,7 @@ public sealed class ArWaypointOverlay : MonoBehaviour
             Color = color,
             Icon = icon,
             DistLabel = distLabel,
+            LabelSize = labelSize,
             Behind = behind,
             BehindBearing = bearing,
             StickyX = stickyX,
@@ -421,7 +458,7 @@ public sealed class ArWaypointOverlay : MonoBehaviour
         return true;
     }
 
-    private static void ApplyEdgeStackOffsets(MarkerFrame[] frames, int n)
+    private void ApplyEdgeStackOffsets(MarkerFrame[] frames, int n)
     {
         if (n < 2)
         {
@@ -432,14 +469,14 @@ public sealed class ArWaypointOverlay : MonoBehaviour
         ApplyEdgeStackForSide(frames, n, ArHorizontalEdge.Right);
     }
 
-    private static void ApplyEdgeStackForSide(MarkerFrame[] frames, int n, ArHorizontalEdge side)
+    private void ApplyEdgeStackForSide(MarkerFrame[] frames, int n, ArHorizontalEdge side)
     {
         var margin = ArMarkerProjection.DefaultEdgeMarginPixels;
         var outermost = side == ArHorizontalEdge.Left
             ? margin
             : Math.Max(margin, Screen.width - margin);
 
-        var indices = new int[n];
+        var indices = _edgeIndices;
         var count = 0;
         for (var i = 0; i < n; i++)
         {
@@ -465,14 +502,20 @@ public sealed class ArWaypointOverlay : MonoBehaviour
             return;
         }
 
-        var keys = new float[count];
-        var xs = new float[count];
+        var keys = _edgeKeys;
+        var xs = _edgeXs;
         for (var i = 0; i < count; i++)
         {
             keys[i] = ArEdgeStackLayout.OutwardSortKey(side, frames[indices[i]].BehindBearing);
         }
 
-        ArEdgeStackLayout.AssignStackedXs(side, outermost, ArEdgeStackLayout.DefaultSeparationPixels, keys, xs);
+        ArEdgeStackLayout.AssignStackedXs(
+            side,
+            outermost,
+            ArEdgeStackLayout.DefaultSeparationPixels,
+            keys,
+            xs,
+            count);
         for (var i = 0; i < count; i++)
         {
             frames[indices[i]].StickyX = xs[i];
@@ -489,10 +532,10 @@ public sealed class ArWaypointOverlay : MonoBehaviour
             return;
         }
 
-        var xs = new float[n];
-        var ys = new float[n];
-        var halfW = new float[n];
-        var halfH = new float[n];
+        var xs = _packXs;
+        var ys = _packYs;
+        var halfW = _packHalfWidths;
+        var halfH = _packHalfHeights;
         for (var i = 0; i < n; i++)
         {
             ref var f = ref frames[i];
@@ -507,7 +550,7 @@ public sealed class ArWaypointOverlay : MonoBehaviour
                 ys[i] = f.StickyGuiCenter;
             }
 
-            EstimateMarkerHalfExtents(f.Icon, f.DistLabel, out halfW[i], out halfH[i]);
+            EstimateMarkerHalfExtents(f.Icon, f.LabelSize, out halfW[i], out halfH[i]);
         }
 
         ArScreenClusterLayout.PackNonOverlapping(
@@ -552,13 +595,44 @@ public sealed class ArWaypointOverlay : MonoBehaviour
         }
     }
 
-    private void EstimateMarkerHalfExtents(Texture2D? icon, string? distLabel, out float halfW, out float halfH)
+    /// <summary>Caption text only changes on a whole-meter step — otherwise reuse the same string.</summary>
+    private string DistanceLabel(int slot, float distanceMeters)
+    {
+        var meters = ArDistanceLabelCache.RoundMeters(distanceMeters);
+        if (ArDistanceLabelCache.NeedsRebuild(_distLabels[slot], _distLabelMeters[slot], meters))
+        {
+            _distLabels[slot] = ArMarkerDisplay.FormatDistanceOnly(distanceMeters);
+            _distLabelMeters[slot] = meters;
+        }
+
+        return _distLabels[slot]!;
+    }
+
+    /// <summary>
+    /// One <see cref="GUIStyle.CalcSize"/> per marker per label change instead of three per frame.
+    /// The style has a fixed font size, so a cached size stays valid until the text changes.
+    /// </summary>
+    private Vector2 MeasureLabel(int slot, string? label)
+    {
+        if (string.IsNullOrEmpty(label) || _labelStyle == null)
+        {
+            return Vector2.zero;
+        }
+
+        if (HudBarMeasureCache.NeedsRemeasure(_measuredLabels[slot], label!))
+        {
+            _measureContent.text = label;
+            _measuredSizes[slot] = _labelStyle.CalcSize(_measureContent);
+            _measuredLabels[slot] = label;
+        }
+
+        return _measuredSizes[slot];
+    }
+
+    private static void EstimateMarkerHalfExtents(Texture2D? icon, Vector2 labelSize, out float halfW, out float halfH)
     {
         var iconH = icon != null ? IconPixels : 22f;
         var iconW = icon != null ? IconPixels : 22f;
-        var labelSize = string.IsNullOrEmpty(distLabel)
-            ? Vector2.zero
-            : _labelStyle!.CalcSize(new GUIContent(distLabel!));
         var width = Mathf.Max(iconW, labelSize.x) + 8f + 8f; // content pad + plate
         var height = iconH + (labelSize.y > 0 ? labelSize.y + 2f : 0f) + 4f; // plate
         halfW = width * 0.5f;
@@ -653,6 +727,7 @@ public sealed class ArWaypointOverlay : MonoBehaviour
             frame.Color,
             frame.Icon,
             frame.DistLabel,
+            frame.LabelSize,
             guiYIsCenter: true,
             emphasize);
     }
@@ -664,12 +739,10 @@ public sealed class ArWaypointOverlay : MonoBehaviour
         Color color,
         Texture2D? icon,
         string? distLabel,
+        Vector2 labelSize,
         bool guiYIsCenter,
         bool emphasize)
     {
-        var labelSize = string.IsNullOrEmpty(distLabel)
-            ? Vector2.zero
-            : _labelStyle!.CalcSize(new GUIContent(distLabel!));
         var iconH = icon != null ? IconPixels : 22f;
         var iconW = icon != null ? IconPixels : 22f;
 
@@ -709,6 +782,12 @@ public sealed class ArWaypointOverlay : MonoBehaviour
 
     private void EmitArDebug(bool loco, bool station, bool pin)
     {
+        if (!Tier2TelemetryLogGate.Enabled)
+        {
+            _hasArDebug = false;
+            return;
+        }
+
         var snap = new ArWaypointDebugSnapshot(loco, station, pin);
         ArWaypointDebugSnapshot? previous = null;
         if (_hasArDebug)

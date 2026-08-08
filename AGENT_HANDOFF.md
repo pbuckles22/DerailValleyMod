@@ -117,8 +117,10 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 |--|--|
 | **Project** | *Yard Master Suite* (UMM / Harmony / net48) |
 | **MVP** | **Epic 1** System Monitor HUD |
-| **Version (`main`)** | **0.6.28** *(4.13)* — branch WIP **0.6.49** (`feature/4.13-unnamed-y-rails`, cab Limit cache-only) |
-| **Active branch** | `feature/4.13-unnamed-y-rails` |
+| **Version (`main`)** | **0.6.28** *(4.13)* |
+| **Active branch** | `fix/hitch-bisect-from-0.6.28` (walk-back mission) |
+| **Hitch park** | `wip/hitch-park-0.6.54` — 0.6.50–0.6.54 GC hunt parked (**do not merge**); `feature/4.13-unnamed-y-rails` stays @ `55347ae` (0.6.49) |
+| **Baseline** | `9e00493` / **0.6.28** — last check-in before first freeze @ 0.6.33 |
 
 **Shipped on `main`**
 
@@ -146,7 +148,7 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 
 **Next**
 
-1. **Tier 2 @ UMM 0.6.48** — Align blocks ≤500 ms for ≤8 on-route board attaches **before** OK. Log `align sync attached=… in …ms`. No async remainder after Align.
+1. **Hitch walk-back mission** — park @ `wip/hitch-park-0.6.54`; investigate from `9e00493` / 0.6.28; smoke baseline → re-land slices A–D (mini-map → rebuild gate → HUD declutter → settings/log/radar keepers). **Do not merge** park or FAIL slices to `main`. First FAIL slice = primary suspect.
 2. **4.13 follow-ons** — MFMB fence retune; mini-map UMM resize; loco finder (ask). *3.7 stash:* `park 3.7 WIP 0.6.28`.
 3. **3.7 Multi-step Maps** — Switch List TurnAround inject (WIP parked). **3.1b iced**.
 4. Parking: 3.1b ghost/spawn; place ghost / Snap office under-mesh; Switch List couple auto-advance / arrival-track split; flight-sim HUD; AR house hide; DM3; session reset; 1.17 #4 behind-seed.

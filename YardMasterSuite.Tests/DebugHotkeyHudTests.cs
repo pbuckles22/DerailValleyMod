@@ -10,6 +10,7 @@ public class DebugHotkeyHudLineTests
     {
         var line = DebugHotkeyHudLine.Format();
         Assert.Contains("Shift+F1", line);
+        Assert.Contains("Shift+F2 Logs", line);
         Assert.Contains("F5 DH4/DE6", line);
         Assert.Contains("F6 Load", line);
         Assert.Contains("F7 Cargo", line);

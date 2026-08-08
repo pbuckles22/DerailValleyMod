@@ -16,6 +16,16 @@ public static class HudPerfLog
         $"{Prefix} train: total={totalMs}ms fluids={fluidsMs}ms limit={limitMs}ms "
         + $"massLevers={massLeversMs}ms rest={restMs}ms";
 
+    /// <summary>Other-loco radar scene scan — the 1 Hz hitch suspect (0.6.51).</summary>
+    public static string FormatRadarScan(long scanMs, int carsSeen, int kept) =>
+        $"{Prefix} radar: scan={scanMs}ms cars={carsSeen} kept={kept}";
+
+    /// <summary>
+    /// Gen-0 cadence for the rhythmic hitch (0.6.54). Player.log line, one per probe window.
+    /// </summary>
+    public static string FormatGcCadence(int gen0InWindow, float windowSeconds, long heapBytes) =>
+        $"{Prefix} gc: gen0={gen0InWindow}/{windowSeconds:0.#}s heap={heapBytes / (1024 * 1024)}MB";
+
     public static string FormatLimitScan(
         long totalMs,
         long signFoTMs,

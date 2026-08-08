@@ -45,6 +45,10 @@ powershell -ExecutionPolicy Bypass -File package.ps1 -NoArchive -OutputDirectory
 
 **Logging:** lifecycle + discrete `T2` on meaningful change. No per-frame spam. Speed/grade/tonnage are not logged every tick.
 
+**Telemetry logs are opt-in (0.6.50):** press **Shift+F2** in-world (`T2 telemetry-logs: on`) before collecting evidence. Change-driven channels — `T2 heading` / `look-at` / `local-car` / `coupler` / `consist` / `power` / `limit change` / `pos` / `mark` / `station` / `path` / `job` / `ar`, plus `T2 limit take/skip` board traces — stay silent in normal play because look-at and heading move with the camera, so they wrote to Player.log every HUD tick while looking around. Enabling re-logs one `init` line per channel. Lifecycle, hotkey feedback, `T2 perf`, and action lines (path, switch-list, teleport, minimap) are never gated. Gate: `YardMasterSuite.Core.Tier2TelemetryLogGate`.
+
+**GC cadence probe (0.6.54, ungated):** `T2 perf gc: gen0=<count>/<window>s heap=<MB>MB` — at most one line per 5 s, and only when a gen-0 collection happened in that window. This is the pass/fail number for the rhythmic ~2.5 s hitch: a hitch every ~2.5 s means roughly two gen-0 collections per window. Grep Player.log after a walk/drive smoke instead of judging the stutter by eye. Gate: `YardMasterSuite.Core.GcCadenceProbe`.
+
 **Retro:** each new Monitor story ships `T2 <topic> …` lines and a checklist below.
 
 ### Lifecycle (every session)
@@ -380,7 +384,7 @@ Second bar includes `Track SM-O6I` on yard tracks. **Omit** the Track segment on
 
 Former `Next: … [N km]` on loco bar when fluids low — **removed**. Smoke A1–6 **PASS** @ 0.4.54 then product cut. Cut verify @ **0.4.55** (player 2026-07-25): F8/F9 low fluids, mainline — **no** `Next:` chip.
 
-**Fluid HUD debug inject (kept):** in-world, usable loco (debug gate on — **Shift+F1** toggles; bottom legend HUD when on):
+**Fluid HUD debug inject (kept):** in-world, usable loco (debug gate on — **Shift+F1** toggles; bottom legend HUD when on; **Shift+F2** toggles telemetry logs — 0.6.50):
 - **F8** — cycle **Fluids**: real → low oil / full fuel → low fuel / full oil → both low → both full → real
 - Player.log: `T2 fluid-debug: …`
 

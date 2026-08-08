@@ -22,6 +22,9 @@ public sealed class MonitorHudDriver : MonoBehaviour
     /// <summary>Shift+F1 = toggle Tier 2 debug hotkeys (and bottom legend HUD).</summary>
     private const KeyCode DebugToggleKey = KeyCode.F1;
 
+    /// <summary>Shift+F2 = toggle change-driven <c>T2 …</c> telemetry lines (off in normal play).</summary>
+    private const KeyCode TelemetryLogToggleKey = KeyCode.F2;
+
     /// <summary>F5 = cycle DH4/DE6 licenses: real → DH4 only → DH4+DE6 → real.</summary>
     private const KeyCode LocoLicenseDebugKey = KeyCode.F5;
 
@@ -70,6 +73,8 @@ public sealed class MonitorHudDriver : MonoBehaviour
 
     private float _elapsed;
     private float _etaRefreshAt;
+    private float _gcProbeAt;
+    private int _gcProbeGen0;
     private string? _trainLabel;
     private string? _localLabel;
     private string? _jobLabel;
@@ -90,6 +95,20 @@ public sealed class MonitorHudDriver : MonoBehaviour
     private Texture2D? _jobTex;
     private Texture2D? _alwaysOnTex;
     private Texture2D? _debugHotkeyTex;
+
+    /// <summary>Reused across OnGUI — <c>new GUIContent</c> every draw was a GC source.</summary>
+    private readonly GUIContent _barMeasureContent = new();
+    private string? _alwaysOnMeasureLabel;
+    private float _alwaysOnMeasureWidth;
+    private string? _trainMeasureLabel;
+    private float _trainMeasureWidth;
+    private string? _localMeasureLabel;
+    private float _localMeasureWidth;
+    private string? _jobMeasureLabel;
+    private float _jobMeasureWidth;
+    private string? _debugMeasureLabel;
+    private float _debugMeasureWidth;
+    private int _barMeasureScreenWidth = -1;
 
     private bool _hasConsistDebug;
     private bool _lastHasLoco;
@@ -151,6 +170,8 @@ public sealed class MonitorHudDriver : MonoBehaviour
     private string? _lastActiveJobBonus;
     private string? _lastActiveJobPreview;
 
+    private bool _tier2LogsEmitting;
+
     private void OnDisable()
     {
         // Styles touch GUI.skin — only build them from OnGUI (EnsureStyles).
@@ -177,6 +198,7 @@ public sealed class MonitorHudDriver : MonoBehaviour
         PollParkMarkHotkey();
         PollPathDestHotkey();
         PollDebugToggleHotkey();
+        PollTelemetryLogToggleHotkey();
         // QOL: turntable always available in-world (Epic 4), not behind debug gate.
         PollTurntableHotkeys();
         if (DebugHotkeyGate.Enabled)
@@ -195,6 +217,8 @@ public sealed class MonitorHudDriver : MonoBehaviour
 
             PollCouplerDebugHotkey();
         }
+
+        SampleGcCadence();
 
         _elapsed += Time.unscaledDeltaTime;
         if (_elapsed < RefreshSeconds)
@@ -223,18 +247,7 @@ public sealed class MonitorHudDriver : MonoBehaviour
                 _pathLabel,
                 MonitorHudLine.Join(new[] { _facingLabel ?? "", exitLabel ?? "" }),
                 TelemetryReader.CurrentClockLabel());
-            EmitConsistDebugIfNeeded();
-            EmitLocalCarDebugIfNeeded();
-            EmitLookAtDebugIfNeeded();
-            EmitCouplerDebugIfNeeded();
-            EmitPowerDebugIfNeeded();
-            EmitSpeedLimitDebugIfNeeded();
-            EmitHeadingDebugIfNeeded();
-            EmitPositionDebugIfNeeded();
-            EmitParkDebugIfNeeded();
-            EmitStationWaypointDebugIfNeeded();
-            EmitPathCheckDebugIfNeeded();
-            EmitActiveJobDebugIfNeeded();
+            EmitTier2DebugLinesIfEnabled();
             RefreshRemainingEtaIfDue();
         }
         finally
@@ -256,6 +269,33 @@ public sealed class MonitorHudDriver : MonoBehaviour
         {
             Main.Log(line);
         }
+    }
+
+    /// <summary>
+    /// The ~2.5 s hitch is a stop-the-world collection, so log the gen-0 rate rather than guessing
+    /// from video. Ungated: it must show up in a normal play smoke, and it is one line per window.
+    /// </summary>
+    private void SampleGcCadence()
+    {
+        var now = Time.unscaledTime;
+        var gen0 = System.GC.CollectionCount(0);
+        if (_gcProbeAt <= 0f)
+        {
+            _gcProbeAt = now;
+            _gcProbeGen0 = gen0;
+            return;
+        }
+
+        var window = now - _gcProbeAt;
+        var collections = gen0 - _gcProbeGen0;
+        if (!GcCadenceProbe.ShouldLog(window, collections))
+        {
+            return;
+        }
+
+        _gcProbeAt = now;
+        _gcProbeGen0 = gen0;
+        Main.Log(HudPerfLog.FormatGcCadence(collections, window, System.GC.GetTotalMemory(false)));
     }
 
     private void PollParkMarkHotkey()
@@ -316,6 +356,18 @@ public sealed class MonitorHudDriver : MonoBehaviour
         }
 
         Main.Log($"T2 debug-hotkeys: {(on ? "on" : "off")}");
+    }
+
+    private void PollTelemetryLogToggleHotkey()
+    {
+        var shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+        if (!shift || !Input.GetKeyDown(TelemetryLogToggleKey))
+        {
+            return;
+        }
+
+        var on = Tier2TelemetryLogGate.Toggle();
+        Main.Log($"T2 telemetry-logs: {(on ? "on" : "off")}");
     }
 
     private void PollFluidDebugHotkeys()
@@ -497,6 +549,55 @@ public sealed class MonitorHudDriver : MonoBehaviour
             downAt = -1f;
             didHold = false;
         }
+    }
+
+    /// <summary>
+    /// Change-driven <c>T2 …</c> lines. Off in normal play: look-at and heading move with the camera,
+    /// so these channels used to write to Player.log every HUD tick while looking around (0.6.50).
+    /// </summary>
+    private void EmitTier2DebugLinesIfEnabled()
+    {
+        var action = Tier2TelemetryLogGate.Decide(Tier2TelemetryLogGate.Enabled, _tier2LogsEmitting);
+        _tier2LogsEmitting = action != Tier2LogAction.Skip;
+        if (action == Tier2LogAction.Skip)
+        {
+            return;
+        }
+
+        if (action == Tier2LogAction.ResetThenEmit)
+        {
+            ForgetTier2DebugBaselines();
+        }
+
+        EmitConsistDebugIfNeeded();
+        EmitLocalCarDebugIfNeeded();
+        EmitLookAtDebugIfNeeded();
+        EmitCouplerDebugIfNeeded();
+        EmitPowerDebugIfNeeded();
+        EmitSpeedLimitDebugIfNeeded();
+        EmitHeadingDebugIfNeeded();
+        EmitPositionDebugIfNeeded();
+        EmitParkDebugIfNeeded();
+        EmitStationWaypointDebugIfNeeded();
+        EmitPathCheckDebugIfNeeded();
+        EmitActiveJobDebugIfNeeded();
+    }
+
+    /// <summary>Baselines went stale while logs were off — re-log one <c>init</c> line per channel.</summary>
+    private void ForgetTier2DebugBaselines()
+    {
+        _hasConsistDebug = false;
+        _hasLocalDebug = false;
+        _hasLookAtDebug = false;
+        _hasCouplerDebug = false;
+        _hasPowerDebug = false;
+        _hasLimitDebug = false;
+        _hasHeadingDebug = false;
+        _hasPositionDebug = false;
+        _hasParkDebug = false;
+        _hasStationDebug = false;
+        _hasPathDebug = false;
+        _hasActiveJobDebug = false;
     }
 
     private void EmitSpeedLimitDebugIfNeeded()
@@ -766,24 +867,58 @@ public sealed class MonitorHudDriver : MonoBehaviour
 
         EnsureStyles();
 
+        if (_barMeasureScreenWidth != Screen.width)
+        {
+            _barMeasureScreenWidth = Screen.width;
+            _alwaysOnMeasureLabel = null;
+            _trainMeasureLabel = null;
+            _localMeasureLabel = null;
+            _jobMeasureLabel = null;
+            _debugMeasureLabel = null;
+        }
+
         // Stack top → bottom: always-on fixed first, then loco → look-at → job.
         var y = MonitorHudStackLayout.Pad;
 
-        y = DrawCenteredBar(_alwaysOnLabel, _alwaysOnStyle!, y) + MonitorHudStackLayout.Gap;
+        y = DrawCenteredBar(
+                _alwaysOnLabel,
+                _alwaysOnStyle!,
+                y,
+                ref _alwaysOnMeasureLabel,
+                ref _alwaysOnMeasureWidth)
+            + MonitorHudStackLayout.Gap;
 
         if (_trainLabel != null)
         {
-            y = DrawCenteredBar(_trainLabel, _trainStyle!, y) + MonitorHudStackLayout.Gap;
+            y = DrawCenteredBar(
+                    _trainLabel,
+                    _trainStyle!,
+                    y,
+                    ref _trainMeasureLabel,
+                    ref _trainMeasureWidth)
+                + MonitorHudStackLayout.Gap;
         }
 
         if (_localLabel != null)
         {
-            y = DrawCenteredBar(_localLabel, _localStyle!, y) + MonitorHudStackLayout.Gap;
+            y = DrawCenteredBar(
+                    _localLabel,
+                    _localStyle!,
+                    y,
+                    ref _localMeasureLabel,
+                    ref _localMeasureWidth)
+                + MonitorHudStackLayout.Gap;
         }
 
         if (_jobLabel != null)
         {
-            y = DrawCenteredBar(_jobLabel, _jobStyle!, y) + MonitorHudStackLayout.Gap;
+            y = DrawCenteredBar(
+                    _jobLabel,
+                    _jobStyle!,
+                    y,
+                    ref _jobMeasureLabel,
+                    ref _jobMeasureWidth)
+                + MonitorHudStackLayout.Gap;
         }
 
         LastStackBottomGuiY = y;
@@ -791,46 +926,36 @@ public sealed class MonitorHudDriver : MonoBehaviour
         if (_debugHotkeyLabel != null)
         {
             var bottomY = Screen.height - MonitorHudStackLayout.Pad - MonitorHudStackLayout.BarHeight;
-            DrawCenteredBar(_debugHotkeyLabel, _debugHotkeyStyle!, bottomY);
+            DrawCenteredBar(
+                _debugHotkeyLabel,
+                _debugHotkeyStyle!,
+                bottomY,
+                ref _debugMeasureLabel,
+                ref _debugMeasureWidth);
         }
     }
 
-    private float DrawCenteredBar(string label, GUIStyle style, float y)
+    private float DrawCenteredBar(
+        string label,
+        GUIStyle style,
+        float y,
+        ref string? cachedLabel,
+        ref float cachedWidth)
     {
-        var measure = StripRichText(label);
+        // OnGUI can run twice per frame; stripping + CalcSize every call filled the heap (~2.5 s GC).
+        if (HudBarMeasureCache.NeedsRemeasure(cachedLabel, label))
+        {
+            cachedLabel = label;
+            _barMeasureContent.text = HudRichText.StripTags(label);
+            cachedWidth = Mathf.Ceil(style.CalcSize(_barMeasureContent).x);
+        }
+
         // Grow from content only (DESIGN_SYSTEM). Style padding is already in CalcSize —
         // do not floor to a wide min (showed empty right pad after Pos was removed).
-        var width = Mathf.Ceil(style.CalcSize(new GUIContent(measure)).x);
+        var width = cachedWidth;
         var x = Mathf.Max(MonitorHudStackLayout.Pad, (Screen.width - width) * 0.5f);
         GUI.Label(new Rect(x, y, width, MonitorHudStackLayout.BarHeight), label, style);
         return y + MonitorHudStackLayout.BarHeight;
-    }
-
-    private static string StripRichText(string text)
-    {
-        var sb = new System.Text.StringBuilder(text.Length);
-        var inTag = false;
-        foreach (var ch in text)
-        {
-            if (ch == '<')
-            {
-                inTag = true;
-                continue;
-            }
-
-            if (ch == '>')
-            {
-                inTag = false;
-                continue;
-            }
-
-            if (!inTag)
-            {
-                sb.Append(ch);
-            }
-        }
-
-        return sb.ToString();
     }
 
     private void EnsureStyles()
