@@ -10,7 +10,7 @@ Durable ranked backlog. Handoff notes may mention debt; **promote** anything tha
 
 
 
-**Last full pass:** handoff — 2026-08-05 (4.13 @ 0.6.28).
+**Last full pass:** handoff — 2026-08-08 (hitch walk-back **DEFERRED**; park @ `wip/hitch-park-0.6.54`).
 
 
 
@@ -42,7 +42,9 @@ High ROI; frequent pain; not blocking.
 
 
 
-- [ ] **4.13 follow-on — unnamed/`#Y` rails on mini-map** — schematic currently named catalog only; retune MFMB office fence after coverage improves.
+- [ ] **Rhythmic hitch walk-back — DEFERRED** — Mod-off proved ours @ 0.6.54. Park `wip/hitch-park-0.6.54` @ `06528bd`; bisect branch `fix/hitch-bisect-from-0.6.28` deployed **0.6.28**. Baseline smoke + slices A–D not run. Resume per `TEST_PLAN` *Hitch walk-back*. Do not merge park.
+
+- [ ] **4.13 follow-on — unnamed/`#Y` rails on mini-map** — schematic currently named catalog only; retune MFMB office fence after coverage improves. (Also parked on `feature/4.13-unnamed-y-rails` @ `55347ae` / 0.6.49 + park tip.)
 
 - [ ] **3.1 place ghost / facing cue** — MVP chip-only; players can’t preview landing until Confirm. Add re-rail-style ghost (and Flip cue) on look-at aim.
 

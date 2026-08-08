@@ -541,6 +541,23 @@ In-world **`M`** toggle; track schematic + pin/heading + Office/TT; off-map edge
 - [x] Tier 1: `YardMiniMapSmokeRegressionTests` / office-fence gates
 - [ ] Ship commit when asked → **done** (CMPH 2026-08-05)
 
+### Hitch walk-back (rhythmic ~2.5 s) — **DEFERRED** 2026-08-08
+
+Goal: prove `9e00493` / **0.6.28** cadence-clean, then re-land product slices until the hitch returns. Stay off `main`; do not merge hitch park.
+
+| Step | Status |
+|------|--------|
+| Park `wip/hitch-park-0.6.54` @ `06528bd` (0.6.50–0.6.54) | **done** — do not merge |
+| Branch `fix/hitch-bisect-from-0.6.28` @ `9e00493`; deploy UMM **0.6.28** | **done** |
+| Baseline smoke (walk / look-around / drive / map toggle) | **DEFERRED** |
+| Slice A — mini-map product (`#Y` / focus / panel) | **DEFERRED** |
+| Slice B — `YardMiniMapRebuildGate` | **DEFERRED** |
+| Slice C — HUD declutter (no Limit pump) | **DEFERRED** |
+| Slice D — Settings XML + Tier2 log gate + radar town policy (+ GC probe) | **DEFERRED** |
+| LimitCabDiscoveryPolicy only if cab 2 s freeze returns | **DEFERRED** |
+
+Resume: confirm UMM **0.6.28** → baseline smoke PASS → one slice per deploy/smoke. First FAIL = primary suspect. Archaeology: park branch + `feature/4.13-unnamed-y-rails` @ `55347ae` (0.6.49).
+
 ### 4.7 HUD strip IA — **PASS** v0.4.23
 
 All rows centered. Stack: loco → look-at → always-on bar (same chrome).
