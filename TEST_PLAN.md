@@ -552,12 +552,16 @@ Goal was: prove `9e00493` / **0.6.28** cadence-clean. **Player 2026-08-08:** hit
 | Baseline smoke (walk / look-around / drive / map toggle) | **FAIL** — hitch present |
 | Slices A–D / LimitCabDiscoveryPolicy re-entry | **aborted** (baseline not clean) |
 
-**Deeper bisect (next):** binary-search `main` commits older than 0.6.28. Suggested order (~3–4 smokes):
+**Deeper bisect:**
 
-1. **`ccc724c` / 0.5.101** (Align) — before Limit 1.17, stress, Switch List, mini-map  
-2. If FAIL → **`6690acd` / 0.4.66`** (pre–loco radar 4.10)  
-3. If FAIL → **`703cbc4` / 0.4.29`** (Epic 4 HUD/AR baseline) or **`7601aee` / 0.4.23`** (centered IA)  
-4. If 0.5.101 PASS → bisect forward: `0.5.104` Limit → `0.6.2` Switch List → `0.6.19` maps/AR → `0.6.28` mini-map  
+| Probe | Version | Result |
+|-------|---------|--------|
+| Baseline | **0.6.28** `9e00493` | **FAIL** |
+| Mid | **0.5.101** `ccc724c` Align | **FAIL** (2026-08-08) |
+| Older | **0.4.66** `6690acd` pre–loco radar 4.10 | **deployed — awaiting smoke** |
+
+If 0.4.66 FAIL → next **`703cbc4` / 0.4.29** (Epic 4 baseline) or **`7601aee` / 0.4.23**.  
+If 0.4.66 PASS → hitch introduced in **4.10 radar → 0.5.101** band; bisect forward.
 
 Archaeology still on park + `feature/4.13-unnamed-y-rails` @ `55347ae`.
 
