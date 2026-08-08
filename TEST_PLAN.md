@@ -559,10 +559,11 @@ Goal was: prove `9e00493` / **0.6.28** cadence-clean. **Player 2026-08-08:** hit
 | Baseline | **0.6.28** `9e00493` | **FAIL** |
 | Mid | **0.5.101** `ccc724c` Align | **FAIL** (2026-08-08) |
 | Older | **0.4.66** `6690acd` pre–loco radar 4.10 | **FAIL** (2026-08-08) |
-| Older | **0.4.29** `703cbc4` Epic 4 HUD/AR baseline | **deployed — awaiting smoke** |
+| Older | **0.4.29** `703cbc4` Epic 4 HUD/AR baseline | **FAIL** (2026-08-08; YMS-only, others Off) |
+| Older | **0.4.23** `7601aee` centered IA | **deployed — awaiting smoke** |
 
-If 0.4.29 FAIL → next **`7601aee` / 0.4.23** (centered IA) or earlier Epic 1 (`ee92f62` / 0.4.20 Limit).  
-If 0.4.29 PASS → hitch introduced between **0.4.29 and 0.4.66** (Bundles A–D / AR sticky).
+If 0.4.23 FAIL → next **`ee92f62` / 0.4.20** (posted Limit) or earliest Monitor ship.  
+If 0.4.23 PASS → hitch introduced between **0.4.23 and 0.4.29** (Epic 4 Track/Station/Job/AR).
 
 Archaeology still on park + `feature/4.13-unnamed-y-rails` @ `55347ae`.
 
