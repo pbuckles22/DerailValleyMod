@@ -117,21 +117,19 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 |--|--|
 | **Project** | *Yard Master Suite* (UMM / Harmony / net48) |
 | **MVP** | **Epic 1** System Monitor HUD |
-| **Version (`main`)** | **0.4.20** |
-| **Active branch** | `main` |
+| **Version (`origin/main`)** | **0.6.28** @ `9e00493` *(do not treat this 0.4.20 probe tree as main)* |
+| **Active branch** | `fix/hitch-0.4.20.1-hud-draw-gate` @ **0.4.20.4** — hitch probe (**do not merge** to `main`) |
+| **Hitch wrap** | Visual/Gemini **PASS** with PostedBoard FoT **killed**; logs prove `fotRef=0`. Kill switch is **not** shippable Limit. Park residual GC nit; restore scanner on tip (see `TECH_DEBT.md`). |
 
-**Shipped on `main`**
+**Shipped on `origin/main` (reference)**
 
-- [x] **Epic 0** Safe Boot *(0.4 scaffold)*
-- [x] **1.1–1.10** Speed, grade/mass, integrity, couplers, look-at, **Load %**, **Motors**, **Fuel/Oil**, **Limit** (boards + GYR; Motors current-state only — Hot dwell **cut**)
-- [x] **4.1–4.3** Spherecast, cargo, hide loco top bar (**PASS**)
+- [x] Through **0.6.28** / 4.13 yard mini-map *(full list lives on `main` handoff — this file on the probe branch is investigation-local)*
 
-**Next**
+**Next (hitch → tip)**
 
-- [ ] **1.11** next Limit ↑/↓ lookahead *(same badge; no second number)*
-- [ ] **2.1** Three-Gate → **2.2** Thermal governor *(after 1.11 or if governor prep is prioritized)*
-- [ ] Re-smoke Load yellow/red when practical
-- [ ] Later: **4.4** next-station distance · dispatcher **3.x** · Digital Catalog **5.1**
+- [ ] Restore posted Limit without ~1.5 s FoT — Active Roster + rare refresh; **port to tip**, don’t merge this branch
+- [ ] Strip/gate `HitchCadenceProbe` for release
+- [ ] Resume product on `main` / feature branches (1.11 / 4.13 follow-ons per `main` handoff)
 
 **Merge-ready:** `dotnet test YardMasterSuite.sln` · `dotnet build YardMasterSuite.sln -c Release` · deploy via `package.ps1`
 
