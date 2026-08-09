@@ -74,7 +74,11 @@ public sealed class MonitorHudDriver : MonoBehaviour
 
     private void Update()
     {
+        var now = Time.unscaledTime;
+        var frameDt = Time.unscaledDeltaTime;
+
         // Shift+F3 — hide/show OnGUI paint; Update/telemetry keep running (OnGUI jitter A/B).
+        // Shift+F4 — immediate hitch counter / GC dump.
         if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
         {
             if (Input.GetKeyDown(KeyCode.F3))
@@ -82,9 +86,17 @@ public sealed class MonitorHudDriver : MonoBehaviour
                 HudDrawGate.Toggle();
                 Main.Log($"T2 hud-draw: {(HudDrawGate.DrawVisuals ? "on" : "off")}");
             }
+
+            if (Input.GetKeyDown(KeyCode.F4))
+            {
+                TelemetryReader.DumpHitchCadenceNow(now);
+            }
         }
 
-        _elapsed += Time.unscaledDeltaTime;
+        // Spike lines every frame; summary every 5 s (even between 10 Hz HUD ticks).
+        TelemetryReader.EmitHitchCadenceIfNeeded(now, frameDt);
+
+        _elapsed += frameDt;
         if (_elapsed < RefreshSeconds)
         {
             return;

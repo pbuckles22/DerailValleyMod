@@ -221,6 +221,43 @@ internal static class TelemetryReader
         }
     }
 
+    /// <summary>Hitch A/B: true when periodic SignDebug FoT is allowed.</summary>
+    public static bool IsPostedBoardFotEnabled => PostedBoardFotEnabled;
+
+    /// <summary>Current Active Roster size (0 when FoT killed or empty).</summary>
+    public static int ActiveBoardRosterCount => _activeBoardRoster.Length;
+
+    /// <summary>
+    /// Emit frame-spike + periodic hitch summary lines (Player.log via <see cref="Main.Log"/>).
+    /// </summary>
+    public static void EmitHitchCadenceIfNeeded(float now, float unscaledDelta)
+    {
+        var spike = HitchCadenceProbe.NoteFrameDelta(unscaledDelta, now);
+        if (spike != null)
+        {
+            Main.Log(spike);
+        }
+
+        var summary = HitchCadenceProbe.TickSummary(
+            now,
+            PostedBoardFotEnabled,
+            HudDrawGate.DrawVisuals,
+            _activeBoardRoster.Length);
+        if (summary != null)
+        {
+            Main.Log(summary);
+        }
+    }
+
+    /// <summary>Shift+F4 — immediate hitch counter dump.</summary>
+    public static void DumpHitchCadenceNow(float now) =>
+        Main.Log(
+            HitchCadenceProbe.FormatImmediateDump(
+                now,
+                PostedBoardFotEnabled,
+                HudDrawGate.DrawVisuals,
+                _activeBoardRoster.Length));
+
     /// <summary>
     /// Governing speed limit (km/h): last posted board behind the loco when available;
     /// otherwise current-track geometry (SignPlacer ladder).
@@ -232,21 +269,31 @@ internal static class TelemetryReader
             var loco = TryGetUsableLoco();
             if (loco == null)
             {
+                HitchCadenceProbe.NoteLimitNull();
                 return null;
             }
 
             var fromBoard = TryGetPostedBoardSpeedLimitKmh(loco);
             if (fromBoard != null)
             {
+                HitchCadenceProbe.NoteLimitFromBoard();
                 return fromBoard;
             }
 
             var bogie = loco.FrontBogie ?? loco.RearBogie;
             var track = bogie?.track;
-            return track == null ? null : GetOrComputeTrackSpeedLimitKmh(track);
+            if (track == null)
+            {
+                HitchCadenceProbe.NoteLimitNull();
+                return null;
+            }
+
+            HitchCadenceProbe.NoteLimitFromGeometry();
+            return GetOrComputeTrackSpeedLimitKmh(track);
         }
         catch
         {
+            HitchCadenceProbe.NoteLimitNull();
             return null;
         }
     }
@@ -259,6 +306,7 @@ internal static class TelemetryReader
     {
         var origin = loco.transform.position;
         RefreshActiveBoardRosterIfNeeded(origin);
+        HitchCadenceProbe.NotePick(_activeBoardRoster.Length);
         if (_activeBoardRoster.Length == 0)
         {
             return null;
@@ -285,10 +333,16 @@ internal static class TelemetryReader
         if (!PostedBoardFotEnabled)
         {
             _activeBoardRoster = Array.Empty<ParsedPostedBoard>();
-            if (!_postedBoardFotKillLogged)
+            // Count at the would-be refresh cadence so fotKill ≈ expected FoT rate, not 10 Hz.
+            if (Time.unscaledTime - _signDebugCacheAt >= SignDebugRefreshSeconds || !_postedBoardFotKillLogged)
             {
-                _postedBoardFotKillLogged = true;
-                Main.Log("T2 hitch: PostedBoard FoT DISABLED — Limit uses track geometry only");
+                _signDebugCacheAt = Time.unscaledTime;
+                HitchCadenceProbe.NoteFotKillSkip();
+                if (!_postedBoardFotKillLogged)
+                {
+                    _postedBoardFotKillLogged = true;
+                    Main.Log("T2 hitch: PostedBoard FoT DISABLED — Limit uses track geometry only");
+                }
             }
 
             return;
@@ -296,56 +350,70 @@ internal static class TelemetryReader
 
         if (Time.unscaledTime - _signDebugCacheAt < SignDebugRefreshSeconds)
         {
+            HitchCadenceProbe.NoteFotCacheHit();
             return;
         }
 
         _signDebugCacheAt = Time.unscaledTime;
         ActiveBoardScratch.Clear();
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        var rawCount = 0;
         try
         {
             var rawSigns = Object.FindObjectsOfType<SignDebug>();
+            rawCount = rawSigns?.Length ?? 0;
             if (rawSigns == null || rawSigns.Length == 0)
             {
                 _activeBoardRoster = Array.Empty<ParsedPostedBoard>();
-                return;
             }
-
-            foreach (var sign in rawSigns)
+            else
             {
-                if (sign == null)
+                foreach (var sign in rawSigns)
                 {
-                    continue;
+                    if (sign == null)
+                    {
+                        continue;
+                    }
+
+                    var p = sign.transform.position;
+                    if (!PostedBoardActiveRoster.WithinActiveRadius(
+                            p.x,
+                            p.y,
+                            p.z,
+                            origin.x,
+                            origin.y,
+                            origin.z))
+                    {
+                        continue;
+                    }
+
+                    var parsed = SpeedLimitBoardParser.ParseKmh(sign.text);
+                    if (parsed is null)
+                    {
+                        continue;
+                    }
+
+                    ActiveBoardScratch.Add(new ParsedPostedBoard(p.x, p.y, p.z, parsed.Value));
                 }
 
-                var p = sign.transform.position;
-                if (!PostedBoardActiveRoster.WithinActiveRadius(
-                        p.x,
-                        p.y,
-                        p.z,
-                        origin.x,
-                        origin.y,
-                        origin.z))
-                {
-                    continue;
-                }
-
-                var parsed = SpeedLimitBoardParser.ParseKmh(sign.text);
-                if (parsed is null)
-                {
-                    continue;
-                }
-
-                ActiveBoardScratch.Add(new ParsedPostedBoard(p.x, p.y, p.z, parsed.Value));
+                _activeBoardRoster = ActiveBoardScratch.Count == 0
+                    ? Array.Empty<ParsedPostedBoard>()
+                    : ActiveBoardScratch.ToArray();
             }
-
-            _activeBoardRoster = ActiveBoardScratch.Count == 0
-                ? Array.Empty<ParsedPostedBoard>()
-                : ActiveBoardScratch.ToArray();
         }
         catch
         {
             _activeBoardRoster = Array.Empty<ParsedPostedBoard>();
         }
+
+        sw.Stop();
+        HitchCadenceProbe.NoteFotRefresh(rawCount, _activeBoardRoster.Length, sw.Elapsed.TotalMilliseconds);
+        Main.Log(
+            HitchCadenceProbe.FormatFotRefreshLine(
+                fotEnabled: true,
+                rawCount,
+                _activeBoardRoster.Length,
+                sw.Elapsed.TotalMilliseconds));
     }
 
     private static Vector3 TravelForward(TrainCar loco)
