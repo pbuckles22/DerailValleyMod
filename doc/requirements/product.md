@@ -67,9 +67,9 @@ Center-weighted IA (**4.7**): bar is **horizontally centered**; mid-string = Spe
 | Pos | *(removed — Bundle B.1)* | Was **1.13**; `T2 pos` debug only |
 | Marked | `Marked NE 84m` / `Marked here` | **1.14** — return bearing + distance; omit when unmarked |
 | Clock | `Clock 14:30` | In-game world time (`DateTimeWrapper`); world session only |
-| Version | *(removed from HUD)* | Confirm ship # in **UMM Mod Manager** / `info.json` only |
+| Version | `v0.6.41` | In-world always-on only; UMM Mod Manager still the deploy smoke check |
 
-*(No mod version chip on the always-on bar.)*
+*(Version chip is gated with the rest of the always-on bar — never on launcher/menus.)*
 
 Always-on is a full HUD bar (same chrome as loco/look-at).
 
@@ -92,7 +92,7 @@ Look-at wins; standing fallback when crosshair is not on a car. Hidden when no t
 
 **1.10 / 1.11 / 1.17 notes:** `Limit N | Next M (distance)` — posted sticky + look-ahead only. No Recommended, no `(Posted)` label, no soft Brake chip, no geometry-ahead boards. World board index keeps discovered signs after stream-out. Limit caution: yellow **Limit−10 through Limit+5**, red above **Limit+5**. **1.16 Recommended** and soft Brake HUD **CUT**. Hidden with the top bar (**4.3**).
 
-**1.12 notes:** Personal compass only — not part of `TrainHudLine`. Shown on the always-on bar **only while a world session is active** (player present). Source = look direction (`ActiveCamera`, else `PlayerTransform`); Unity world +Z = N. Display = 16-point abbreviations only (`N`, `NNE`, `NE`, `ENE`, …) — never degrees. Do not paint `— Heading` on the launcher. Mod version is not shown beside Heading — use Mod Manager.
+**1.12 notes:** Personal compass only — not part of `TrainHudLine`. Shown on the always-on bar **only while a world session is active** (player present). Source = look direction (`ActiveCamera`, else `PlayerTransform`); Unity world +Z = N. Display = 16-point abbreviations only (`N`, `NNE`, `NE`, `ENE`, …) — never degrees. Do not paint `— Heading` on the launcher. In-world version chip (`v…`) may sit beside Heading; confirm deploy ship # in Mod Manager before smoke.
 
 **1.13 notes:** Was always-on `Pos x, z`. **Bundle B.1** removes Pos from the HUD; `T2 pos` debug remains.
 

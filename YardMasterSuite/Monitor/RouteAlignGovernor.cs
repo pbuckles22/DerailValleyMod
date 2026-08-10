@@ -36,6 +36,21 @@ internal static class RouteAlignGovernor
             return string.IsNullOrEmpty(compute) ? "T2 align: no path" : compute;
         }
 
+        RoutePlanService.RefreshRemainingEta();
+        if (AlignLocalRemGuard.IsImplausibleSameYardTrip(
+                RouteDestSession.YardId,
+                StickyYardHost.CurrentYardId,
+                RoutePlanSession.RemainingMeters))
+        {
+            var rem = RoutePlanSession.RemainingMeters;
+            var msg =
+                "T2 align: rem too large for local dest ("
+                + (rem.HasValue ? rem.Value.ToString("0") + "m" : "?")
+                + ") — Clear / Set dest again";
+            Main.Log(msg);
+            return msg;
+        }
+
         if (!PathGraphBuilder.HasReadyCache)
         {
             PathGraphBuilder.EnsureMappingStarted();
@@ -54,8 +69,16 @@ internal static class RouteAlignGovernor
             return "T2 align: already clear";
         }
 
+        var safe = SwitchListRouteLeg.FilterSafeToThrowFlips(
+            flips,
+            id => TelemetryReader.EvaluateJunctionOccupancy(id));
+        if (safe.Count == 0)
+        {
+            return "T2 align: wait · train on switch";
+        }
+
         var applied = 0;
-        foreach (var flip in flips)
+        foreach (var flip in safe)
         {
             if (!junctionsById.TryGetValue(flip.JunctionId, out var junction) || junction == null)
             {
@@ -92,7 +115,10 @@ internal static class RouteAlignGovernor
         // Re-eval the same corridor (do not re-Dijkstra — origin churn was causing Path-wrong).
         Main.Log(RoutePlanService.ReevaluateAfterAlign(plan));
         TelemetryReader.OnLimitFiloAlignCompleted();
-        return $"T2 align: threw {applied}";
+        var skipped = flips.Count - applied;
+        return skipped > 0
+            ? $"T2 align: threw {applied} · skipped {skipped} (on switch)"
+            : $"T2 align: threw {applied}";
     }
 
     public static bool HasDispatcherLicense()

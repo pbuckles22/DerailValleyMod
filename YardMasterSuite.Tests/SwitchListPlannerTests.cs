@@ -80,6 +80,38 @@ public class SwitchListPlannerTests
         Assert.Equal("SM-I1P", steps![1].DestTrackId);
         Assert.Equal("SM-C5O", steps[2].DestTrackId);
     }
+
+    [Fact]
+    public void BuildTownTurntable_tt_only()
+    {
+        var steps = SwitchListPlanner.BuildTownTurntable("SW", "#Y-#S1774#T");
+        Assert.NotNull(steps);
+        Assert.Single(steps!);
+        Assert.Equal(SwitchListStepKind.TurnAround, steps[0].Kind);
+        Assert.Equal("#Y-#S1774#T", steps[0].DestTrackId);
+        Assert.Equal("SW", steps[0].DestYardId);
+    }
+
+    [Fact]
+    public void BuildTownTurntable_pivot_then_tt()
+    {
+        var steps = SwitchListPlanner.BuildTownTurntable("SW", "#Y-#S1774#T", "#Y-#S23#T");
+        Assert.NotNull(steps);
+        Assert.Equal(2, steps!.Count);
+        Assert.Equal(SwitchListStepKind.Transit, steps[0].Kind);
+        Assert.Equal("#Y-#S23#T", steps[0].DestTrackId);
+        Assert.Equal("Set Forward · Pivot → #Y-#S23#T", steps[0].Label);
+        Assert.Equal(SwitchListStepKind.TurnAround, steps[1].Kind);
+        Assert.Equal("#Y-#S1774#T", steps[1].DestTrackId);
+        Assert.Equal("Set Forward · Turn around → #Y-#S1774#T", steps[1].Label);
+    }
+
+    [Fact]
+    public void BuildTownTurntable_fail_closed_without_tt()
+    {
+        Assert.Null(SwitchListPlanner.BuildTownTurntable("SW", null));
+        Assert.Null(SwitchListPlanner.BuildTownTurntable("SW", "  "));
+    }
 }
 
 public class SwitchListSessionTests

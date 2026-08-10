@@ -20,4 +20,4 @@ Promote decisions into tracked docs (`PM_PLAN.md`, `doc/requirements/*`, `TEST_P
 
 | Pack | Topic |
 |------|--------|
-| [`Town_Turntable_Align.md`](./Town_Turntable_Align.md) | In-town Align to turntable — 3.7 precursor (resolver + desk TT Align; Path/AR first; event-owned graph warm) |
+| [`SetForward_SwitchBehind.md`](./SetForward_SwitchBehind.md) | Desk says Set Forward but first switch / RouteLeg pin is behind the cab (drive-set vs stub ReverseCount) |

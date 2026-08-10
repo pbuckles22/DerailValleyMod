@@ -14,6 +14,8 @@ public enum ArWaypointKind
     OtherLoco = 3,
     /// <summary>Taken-job task car (find freight for the job in hand).</summary>
     JobCar = 4,
+    /// <summary>Active Switch List Align leg target (3.7 / Town TT).</summary>
+    RouteLeg = 5,
 }
 
 /// <summary>
@@ -274,7 +276,7 @@ public static class ArMarkerDisplay
         return $"{meters}m";
     }
 
-    /// <summary>Distinct shapes (not color-only): loco ▲, station ⌂, pin ●, job car ■.</summary>
+    /// <summary>Distinct shapes (not color-only): loco ▲, station ⌂, pin ●, job car ■, route leg ◆.</summary>
     public static string Glyph(ArWaypointKind kind) =>
         kind switch
         {
@@ -283,6 +285,7 @@ public static class ArMarkerDisplay
             ArWaypointKind.Station => "⌂",
             ArWaypointKind.Pin => "●",
             ArWaypointKind.JobCar => "■",
+            ArWaypointKind.RouteLeg => "◆",
             _ => "•",
         };
 }

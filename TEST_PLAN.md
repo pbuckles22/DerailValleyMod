@@ -398,9 +398,9 @@ Former `Next: … [N km]` on loco bar when fluids low — **removed**. Smoke A1�
 - **F9** — coupler HUD for #23: off → front `F*` yellow → rear `R*` yellow → both → off
 - **F11** — grant **all** obtainable general + job licenses ↔ restore pre-press snapshot (**real**)
 - **PgUp / PgDn** — within turntable **SearchRadius + 15 m** (or look-at); hold = bar/lever rate; tap = assist if ≤2 m from lock
-- **M** — yard mini-map toggle (in-world, in job zone) — **4.13**
+- **~~M — yard mini-map~~** — **CUT @ 0.6.38** (4.13 schematic graveyard)
 - **Motors heat debug** — *parked* (was F10/F4; not needed until thermal Tier 2). Leftover inject clears while debug is on.
-- Player.log: `T2 cargo-debug …` / `T2 load-debug: …` / `T2 coupler-debug: …` / `T2 turntable …` / `T2 loco-license-debug …` / `T2 license-debug …` / `T2 minimap: …`
+- Player.log: `T2 cargo-debug …` / `T2 load-debug: …` / `T2 coupler-debug: …` / `T2 turntable …` / `T2 loco-license-debug …` / `T2 license-debug …` / `T2 sticky: …`
 
 **F5 DH4/DE6 license cycle — smoke @ v0.6.5 — Tier 2 PASS (2026-08-03)**
 
@@ -538,18 +538,52 @@ Nearest **other** locos as amber AR markers on the sticky locator bar (**≤600 
 - [x] UMM **0.6.15** — markers beyond **600 m** omitted (0–3 shown)
 - [x] UMM **0.6.19** — Options **Show nearest locos** off → radar gone; on → returns (Tier 2 PASS 2026-08-04)
 
-### 4.13 Yard mini-map — `T2 minimap` — smoke **PASS @ 0.6.28** (fence); ship pending
+### 4.13 Yard mini-map — **CUT @ 0.6.38** (was smoke **PASS @ 0.6.28**)
 
-In-world **`M`** toggle; track schematic + pin/heading + Office/TT; off-map edge arrow. **MFMB** only when nearest is MFMB **and** within temp **5 m** office fence (smoke: switched near ~9 m of MB home). Else sticky **Yard MF** / hide. Detail: `T2 minimap: detail … distMFMB=…`.
+In-world **`M`** schematic **removed** (AR GPS philosophy). Sticky yard + MFMB **5 m** office fence retained in Core (`YardMiniMapYardStick`) + HUD `StickyYardHost` for desk TT Align + Limit FILO. Log: `T2 sticky: detail …`.
 
-**Follow-on:** unnamed/`#Y` rails on schematic; retune fence after map coverage improves.
+**Sign-off (historical)**
+
+- [x] UMM **0.6.28** — Station MF approach stays **Yard MF**; MFMB only near MB office (**PASS** 2026-08-05)
+- [x] Off-map arrow **PASS** (@ 0.6.25+) — *feature removed with schematic*
+- [x] Tier 1: `YardMiniMapSmokeRegressionTests` / office-fence gates *(stick tests remain)*
+- [x] Schematic delete @ **0.6.38**
+
+### Town Turntable Align — Track ▼ **Turntable** + drive-set facing — **0.6.49**
+
+**Route desk buttons**
+
+| Button | Does |
+|--------|------|
+| City ▼ / Track ▼ | Pick yard; Track includes synthetic **Turntable** (resolved on Set dest) |
+| **Set dest** | Bind dest + Compute. Does **not** Align. TT NoPath → multi-leg list (shown on Route) |
+| **Recheck** | Recompute current dest |
+| **Align Route** | Throw safe flips (`TryAlign`); refuses absurd same-yard rem |
+| **Align step** / **Next** | Shown when a multi-leg list is active (same as Per job). Next = advance + Compute + TryAlign when Arrived |
+| Clear / Hide / Reload list | Session / UI |
+
+**Per job** (was Switch List): Load / Align step / Next. Active steps also draw on **Route**.
+
+**Facing / Exit (drive-set):** `Set Forward` / `Set Reverse` = cab forward vs vector to first AR pin (or dest). Exit compass = loco → same pin. Not topological stub `ReverseCount` (stub count may still show as `(stub N)`).
+
+**Arrived (HERE pin):** past the pin along travel **and** within ~35 m — chip `Arrived · Next` means press **Next**. Pin may still sit slightly ahead; do **not** require kissing the pin. Product-accepted 2026-08-10.
+
+**TT resolve:** blank-yard nearest fallback only when sticky yard = City. CME while in SW → fail closed.
 
 **Sign-off**
 
-- [x] UMM **0.6.28** — Station MF approach stays **Yard MF**; MFMB only near MB office (**PASS** 2026-08-05)
-- [x] Off-map arrow **PASS** (@ 0.6.25+)
-- [x] Tier 1: `YardMiniMapSmokeRegressionTests` / office-fence gates
-- [ ] Ship commit when asked → **done** (CMPH 2026-08-05)
+**Locked PASS (do not re-gate later path/Align ships on these):**
+
+- [x] **Drive-set** @ **0.6.48+** (2026-08-10) — SW-B4L Turntable: switch behind → **Set Reverse** + Exit toward pin; follows cab→pin. Re-smoke only if drive-set math/wire changes.
+- [x] **HERE / Arrived pin** @ **0.6.48+** (2026-08-10) — Arrived with meters left / pin still short of kiss → OK to **Next**. Re-smoke only if arrive radius / past-gate logic changes.
+
+**Still open (path / Align after Next):**
+
+- [ ] UMM **0.6.49+** — Per job tab; Route shows **Next** when list active
+- [ ] **Next** onto turntable leg → local rem (not ~10 km) → Align throws for that leg (smoke: rem guard fired at 10534 m)
+- [ ] In SW: City=CME + Turntable → fail closed
+- [ ] Set dest to a normal track clears stale TT list
+- [ ] Cab look-around: no map warm without sticky/desk/Align/Set dest
 
 ### 4.7 HUD strip IA — **PASS** v0.4.23
 

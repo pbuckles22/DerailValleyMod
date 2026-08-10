@@ -65,7 +65,9 @@ public static class PathPlan
         string? originTrackId,
         string? destinationTrackId,
         Func<string, PathTrackClass>? classFor = null,
-        bool skipPlainOnMultiBranchStem = true)
+        bool skipPlainOnMultiBranchStem = true,
+        string? destYardId = null,
+        Func<string, string?>? yardFor = null)
     {
         var dest = Normalize(destinationTrackId);
         if (dest == null)
@@ -98,6 +100,8 @@ public static class PathPlan
                 dest,
                 classFor,
                 skipPlainOnMultiBranchStem,
+                destYardId,
+                yardFor,
                 out var path,
                 out var totalCost))
         {
@@ -333,6 +337,8 @@ public static class PathPlan
         string dest,
         Func<string, PathTrackClass>? classFor,
         bool skipPlainOnMultiBranchStem,
+        string? destYardId,
+        Func<string, string?>? yardFor,
         out List<string> path,
         out float totalCost)
     {
@@ -341,8 +347,11 @@ public static class PathPlan
         var costSoFar = new Dictionary<string, float>(StringComparer.Ordinal) { [origin] = 0f };
         var cameFrom = new Dictionary<string, string>(StringComparer.Ordinal) { [origin] = origin };
         var open = new List<string> { origin };
-        var originYard = PathRouteConstraints.YardIdOf(origin);
-        var destYard = PathRouteConstraints.YardIdOf(dest);
+        string? YardOf(string id) => yardFor?.Invoke(id) ?? PathRouteConstraints.YardIdOf(id);
+        var originYard = YardOf(origin);
+        var destYard = !string.IsNullOrWhiteSpace(destYardId)
+            ? destYardId!.Trim()
+            : YardOf(dest);
 
         while (open.Count > 0)
         {
@@ -402,9 +411,10 @@ public static class PathPlan
                 }
 
                 var next = hop.ToTrackId;
-                if (!TryStepCost(hop, next, dest, originYard, destYard, classFor, out var step))
+                if (!TryStepCost(
+                        hop, next, dest, originYard, destYard, classFor, out var step, yardFor))
                 {
-                    continue; // forward-only hard ban outside dest
+                    continue; // forward-only hard ban outside dest / same-town
                 }
 
                 var newCost = costSoFar[current] + step;
@@ -488,7 +498,7 @@ public static class PathPlan
 
     /// <summary>
     /// Edge step cost with pass-through rules. Returns false when the hop is hard-banned
-    /// (reverse outside destination yard / dest track). Public for Tier 2 think dumps.
+    /// (reverse outside destination yard / dest track / same-town). Public for Tier 2 think dumps.
     /// </summary>
     public static bool TryStepCost(
         PathEdge hop,
@@ -497,17 +507,22 @@ public static class PathPlan
         string? originYardId,
         string? destYardId,
         Func<string, PathTrackClass>? classFor,
-        out float stepSeconds)
+        out float stepSeconds,
+        Func<string, string?>? yardFor = null)
     {
         stepSeconds = hop.Cost;
-        var nextYard = PathRouteConstraints.YardIdOf(nextTrackId);
+        var nextYard = yardFor?.Invoke(nextTrackId) ?? PathRouteConstraints.YardIdOf(nextTrackId);
         var inDestYard = nextYard != null
             && destYardId != null
             && string.Equals(nextYard, destYardId, StringComparison.OrdinalIgnoreCase);
         var isDestTrack = string.Equals(nextTrackId, destTrackId, StringComparison.Ordinal);
+        var sameTown = originYardId != null
+            && destYardId != null
+            && string.Equals(originYardId, destYardId, StringComparison.OrdinalIgnoreCase);
 
-        // HARD BAN: reverse only allowed into the destination yard (or onto the dest track).
-        if (hop.RequiresReverse && !inDestYard && !isDestTrack)
+        // HARD BAN: reverse only into dest yard / dest track, or any reverse when same-town
+        // (Town TT Align — anonymous #Y dest with session yard).
+        if (hop.RequiresReverse && !inDestYard && !isDestTrack && !sameTown)
         {
             return false;
         }

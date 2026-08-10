@@ -802,10 +802,11 @@ public static class PathRouteDebug
         string reason,
         string origin,
         string dest,
-        IReadOnlyList<string>? originCandidates)
+        IReadOnlyList<string>? originCandidates,
+        string? destYardOverride = null)
     {
         var oy = PathRouteConstraints.YardIdOf(origin) ?? "—";
-        var dy = PathRouteConstraints.YardIdOf(dest) ?? "—";
+        var dy = PathRouteConstraints.EffectiveDestYardId(dest, destYardOverride) ?? "—";
         var cands = originCandidates == null || originCandidates.Count == 0
             ? origin
             : FormatKeySample(originCandidates, head: 8);

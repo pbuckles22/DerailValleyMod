@@ -3,7 +3,10 @@ namespace YardMasterSuite.Core;
 /// <summary>Facing / reverse cue for Align Route preview (3.5). Informational only.</summary>
 public static class RouteFacingDisplay
 {
-    public static string? Format(PathPlanResult? plan)
+    /// <summary>
+    /// Drive-set chip from live cab→pin polarity. Optional stub count is topological only.
+    /// </summary>
+    public static string? Format(PathPlanResult? plan, bool isTargetBehind)
     {
         if (plan == null
             || plan.Status == PathCheckStatus.NoDestination
@@ -13,16 +16,14 @@ public static class RouteFacingDisplay
             return null;
         }
 
-        if (plan.ReverseCount <= 0)
+        var word = SwitchListDriveFacing.SetWord(isTargetBehind);
+
+        // Stub reverse-into hops remain visible (pathfind topology), not drive-set.
+        if (plan.ReverseCount > 0)
         {
-            return "Facing OK";
+            return word + " (stub " + plan.ReverseCount + ")";
         }
 
-        if (plan.LastHopRequiresReverse && plan.ReverseCount == 1)
-        {
-            return "Reverse into dest";
-        }
-
-        return $"{plan.ReverseCount} reverses";
+        return word;
     }
 }

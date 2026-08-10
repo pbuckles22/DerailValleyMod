@@ -464,7 +464,18 @@ internal static class TelemetryReader
             return null;
         }
 
-        var chip = PathCheckDisplay.Format(plan.ToCheckResult());
+        string? chip;
+        if (SwitchListSession.HasActive
+            && !SwitchListSession.IsComplete
+            && IsSwitchListStepArrived())
+        {
+            chip = "Arrived · Next";
+        }
+        else
+        {
+            chip = PathCheckDisplay.Format(plan.ToCheckResult());
+        }
+
         var etaCost = RoutePlanSession.EtaCostSeconds ?? plan.TotalCost;
         return RouteEtaDisplay.WithPathChip(
             chip,
@@ -474,7 +485,7 @@ internal static class TelemetryReader
             RoutePlanSession.EtaMode);
     }
 
-    /// <summary>Facing cue — frozen plan only.</summary>
+    /// <summary>Facing cue — live cab→pin drive-set (frozen plan only).</summary>
     public static string? CurrentFacingLabel()
     {
         if (RoutePlanSession.IsStale)
@@ -482,11 +493,21 @@ internal static class TelemetryReader
             return null;
         }
 
-        return RouteFacingDisplay.Format(RoutePlanSession.Plan);
+        var plan = RoutePlanSession.Plan;
+        return RouteFacingDisplay.Format(plan, RouteFacingResolver.IsTargetBehind(plan));
     }
 
-    /// <summary>Exit compass toward the path (frozen).</summary>
-    public static string? CurrentExitLabel() => RoutePlanSession.ExitCue;
+    /// <summary>Exit compass loco→pin (live); falls back to frozen cue.</summary>
+    public static string? CurrentExitLabel()
+    {
+        if (RoutePlanSession.IsStale)
+        {
+            return null;
+        }
+
+        return RouteFacingResolver.TryGetExitCue(RoutePlanSession.Plan)
+            ?? RoutePlanSession.ExitCue;
+    }
 
     /// <summary>Last explicit plan (Set dest / Check / Align). Null when none or stale.</summary>
     internal static PathPlanResult? CurrentPathCheckResult() => RoutePlanSession.Plan;
@@ -1606,6 +1627,333 @@ internal static class TelemetryReader
         return true;
     }
 
+    /// <summary>
+    /// Active Switch List RouteLeg: pin on next throw switch (or dest track when Path OK).
+    /// Caption shows Arrived · Next only when consist is past the gate (or cars-in-zone on Delivery).
+    /// </summary>
+    public static bool TryGetArRouteLegWorldPosition(out Vector3 world, out string caption)
+    {
+        world = default;
+        caption = "";
+        try
+        {
+            if (!SwitchListSession.HasActive || SwitchListSession.IsComplete)
+            {
+                return false;
+            }
+
+            // Off corridor: do not show a chase pin (smoke: Exit NNW, drove SSE, rem grew).
+            if (RoutePlanSession.IsStale)
+            {
+                return false;
+            }
+
+            var step = SwitchListSession.CurrentStep;
+            var plan = RoutePlanSession.Plan;
+            var pinJ = SwitchListRouteLeg.PickPinJunctionId(plan);
+            if (!string.IsNullOrEmpty(pinJ)
+                && PathGraphBuilder.TryGetJunctionWorldPosition(pinJ, out var jx, out var jy, out var jz))
+            {
+                world = new Vector3(jx, jy, jz);
+                if (TryGetSwitchListArriveStatus(out var arrive) && ConsistSwitchClearance.IsArrived(arrive))
+                {
+                    caption = "Arrived · Next";
+                }
+                else
+                {
+                    var label = step?.Label ?? pinJ!;
+                    caption = FormatRouteLegCaption(label, jx, jy, jz);
+                }
+
+                return true;
+            }
+
+            // Path OK / no flips — approach step dest track.
+            var trackId = SwitchListSession.CurrentAlignTrackId;
+            if (string.IsNullOrEmpty(trackId)
+                || !PathGraphBuilder.TryGetRailTrack(trackId, out var rail)
+                || rail == null)
+            {
+                return false;
+            }
+
+            var p = rail.transform.position;
+            world = p;
+            if (TryGetSwitchListArriveStatus(out var destArrive) && ConsistSwitchClearance.IsArrived(destArrive))
+            {
+                caption = "Arrived · Next";
+            }
+            else
+            {
+                var label = step?.Label ?? trackId!;
+                caption = FormatRouteLegCaption(label, p.x, p.y, p.z);
+            }
+
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static string FormatRouteLegCaption(string label, float x, float y, float z)
+    {
+        if (TryGetPlayerPosition(out var px, out var py, out var pz))
+        {
+            var dx = x - px;
+            var dy = y - py;
+            var dz = z - pz;
+            var meters = (int)Mathf.Round(Mathf.Sqrt((dx * dx) + (dy * dy) + (dz * dz)));
+            return $"{label} · {meters}m";
+        }
+
+        return label;
+    }
+
+    /// <summary>True when Switch List step shows Arrived (past switch / cars in delivery zone).</summary>
+    public static bool IsSwitchListStepArrived() =>
+        TryGetSwitchListArriveStatus(out var s) && ConsistSwitchClearance.IsArrived(s);
+
+    /// <summary>Occupancy for Align filter — Cleared means not straddling (safe to throw).</summary>
+    public static ConsistClearanceStatus EvaluateJunctionOccupancy(string? junctionId)
+    {
+        if (string.IsNullOrEmpty(junctionId)
+            || !PathGraphBuilder.TryGetJunctionWorldPosition(junctionId, out var sx, out _, out var sz)
+            || !TryGetConsistTipXz(ConsistClearanceMode.FullTrain, out var ax, out var az, out var bx, out var bz)
+            || !TryGetTravelAxisXz(out var tx, out var tz))
+        {
+            return ConsistClearanceStatus.Unknown;
+        }
+
+        return ConsistSwitchClearance.EvaluateNotOccupying(sx, sz, ax, az, bx, bz, tx, tz);
+    }
+
+    public static ConsistClearanceStatus EvaluateJunctionPast(string? junctionId)
+    {
+        if (string.IsNullOrEmpty(junctionId)
+            || !PathGraphBuilder.TryGetJunctionWorldPosition(junctionId, out var sx, out _, out var sz)
+            || !TryGetConsistTipXz(ConsistClearanceMode.FullTrain, out var ax, out var az, out var bx, out var bz)
+            || !TryGetTravelAxisXz(out var tx, out var tz))
+        {
+            return ConsistClearanceStatus.Unknown;
+        }
+
+        return ConsistSwitchClearance.EvaluatePastSwitch(sx, sz, ax, az, bx, bz, tx, tz);
+    }
+
+    public static bool TryGetSwitchListArriveStatus(out ConsistClearanceStatus status)
+    {
+        status = ConsistClearanceStatus.Unknown;
+        if (!SwitchListSession.HasActive || SwitchListSession.IsComplete)
+        {
+            return false;
+        }
+
+        // Off corridor — never Arrived (smoke: Exit NNW while driving SSE).
+        if (RoutePlanSession.IsStale)
+        {
+            status = ConsistClearanceStatus.Fouling;
+            return true;
+        }
+
+        var step = SwitchListSession.CurrentStep;
+        if (step == null)
+        {
+            return false;
+        }
+
+        if (!TryGetPlayerPosition(out var px, out _, out var pz))
+        {
+            return false;
+        }
+
+        var mode = ConsistSwitchClearance.ModeForStep(step.Kind);
+        if (mode == ConsistClearanceMode.CarsOnly)
+        {
+            var trackId = step.DestTrackId;
+            if (string.IsNullOrEmpty(trackId)
+                || !PathGraphBuilder.TryGetTrackWorldXZ(trackId, out var zx, out var zz)
+                || !TryGetConsistTipXz(ConsistClearanceMode.CarsOnly, out var ax, out var az, out var bx, out var bz))
+            {
+                return false;
+            }
+
+            var zone = ConsistSwitchClearance.EvaluateCarsInZone(zx, zz, DeliveryZoneRadiusMeters, ax, az, bx, bz);
+            status = ConsistSwitchClearance.CombinePastAndNear(
+                zone, zx, zz, px, pz, DeliveryZoneRadiusMeters);
+            return true;
+        }
+
+        var plan = RoutePlanSession.Plan;
+        var pinJ = SwitchListRouteLeg.PickPinJunctionId(plan);
+        if (!string.IsNullOrEmpty(pinJ)
+            && PathGraphBuilder.TryGetJunctionWorldPosition(pinJ, out var jx, out _, out var jz))
+        {
+            var past = EvaluateJunctionPast(pinJ);
+            status = ConsistSwitchClearance.CombinePastAndNear(
+                past, jx, jz, px, pz, PinArriveRadiusMeters);
+            return status != ConsistClearanceStatus.Unknown;
+        }
+
+        // No flips left — tips in dest zone AND player near dest.
+        var dest = SwitchListSession.CurrentAlignTrackId;
+        if (string.IsNullOrEmpty(dest)
+            || !PathGraphBuilder.TryGetTrackWorldXZ(dest, out var dx, out var dz)
+            || !TryGetConsistTipXz(ConsistClearanceMode.FullTrain, out var fax, out var faz, out var fbx, out var fbz))
+        {
+            return false;
+        }
+
+        var atDest = ConsistSwitchClearance.EvaluateCarsInZone(
+            dx, dz, DeliveryZoneRadiusMeters, fax, faz, fbx, fbz);
+        status = ConsistSwitchClearance.CombinePastAndNear(
+            atDest, dx, dz, px, pz, DeliveryZoneRadiusMeters);
+        return true;
+    }
+
+    private const float DeliveryZoneRadiusMeters = 40f;
+    private const float PinArriveRadiusMeters = 35f;
+
+    private static bool TryGetTravelAxisXz(out float tx, out float tz)
+    {
+        tx = tz = 0f;
+        var loco = TryGetUsableLoco();
+        if (loco == null)
+        {
+            return false;
+        }
+
+        var fwd = loco.transform.forward;
+        var dir = ProximityTravelDirectionGate.FromReverser(TryGetReverserValue(loco));
+        if (dir == ProximityTravelDirection.Reverse)
+        {
+            tx = -fwd.x;
+            tz = -fwd.z;
+        }
+        else
+        {
+            // Forward or Neutral/Unknown: treat loco forward as approach axis.
+            tx = fwd.x;
+            tz = fwd.z;
+        }
+
+        return (tx * tx) + (tz * tz) > 1e-6f;
+    }
+
+    private static bool TryGetConsistTipXz(
+        ConsistClearanceMode mode,
+        out float ax,
+        out float az,
+        out float bx,
+        out float bz)
+    {
+        ax = az = bx = bz = 0f;
+        var loco = TryGetUsableLoco();
+        if (loco == null)
+        {
+            return false;
+        }
+
+        if (mode == ConsistClearanceMode.CarsOnly)
+        {
+            return TryGetFreightExtremityXz(loco, out ax, out az, out bx, out bz);
+        }
+
+        var front = TryGetApproachTipCoupler(loco, useFront: true);
+        var rear = TryGetApproachTipCoupler(loco, useFront: false);
+        if (front == null && rear == null)
+        {
+            var p = loco.transform.position;
+            ax = bx = p.x;
+            az = bz = p.z;
+            return true;
+        }
+
+        if (front == null)
+        {
+            front = rear;
+        }
+
+        if (rear == null)
+        {
+            rear = front;
+        }
+
+        var fp = CouplerClearancePoint(front!);
+        var rp = CouplerClearancePoint(rear!);
+        ax = fp.x;
+        az = fp.z;
+        bx = rp.x;
+        bz = rp.z;
+        return true;
+    }
+
+    private static bool TryGetFreightExtremityXz(
+        TrainCar loco,
+        out float ax,
+        out float az,
+        out float bx,
+        out float bz)
+    {
+        ax = az = bx = bz = 0f;
+        var freight = CollectTrainsetFreight(loco);
+        if (freight.Count == 0)
+        {
+            return false;
+        }
+
+        var fwd = loco.transform.forward;
+        var fx = fwd.x;
+        var fz = fwd.z;
+        var fl = Mathf.Sqrt((fx * fx) + (fz * fz));
+        if (fl < 1e-4f)
+        {
+            return false;
+        }
+
+        fx /= fl;
+        fz /= fl;
+        var minP = float.PositiveInfinity;
+        var maxP = float.NegativeInfinity;
+        float minX = 0, minZ = 0, maxX = 0, maxZ = 0;
+        for (var i = 0; i < freight.Count; i++)
+        {
+            var c = freight[i];
+            if (c == null)
+            {
+                continue;
+            }
+
+            var p = c.transform.position;
+            var proj = (p.x * fx) + (p.z * fz);
+            if (proj < minP)
+            {
+                minP = proj;
+                minX = p.x;
+                minZ = p.z;
+            }
+
+            if (proj > maxP)
+            {
+                maxP = proj;
+                maxX = p.x;
+                maxZ = p.z;
+            }
+        }
+
+        if (float.IsInfinity(minP) || float.IsInfinity(maxP))
+        {
+            return false;
+        }
+
+        ax = minX;
+        az = minZ;
+        bx = maxX;
+        bz = maxZ;
+        return true;
+    }
+
     public static float? TryGetAbsSpeedMetersPerSecond()
     {
         try
@@ -1616,6 +1964,33 @@ internal static class TelemetryReader
         catch
         {
             return null;
+        }
+    }
+
+    /// <summary>Travel compass vs planned Exit cue for T2 route logs.</summary>
+    public static string TryDescribeTravelVsExit(string? exitCue)
+    {
+        try
+        {
+            var speedMps = TryGetAbsSpeedMetersPerSecond();
+            var speedKmh = speedMps is float m ? SpeedDisplay.ToKilometersPerHour(m) : 0f;
+            string? travelPoint = null;
+            var loco = TryGetUsableLoco();
+            if (loco != null)
+            {
+                var f = loco.transform.forward;
+                var signed = loco.GetForwardSpeed();
+                // Reverse travel: face opposite of loco forward.
+                var fx = signed < -0.1f ? -f.x : f.x;
+                var fz = signed < -0.1f ? -f.z : f.z;
+                travelPoint = HeadingDisplay.ToCompassPoint(HeadingDisplay.FromForward(fx, fz));
+            }
+
+            return RouteExitTravelMatch.Format(exitCue, travelPoint, speedKmh);
+        }
+        catch
+        {
+            return "—";
         }
     }
 

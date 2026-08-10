@@ -13,7 +13,7 @@ public static class PathCheckDisplay
         return result.Status switch
         {
             PathCheckStatus.Aligned => "Path OK",
-            PathCheckStatus.Misaligned => $"Path {result.MisalignedCount} wrong",
+            PathCheckStatus.Misaligned => $"Path {result.MisalignedCount} switch",
             PathCheckStatus.NoPath => "Path none",
             PathCheckStatus.NoOrigin => "Path —",
             _ => null,

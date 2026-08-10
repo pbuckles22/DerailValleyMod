@@ -24,6 +24,21 @@ public static class Main
     /// <summary>UMM logger → Player.log. Used for Tier 2 discrete debug lines.</summary>
     internal static void Log(string message) => _modEntry?.Logger.Log(message);
 
+    /// <summary>Ship version for in-world HUD chip (e.g. <c>v0.6.41</c>). Null until Load.</summary>
+    internal static string? VersionChip
+    {
+        get
+        {
+            var v = _modEntry?.Info?.Version?.Trim();
+            if (string.IsNullOrEmpty(v))
+            {
+                return null;
+            }
+
+            return v!.StartsWith("v", StringComparison.OrdinalIgnoreCase) ? v : "v" + v;
+        }
+    }
+
     /// <summary>Mods/YardMasterSuite/Icons — AR waypoint PNGs.</summary>
     internal static string? IconsPath
     {
@@ -131,7 +146,6 @@ public static class Main
             _hudRoot.AddComponent<MonitorHudDriver>();
             _hudRoot.AddComponent<ArWaypointOverlay>();
             _hudRoot.AddComponent<DispatchDeskPanel>();
-            _hudRoot.AddComponent<YardMiniMapOverlay>();
         }
         catch (Exception ex)
         {

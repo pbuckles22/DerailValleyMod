@@ -1097,6 +1097,42 @@ internal static class PathGraphBuilder
         }
     }
 
+    /// <summary>Cached junction world position (Switch List RouteLeg pin).</summary>
+    public static bool TryGetJunctionWorldPosition(string? junctionId, out float x, out float y, out float z)
+    {
+        x = y = z = 0f;
+        var id = junctionId?.Trim();
+        if (string.IsNullOrEmpty(id))
+        {
+            return false;
+        }
+
+        try
+        {
+            if (_junctionsById == null && !TryBuild(out _, out _, out _, out _))
+            {
+                return false;
+            }
+
+            if (_junctionsById == null
+                || !_junctionsById.TryGetValue(id!, out var junction)
+                || junction == null)
+            {
+                return false;
+            }
+
+            var p = junction.transform.position;
+            x = p.x;
+            y = p.y;
+            z = p.z;
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     /// <summary>Resolve a cached rail by primary track key (after mapping warm).</summary>
     public static bool TryGetRailTrack(string? trackKey, out RailTrack? rail)
     {

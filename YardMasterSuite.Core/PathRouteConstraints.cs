@@ -163,6 +163,30 @@ public static class PathRouteConstraints
     }
 
     /// <summary>
+    /// Dest yard for FilterEdges: track meta first; else session/sticky yard when dest is anonymous
+    /// (Town TT Align — <c>#Y</c> bridge has no city prefix, but delivery is still in-town).
+    /// </summary>
+    public static string? EffectiveDestYardId(
+        string? destTrackId,
+        string? sessionYardId,
+        Func<string, string?>? yardFor = null)
+    {
+        yardFor ??= YardIdOf;
+        var dest = Normalize(destTrackId);
+        if (dest != null)
+        {
+            var fromMeta = yardFor(dest);
+            if (!string.IsNullOrWhiteSpace(fromMeta))
+            {
+                return fromMeta!.Trim();
+            }
+        }
+
+        var session = sessionYardId?.Trim();
+        return LocoRadarDisplay.IsUsableCityYardId(session) ? session : null;
+    }
+
+    /// <summary>
     /// True when entering <paramref name="toTrackId"/> is forbidden for this plan.
     /// <para><b>PRODUCT LOCK (3.5 #4) — do not weaken without an explicit player decision:</b></para>
     /// <list type="number">
@@ -173,6 +197,7 @@ public static class PathRouteConstraints
     /// <item>No free Through through a city ⇒ Dijkstra skips that city (other corridor / NoPath).</item>
     /// </list>
     /// Use <paramref name="yardFor"/> so <c>#Y</c> aliases of named rails still get the yard rule.
+    /// Pass <paramref name="destYardOverride"/> when dest is anonymous but known in-town (session yard).
     /// </summary>
     public static bool IsEntryBlocked(
         string? toTrackId,
@@ -180,7 +205,8 @@ public static class PathRouteConstraints
         ISet<string>? occupied,
         string? originTrackId,
         string? destTrackId,
-        Func<string, string?>? yardFor = null)
+        Func<string, string?>? yardFor = null,
+        string? destYardOverride = null)
     {
         var to = Normalize(toTrackId);
         if (to == null)
@@ -212,7 +238,9 @@ public static class PathRouteConstraints
             return false; // anonymous backbone with no named-yard alias
         }
 
-        var destYard = dest == null ? null : yardFor(dest);
+        var destYard = !string.IsNullOrWhiteSpace(destYardOverride)
+            ? destYardOverride!.Trim()
+            : (dest == null ? null : yardFor(dest));
         if (destYard != null
             && string.Equals(yard, destYard, StringComparison.OrdinalIgnoreCase))
         {
@@ -230,7 +258,8 @@ public static class PathRouteConstraints
         ISet<string>? occupied,
         string? originTrackId,
         string? destTrackId,
-        Func<string, string?>? yardFor = null)
+        Func<string, string?>? yardFor = null,
+        string? destYardOverride = null)
     {
         var list = new List<PathEdge>();
         if (edges == null)
@@ -248,7 +277,8 @@ public static class PathRouteConstraints
             }
 
             var cls = classFor(to);
-            if (IsEntryBlocked(to, cls, occupied, originTrackId, destTrackId, yardFor))
+            if (IsEntryBlocked(
+                    to, cls, occupied, originTrackId, destTrackId, yardFor, destYardOverride))
             {
                 continue;
             }

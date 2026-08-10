@@ -22,9 +22,10 @@ public sealed class ArWaypointOverlay : MonoBehaviour
     private static readonly Color JobCarColor = new(0.78f, 0.49f, 1f, 1f);
     private static readonly Color StationColor = new(0.51f, 0.78f, 0.52f, 1f);
     private static readonly Color PinColor = new(1f, 0.84f, 0.31f, 1f);
+    private static readonly Color RouteLegColor = new(0.95f, 0.55f, 0.2f, 1f);
 
     private const int MaxFrames =
-        3 + LocoRadarSelection.DefaultMaxResults + JobCarMarkerDisplay.DefaultMaxMarkers;
+        4 + LocoRadarSelection.DefaultMaxResults + JobCarMarkerDisplay.DefaultMaxMarkers;
 
     private GUIStyle? _labelStyle;
     private Texture2D? _locoIcon;
@@ -40,6 +41,7 @@ public sealed class ArWaypointOverlay : MonoBehaviour
     private MarkerMotion _locoMotion;
     private MarkerMotion _stationMotion;
     private MarkerMotion _pinMotion;
+    private MarkerMotion _routeLegMotion;
     private readonly MarkerMotion[] _radarMotions = new MarkerMotion[LocoRadarSelection.DefaultMaxResults];
     private readonly MarkerMotion[] _jobCarMotions = new MarkerMotion[JobCarMarkerDisplay.DefaultMaxMarkers];
 
@@ -162,6 +164,30 @@ public sealed class ArWaypointOverlay : MonoBehaviour
             n++;
         }
 
+        var switchListActive = SwitchListSession.HasActive && !SwitchListSession.IsComplete;
+        if (switchListActive
+            && TelemetryReader.TryGetArRouteLegWorldPosition(out var legWorld, out var legCaption)
+            && TryPrepareWorldMarker(
+                cam,
+                playerPos,
+                ArWaypointKind.RouteLeg,
+                legWorld,
+                legCaption,
+                RouteLegColor,
+                _pinIcon,
+                ref _routeLegMotion,
+                out _frames[n]))
+        {
+            n++;
+        }
+        else
+        {
+            _routeLegMotion.Progress = 0f;
+            _routeLegMotion.HasObjectAnchor = false;
+            _routeLegMotion.HasLastDraw = false;
+            _routeLegMotion.WantedOnObject = false;
+        }
+
         var radarCount = TelemetryReader.GetArOtherLocoCount();
         for (var r = 0; r < radarCount && n < MaxFrames; r++)
         {
@@ -198,7 +224,8 @@ public sealed class ArWaypointOverlay : MonoBehaviour
             _radarMotions[r].WantedOnObject = false;
         }
 
-        var jobCarCount = TelemetryReader.GetArJobCarCount();
+        // While Switch List drives the active-leg finder, suppress job-car AR clutter.
+        var jobCarCount = switchListActive ? 0 : TelemetryReader.GetArJobCarCount();
         for (var j = 0; j < jobCarCount && n < MaxFrames; j++)
         {
             if (!TelemetryReader.TryGetArJobCar(j, out var world, out var caption))
@@ -305,7 +332,9 @@ public sealed class ArWaypointOverlay : MonoBehaviour
         out MarkerFrame frame)
     {
         frame = default;
-        var lift = kind == ArWaypointKind.Pin ? PinVerticalLiftMeters : VerticalLiftMeters;
+        var lift = kind == ArWaypointKind.Pin || kind == ArWaypointKind.RouteLeg
+            ? PinVerticalLiftMeters
+            : VerticalLiftMeters;
         var lifted = world + Vector3.up * lift;
         var toTarget = lifted - cam.transform.position;
         var viewForward = Vector3.Dot(toTarget, cam.transform.forward);
@@ -638,6 +667,9 @@ public sealed class ArWaypointOverlay : MonoBehaviour
                 break;
             case ArWaypointKind.Pin:
                 _pinMotion = motion;
+                break;
+            case ArWaypointKind.RouteLeg:
+                _routeLegMotion = motion;
                 break;
             case ArWaypointKind.OtherLoco:
                 var slot = motion.RadarSlot;

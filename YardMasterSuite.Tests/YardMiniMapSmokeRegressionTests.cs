@@ -3,7 +3,7 @@ using YardMasterSuite.Core;
 namespace YardMasterSuite.Tests;
 
 /// <summary>
-/// Smoke regressions from Player.log + screenshots (4.13).
+/// Smoke regressions for sticky yard / MFMB office fence (formerly 4.13 mini-map; stick still used by desk + FILO).
 /// 0.6.26 FAIL: Station MF→MFMB N flipped Yard to MFMB via track AABB — too early vs fences.
 /// </summary>
 public class YardMiniMapSmokeRegressionTests
@@ -65,7 +65,6 @@ public class YardMiniMapSmokeRegressionTests
         Assert.Equal(5f, YardMiniMapYardStick.SatelliteFenceRadiusMeters);
     }
 
-    /// <summary>0.6.27 FAIL: ~50 m out, Station MF, Yard MFMB — fence must not steal while nearest is MF.</summary>
     [Fact]
     public void Smoke_station_mf_not_stolen_by_near_mfmb_office_fence()
     {
@@ -76,18 +75,5 @@ public class YardMiniMapSmokeRegressionTests
                 inZoneYardIds: new[] { "MF", "MFMB" },
                 nearestYardId: "MF",
                 insideFenceSatellites: new[] { "MFMB" }));
-    }
-
-    [Fact]
-    public void Smoke_off_map_uses_edge_arrow_not_interior_pin()
-    {
-        Assert.True(YardMiniMapProjection.IsOutsideBounds(50f, -40f, 0f, 100f, 0f, 100f));
-        Assert.True(YardMiniMapProjection.TryOffMapEdge(
-            50f, -40f, 0f, 100f, 0f, 100f, 0f, 0f, 100f, 100f, 6f,
-            out var ex, out var ey, out var dx, out var dy));
-        Assert.Equal(50f, ex, 3);
-        Assert.Equal(94f, ey, 3);
-        Assert.True(dy > 0f);
-        Assert.True(Math.Abs(dx) < 0.2f);
     }
 }

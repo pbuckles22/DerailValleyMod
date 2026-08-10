@@ -111,6 +111,17 @@ public static class RoutePlanSession
         _junctionSnapshot = null;
     }
 
+    /// <summary>Refresh Exit compass without clearing the frozen plan (live loco→pin).</summary>
+    public static void SetExitCue(string? exitCue)
+    {
+        if (_plan == null || _stale)
+        {
+            return;
+        }
+
+        _exitCue = string.IsNullOrWhiteSpace(exitCue) ? null : exitCue!.Trim();
+    }
+
     /// <summary>Record corridor junction branches after Set dest / Align (for no-throw Path OK).</summary>
     public static void SetJunctionSnapshot(IReadOnlyDictionary<string, int>? snapshot)
     {

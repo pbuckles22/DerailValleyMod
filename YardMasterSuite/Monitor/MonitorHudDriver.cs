@@ -6,8 +6,8 @@ namespace YardMasterSuite.Monitor;
 /// <summary>
 /// In-world IMGUI overlay for Monitor Mode telemetry.
 /// Top bar = usable loco-train totals (hidden when not usable — 4.3); second bar = look-at preferred, standing fallback.
-/// Always-on: Heading (1.12) + Marked (1.14) + Station zone (4.6) + Path check (3.4) + Clock.
-/// No mod version chip on HUD — verify ship # in UMM Mod Manager.
+/// Always-on: Version (in-world) + Heading (1.12) + Marked (1.14) + Station zone (4.6) + Path check (3.4) + Clock.
+/// Version chip only while world session active — never launcher filler.
 /// Bundle B.1: Pos (1.13) removed from the always-on bar.
 /// Active Job bar (4.8) when jobs are taken. Loco bar centered IA (4.7).
 /// </summary>
@@ -143,7 +143,6 @@ public sealed class MonitorHudDriver : MonoBehaviour
     private float _msHudBuild;
     private float _msLimitFilo;
     private float _msOnGui;
-    private string? _filoStationYardId;
 
     private bool _hasPositionDebug;
     private int? _lastPosX;
@@ -188,7 +187,7 @@ public sealed class MonitorHudDriver : MonoBehaviour
             _alwaysOnLabel = "";
             LastStackBottomGuiY = 0f;
             _hitchProbeLastFrameAt = -999f;
-            _filoStationYardId = null;
+            StickyYardHost.Reset();
             return;
         }
 
@@ -259,7 +258,7 @@ public sealed class MonitorHudDriver : MonoBehaviour
             var buildMs = sw.ElapsedMilliseconds;
 
             sw.Restart();
-            MaybeWarmLimitFiloForStation();
+            StickyYardHost.Tick();
             sw.Stop();
             _msLimitFilo = sw.ElapsedMilliseconds;
 
@@ -281,7 +280,8 @@ public sealed class MonitorHudDriver : MonoBehaviour
                 _stationLabel,
                 _pathLabel,
                 MonitorHudLine.Join(new[] { _facingLabel ?? "", exitLabel ?? "" }),
-                TelemetryReader.CurrentClockLabel());
+                TelemetryReader.CurrentClockLabel(),
+                Main.VersionChip);
             EmitConsistDebugIfNeeded();
             EmitPowerDebugIfNeeded();
             EmitSpeedLimitDebugIfNeeded();
@@ -721,20 +721,6 @@ public sealed class MonitorHudDriver : MonoBehaviour
         {
             Main.Log(line);
         }
-    }
-
-    private void MaybeWarmLimitFiloForStation()
-    {
-        var snap = TelemetryReader.CurrentStationWaypointDebugSnapshot();
-        var yard = snap.InZone ? snap.YardId : null;
-        if (string.Equals(_filoStationYardId, yard, System.StringComparison.OrdinalIgnoreCase))
-        {
-            return;
-        }
-
-        var from = _filoStationYardId;
-        _filoStationYardId = yard;
-        TelemetryReader.OnLimitFiloTownChanged(from, yard);
     }
 
     private void EmitConsistDebugIfNeeded()

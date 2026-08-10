@@ -52,8 +52,12 @@ internal static class RoutePlanService
         string? YardFor(string id) => yardAliases.TryGetValue(id, out var yard)
             ? yard
             : PathRouteConstraints.YardIdOf(id);
+        // Anonymous TT / #Y dest has no city prefix — use session yard so in-town YardService
+        // rails stay legal (SW-B4L → #Y turntable was Through-only NoPath with dYard=-).
+        var destYard = PathRouteConstraints.EffectiveDestYardId(
+            dest, RouteDestSession.YardId, YardFor);
         var filtered = PathRouteConstraints.FilterEdges(
-            edges, ClassFor, occupied, origin, dest, YardFor);
+            edges, ClassFor, occupied, origin, dest, YardFor, destYard);
         var originCands = TelemetryReaderOrigin.TryGetCandidates();
         Main.Log(
             "T2 path: occupancy cars="
@@ -66,11 +70,13 @@ internal static class RoutePlanService
             + edges.Count
             + "→"
             + filtered.Count);
-        Main.Log(PathRouteDebug.FormatThinkHeader(reason, origin, dest, originCands));
+        Main.Log(PathRouteDebug.FormatThinkHeader(
+            reason, origin, dest, originCands, RouteDestSession.YardId));
 
         // classFor drives spur / non-through penalties + forward-only reverse ban in Dijkstra.
         LogYardProbe(reason, origin, dest, edges, filtered, occupied, ClassFor);
-        var plan = PathPlan.Find(filtered, selected, origin, dest, ClassFor);
+        var plan = PathPlan.Find(
+            filtered, selected, origin, dest, ClassFor, destYardId: destYard, yardFor: YardFor);
         if (plan.Status == PathCheckStatus.NoPath)
         {
             // Still dump choices so we can see why every outbound died.
@@ -85,7 +91,7 @@ internal static class RoutePlanService
         RouteMemo.Clear();
         RouteMemo.Put(origin, dest, plan);
 
-        var exit = TryExitCue(plan, origin);
+        var exit = RouteFacingResolver.TryGetExitCue(plan) ?? TryExitCue(plan, origin);
         var travelEta = PathRouteDebug.RemainingCostSeconds(plan, 0, filtered)
             ?? plan.TotalCost;
         RoutePlanSession.SetPlan(plan, origin, exit, travelEta);
@@ -106,6 +112,135 @@ internal static class RoutePlanService
         ResetEtaPace();
         RefreshRemainingEta();
         return FormatPathLines(reason, plan, origin, dest, exit, filtered);
+    }
+
+    /// <summary>
+    /// When origin→final is NoPath, pick the first Align stop (bridge preferred, else pull-toward).
+    /// Uses the same filtered graph as a compute toward <paramref name="finalTrackId"/>.
+    /// </summary>
+    public static string? TryFindFirstPivotTrackId(
+        string origin,
+        string finalTrackId,
+        string? sessionYardId)
+    {
+        if (string.IsNullOrWhiteSpace(origin) || string.IsNullOrWhiteSpace(finalTrackId))
+        {
+            return null;
+        }
+
+        if (!PathGraphBuilder.HasReadyCache || !PathGraphBuilder.TryBuild(out var edges, out var selected))
+        {
+            return null;
+        }
+
+        PathTrackClass ClassFor(string id)
+        {
+            var meta = PathGraphBuilder.TryGetTrackMeta(id);
+            return meta?.TrackClass ?? PathTrackClass.Unknown;
+        }
+
+        var yardAliases = PathGraphBuilder.BuildYardAliasMap();
+        string? YardFor(string id) => yardAliases.TryGetValue(id, out var yard)
+            ? yard
+            : PathRouteConstraints.YardIdOf(id);
+
+        var destYard = PathRouteConstraints.EffectiveDestYardId(finalTrackId, sessionYardId, YardFor);
+        var occupiedNamed = PathOccupancyScanner.SnapshotOccupiedTrackKeys();
+        var occupiedAliased = PathGraphBuilder.ExpandOccupiedAliases(occupiedNamed);
+        var occupied = PathRouteConstraints.ExpandOccupiedThroughAnonymous(
+            occupiedAliased, edges, origin, finalTrackId);
+        var filtered = PathRouteConstraints.FilterEdges(
+            edges, ClassFor, occupied, origin, finalTrackId, YardFor, destYard);
+
+        if (!PathGraphBuilder.TryGetTrackWorldXZ(origin, out var ox, out var oz))
+        {
+            return null;
+        }
+
+        float fx = ox, fz = oz;
+        var haveFinal = PathGraphBuilder.TryGetTrackWorldXZ(finalTrackId, out fx, out fz);
+        var near = PathGraphBuilder.CollectNearbyTracks(ox, oz, radiusMeters: 400f, max: 48);
+        var scored = new System.Collections.Generic.List<(string Id, float DistFinal, PathTrackClass Cls)>();
+        for (var i = 0; i < near.Count; i++)
+        {
+            var (id, _, cls) = near[i];
+            if (string.IsNullOrWhiteSpace(id)
+                || string.Equals(id, origin, System.StringComparison.Ordinal)
+                || string.Equals(id, finalTrackId, System.StringComparison.Ordinal)
+                || occupied.Contains(id!))
+            {
+                continue;
+            }
+
+            // Prefer named rails in the sticky/session yard (or anonymous with yard alias).
+            var yard = YardFor(id!);
+            if (destYard != null
+                && yard != null
+                && !string.Equals(yard, destYard, System.StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            if (cls != PathTrackClass.Through && cls != PathTrackClass.YardService)
+            {
+                continue;
+            }
+
+            var distFinal = haveFinal && PathGraphBuilder.TryGetTrackWorldXZ(id, out var px, out var pz)
+                ? DistXZ(px, pz, fx, fz)
+                : 9999f;
+            scored.Add((id!, distFinal, cls));
+        }
+
+        scored.Sort((a, b) =>
+        {
+            var thru = (a.Cls == PathTrackClass.Through ? 0 : 1)
+                .CompareTo(b.Cls == PathTrackClass.Through ? 0 : 1);
+            return thru != 0 ? thru : a.DistFinal.CompareTo(b.DistFinal);
+        });
+
+        const int maxTry = 12;
+        var candidates = new System.Collections.Generic.List<RoutePivotCandidate>(maxTry);
+        var n = System.Math.Min(maxTry, scored.Count);
+        for (var i = 0; i < n; i++)
+        {
+            var id = scored[i].Id;
+            var toPivot = PathPlan.Find(
+                filtered, selected, origin, id, ClassFor, destYardId: destYard, yardFor: YardFor);
+            var fromPivot = PathPlan.Find(
+                filtered, selected, id, finalTrackId, ClassFor, destYardId: destYard, yardFor: YardFor);
+            candidates.Add(new RoutePivotCandidate(
+                id,
+                canReachFromOrigin: toPivot.Status != PathCheckStatus.NoPath
+                    && toPivot.Status != PathCheckStatus.NoOrigin
+                    && toPivot.Status != PathCheckStatus.NoDestination,
+                canReachFinal: fromPivot.Status != PathCheckStatus.NoPath
+                    && fromPivot.Status != PathCheckStatus.NoOrigin
+                    && fromPivot.Status != PathCheckStatus.NoDestination,
+                originToPivotCost: toPivot.Status == PathCheckStatus.NoPath ? float.MaxValue : toPivot.TotalCost,
+                metersToFinal: scored[i].DistFinal));
+        }
+
+        var pick = RouteFirstPivot.Pick(origin, finalTrackId, candidates);
+        if (pick != null)
+        {
+            Main.Log(
+                "T2 path: TT multi-step pivot1="
+                + pick
+                + " final="
+                + finalTrackId
+                + " tried="
+                + candidates.Count);
+        }
+
+        return pick;
+    }
+
+    private static float DistXZ(float ax, float az, float bx, float bz)
+    {
+        var dx = ax - bx;
+        var dz = az - bz;
+        return (float)System.Math.Sqrt(dx * dx + dz * dz);
     }
 
     /// <summary>
@@ -140,7 +275,8 @@ internal static class RoutePlanService
         var origin = RoutePlanSession.PlannedOriginTrackId
             ?? (thrownPlan.TrackIds.Count > 0 ? thrownPlan.TrackIds[0] : null);
         var dest = RouteDestSession.TrackId ?? thrownPlan.TrackIds[thrownPlan.TrackIds.Count - 1];
-        var exit = origin != null ? TryExitCue(plan, origin) : null;
+        var exit = RouteFacingResolver.TryGetExitCue(plan)
+            ?? (origin != null ? TryExitCue(plan, origin) : null);
         var travelEta = PathRouteDebug.RemainingCostSeconds(plan, 0, edges)
             ?? plan.TotalCost;
         RoutePlanSession.SetPlan(plan, origin, exit, travelEta);
@@ -182,7 +318,8 @@ internal static class RoutePlanService
             RoutePlanSession.RemainingMeters,
             RoutePlanSession.TripProgress01,
             RoutePlanSession.EtaMode) ?? pathChip;
-        var facing = RouteFacingDisplay.Format(plan) ?? "Facing —";
+        var facing = RouteFacingDisplay.Format(plan, RouteFacingResolver.IsTargetBehind(plan))
+            ?? "Facing —";
         var exitChip = exit ?? "Exit —";
         var summary = $"T2 path: {reason} {pathChip} / {facing} / {exitChip} ({origin} → {dest})";
 
@@ -565,6 +702,15 @@ internal static class RoutePlanService
 
         var mode = arrived ? "arrived" : "lag";
         var chip = RouteEtaDisplay.WithPathChip("Path", etaSec, remM, tripProg, mode);
+        var liveExit = RouteFacingResolver.TryGetExitCue(plan);
+        if (liveExit != null)
+        {
+            RoutePlanSession.SetExitCue(liveExit);
+        }
+
+        var exit = liveExit ?? RoutePlanSession.ExitCue ?? "—";
+        var facing = SwitchListDriveFacing.SetWord(RouteFacingResolver.IsTargetBehind(plan));
+        var travel = TelemetryReader.TryDescribeTravelVsExit(exit);
         return "T2 path: eta-refresh "
             + (chip ?? ("ETA " + etaSec.ToString("0") + "s"))
             + " plan=" + planSec.ToString("0") + "s"
@@ -575,6 +721,9 @@ internal static class RoutePlanService
             + " at=" + (at ?? "—")
             + " drive=" + driveSince.ToString("0") + "m"
             + " spd=" + speedKmh.ToString("0") + "km/h"
+            + " facing=" + facing
+            + " exit=" + exit
+            + " travel=" + travel
             + (arrived ? " arrived" : "");
     }
 }

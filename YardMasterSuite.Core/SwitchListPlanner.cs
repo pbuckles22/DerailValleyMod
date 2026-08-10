@@ -107,6 +107,61 @@ public static class SwitchListPlanner
         return steps;
     }
 
+    /// <summary>
+    /// Town Turntable Align (manual multi-leg) — optional pivot then turntable.
+    /// Fail closed without a turntable track id.
+    /// Labels include Set Forward / Set Reverse from facing flags.
+    /// </summary>
+    public static System.Collections.Generic.IReadOnlyList<SwitchListStep>? BuildTownTurntable(
+        string? yardId,
+        string? turntableTrackId,
+        string? pivotTrackId = null,
+        bool pivotNeedsReverse = false,
+        bool turntableNeedsReverse = false,
+        bool insertFacingBeforeTurntable = false)
+    {
+        var tt = Normalize(turntableTrackId);
+        if (tt == null)
+        {
+            return null;
+        }
+
+        var yard = string.IsNullOrWhiteSpace(yardId) ? null : yardId!.Trim();
+        var steps = new System.Collections.Generic.List<SwitchListStep>(4);
+        var i = 1;
+        var pivot = Normalize(pivotTrackId);
+        if (pivot != null
+            && !string.Equals(pivot, tt, System.StringComparison.OrdinalIgnoreCase))
+        {
+            steps.Add(new SwitchListStep(
+                i++,
+                SwitchListStepKind.Transit,
+                yard,
+                pivot,
+                SwitchListDriveFacing.FormatDriveLabel(pivotNeedsReverse, "Pivot", pivot)));
+        }
+
+        if (insertFacingBeforeTurntable
+            && pivot != null
+            && pivotNeedsReverse != turntableNeedsReverse)
+        {
+            steps.Add(new SwitchListStep(
+                i++,
+                SwitchListStepKind.Prep,
+                yard,
+                tt,
+                SwitchListDriveFacing.FormatFacingOnlyLabel(turntableNeedsReverse)));
+        }
+
+        steps.Add(new SwitchListStep(
+            i,
+            SwitchListStepKind.TurnAround,
+            yard,
+            tt,
+            SwitchListDriveFacing.FormatDriveLabel(turntableNeedsReverse, "Turn around", tt)));
+        return steps;
+    }
+
     private static string? Normalize(string? id)
     {
         var t = id?.Trim();

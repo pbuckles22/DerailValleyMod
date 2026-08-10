@@ -40,7 +40,9 @@ public class PathPlanTests
         var plan = PathPlan.Find(edges, new Dictionary<string, int>(), "A", "STALL");
         Assert.Equal(1, plan.ReverseCount);
         Assert.True(plan.LastHopRequiresReverse);
-        Assert.Equal("Reverse into dest", RouteFacingDisplay.Format(plan));
+        // Drive-set is live cab→pin; stub count is topological only.
+        Assert.Equal("Set Reverse (stub 1)", RouteFacingDisplay.Format(plan, isTargetBehind: true));
+        Assert.Equal("Set Forward (stub 1)", RouteFacingDisplay.Format(plan, isTargetBehind: false));
     }
 
     [Fact]
@@ -52,7 +54,7 @@ public class PathPlanTests
             new PathEdge("B", "A"),
         };
         var plan = PathPlan.Find(edges, new Dictionary<string, int>(), "A", "B");
-        Assert.Equal("Facing OK", RouteFacingDisplay.Format(plan));
+        Assert.Equal("Set Forward", RouteFacingDisplay.Format(plan, isTargetBehind: false));
     }
 
     [Fact]
@@ -186,6 +188,63 @@ public class PathPlanTests
         };
 
         var plan = PathPlan.Find(edges, new Dictionary<string, int>(), "FF-A1L", "OWC-A1L");
+        Assert.Equal(PathCheckStatus.Aligned, plan.Status);
+        Assert.Equal(new[] { "FF-A1L", "LOOP", "OWC-A1L" }, plan.TrackIds);
+        Assert.Equal(0, plan.ReverseCount);
+    }
+
+    /// <summary>
+    /// Smoke SW TT: anonymous dest needs an intermediate reverse; without session destYard → NoPath;
+    /// with same-town destYard SW → Path OK.
+    /// </summary>
+    [Fact]
+    public void Smoke_SwTurntable_SameTown_AllowsIntermediateReverseToAnonymousDest()
+    {
+        var edges = new[]
+        {
+            new PathEdge("SW-B4L", "SW-C1O", cost: 10f),
+            new PathEdge("SW-C1O", "SW-B4L", cost: 10f),
+            // Must reverse off the through to reach the TT spur (not last-hop-only).
+            new PathEdge("SW-C1O", "SW-A2P", cost: 10f, requiresReverse: true),
+            new PathEdge("SW-A2P", "SW-C1O", cost: 10f, requiresReverse: true),
+            new PathEdge("SW-A2P", "#Y-#S1774#T", cost: 10f),
+            new PathEdge("#Y-#S1774#T", "SW-A2P", cost: 10f),
+        };
+
+        var banned = PathPlan.Find(
+            edges, new Dictionary<string, int>(), "SW-B4L", "#Y-#S1774#T");
+        Assert.Equal(PathCheckStatus.NoPath, banned.Status);
+
+        var ok = PathPlan.Find(
+            edges,
+            new Dictionary<string, int>(),
+            "SW-B4L",
+            "#Y-#S1774#T",
+            destYardId: "SW");
+        Assert.Equal(PathCheckStatus.Aligned, ok.Status);
+        Assert.Contains("#Y-#S1774#T", ok.TrackIds);
+        Assert.True(ok.ReverseCount >= 1);
+    }
+
+    [Fact]
+    public void Find_same_town_does_not_weaken_intercity_reverse_ban()
+    {
+        // Cheap reverse through intermediate HB; expensive forward loop — must take the loop
+        // even when destYardId is passed (OWC ≠ FF origin).
+        var edges = new[]
+        {
+            new PathEdge("FF-A1L", "HB-P1P", cost: 10f, requiresReverse: true),
+            new PathEdge("HB-P1P", "OWC-A1L", cost: 10f, requiresReverse: true),
+            new PathEdge("FF-A1L", "LOOP", cost: 200f),
+            new PathEdge("LOOP", "OWC-A1L", cost: 200f),
+            new PathEdge("HB-P1P", "FF-A1L", cost: 10f),
+            new PathEdge("OWC-A1L", "HB-P1P", cost: 10f),
+            new PathEdge("LOOP", "FF-A1L", cost: 200f),
+            new PathEdge("OWC-A1L", "LOOP", cost: 200f),
+        };
+
+        var plan = PathPlan.Find(
+            edges, new Dictionary<string, int>(), "FF-A1L", "OWC-A1L", destYardId: "OWC");
         Assert.Equal(PathCheckStatus.Aligned, plan.Status);
         Assert.Equal(new[] { "FF-A1L", "LOOP", "OWC-A1L" }, plan.TrackIds);
         Assert.Equal(0, plan.ReverseCount);

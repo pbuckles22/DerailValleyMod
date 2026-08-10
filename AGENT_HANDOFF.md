@@ -117,21 +117,20 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 |--|--|
 | **Project** | *Yard Master Suite* (UMM / Harmony / net48) |
 | **MVP** | **Epic 1** System Monitor HUD |
-| **Version** | **0.6.37** *(on `main`)* |
-| **Active branch** | **`main`** |
+| **Version** | **0.6.49** *(feature/town-turntable-align — drive-set + Arrived PASS; Next→TT Align open)* |
+| **Active branch** | **`feature/town-turntable-align`** |
 
 **Shipped on `main`**
 
 - [x] **Epic 0** Safe Boot *(0.4 scaffold)*
 - [x] **Epic 1** Diagnostic HUD — **1.1–1.15** complete (**1.15** @ **0.5.20**); **1.16** CUT; **1.17** @ **0.5.104**
-- [x] **Epic 4** HUD quality — **4.1–4.12** complete 2026-07-28 (**4.12** @ **0.5.17**); backlog **4.13** @ **0.6.28**
+- [x] **Epic 4** HUD quality — **4.1–4.12** complete 2026-07-28 (**4.12** @ **0.5.17**); **4.13** schematic shipped @ **0.6.28**, **CUT @ 0.6.38**
 - [x] **Epic 2** Governor Mode — **2.1**–**2.3** complete 2026-07-28 (**2.3** @ **0.5.25**)
 - [x] **3.5** Align Route (**0.5.101**)
 - [x] **3.6** Digital Switch List (**0.6.2**, Tier 2 **PASS**)
 - [x] **3.1** Job-cars teleport + Station Snap (**0.6.4**, Tier 2 **PASS** — look-at place; Flip; Snap/Return)
 - [x] **F5 DH4/DE6 license debug** (**0.6.5**, Tier 2 **PASS** — real → DH4 only → DH4+DE6 → real; replaces lighter)
 - [x] **Maps path rem/ETA + job AR + UMM options** (**0.6.19**, Tier 2 **PASS** — rem until dest; pickup-track pins; Show nearest locos; false Path stale @ **0.6.13**)
-- [x] **4.13 Yard mini-map** (**0.6.28**, Tier 2 **PASS** — `M` toggle; MFMB 5 m office fence; off-map arrow; smoke-gates Tier 1 CI)
 - [x] **Active Roster Limit + hitch event gates** (**0.6.37**, Tier 2 **PASS** 2026-08-10 — FILO soft-warm; path map deferred; loco/office/job-car event scans; hitch attribution)
 - [x] **1.17** Posted Limit + Next (**0.5.104**, Tier 2 **PASS**; #4 behind-seed on ice)
 - [x] **Stress RAG HUD chip** (**0.5.105**, Tier 2 **PASS** — coupler/derail % RAG)
@@ -145,9 +144,13 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 - [x] **1.15** Consist free-motion (**v0.5.20**, Tier 1 + Tier 2 **PASS**)
 - [x] **2.3** Auto-brake / engine-off secure (**v0.5.25**, Tier 1 + Tier 2 **PASS**)
 
+**In flight**
+
+- [ ] **Town Turntable Align** (**0.6.49**) — drive-set + HERE/Arrived **PASS** (2026-08-10; no re-gate on later path ships). Open: **Next→TT** rem ~10 km / Align rem-guard.
+
 **Next**
 
-1. **Town Turntable Align** (desk Set Dest) or **3.7** / **4.13 `#Y`** — user pick. **3.1b iced**.
+1. Tier 2 smoke Town TT Align → commit/merge → then **3.7** inject. **3.1b iced**.
 2. Do **not** merge `fix/hitch-0.4.20.1-hud-draw-gate`.
 3. Parking: 3.1b ghost/spawn; place ghost / Snap office under-mesh; Switch List couple auto-advance / arrival-track split; flight-sim HUD; AR house hide; DM3; session reset; 1.17 #4 behind-seed.
 

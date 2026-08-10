@@ -46,13 +46,13 @@ High ROI; frequent pain; not blocking.
 
 - [ ] **Hitch residual (nit)** — Sub‑100 ms spikes / slow heap creep may remain with rare FoT; revisit only if cadence returns. Do **not** chase 20 ms GC while feel is PASS.
 
-- [ ] **4.13 follow-on — unnamed/`#Y` rails on mini-map** — schematic currently named catalog only; retune MFMB office fence after coverage improves.
+- [x] **4.13 follow-on — unnamed/`#Y` rails on mini-map** — **CUT @ 0.6.38** with schematic graveyard (AR GPS / desk TT Align). Fence stick Core retained.
 
 - [ ] **3.1 place ghost / facing cue** — MVP chip-only; players can’t preview landing until Confirm. Add re-rail-style ghost (and Flip cue) on look-at aim.
 
 - [ ] **3.1 Snap office under-mesh** — Station Snap can drop the player under the office floor / into water; needs a known-good office spawn (or offset up).
 
-- [ ] **3.7 NeedsTurnAround + turntable resolution** — `SwitchListPlanner` supports TurnAround but `SwitchListJobReader` never sets `NeedsTurnAround` / `TurntableTrackId`; no turntable catalog in graph. Blocks 3.7 slice 1.
+- [ ] **3.7 Switch List inject TurnAround** — Core `TurntableTrackResolver` + desk Set Dest TT @ **0.6.38**; still need `SwitchListJobReader` to set `NeedsTurnAround` / `TurntableTrackId`. Blocks remaining 3.7 slice 1.
 
 - [ ] **3.7 Reverse-into as Switch List leg** — `RouteFacingDisplay` is informational only; need explicit reverse-into Align leg (e.g. MF-B4O). 3.7 slice 2.
 

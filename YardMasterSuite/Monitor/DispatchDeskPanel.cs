@@ -19,6 +19,7 @@ internal sealed class DispatchDeskPanel : MonoBehaviour
 
     private bool _visible;
     private DeskMode _mode = DeskMode.Route;
+    private static bool _requestSwitchListTab;
     private List<(string YardId, string TrackId)> _catalog = new();
     private IReadOnlyList<string> _yards = System.Array.Empty<string>();
     private IReadOnlyList<string> _tracks = System.Array.Empty<string>();
@@ -37,6 +38,9 @@ internal sealed class DispatchDeskPanel : MonoBehaviour
 
     private List<Job> _jobs = new();
     private int _jobIndex;
+
+    /// <summary>Job load — show Per job tab next draw.</summary>
+    internal static void RequestSwitchListTab() => _requestSwitchListTab = true;
 
     private void Update()
     {
@@ -57,8 +61,8 @@ internal sealed class DispatchDeskPanel : MonoBehaviour
         {
             _worldSessionActive = true;
             // Do NOT EnsureMappingStarted here — pumping ~2k tracks on every world enter
-            // reintroduces the rhythmic hitch. Warm only on Insert desk / Align / M map.
-            Main.Log("T2 path: world session (map warm deferred until desk/Align/M)");
+            // reintroduces the rhythmic hitch. Warm on first sticky city / desk / Align / Set Dest.
+            Main.Log("T2 path: world session (map warm deferred until sticky city/desk/Align/Set Dest)");
         }
 
         if (PathGraphBuilder.IsMapping)
@@ -253,13 +257,24 @@ internal sealed class DispatchDeskPanel : MonoBehaviour
             DrawMappingBanner();
         }
 
+        if (_requestSwitchListTab)
+        {
+            _requestSwitchListTab = false;
+            _mode = DeskMode.SwitchList;
+            _visible = true;
+            _yardDropOpen = _trackDropOpen = _jobDropOpen = false;
+        }
+
         if (!_visible)
         {
             return;
         }
 
         const float w = 420f;
-        var h = _mode == DeskMode.SwitchList ? 420f : (PathGraphBuilder.IsMapping ? 300f : 280f);
+        var stepCount = SwitchListSession.Steps?.Count ?? 0;
+        var h = _mode == DeskMode.SwitchList
+            ? 420f
+            : (PathGraphBuilder.IsMapping ? 300f : (stepCount > 0 ? 420f : 280f));
         var x = (Screen.width - w) * 0.5f;
         var y = Screen.height * 0.12f;
         GUI.Box(new Rect(x, y, w, h), "Dispatch desk (Dispatcher)");
@@ -271,7 +286,7 @@ internal sealed class DispatchDeskPanel : MonoBehaviour
             _jobDropOpen = false;
         }
 
-        if (GUI.Button(new Rect(x + 118, row, 120, 22), _mode == DeskMode.SwitchList ? "● Switch List" : "Switch List"))
+        if (GUI.Button(new Rect(x + 118, row, 120, 22), _mode == DeskMode.SwitchList ? "● Per job" : "Per job"))
         {
             _mode = DeskMode.SwitchList;
             _yardDropOpen = _trackDropOpen = false;
@@ -296,7 +311,7 @@ internal sealed class DispatchDeskPanel : MonoBehaviour
         var planChip = TelemetryReader.CurrentPathCheckLabel()
             ?? (RouteDestSession.HasDestination ? "Path (Set dest / Check)" : "Path —");
         var facing = TelemetryReader.CurrentFacingLabel() ?? "Facing —";
-        var exit = RoutePlanSession.ExitCue ?? "Exit —";
+        var exit = TelemetryReader.CurrentExitLabel() ?? "Exit —";
         var license = RouteAlignAccess.DeniedChip(RouteAlignGovernor.HasDispatcherLicense())
             ?? "Dispatcher ok";
 
@@ -383,15 +398,18 @@ internal sealed class DispatchDeskPanel : MonoBehaviour
         if (GUI.Button(new Rect(x + 12, row, 100, 28), "Set dest"))
         {
             _yardDropOpen = _trackDropOpen = false;
-            if (!ApplySelection())
+            if (_yards.Count == 0 || _tracks.Count == 0)
             {
                 _status = _yards.Count == 0 ? "no cities — reopen in world" : "pick city + track";
                 RefreshCatalog(force: true);
             }
             else
             {
-                _status = RoutePlanService.Compute("set");
-                Main.Log(_status);
+                _status = DispatchDeskSetDest.Run(_yards[_yardIndex], _tracks[_trackIndex]);
+                if (RouteDestSession.HasDestination)
+                {
+                    SyncIndicesFromSession();
+                }
             }
         }
 
@@ -411,6 +429,7 @@ internal sealed class DispatchDeskPanel : MonoBehaviour
             {
                 _status = RoutePlanService.Compute("recheck");
                 Main.Log(_status);
+                DispatchDeskSetDest.LogRouteSnapshot("recheck");
             }
         }
 
@@ -428,9 +447,31 @@ internal sealed class DispatchDeskPanel : MonoBehaviour
             {
                 Main.Log(line);
             }
+
+            DispatchDeskSetDest.LogRouteSnapshot("align", line);
         }
 
         row += 34f;
+
+        // Multi-leg list lives on Route too — need Next/Align here (smoke: Arrived · Next, no button).
+        var hasSteps = SwitchListSession.Steps != null && SwitchListSession.Steps.Count > 0;
+        if (hasSteps)
+        {
+            if (GUI.Button(new Rect(x + 12, row, 100, 28), "Align step"))
+            {
+                _yardDropOpen = _trackDropOpen = false;
+                AlignCurrentStep();
+            }
+
+            if (GUI.Button(new Rect(x + 118, row, 70, 28), "Next"))
+            {
+                _yardDropOpen = _trackDropOpen = false;
+                AdvanceSwitchListStep();
+            }
+
+            row += 34f;
+        }
+
         if (GUI.Button(new Rect(x + 12, row, 70, 28), "Clear"))
         {
             RoutePlanService.ClearAll();
@@ -461,6 +502,42 @@ internal sealed class DispatchDeskPanel : MonoBehaviour
         if (!string.IsNullOrEmpty(_status))
         {
             GUI.Label(new Rect(x + 270, row, w - 282, 28), _status);
+        }
+
+        row += 32f;
+        DrawActiveSteps(x, ref row, w, emptyHint: null);
+    }
+
+    private void DrawActiveSteps(float x, ref float row, float w, string? emptyHint)
+    {
+        var steps = SwitchListSession.Steps;
+        if (steps != null && steps.Count > 0)
+        {
+            var active = SwitchListSession.JobId ?? "";
+            var cur = SwitchListSession.IsComplete
+                ? "done"
+                : (SwitchListSession.CurrentStep?.Label ?? "—");
+            GUI.Label(new Rect(x + 12, row, w - 24, 20), $"{active} · {cur}");
+            row += 22f;
+
+            var listH = Mathf.Min(120f, 20f * steps.Count + 4f);
+            _stepScroll = GUI.BeginScrollView(
+                new Rect(x + 12, row, w - 24, listH),
+                _stepScroll,
+                new Rect(0, 0, w - 48, 20f * steps.Count));
+            for (var i = 0; i < steps.Count; i++)
+            {
+                var mark = i == SwitchListSession.CurrentIndex && !SwitchListSession.IsComplete ? "▶ " : "  ";
+                GUI.Label(new Rect(0, i * 20f, w - 48, 20), mark + steps[i].Label);
+            }
+
+            GUI.EndScrollView();
+            row += listH + 4f;
+        }
+        else if (!string.IsNullOrEmpty(emptyHint))
+        {
+            GUI.Label(new Rect(x + 12, row, w - 24, 40), emptyHint);
+            row += 44f;
         }
     }
 
@@ -522,21 +599,7 @@ internal sealed class DispatchDeskPanel : MonoBehaviour
 
         if (GUI.Button(new Rect(x + 254, row, 70, 26), "Next"))
         {
-            if (SwitchListSession.TryAdvance())
-            {
-                var step = SwitchListSession.CurrentStep;
-                _status = step != null ? $"step {step.Index}: {step.Label}" : "advanced";
-                Main.Log("T2 switch-list: next · " + _status);
-            }
-            else if (SwitchListSession.IsComplete)
-            {
-                _status = "Switch List complete";
-                Main.Log("T2 switch-list: complete");
-            }
-            else
-            {
-                _status = "no Switch List";
-            }
+            AdvanceSwitchListStep();
         }
 
         if (GUI.Button(new Rect(x + 330, row, 70, 26), "Clear"))
@@ -606,35 +669,11 @@ internal sealed class DispatchDeskPanel : MonoBehaviour
 
         row += 30f;
 
-        var steps = SwitchListSession.Steps;
-        if (steps != null && steps.Count > 0)
-        {
-            var active = SwitchListSession.JobId ?? "";
-            var cur = SwitchListSession.IsComplete
-                ? "done"
-                : (SwitchListSession.CurrentStep?.Label ?? "—");
-            GUI.Label(new Rect(x + 12, row, w - 24, 20), $"{active} · {cur}");
-            row += 22f;
-
-            var listH = Mathf.Min(120f, 20f * steps.Count + 4f);
-            _stepScroll = GUI.BeginScrollView(
-                new Rect(x + 12, row, w - 24, listH),
-                _stepScroll,
-                new Rect(0, 0, w - 48, 20f * steps.Count));
-            for (var i = 0; i < steps.Count; i++)
-            {
-                var mark = i == SwitchListSession.CurrentIndex && !SwitchListSession.IsComplete ? "▶ " : "  ";
-                GUI.Label(new Rect(0, i * 20f, w - 48, 20), mark + steps[i].Label);
-            }
-
-            GUI.EndScrollView();
-            row += listH + 4f;
-        }
-        else
-        {
-            GUI.Label(new Rect(x + 12, row, w - 24, 40), "Pick a taken or held job → Load Switch List → Align step per leg.");
-            row += 44f;
-        }
+        DrawActiveSteps(
+            x,
+            ref row,
+            w,
+            emptyHint: "Pick a taken or held job → Load list → Align step per leg.");
 
         var planChip = TelemetryReader.CurrentPathCheckLabel() ?? "Path —";
         var facing = TelemetryReader.CurrentFacingLabel() ?? "Facing —";
@@ -692,6 +731,55 @@ internal sealed class DispatchDeskPanel : MonoBehaviour
         SwitchListSession.Bind(summary.JobId, steps);
         _status = $"loaded {steps.Count} steps · {summary.JobId}";
         Main.Log($"T2 switch-list: loaded {summary.JobId} · {steps.Count} steps · {summary.OriginTrackId} → {summary.DestTrackId}");
+    }
+
+    private void AdvanceSwitchListStep()
+    {
+        if (!SwitchListSession.HasActive)
+        {
+            _status = "no list";
+            return;
+        }
+
+        if (SwitchListSession.IsComplete)
+        {
+            _status = "list complete";
+            return;
+        }
+
+        if (!TelemetryReader.IsSwitchListStepArrived())
+        {
+            _status = "wait · clear the switch / get nearer the pin";
+            Main.Log("T2 switch-list: next blocked · consist not clear");
+            return;
+        }
+
+        if (!SwitchListSession.TryAdvance())
+        {
+            _status = SwitchListSession.IsComplete ? "list complete" : "no list";
+            if (SwitchListSession.IsComplete)
+            {
+                Main.Log("T2 switch-list: complete");
+            }
+
+            return;
+        }
+
+        var step = SwitchListSession.CurrentStep;
+        if (step != null && !string.IsNullOrEmpty(step.DestTrackId))
+        {
+            RouteDestSession.Set(step.DestYardId, step.DestTrackId);
+            RoutePlanService.Compute("list-next");
+            var driveSet = SwitchListDriveFacing.SetWord(
+                RouteFacingResolver.IsTargetBehind(RoutePlanSession.Plan));
+            var align = RouteAlignGovernor.TryAlign() ?? "align —";
+            _status = $"step {step.Index}: {step.Label} · {driveSet} · {align}";
+            DispatchDeskSetDest.LogRouteSnapshot("next", _status);
+            return;
+        }
+
+        _status = step != null ? $"step {step.Index}: {step.Label}" : "advanced";
+        Main.Log("T2 switch-list: next · " + _status);
     }
 
     private void AlignCurrentStep()
@@ -834,7 +922,23 @@ internal sealed class DispatchDeskPanel : MonoBehaviour
     private void RefreshTracks()
     {
         var yard = _yards.Count > 0 ? _yards[_yardIndex] : null;
-        _tracks = DestinationCatalog.ListTracksInYard(_catalog, yard);
+        var listed = DestinationCatalog.ListTracksInYard(_catalog, yard);
+        if (!string.IsNullOrWhiteSpace(yard))
+        {
+            // Synthetic dest — resolved to a real TT rail on Set dest (no FoT until then).
+            var withTt = new List<string>(listed.Count + 1) { DispatchDeskSetDest.TurntableToken };
+            for (var i = 0; i < listed.Count; i++)
+            {
+                withTt.Add(listed[i]);
+            }
+
+            _tracks = withTt;
+        }
+        else
+        {
+            _tracks = listed;
+        }
+
         if (_trackIndex >= _tracks.Count)
         {
             _trackIndex = 0;
@@ -858,13 +962,24 @@ internal sealed class DispatchDeskPanel : MonoBehaviour
         RefreshTracks();
         if (RouteDestSession.TrackId != null && _tracks.Count > 0)
         {
+            var dest = RouteDestSession.TrackId;
+            var found = false;
             for (var i = 0; i < _tracks.Count; i++)
             {
-                if (string.Equals(_tracks[i], RouteDestSession.TrackId, System.StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(_tracks[i], dest, System.StringComparison.OrdinalIgnoreCase))
                 {
                     _trackIndex = i;
+                    found = true;
                     break;
                 }
+            }
+
+            // TT dest ids are not in the catalog — keep Turntable token selected.
+            if (!found
+                && _tracks.Count > 0
+                && DispatchDeskSetDest.IsTurntableToken(_tracks[0]))
+            {
+                _trackIndex = 0;
             }
         }
     }
@@ -876,7 +991,16 @@ internal sealed class DispatchDeskPanel : MonoBehaviour
             return false;
         }
 
-        RouteDestSession.Set(_yards[_yardIndex], _tracks[_trackIndex]);
+        if (!DispatchDeskSetDest.TryResolveTrackId(
+                _yards[_yardIndex],
+                _tracks[_trackIndex],
+                out var trackId,
+                out _))
+        {
+            return false;
+        }
+
+        RouteDestSession.Set(_yards[_yardIndex], trackId);
         return true;
     }
 }

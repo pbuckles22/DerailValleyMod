@@ -169,7 +169,7 @@ public class PathCheckDisplayTests
             new[] { "A", "B" },
             Array.Empty<PathJunctionEval>(),
             3);
-        Assert.Equal("Path 3 wrong", PathCheckDisplay.Format(bad));
+        Assert.Equal("Path 3 switch", PathCheckDisplay.Format(bad));
     }
 
     [Fact]

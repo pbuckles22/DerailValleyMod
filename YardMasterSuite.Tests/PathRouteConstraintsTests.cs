@@ -247,4 +247,40 @@ public class PathRouteConstraintsTests
         Assert.Contains("HB-P1P", plan.TrackIds);
         Assert.DoesNotContain("HB-E5O", plan.TrackIds);
     }
+
+    /// <summary>
+    /// Smoke SW TT: dest <c>#Y-#S1774#T</c> has no city prefix (dYard=-) — without session yard,
+    /// SW YardService rails are Through-only blocked and Path dies. Session SW unlocks them.
+    /// </summary>
+    [Fact]
+    public void Smoke_SwTurntable_AnonymousDest_SessionYard_AllowsYardServiceRails()
+    {
+        const string dest = "#Y-#S1774#T";
+        Assert.Null(PathRouteConstraints.YardIdOf(dest));
+        Assert.Equal("SW", PathRouteConstraints.EffectiveDestYardId(dest, "SW"));
+
+        // Without override: origin-yard Through-only blocks SW-A2P.
+        Assert.True(PathRouteConstraints.IsEntryBlocked(
+            "SW-A2P",
+            PathTrackClass.YardService,
+            occupied: null,
+            originTrackId: "SW-B4L",
+            destTrackId: dest));
+
+        // With session dest yard: delivery yard may use service rails.
+        Assert.False(PathRouteConstraints.IsEntryBlocked(
+            "SW-A2P",
+            PathTrackClass.YardService,
+            occupied: null,
+            originTrackId: "SW-B4L",
+            destTrackId: dest,
+            yardFor: null,
+            destYardOverride: "SW"));
+    }
+
+    [Fact]
+    public void EffectiveDestYardId_PrefersTrackMeta_OverSession()
+    {
+        Assert.Equal("MF", PathRouteConstraints.EffectiveDestYardId("MF-B4O", "SW"));
+    }
 }

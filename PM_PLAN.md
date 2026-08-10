@@ -147,7 +147,7 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
   - [x] **1.17 Posted Limit + Next look-ahead (+ world board index)** — HUD: `Limit 80 | Next 50 (50m)` (or `1.2km`). Limit = sticky **posted** only — no `(Posted)` / `(Recommended)` labels. Soft **Brake** chip **CUT**. Geometry-ahead boards **CUT**. World board index seeds Limit from behind (not Next). **Done** — Tier 1 + Tier 2 **PASS** @ **0.5.104** (2026-08-03). *(#4 blind behind-seed on ice — reopen if Limit stays empty when a board is <600 m behind.)*
     > As a driver, I want an honest posted Limit and a clear next-sign cue with distance — not a Limit that jumps or a Brake chip that invents 50 when Next shows 80.
 
-  **Build order:** **Stress RAG** / **3.6** / **3.1** done → **3.7** Multi-step Maps → **3.1b** *(iced)*. *(Do not reopen **1.8** HUD thermal prediction.)*
+  **Build order:** **Town Turntable Align** / **3.6** / **3.1** done → **3.7** Multi-step Maps → **3.1b** *(iced)*. *(Do not reopen **1.8** HUD thermal prediction.)*
 
 ---
 
@@ -193,16 +193,19 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
     - *Concept bridge:* `doc/GeminiDocs/` Multi-step Maps Specification (local scratch).
     > As a licensed dispatcher, I want a job Switch List that tells me turn-around → pick up → transit → deliver and Aligns each leg so I am not manually re-picking city/track three times.
 
+  - [x] **Town Turntable Align** *(3.7 precursor / shared resolver — 2026-08-10)* — Desk Route **Set Dest: Turntable**: sticky yard → FoT + `TurntableTrackResolver` → `RouteDestSession` + Compute (3.5 parity); Align throws stay on **Align Route**. Event-owned graph warm only. Sticky yard host on HUD tick; **4.13** M schematic removed. *Ship **0.6.38** — Tier 2 smoke pending.*
+    > As an engineer in town, I want desk Set Dest to the yard turntable so Path/AR/Align get me to the bridge without hiking the apron blind.
+
   - [ ] **3.7 Multi-step Maps (Switch List legs)** *(promoted from Gemini 2026-08-04)* — Job-only multi-leg routing on the **Switch List** tab (Route tab stays manual single dest). When orientation is wrong for the required exit, **auto-inject TurnAround** with a concrete turntable track (prefer origin yard; allow dest/intermediate if that yields a valid path). Treat **reverse-into** (e.g. MF-B4O) as its own Align leg when needed. **AR finder:** one mark for the **active leg only** (turntable / reverse spur / transit / delivery), works facing F or R. Final leg is always the job destination. Pathfind must solve via turntable/reverse so valid jobs do not die on false **NoPath** (`#Y… → named spur`) merely because the loco faces the wrong way. Manual **Next** after each completed leg (incl. after 180°). Dispatcher-gated. *Evidence: SM transfer facing south → B4O → SM-B3I screenshots.*
-    - **Build slices (suggested):** (1) Core `NeedsTurnAround` + `TurntableTrackId` resolution + planner tests; (2) `SwitchListJobReader` inject; (3) AR `RouteLeg` bound to `SwitchListSession.CurrentAlignTrackId`; (4) Tier 2 smoke MF/SM reverse case.
+    - **Build slices (suggested):** (1) ~~Core resolver + desk TT~~ *(**0.6.38**)* → remaining: `SwitchListJobReader` inject; (2) reverse-into leg; (3) AR `RouteLeg` bound to `SwitchListSession.CurrentAlignTrackId`; (4) Tier 2 smoke MF/SM reverse case.
     - **Out of scope:** multi-leg on Route tab; desk remote turntable (3.3 cut — PgUp/PgDn remain); showing all future legs on AR at once.
     > As an engineer facing the wrong way for delivery, I want Switch List to send me to the turntable, mark it on the finder, then reverse into the spur and Align each leg to the job dest — not a single Set dest that fails with occupancy/NoPath.
 
-  **Build order:** **3.7 Multi-step Maps** next *(false Path stale @ **0.6.13**; rem/ETA + job AR + UMM options @ **0.6.19**)*; **4.13** yard mini-map @ **0.6.28**; **3.1b iced** *(**3.1** @ **0.6.4**; **3.6** @ **0.6.2**; **3.2** cut)*.
+  **Build order:** **Town Turntable Align** @ **0.6.38** *(resolver + desk Set Dest TT; 4.13 schematic cut)* → **3.7** Multi-step Maps *(job inject / reverse-into / leg AR)*; **3.1b iced** *(**3.1** @ **0.6.4**; **3.6** @ **0.6.2**; **3.2** cut)*.
 
 ---
 
-- [x] **Epic 4 — HUD quality (QOL)** — Small UX polish on the Diagnostic HUD. *Supports Stage 1 playability.* **Status: complete 2026-07-28** *(incl. **4.12** @ **0.5.17**)*; backlog **4.13** @ **0.6.28**
+- [x] **Epic 4 — HUD quality (QOL)** — Small UX polish on the Diagnostic HUD. *Supports Stage 1 playability.* **Status: complete 2026-07-28** *(incl. **4.12** @ **0.5.17**)*; **4.13** schematic **CUT @ 0.6.38**
 
   - [x] **4.1 Enhanced targeting** *(was QOL-06)* — Look-at spherecast **0.15 m**, max **250 m**. *PASS\*; slight sky-stickiness accepted.*
     > As a yard scout, I want distant cars to resolve under the crosshair so I can inspect from farther away.
@@ -240,8 +243,8 @@ Back-dated Epic 1 / Epic 4 items (e.g. **4.3**, **1.7–1.9**) exist so Stage 1 
   - [x] **4.12 Direction-gated proximity** — Reverser gate: **Reverse** → `Rear …`; **Forward** → `Front …` (same ranging/colors); **Neutral** → omit. Tip jumps to new free end after couple. **Done** — Tier 1 + Tier 2 smoke **PASS** (v**0.5.17**).
     > As an engineer, I only want rear proximity when I’m backing; when I’m going forward, show front clearance instead.
 
-  - [x] **4.13 Yard mini-map (“you are here”)** — Hotkey **`M`**: in-world one-yard schematic (named tracks) + pin/heading + Office/TT; off-map edge arrow. **MFMB** satellite: temp **5 m** office fence + nearest MFMB. Tier 1 smoke regressions + Tier 2 **PASS** @ **0.6.28** (2026-08-05). *Follow-on: `#Y`/unnamed rails on map; fence retune.*
-    > As a yard worker who gets lost on paper maps, I want a mini-map of only this yard showing where I am so I can orient without leaving the cab.
+  - [x] **4.13 Yard mini-map (“you are here”)** — Shipped @ **0.6.28** (`M` schematic + MFMB fence). **CUT / graveyard @ 0.6.38** — schematic deleted (AR GPS philosophy); sticky yard + fence Core (`YardMiniMapYardStick`) retained for desk TT Align + Limit FILO. `#Y` rails-on-map follow-on cancelled with schematic.
+    > ~~As a yard worker who gets lost on paper maps…~~ *Replaced by Path/AR + desk Set Dest Turntable.*
 
 ---
 

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace YardMasterSuite.Core;
 
 /// <summary>
-/// Sticky / nested yard pick for the mini-map (4.13).
+/// Sticky / nested yard pick for desk TT Align + Limit FILO town warm.
 /// MFMB is a satellite: only when inside a tight office-radius “fence”, not the job zone / track AABB.
 /// Player.log 0.6.26: Station MF→MFMB N still flipped the map — AABB footprint was too early.
 /// </summary>
