@@ -56,8 +56,9 @@ internal sealed class DispatchDeskPanel : MonoBehaviour
         if (!_worldSessionActive)
         {
             _worldSessionActive = true;
-            PathGraphBuilder.EnsureMappingStarted();
-            Main.Log("T2 path: session map warm started");
+            // Do NOT EnsureMappingStarted here — pumping ~2k tracks on every world enter
+            // reintroduces the rhythmic hitch. Warm only on Insert desk / Align / M map.
+            Main.Log("T2 path: world session (map warm deferred until desk/Align/M)");
         }
 
         if (PathGraphBuilder.IsMapping)

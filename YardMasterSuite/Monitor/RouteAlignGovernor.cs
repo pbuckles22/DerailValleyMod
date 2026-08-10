@@ -36,6 +36,12 @@ internal static class RouteAlignGovernor
             return string.IsNullOrEmpty(compute) ? "T2 align: no path" : compute;
         }
 
+        if (!PathGraphBuilder.HasReadyCache)
+        {
+            PathGraphBuilder.EnsureMappingStarted();
+            return "T2 align: Station mapping… (retry when ready)";
+        }
+
         if (!PathGraphBuilder.TryBuild(out _, out _, out var junctionsById, out _))
         {
             return "T2 align: no graph";
@@ -44,6 +50,7 @@ internal static class RouteAlignGovernor
         var flips = PathPlan.RequiredFlips(plan);
         if (flips.Count == 0)
         {
+            TelemetryReader.OnLimitFiloAlignCompleted();
             return "T2 align: already clear";
         }
 
@@ -84,6 +91,7 @@ internal static class RouteAlignGovernor
         RouteMemo.Clear();
         // Re-eval the same corridor (do not re-Dijkstra — origin churn was causing Path-wrong).
         Main.Log(RoutePlanService.ReevaluateAfterAlign(plan));
+        TelemetryReader.OnLimitFiloAlignCompleted();
         return $"T2 align: threw {applied}";
     }
 

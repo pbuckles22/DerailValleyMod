@@ -72,15 +72,23 @@ internal sealed class YardMiniMapOverlay : MonoBehaviour
         if (!_worldSessionActive)
         {
             _worldSessionActive = true;
-            PathGraphBuilder.EnsureMappingStarted();
+            // Map graph warm is on-demand (M / desk / Align) — never here.
         }
 
-        PathGraphBuilder.TickMapping();
+        // Only advance an in-flight pump (started by M/desk/Align); do not Tick cold.
+        if (PathGraphBuilder.IsMapping)
+        {
+            PathGraphBuilder.TickMapping();
+        }
 
         if (Input.GetKeyDown(ToggleKey))
         {
             _visible = !_visible;
             Main.Log(_visible ? "T2 minimap: on" : "T2 minimap: off");
+            if (_visible)
+            {
+                PathGraphBuilder.EnsureMappingStarted();
+            }
         }
     }
 
@@ -175,6 +183,7 @@ internal sealed class YardMiniMapOverlay : MonoBehaviour
         if (!string.Equals(_stickyYard, resolved, System.StringComparison.OrdinalIgnoreCase))
         {
             LogResolveDetail(resolved, nearest, havePlayer, px, pz);
+            TelemetryReader.OnLimitFiloTownChanged(_stickyYard, resolved);
         }
 
         _stickyYard = resolved;

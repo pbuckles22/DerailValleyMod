@@ -43,10 +43,6 @@ internal static class TelemetryReader
     /// <summary>Cached motor-status fields for private <see cref="TractionMotorSet"/> members.</summary>
     private static MotorSetFieldMap? _motorSetFields;
 
-    /// <summary>Refresh loaded <see cref="SignDebug"/> boards periodically (streaming scenes).</summary>
-    /// <summary>FindObjectsOfType&lt;SignDebug&gt; is expensive — keep well below HUD tick rate.</summary>
-    private const float SignDebugRefreshSeconds = 5f;
-
     /// <summary>How far behind the loco (m) to look for the governing posted board.</summary>
     private const float BoardLookbackMeters = 600f;
 
@@ -77,8 +73,21 @@ internal static class TelemetryReader
     /// <summary>Sign instance id → nearest <see cref="RailTrack"/>. Boards never move, so this is permanent.</summary>
     private static readonly Dictionary<int, RailTrack?> BoardTrackCache = new();
 
-    private static SignDebug[] _signDebugCache = Array.Empty<SignDebug>();
-    private static float _signDebugCacheAt = -999f;
+    /// <summary>Active exit FILO for Limit scan (event-fed; cab never FoT).</summary>
+    private static ParsedPostedBoard[] _activeBoardRoster = Array.Empty<ParsedPostedBoard>();
+
+    /// <summary>+travel exit corridor at last soft-warm (≤ <see cref="PostedLimitFilo.MaxDepth"/>).</summary>
+    private static ParsedPostedBoard[] _filoExitPlus = Array.Empty<ParsedPostedBoard>();
+
+    /// <summary>−travel exit corridor at last soft-warm.</summary>
+    private static ParsedPostedBoard[] _filoExitMinus = Array.Empty<ParsedPostedBoard>();
+
+    private static readonly List<ParsedPostedBoard> ActiveBoardScratch = new(64);
+
+    private static float _filoWarmForwardX;
+    private static float _filoWarmForwardZ;
+    private static bool _hasFiloWarm;
+    private static bool _filoDirectionLocked;
 
     /// <summary>Last posted board limit — released only by passing a board (**1.16**).</summary>
     private static float? _stickyBoardLimitKmh;
@@ -122,21 +131,35 @@ internal static class TelemetryReader
     /// <summary>Last scan attribution for T2 limit change logs.</summary>
     private static string? _lastBoardScanDetail;
 
-    /// <summary>FindObjectsOfType throttle for other-loco AR radar (4.10).</summary>
-    private const float LocoRadarCacheSeconds = 2.5f;
+    /// <summary>Job AR refresh uses inventory hold events (no timer).</summary>
+    private static float _lastLocoRadarFotMs;
 
-    /// <summary>Job-car AR + consist status refresh.</summary>
-    private const float JobCarCacheSeconds = 1.0f;
+    /// <summary>UMM invalidate / first enable — one FoT then clear.</summary>
+    private static bool _locoRadarForceScan = true;
 
-    private static float _locoRadarCachedAt = -999f;
+    private static string? _locoRadarScannedCityId;
+    private static int? _locoRadarOccupiedLocoId;
+    private static int? _locoRadarLeftLocoId;
+
+    /// <summary>Last loco-radar FindObjectsOfType cost (ms); cleared when consumed for hitch attribution.</summary>
+    internal static float ConsumeLastLocoRadarFotMs()
+    {
+        var ms = _lastLocoRadarFotMs;
+        _lastLocoRadarFotMs = 0f;
+        return ms;
+    }
+
+    /// <summary>Loco id marked when the player last left a cab (event scan).</summary>
+    internal static int? LastLeftLocoId => _locoRadarLeftLocoId;
+
     private static int _locoRadarCount;
     private static readonly TrainCar?[] _locoRadarCars = new TrainCar?[LocoRadarSelection.DefaultMaxResults];
     private static readonly string?[] _locoRadarTypeIds = new string?[LocoRadarSelection.DefaultMaxResults];
     private static readonly string?[] _locoRadarPlaceLabels = new string?[LocoRadarSelection.DefaultMaxResults];
 
-    private static float _jobCarCachedAt = -999f;
-    private static string? _jobCarCachedJobId;
-    private static bool _jobCarCachedTaken;
+    /// <summary>Job-car AR + consist — rebuilt on hand pickup; no timer.</summary>
+    private static string? _jobArScannedHeldJobId;
+    private static int _jobArExpectedCars;
     private static int _jobArCount;
     private static string? _jobArJobId;
     private static readonly Vector3[] _jobArWorlds = new Vector3[JobCarMarkerDisplay.DefaultMaxMarkers];
@@ -544,6 +567,7 @@ internal static class TelemetryReader
     public static string? CurrentActiveJobHudLineOrNull()
     {
         EnsureJobLifecycleHooks();
+        EnsureJobCarCache();
 
         if (TryConsumeCancelledFlash(out var cancelledId))
         {
@@ -559,7 +583,7 @@ internal static class TelemetryReader
             }
 
             var remaining = BonusTimeDisplay.RemainingSeconds(job.TimeLimit, SafeTimeOnJob(job));
-            EnsureJobCarCache();
+            RefreshTakenJobConsistStatus();
             return ActiveJobHudLine.Format(
                 ActiveJobHudLine.FormatJobId(job.ID, extraCount),
                 JobConsistStatusDisplay.FormatHud(_jobConsistStatus),
@@ -673,9 +697,13 @@ internal static class TelemetryReader
         return _locoRadarCount;
     }
 
-    /// <summary>Drop radar cache so UMM option changes apply immediately.</summary>
-    internal static void InvalidateLocoRadarCache() =>
-        _locoRadarCachedAt = -999f;
+    /// <summary>Drop radar cache so UMM option changes apply immediately (one Forced scan).</summary>
+    internal static void InvalidateLocoRadarCache()
+    {
+        _locoRadarForceScan = true;
+        _locoRadarScannedCityId = null;
+        _locoRadarCount = 0;
+    }
 
     /// <summary>
     /// Nearest other loco for AR radar (4.10). Excludes self / my-loco AR target / same consist.
@@ -731,15 +759,88 @@ internal static class TelemetryReader
         if (!Main.Settings.ShowNearestLocos)
         {
             _locoRadarCount = 0;
+            _locoRadarForceScan = false;
+            _locoRadarOccupiedLocoId = TryGetOccupiedLocoInstanceId();
             return;
         }
 
-        if (Time.unscaledTime - _locoRadarCachedAt < LocoRadarCacheSeconds)
+        var occupied = TryGetOccupiedLocoInstanceId();
+        var city = TryGetLocoRadarCityId();
+        var force = _locoRadarForceScan;
+        var reason = LocoRadarScanPolicy.Decide(
+            featureEnabled: true,
+            forceScan: force,
+            lastScannedCityId: _locoRadarScannedCityId,
+            currentCityId: city,
+            lastOccupiedLocoId: _locoRadarOccupiedLocoId,
+            currentOccupiedLocoId: occupied,
+            out var leftLocoId);
+
+        // Always advance occupancy so leave edges are detected once.
+        _locoRadarOccupiedLocoId = occupied;
+
+        if (reason == LocoRadarScanReason.None)
         {
             return;
         }
 
-        _locoRadarCachedAt = Time.unscaledTime;
+        if (reason == LocoRadarScanReason.LeftLoco && leftLocoId.HasValue)
+        {
+            _locoRadarLeftLocoId = leftLocoId;
+        }
+
+        _locoRadarForceScan = false;
+        _locoRadarScannedCityId = city;
+        RunLocoRadarFotScan(reason, city, leftLocoId);
+    }
+
+    /// <summary>City key for radar: in-zone station yard, else nearest yard id.</summary>
+    private static string? TryGetLocoRadarCityId()
+    {
+        try
+        {
+            if (TryGetStationInPlayerZone(out var yardId, out _, out _)
+                && !string.IsNullOrWhiteSpace(yardId))
+            {
+                return yardId;
+            }
+
+            if (TryGetPlayerPosition(out var x, out var y, out var z))
+            {
+                return TryGetNearestYardId(new Vector3(x, y, z));
+            }
+        }
+        catch
+        {
+            // ignored
+        }
+
+        return null;
+    }
+
+    private static int? TryGetOccupiedLocoInstanceId()
+    {
+        try
+        {
+            var car = PlayerManager.Car;
+            if (car == null || !car.IsLoco)
+            {
+                return null;
+            }
+
+            return car.GetInstanceID();
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static void RunLocoRadarFotScan(
+        LocoRadarScanReason reason,
+        string? city,
+        int? leftLocoId)
+    {
         _locoRadarCount = 0;
         for (var i = 0; i < _locoRadarCars.Length; i++)
         {
@@ -750,9 +851,11 @@ internal static class TelemetryReader
 
         if (!TryGetPlayerPosition(out var px, out var py, out var pz))
         {
+            Main.Log($"T2 loco-radar: skip no-player reason={reason} city={city ?? "—"}");
             return;
         }
 
+        var fotSw = System.Diagnostics.Stopwatch.StartNew();
         TrainCar[] allCars;
         try
         {
@@ -760,11 +863,20 @@ internal static class TelemetryReader
         }
         catch
         {
+            _lastLocoRadarFotMs = fotSw.ElapsedMilliseconds;
+            Main.Log(
+                $"T2 loco-radar: fail reason={reason} city={city ?? "—"} fotMs={_lastLocoRadarFotMs}");
             return;
         }
 
+        _lastLocoRadarFotMs = fotSw.ElapsedMilliseconds;
+
         var exclude = new HashSet<int>();
         CollectLocoRadarExclusions(exclude);
+        if (leftLocoId.HasValue)
+        {
+            exclude.Add(leftLocoId.Value);
+        }
 
         var candidates = new List<LocoRadarCandidate>(8);
         var byId = new Dictionary<int, TrainCar>(8);
@@ -826,23 +938,22 @@ internal static class TelemetryReader
             _locoRadarPlaceLabels[_locoRadarCount] = TryGetLocoRadarPlaceLabel(car);
             _locoRadarCount++;
         }
+
+        var leftPart = leftLocoId.HasValue ? $" left={leftLocoId.Value}" : "";
+        Main.Log(
+            $"T2 loco-radar: scan reason={reason} city={city ?? "—"}{leftPart} n={_locoRadarCount} fotMs={_lastLocoRadarFotMs}");
     }
 
-    /// <summary>How many pickup-group job AR markers (0–N).</summary>
-    public static int GetArJobCarCount()
-    {
-        EnsureJobCarCache();
-        return _jobArCount;
-    }
+    /// <summary>How many pickup-group job AR markers (0–N). Pins refresh on HUD tick (hand pickup/drop).</summary>
+    public static int GetArJobCarCount() => _jobArCount;
 
-    /// <summary>Pickup-group world + caption for AR (taken or backpack).</summary>
+    /// <summary>Pickup-group world + caption for AR (held paperwork only).</summary>
     public static bool TryGetArJobCar(int index, out Vector3 world, out string caption)
     {
         world = default;
         caption = "";
         try
         {
-            EnsureJobCarCache();
             if (index < 0 || index >= _jobArCount)
             {
                 return false;
@@ -873,47 +984,151 @@ internal static class TelemetryReader
 
     private static void EnsureJobCarCache()
     {
-        Job? job = null;
-        var jobTaken = false;
-        string? jobId = null;
-
-        if (TryGetPrimaryActiveJob(out var taken, out _) && taken != null
-            && !ActiveJobHudLine.IsCancelledState(taken.State.ToString()))
+        string? heldJobId = null;
+        Job? heldJob = null;
+        if (TryGetJobsFromPlayerInventory(out var held, includingDropped: false)
+            && held != null
+            && held.Count > 0
+            && held[0] != null)
         {
-            job = taken;
-            jobTaken = true;
-            jobId = taken.ID;
-        }
-        else if (TryPeekInventoryJobs(out var held) && held != null && held.Count > 0)
-        {
-            job = held[0];
-            jobTaken = false;
-            jobId = job?.ID;
+            heldJob = held[0];
+            heldJobId = heldJob.ID;
         }
 
-        if (Time.unscaledTime - _jobCarCachedAt < JobCarCacheSeconds
-            && string.Equals(_jobCarCachedJobId, jobId, StringComparison.Ordinal)
-            && _jobCarCachedTaken == jobTaken)
+        var reason = JobCarArScanPolicy.Decide(_jobArScannedHeldJobId, heldJobId);
+        if (reason == JobCarArScanReason.Keep)
         {
+            // Taken + all cars attached → hide pins without rescanning the yard.
+            if (_jobArCount > 0
+                && !JobCarMarkerDisplay.ShouldShowAr(
+                    jobTaken: TryGetPrimaryActiveJob(out _, out _),
+                    _jobConsistStatus,
+                    _jobArExpectedCars))
+            {
+                ClearJobCarArPins();
+            }
+
             return;
         }
 
-        _jobCarCachedAt = Time.unscaledTime;
-        _jobCarCachedJobId = jobId;
-        _jobCarCachedTaken = jobTaken;
+        if (reason == JobCarArScanReason.Clear || heldJob == null || string.IsNullOrEmpty(heldJobId))
+        {
+            ClearJobCarArPins();
+            _jobArScannedHeldJobId = null;
+            Main.Log("T2 job-car-ar: clear (no job in hand)");
+            return;
+        }
+
+        _jobArScannedHeldJobId = heldJobId;
+        var jobTaken = TryGetPrimaryActiveJob(out var taken, out _)
+            && taken != null
+            && string.Equals(taken.ID, heldJobId, StringComparison.Ordinal);
+        RebuildJobCarArPins(heldJob, heldJobId!, jobTaken);
+        Main.Log(
+            $"T2 job-car-ar: scan job={heldJobId} taken={(jobTaken ? 1 : 0)} n={_jobArCount}");
+    }
+
+    private static void ClearJobCarArPins()
+    {
         _jobArCount = 0;
         _jobArJobId = null;
-        _jobConsistStatus = JobConsistStatus.Missing;
+        _jobArExpectedCars = 0;
         for (var i = 0; i < _jobArWorlds.Length; i++)
         {
             _jobArTrackLabels[i] = null;
             _jobArCarCounts[i] = 0;
         }
+    }
 
-        if (job == null || string.IsNullOrEmpty(jobId))
+    /// <summary>Update consist chip for taken jobs without rebuilding AR pin positions.</summary>
+    private static void RefreshTakenJobConsistStatus()
+    {
+        if (!TryGetPrimaryActiveJob(out var taken, out _) || taken == null
+            || ActiveJobHudLine.IsCancelledState(taken.State.ToString()))
         {
+            if (!TryGetJobsFromPlayerInventory(out var held, includingDropped: false)
+                || held == null
+                || held.Count == 0)
+            {
+                _jobConsistStatus = JobConsistStatus.Missing;
+            }
+
             return;
         }
+
+        if (!JobCarsResolver.TryResolveBestEffort(taken, out var resolved, out _) || resolved == null
+            || resolved.Cars.Count == 0)
+        {
+            _jobConsistStatus = JobConsistStatus.Missing;
+            return;
+        }
+
+        var jobSet = new HashSet<int>();
+        for (var i = 0; i < resolved.Cars.Count; i++)
+        {
+            var car = resolved.Cars[i];
+            if (car == null)
+            {
+                continue;
+            }
+
+            try
+            {
+                jobSet.Add(car.GetInstanceID());
+            }
+            catch
+            {
+                // skip
+            }
+        }
+
+        var attachedIds = new HashSet<int>();
+        var foreign = 0;
+        var seed = PlayerManager.Car
+            ?? TryGetStandingCar()
+            ?? PlayerManager.LastLoco;
+        if (seed != null)
+        {
+            var freight = CollectTrainsetFreight(seed);
+            for (var i = 0; i < freight.Count; i++)
+            {
+                var c = freight[i];
+                if (c == null)
+                {
+                    continue;
+                }
+
+                int id;
+                try
+                {
+                    id = c.GetInstanceID();
+                }
+                catch
+                {
+                    continue;
+                }
+
+                if (jobSet.Contains(id))
+                {
+                    attachedIds.Add(id);
+                }
+                else
+                {
+                    foreign++;
+                }
+            }
+        }
+
+        var expected = resolved.ExpectedLogicCars > 0
+            ? resolved.ExpectedLogicCars
+            : resolved.Cars.Count;
+        _jobArExpectedCars = expected;
+        _jobConsistStatus = JobConsistStatusEval.Evaluate(expected, attachedIds.Count, foreign);
+    }
+
+    private static void RebuildJobCarArPins(Job job, string jobId, bool jobTaken)
+    {
+        ClearJobCarArPins();
 
         if (!JobCarsResolver.TryResolveBestEffort(job, out var resolved, out _) || resolved == null
             || resolved.Cars.Count == 0)
@@ -989,13 +1204,18 @@ internal static class TelemetryReader
             var expected = resolved.ExpectedLogicCars > 0
                 ? resolved.ExpectedLogicCars
                 : allCars.Count;
+            _jobArExpectedCars = expected;
             _jobConsistStatus = JobConsistStatusEval.Evaluate(
                 expected, attachedIds.Count, foreign);
         }
+        else
+        {
+            _jobArExpectedCars = resolved.ExpectedLogicCars > 0
+                ? resolved.ExpectedLogicCars
+                : allCars.Count;
+        }
 
-        var expectedForAr = resolved.ExpectedLogicCars > 0
-            ? resolved.ExpectedLogicCars
-            : allCars.Count;
+        var expectedForAr = _jobArExpectedCars;
         if (!JobCarMarkerDisplay.ShouldShowAr(jobTaken, _jobConsistStatus, expectedForAr))
         {
             return;
@@ -1461,6 +1681,7 @@ internal static class TelemetryReader
                 BoardTakes.Reset();
                 PathAhead.Clear();
                 WorldBoards.Clear();
+                ClearLimitFilo("no-loco");
                 ClearLimitDisplayHold();
                 return new SpeedLimitState(null, LimitTrend.None, null);
             }
@@ -1845,6 +2066,7 @@ internal static class TelemetryReader
             _hasStickyTravel = false;
             WorldBoards.Clear();
             BoardTakes.Reset();
+            OnLimitFiloTravelReversed();
         }
     }
 
@@ -1891,19 +2113,20 @@ internal static class TelemetryReader
         Vector3 fwd,
         float warningLookaheadMeters)
     {
-        RefreshSignDebugCacheIfNeeded();
+        var pos = loco.transform.position;
+        SelectActiveFilo(fwd, speedKmh);
         AheadBoardsScratch.Clear();
-        if (_signDebugCache.Length == 0)
+        if (_activeBoardRoster.Length == 0)
         {
-            return new PostedBoardScan(null, null, "no-signs", null, Array.Empty<AheadBoard>());
+            return new PostedBoardScan(null, null, "no-filo", null, Array.Empty<AheadBoard>());
         }
 
-        var pos = loco.transform.position;
         var locoTrack = TryGetLocoTrack(loco);
         var lookahead = Mathf.Max(
             Mathf.Max(BoardLookaheadMinMeters, speedKmh * BoardLookaheadSecondsOfSpeed),
             warningLookaheadMeters);
         var searchRadius = Mathf.Max(BoardLookbackMeters, lookahead);
+        var searchRadiusSq = searchRadius * searchRadius;
         var hasPath = TrackPathAhead.TryBuild(locoTrack, pos, fwd, lookahead, PathAhead);
 
         float? currentKmh = null;
@@ -1914,35 +2137,30 @@ internal static class TelemetryReader
         string? behindDetail = null;
         string? aheadDetail = null;
 
-        foreach (var sign in _signDebugCache)
+        for (var i = 0; i < _activeBoardRoster.Length; i++)
         {
-            if (sign == null)
+            var board = _activeBoardRoster[i];
+            var boardPos = new Vector3(board.X, board.Y, board.Z);
+            var delta = boardPos - pos;
+            if (delta.sqrMagnitude > searchRadiusSq)
             {
                 continue;
             }
 
-            var delta = sign.transform.position - pos;
-            if (delta.sqrMagnitude > searchRadius * searchRadius)
-            {
-                continue;
-            }
-
-            var boardTrack = ResolveBoardTrack(sign);
+            var boardTrack = ResolveBoardTrack(board.InstanceId, boardPos);
             var pathAlong = 0f;
             var routeTravel = fwd;
             var onPath = hasPath
                 && TrackPathAhead.TrySample(
                     PathAhead,
                     boardTrack,
-                    sign.transform.position,
+                    boardPos,
                     out pathAlong,
                     out routeTravel);
             var along = onPath ? pathAlong : Vector3.Dot(delta, fwd);
-            // Facing uses route tangent at the board when on-path — loco heading on curves
-            // rejects boards (0.5.52: fDot=-0.39 at ~12 m).
             var travelForFacing = onPath ? routeTravel : fwd;
-            var eval = EvaluateBoardFacing(sign, travelForFacing, delta, locoTrack, onPath, hasPath);
-            TraceBoardPass(sign, loco, along, eval);
+            var eval = EvaluateBoardFacing(board, travelForFacing, delta, locoTrack, onPath, hasPath);
+            TraceBoardPass(board, loco, along, eval);
             if (!eval.Governs)
             {
                 continue;
@@ -1951,36 +2169,35 @@ internal static class TelemetryReader
             float? parsed;
             if (along < 0f && along >= -BoardLookbackMeters)
             {
-                parsed = ResolveSignBoardKmh(sign, loco, forAhead: false);
+                parsed = ResolveRosterBoardKmh(board, loco, forAhead: false);
                 if (parsed is not null)
                 {
-                    takenKmh ??= BoardTakes.Observe(sign.GetInstanceID(), parsed.Value, along);
-                    RememberWorldBoard(boardTrack, parsed.Value, sign.transform.position, fwd);
+                    takenKmh ??= BoardTakes.Observe(board.InstanceId, parsed.Value, along);
+                    RememberWorldBoard(boardTrack, parsed.Value, boardPos, fwd);
                     if (along > bestBehindAlong)
                     {
                         bestBehindAlong = along;
                         currentKmh = parsed;
-                        behindDetail = FormatBoardHit("behind", sign, parsed.Value, along, eval);
+                        behindDetail = FormatBoardHit("behind", board.Label, parsed.Value, along, eval);
                     }
                 }
             }
             else if (along > 0f && along <= lookahead)
             {
-                // Ahead duals: through or diverge from junction.selectedBranch.
-                parsed = ResolveSignBoardKmh(sign, loco, forAhead: true);
+                parsed = ResolveRosterBoardKmh(board, loco, forAhead: true);
                 if (parsed is null)
                 {
                     continue;
                 }
 
-                BoardTakes.Observe(sign.GetInstanceID(), parsed.Value, along);
-                RememberWorldBoard(boardTrack, parsed.Value, sign.transform.position, fwd);
+                BoardTakes.Observe(board.InstanceId, parsed.Value, along);
+                RememberWorldBoard(boardTrack, parsed.Value, boardPos, fwd);
                 AheadBoardsScratch.Add(new AheadBoard(parsed.Value, along));
                 if (along < bestAheadAlong)
                 {
                     bestAheadAlong = along;
                     nextKmh = parsed;
-                    aheadDetail = FormatBoardHit("ahead", sign, parsed.Value, along, eval);
+                    aheadDetail = FormatBoardHit("ahead", board.Label, parsed.Value, along, eval);
                 }
             }
         }
@@ -2015,11 +2232,11 @@ internal static class TelemetryReader
 
     private static string FormatBoardHit(
         string where,
-        SignDebug sign,
+        string label,
         float kmh,
         float along,
         SpeedLimitBoardFacing.Eval eval) =>
-        $"{where} '{BoardText(sign)}'={RoundLimit(kmh)} kind={eval.Kind} along={along:0.#}m "
+        $"{where} '{label}'={RoundLimit(kmh)} kind={eval.Kind} along={along:0.#}m "
         + $"lat={eval.LateralMeters:0.#}m right={(eval.OnRight ? "y" : "n")} "
         + $"track={BoardTrackFlag(eval)} fDot={eval.ForwardDot:0.##}";
 
@@ -2027,23 +2244,17 @@ internal static class TelemetryReader
     private static string BoardTrackFlag(SpeedLimitBoardFacing.Eval eval) =>
         !eval.TrackKnown ? "?" : eval.OnOurTrack ? "y" : "n";
 
-    private static string BoardText(SignDebug sign)
-    {
-        var text = sign.text?.Replace('\n', ' ').Replace('\r', ' ').Trim() ?? "?";
-        return text.Length > 24 ? text.Substring(0, 24) : text;
-    }
-
     /// <summary>
     /// One Player.log line per board per side while it is within the trace window, so a board that
     /// never takes ownership shows why (corridor, right-hand, forward align, or parse).
     /// </summary>
     private static void TraceBoardPass(
-        SignDebug sign,
+        ParsedPostedBoard board,
         TrainCar loco,
         float along,
         SpeedLimitBoardFacing.Eval eval)
     {
-        var id = sign.GetInstanceID();
+        var id = board.InstanceId;
         if (along > BoardTraceWindowMeters || along < -BoardTraceWindowMeters)
         {
             BoardTraceSide.Remove(id);
@@ -2057,17 +2268,17 @@ internal static class TelemetryReader
         }
 
         BoardTraceSide[id] = side;
-        var parsed = ResolveSignBoardKmh(sign, loco, forAhead: side > 0);
+        var parsed = ResolveRosterBoardKmh(board, loco, forAhead: side > 0);
         var kmh = parsed is null ? "?" : RoundLimit(parsed.Value).ToString();
         Main.Log(
-            $"{Tier2SpeedLimitDebug.Prefix} {(eval.Governs ? "take" : "skip")}: '{BoardText(sign)}'={kmh} "
+            $"{Tier2SpeedLimitDebug.Prefix} {(eval.Governs ? "take" : "skip")}: '{board.Label}'={kmh} "
             + $"along={along:0.#}m lat={eval.LateralMeters:0.#}m/max={eval.MaxLateralMeters:0.#}m "
             + $"right={(eval.OnRight ? "y" : "n")} track={BoardTrackFlag(eval)} "
             + $"fDot={eval.ForwardDot:0.##} kind={eval.Kind}");
     }
 
     private static SpeedLimitBoardFacing.Eval EvaluateBoardFacing(
-        SignDebug sign,
+        ParsedPostedBoard board,
         Vector3 travelFwd,
         Vector3 deltaToSign,
         RailTrack? locoTrack,
@@ -2076,44 +2287,37 @@ internal static class TelemetryReader
     {
         try
         {
-            var isSwitch = SpeedLimitBoardParser.IsSwitchSign(sign.text);
-            var junctionNearby = isSwitch
-                && FindNearestJunction(sign.transform.position) != null;
-            var boardTrack = ResolveBoardTrack(sign);
-            // Route membership is the authority when topology resolved; track identity is the fallback.
+            var boardPos = new Vector3(board.X, board.Y, board.Z);
+            var boardTrack = ResolveBoardTrack(board.InstanceId, boardPos);
             if (pathKnown)
             {
-                var sf2 = sign.transform.forward;
-                var sr2 = sign.transform.right;
                 return SpeedLimitBoardFacing.Evaluate(
-                    sf2.x,
-                    sf2.z,
-                    sr2.x,
-                    sr2.z,
+                    board.ForwardX,
+                    board.ForwardZ,
+                    board.RightX,
+                    board.RightZ,
                     travelFwd.x,
                     travelFwd.z,
                     deltaToSign.x,
                     deltaToSign.z,
-                    isSwitch,
-                    junctionNearby,
+                    board.IsDual,
+                    board.JunctionNearby,
                     onOurTrack: onPath,
                     trackKnown: true);
             }
 
             var trackKnown = boardTrack != null && locoTrack != null;
-            var sf = sign.transform.forward;
-            var sr = sign.transform.right;
             return SpeedLimitBoardFacing.Evaluate(
-                sf.x,
-                sf.z,
-                sr.x,
-                sr.z,
+                board.ForwardX,
+                board.ForwardZ,
+                board.RightX,
+                board.RightZ,
                 travelFwd.x,
                 travelFwd.z,
                 deltaToSign.x,
                 deltaToSign.z,
-                isSwitch,
-                junctionNearby,
+                board.IsDual,
+                board.JunctionNearby,
                 onOurTrack: trackKnown && ReferenceEquals(boardTrack, locoTrack),
                 trackKnown: trackKnown);
         }
@@ -2128,10 +2332,9 @@ internal static class TelemetryReader
     /// Track a board is planted beside. Answers "is this board on my track" exactly, where lateral
     /// distance cannot (it inflates with range on curves). Cached per sign — boards never move.
     /// </summary>
-    private static RailTrack? ResolveBoardTrack(SignDebug sign)
+    private static RailTrack? ResolveBoardTrack(int instanceId, Vector3 boardPos)
     {
-        var id = sign.GetInstanceID();
-        if (BoardTrackCache.TryGetValue(id, out var cached))
+        if (BoardTrackCache.TryGetValue(instanceId, out var cached))
         {
             return cached;
         }
@@ -2142,9 +2345,9 @@ internal static class TelemetryReader
             var tracks = RailTrackRegistry.RailTracks;
             if (tracks != null && tracks.Length > 0)
             {
-                var rail = RailTrack.GetClosest(sign.transform.position, 0f, tracks).Item1;
+                var rail = RailTrack.GetClosest(boardPos, 0f, tracks).Item1;
                 if (rail != null
-                    && RailTrack.GetClosestPoint(rail, sign.transform.position, 0f).Item2
+                    && RailTrack.GetClosestPoint(rail, boardPos, 0f).Item2
                         <= BoardTrackAttachMeters)
                 {
                     track = rail;
@@ -2156,7 +2359,7 @@ internal static class TelemetryReader
             track = null;
         }
 
-        BoardTrackCache[id] = track;
+        BoardTrackCache[instanceId] = track;
         return track;
     }
 
@@ -2173,26 +2376,18 @@ internal static class TelemetryReader
         }
     }
 
-    private static float? ResolveSignBoardKmh(SignDebug sign, TrainCar loco, bool forAhead)
+    private static float? ResolveRosterBoardKmh(ParsedPostedBoard board, TrainCar loco, bool forAhead)
     {
-        var dual = SpeedLimitBoardParser.ParseDual(sign.text);
-        if (dual is null)
+        if (!board.IsDual)
         {
-            return null;
+            return board.ThroughKmh;
         }
 
-        if (!dual.Value.IsDual)
-        {
-            return dual.Value.ThroughKmh;
-        }
-
-        // Ahead: use the junction's selectedBranch so a thrown diverge ('7 4' → 40) warns early.
-        // Through-selected keeps the left number (avoids stealing mainline when points are set through).
-        // Behind / sticky: prefer bogie on a non-through out-branch (actual path taken).
+        var boardPos = new Vector3(board.X, board.Y, board.Z);
         var diverging = forAhead
-            ? IsNearestJunctionThrownForDiverge(sign.transform.position)
-            : IsLocoOnDivergingOutBranch(sign.transform.position, loco);
-        return SpeedLimitBoardParser.Pick(dual.Value, diverging);
+            ? IsNearestJunctionThrownForDiverge(boardPos)
+            : IsLocoOnDivergingOutBranch(boardPos, loco);
+        return PostedBoardActiveRoster.PickKmh(board, diverging);
     }
 
     /// <summary>
@@ -2247,7 +2442,6 @@ internal static class TelemetryReader
         }
     }
 
-    /// <summary>True when nearest junction is not on through (branch 0) — for ahead ↓ only.</summary>
     /// <summary>
     /// Governing dual-board diverge only if the loco bogie is already on a non-through out-branch.
     /// Stem / unknown → through (avoids 60→40 from a thrown switch with no standalone 4 board).
@@ -2288,22 +2482,255 @@ internal static class TelemetryReader
     private static int RoundLimit(float kmh) =>
         (int)Math.Round(kmh, MidpointRounding.AwayFromZero);
 
-    private static void RefreshSignDebugCacheIfNeeded()
+    private static void ClearLimitFilo(string reason)
     {
-        if (Time.unscaledTime - _signDebugCacheAt < SignDebugRefreshSeconds)
-        {
-            return;
-        }
+        _activeBoardRoster = Array.Empty<ParsedPostedBoard>();
+        _filoExitPlus = Array.Empty<ParsedPostedBoard>();
+        _filoExitMinus = Array.Empty<ParsedPostedBoard>();
+        _hasFiloWarm = false;
+        _filoDirectionLocked = false;
+        Main.Log("T2 limit filo: clear · " + reason);
+    }
 
-        _signDebugCacheAt = Time.unscaledTime;
+    /// <summary>Yard sticky changed — soft-load both exits (town event).</summary>
+    internal static void OnLimitFiloTownChanged(string? fromYard, string? toYard)
+    {
+        SoftWarmLimitFilo("town " + (fromYard ?? "—") + "→" + (toYard ?? "—"));
+    }
+
+    /// <summary>Planned corridor switch throw — rebuild active exit FILO.</summary>
+    internal static void OnLimitFiloSwitchChanged()
+    {
+        SoftWarmLimitFilo("switch");
+    }
+
+    /// <summary>Align completed — soft-load exits for the locked corridor.</summary>
+    internal static void OnLimitFiloAlignCompleted()
+    {
+        SoftWarmLimitFilo("align");
+        _filoDirectionLocked = true;
         try
         {
-            _signDebugCache = Object.FindObjectsOfType<SignDebug>() ?? Array.Empty<SignDebug>();
+            var loco = TryGetUsableLoco();
+            if (loco != null)
+            {
+                var travel = TravelForward(loco);
+                _activeBoardRoster = PostedLimitFilo.SelectActiveExit(
+                    _filoExitPlus,
+                    _filoExitMinus,
+                    _filoWarmForwardX,
+                    _filoWarmForwardZ,
+                    travel.x,
+                    travel.z);
+                CollapseFiloToActive(travel);
+            }
+            else
+            {
+                _filoExitMinus = Array.Empty<ParsedPostedBoard>();
+                _activeBoardRoster = _filoExitPlus;
+            }
         }
         catch
         {
-            _signDebugCache = Array.Empty<SignDebug>();
+            _filoExitMinus = Array.Empty<ParsedPostedBoard>();
+            _activeBoardRoster = _filoExitPlus;
         }
+    }
+
+    /// <summary>Travel polarity flipped — prefer opposite exit cache; warm only if empty.</summary>
+    private static void OnLimitFiloTravelReversed()
+    {
+        _filoDirectionLocked = false;
+        if (_filoExitMinus.Length == 0 && _filoExitPlus.Length == 0)
+        {
+            SoftWarmLimitFilo("reverse");
+            return;
+        }
+
+        // Swap warm forward so SelectActiveExit flips sides without FoT.
+        _filoWarmForwardX = -_filoWarmForwardX;
+        _filoWarmForwardZ = -_filoWarmForwardZ;
+        var swap = _filoExitPlus;
+        _filoExitPlus = _filoExitMinus;
+        _filoExitMinus = swap;
+        Main.Log(
+            $"T2 limit filo: reverse swap · plus={_filoExitPlus.Length} minus={_filoExitMinus.Length}");
+    }
+
+    private static void SelectActiveFilo(Vector3 travel, float speedKmh)
+    {
+        if (!_hasFiloWarm)
+        {
+            _activeBoardRoster = Array.Empty<ParsedPostedBoard>();
+            return;
+        }
+
+        if (!_filoDirectionLocked && PostedLimitFilo.ShouldLockDirection(speedKmh))
+        {
+            _filoDirectionLocked = true;
+            _activeBoardRoster = PostedLimitFilo.SelectActiveExit(
+                _filoExitPlus,
+                _filoExitMinus,
+                _filoWarmForwardX,
+                _filoWarmForwardZ,
+                travel.x,
+                travel.z);
+            CollapseFiloToActive(travel);
+            Main.Log("T2 limit filo: direction lock · n=" + _activeBoardRoster.Length);
+            return;
+        }
+
+        _activeBoardRoster = PostedLimitFilo.SelectActiveExit(
+            _filoExitPlus,
+            _filoExitMinus,
+            _filoWarmForwardX,
+            _filoWarmForwardZ,
+            travel.x,
+            travel.z);
+    }
+
+    private static void CollapseFiloToActive(Vector3 travel)
+    {
+        _filoExitPlus = _activeBoardRoster ?? Array.Empty<ParsedPostedBoard>();
+        _filoExitMinus = Array.Empty<ParsedPostedBoard>();
+        _filoWarmForwardX = travel.x;
+        _filoWarmForwardZ = travel.z;
+    }
+
+    /// <summary>
+    /// Event-only soft FoT: both exits (≤ MaxDepth each). Never called from the cab Limit tick.
+    /// </summary>
+    private static void SoftWarmLimitFilo(string reason)
+    {
+        TrainCar? loco = null;
+        try
+        {
+            loco = TryGetUsableLoco();
+        }
+        catch
+        {
+            // ignore
+        }
+
+        Vector3 origin;
+        Vector3 fwd;
+        if (loco != null)
+        {
+            origin = loco.transform.position;
+            fwd = TravelForward(loco);
+        }
+        else if (TryGetPlayerPosition(out var px, out var py, out var pz))
+        {
+            origin = new Vector3(px, py, pz);
+            fwd = Vector3.forward;
+            try
+            {
+                var player = PlayerManager.PlayerTransform;
+                if (player != null)
+                {
+                    fwd = player.forward;
+                }
+            }
+            catch
+            {
+                // keep Vector3.forward
+            }
+        }
+        else
+        {
+            ClearLimitFilo("warm-no-origin · " + reason);
+            return;
+        }
+
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        ActiveBoardScratch.Clear();
+        var rawCount = 0;
+        try
+        {
+            var rawSigns = Object.FindObjectsOfType<SignDebug>();
+            rawCount = rawSigns?.Length ?? 0;
+            if (rawSigns != null)
+            {
+                foreach (var sign in rawSigns)
+                {
+                    if (sign == null)
+                    {
+                        continue;
+                    }
+
+                    var p = sign.transform.position;
+                    if (!PostedBoardActiveRoster.WithinActiveRadius(
+                            p.x,
+                            p.y,
+                            p.z,
+                            origin.x,
+                            origin.y,
+                            origin.z))
+                    {
+                        continue;
+                    }
+
+                    var dual = SpeedLimitBoardParser.ParseDual(sign.text);
+                    if (dual is null)
+                    {
+                        continue;
+                    }
+
+                    var sf = sign.transform.forward;
+                    var sr = sign.transform.right;
+                    var isDual = dual.Value.IsDual;
+                    var junctionNearby = isDual && FindNearestJunction(p) != null;
+                    ActiveBoardScratch.Add(
+                        new ParsedPostedBoard(
+                            sign.GetInstanceID(),
+                            p.x,
+                            p.y,
+                            p.z,
+                            sf.x,
+                            sf.z,
+                            sr.x,
+                            sr.z,
+                            dual.Value.ThroughKmh,
+                            isDual ? (dual.Value.DivergeKmh ?? dual.Value.ThroughKmh) : dual.Value.ThroughKmh,
+                            isDual,
+                            junctionNearby,
+                            FormatBoardLabel(sign.text)));
+                }
+            }
+        }
+        catch
+        {
+            ActiveBoardScratch.Clear();
+        }
+
+        var all = ActiveBoardScratch.Count == 0
+            ? Array.Empty<ParsedPostedBoard>()
+            : ActiveBoardScratch.ToArray();
+        PostedLimitFilo.PartitionExits(
+            all,
+            origin.x,
+            origin.y,
+            origin.z,
+            fwd.x,
+            fwd.y,
+            fwd.z,
+            out _filoExitPlus,
+            out _filoExitMinus);
+        _filoWarmForwardX = fwd.x;
+        _filoWarmForwardZ = fwd.z;
+        _hasFiloWarm = true;
+        _filoDirectionLocked = false;
+        _activeBoardRoster = _filoExitPlus;
+        sw.Stop();
+        Main.Log(
+            $"T2 limit filo: warm · {reason} · plus={_filoExitPlus.Length} minus={_filoExitMinus.Length} "
+            + $"raw={rawCount} parsed={all.Length} fotMs={sw.ElapsedMilliseconds}");
+    }
+
+    private static string FormatBoardLabel(string? text)
+    {
+        var label = text?.Replace('\n', ' ').Replace('\r', ' ').Trim() ?? "?";
+        return label.Length > 24 ? label.Substring(0, 24) : label;
     }
 
     private static Vector3 TravelForward(TrainCar loco)
@@ -4835,7 +5262,7 @@ internal static class TelemetryReader
                 return false;
             }
 
-            if (!TryGetJobsFromPlayerInventory(out var heldJobs) || heldJobs.Count == 0)
+            if (!TryGetJobsFromPlayerInventory(out var heldJobs, includingDropped: true) || heldJobs.Count == 0)
             {
                 return false;
             }
@@ -4881,13 +5308,13 @@ internal static class TelemetryReader
 
     /// <summary>Inventory-held jobs for Switch List (3.6) — same source as Preview prep.</summary>
     internal static bool TryPeekInventoryJobs(out List<Job> jobs) =>
-        TryGetJobsFromPlayerInventory(out jobs);
+        TryGetJobsFromPlayerInventory(out jobs, includingDropped: true);
 
     /// <summary>
-    /// Any <see cref="JobOverview"/> or <see cref="JobBooklet"/> in backpack/hotbar/hands
-    /// (including dropped-but-still-tracked slots when <c>includingDropped</c> is true).
+    /// Any <see cref="JobOverview"/> or <see cref="JobBooklet"/> in backpack/hotbar/hands.
+    /// When <paramref name="includingDropped"/> is false, ground drops do not count (job-car AR gate).
     /// </summary>
-    private static bool TryGetJobsFromPlayerInventory(out List<Job> jobs)
+    private static bool TryGetJobsFromPlayerInventory(out List<Job> jobs, bool includingDropped)
     {
         var found = new List<Job>();
         jobs = found;
@@ -4930,7 +5357,7 @@ internal static class TelemetryReader
                 found.Add(job);
             }
 
-            var items = inv.GetItemsArray(includingDropped: true);
+            var items = inv.GetItemsArray(includingDropped: includingDropped);
             if (items != null)
             {
                 for (var i = 0; i < items.Length; i++)
@@ -4980,7 +5407,7 @@ internal static class TelemetryReader
         codes = new List<string>();
         try
         {
-            if (!TryGetJobsFromPlayerInventory(out var jobs) || jobs.Count == 0)
+            if (!TryGetJobsFromPlayerInventory(out var jobs, includingDropped: true) || jobs.Count == 0)
             {
                 return false;
             }

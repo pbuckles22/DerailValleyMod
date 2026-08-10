@@ -10,7 +10,7 @@ Durable ranked backlog. Handoff notes may mention debt; **promote** anything tha
 
 
 
-**Last full pass:** handoff — 2026-08-05 (4.13 @ 0.6.28).
+**Last full pass:** 2026-08-10 (`main` @ 0.6.37 hitch event gates).
 
 
 
@@ -41,6 +41,10 @@ Blocking, unsafe, or no-rollback.
 High ROI; frequent pain; not blocking.
 
 
+
+- [x] **Posted Limit scanner — restore without periodic FoT** — **0.6.31** event-fed exit FILO (town / switch / Align / reverse); cab never FoT; dual-exit soft-load then drop opposite on direction lock. *Await MF smoke.* Do **not** merge `fix/hitch-0.4.20.*`.
+
+- [ ] **Hitch residual (nit)** — Sub‑100 ms spikes / slow heap creep may remain with rare FoT; revisit only if cadence returns. Do **not** chase 20 ms GC while feel is PASS.
 
 - [ ] **4.13 follow-on — unnamed/`#Y` rails on mini-map** — schematic currently named catalog only; retune MFMB office fence after coverage improves.
 

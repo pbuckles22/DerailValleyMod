@@ -28,6 +28,20 @@ public class Tier2HeadingDebugTests
     }
 
     [Fact]
+    public void NextLogMessage_throttles_rapid_heading_changes()
+    {
+        var prior = new HeadingDebugSnapshot("N");
+        var next = new HeadingDebugSnapshot("NNE");
+        var msg = Tier2HeadingDebug.NextLogMessage(prior, next, nowSeconds: 10f, lastChangeLogAt: 9.5f, out var at);
+        Assert.Null(msg);
+        Assert.Equal(9.5f, at);
+
+        msg = Tier2HeadingDebug.NextLogMessage(prior, next, nowSeconds: 12f, lastChangeLogAt: 9.5f, out at);
+        Assert.Equal("T2 heading change: Heading NNE", msg);
+        Assert.Equal(12f, at);
+    }
+
+    [Fact]
     public void NextLogMessage_logs_when_becoming_unknown()
     {
         var msg = Tier2HeadingDebug.NextLogMessage(

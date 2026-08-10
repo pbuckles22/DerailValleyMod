@@ -90,8 +90,8 @@ internal static class PathGraphBuilder
             return true;
         }
 
-        // Never sync-rebuild on the calling thread — start/continue the pump instead.
-        EnsureMappingStarted();
+        // Never auto-start the pump from TryBuild — that hitch-pumped ~2k tracks while driving.
+        // Callers that need a cold graph must EnsureMappingStarted() (desk / Align / M).
         edges = new List<PathEdge>();
         junctionSelectedBranch = new Dictionary<string, int>();
         junctionsById = new Dictionary<string, Junction>();

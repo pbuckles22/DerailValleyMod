@@ -1,13 +1,13 @@
 # Project status
 
-**Updated:** 2026-08-05
+**Updated:** 2026-08-10
 
 | | |
 |--|--|
-| **Journey** | Stage 3 — **4.13** mini-map @ **0.6.28**; next **3.7** (WIP stash) or `#Y` map follow-on; **3.1b iced** |
+| **Journey** | Hitch diet + Active Roster Limit on **`main` @ 0.6.37**; next Town Turntable Align / **3.7** / `#Y` map |
 | **MVP** | Epic 1 System Monitor HUD |
-| **Version** | **0.6.28** |
-| **Active branch** | `main` |
+| **Version** | **0.6.37** |
+| **Active branch** | **`main`** |
 
 ---
 
@@ -15,8 +15,9 @@
 
 | Branch | Role |
 |--------|------|
-| **`main`** | Integration — **0.6.28** |
+| **`main`** | Integration — **0.6.37** |
 | **`feature/3.7-multi-step-maps`** | 3.7 WIP — stash `park 3.7 WIP 0.6.28` (do not mix with next story) |
+| **`fix/hitch-0.4.20.1-hud-draw-gate`** | Hitch probe — **do not merge** |
 
 ---
 
@@ -31,6 +32,5 @@
 
 ### Next
 
-1. **4.13 follow-on** — unnamed/`#Y` rails on mini-map; fence retune — *or* resume **3.7** from stash (user pick).
-2. **[ ] 3.7 Multi-step Maps** — Switch List TurnAround inject (parked). **3.1b iced**.
-3. Parking: 3.1b spawn/ghost; place ghost / Snap office polish; Switch List couple auto-advance / arrival-track split; flight-sim HUD; AR house hide; DM3; session reset; 1.17 #4 behind-seed ice
+1. **Town Turntable Align** (desk Set Dest Turntable) or **3.7** / **4.13 `#Y`** — user pick. **3.1b iced**.
+2. Parking: 3.1b spawn/ghost; place ghost / Snap office polish; Switch List couple auto-advance / arrival-track split; flight-sim HUD; AR house hide; DM3; session reset; 1.17 #4 behind-seed ice

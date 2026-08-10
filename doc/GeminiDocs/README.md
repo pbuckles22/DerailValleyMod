@@ -20,5 +20,4 @@ Promote decisions into tracked docs (`PM_PLAN.md`, `doc/requirements/*`, `TEST_P
 
 | Pack | Topic |
 |------|--------|
-| [`Multi-step Maps Specification.md`](./Multi-step%20Maps%20Specification.md) | **3.7** — Gemini decisions + acceptance (promoted into `PM_PLAN` 2026-08-04) |
-| [`GMaps_MultiStep.md`](./GMaps_MultiStep.md) | Bridge pack + screenshots / code excerpts (input to that spec) |
+| [`Town_Turntable_Align.md`](./Town_Turntable_Align.md) | In-town Align to turntable — 3.7 precursor (resolver + desk TT Align; Path/AR first; event-owned graph warm) |

@@ -27,8 +27,6 @@ internal static class StationOfficeBounds
     private static string? _cachedYardId;
     private static Aabb3 _cachedAabb;
     private static bool _hasCache;
-    private static float _cachedAt = -999f;
-    private const float CacheSeconds = 2f;
 
     public static void ClearCache()
     {
@@ -45,10 +43,13 @@ internal static class StationOfficeBounds
         }
 
         var yardId = station.stationInfo != null ? station.stationInfo.YardID : station.name;
-        if (_hasCache
-            && _cachedYardId == yardId
-            && Time.unscaledTime - _cachedAt < CacheSeconds)
+        if (!OfficeBoundsCachePolicy.ShouldResolve(_cachedYardId, yardId, _hasCache))
         {
+            if (!_hasCache)
+            {
+                return false;
+            }
+
             aabb = _cachedAabb;
             return true;
         }
@@ -60,7 +61,6 @@ internal static class StationOfficeBounds
 
         _cachedAabb = aabb;
         _cachedYardId = yardId;
-        _cachedAt = Time.unscaledTime;
         _hasCache = true;
         return true;
     }

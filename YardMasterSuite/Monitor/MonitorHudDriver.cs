@@ -136,6 +136,14 @@ public sealed class MonitorHudDriver : MonoBehaviour
 
     private bool _hasHeadingDebug;
     private string? _lastHeadingPoint;
+    private float _lastHeadingChangeLogAt = -999f;
+    private float _hitchProbeLastFrameAt = -999f;
+    private float _hitchProbeLastLogAt = -999f;
+    private float _msLookAt;
+    private float _msHudBuild;
+    private float _msLimitFilo;
+    private float _msOnGui;
+    private string? _filoStationYardId;
 
     private bool _hasPositionDebug;
     private int? _lastPosX;
@@ -179,8 +187,34 @@ public sealed class MonitorHudDriver : MonoBehaviour
             _facingLabel = null;
             _alwaysOnLabel = "";
             LastStackBottomGuiY = 0f;
+            _hitchProbeLastFrameAt = -999f;
+            _filoStationYardId = null;
             return;
         }
+
+        var now = Time.unscaledTime;
+        if (_hitchProbeLastFrameAt >= 0f
+            && now - _hitchProbeLastLogAt >= HitchCadenceProbe.MinLogIntervalSeconds)
+        {
+            var dtMs = (now - _hitchProbeLastFrameAt) * 1000f;
+            var radarMs = TelemetryReader.ConsumeLastLocoRadarFotMs();
+            var arMs = HitchSectionSamples.ConsumeArGuiMs();
+            var spike = HitchSectionBudget.FormatSpike(
+                dtMs,
+                ("lookAt", _msLookAt),
+                ("hudBuild", _msHudBuild),
+                ("onGui", _msOnGui),
+                ("arGui", arMs),
+                ("locoRadar", radarMs),
+                ("limitFilo", _msLimitFilo));
+            if (spike != null)
+            {
+                _hitchProbeLastLogAt = now;
+                Main.Log(spike);
+            }
+        }
+
+        _hitchProbeLastFrameAt = now;
 
         PollParkMarkHotkey();
         PollPathDestHotkey();
@@ -214,13 +248,30 @@ public sealed class MonitorHudDriver : MonoBehaviour
         TelemetryReader.BeginHudTick();
         try
         {
+            var sw = System.Diagnostics.Stopwatch.StartNew();
             _trainLabel = TelemetryReader.CurrentTrainHudLineOrNull();
-            _localLabel = TelemetryReader.CurrentLocalCarHudLineOrNull();
             _jobLabel = TelemetryReader.CurrentActiveJobHudLineOrNull();
             _debugHotkeyLabel = DebugHotkeyGate.Enabled ? DebugHotkeyHudLine.Format() : null;
             _headingLabel = TelemetryReader.CurrentHeadingLabel();
             _parkLabel = TelemetryReader.CurrentParkLabel();
             _stationLabel = TelemetryReader.CurrentStationWaypointLabel();
+            sw.Stop();
+            var buildMs = sw.ElapsedMilliseconds;
+
+            sw.Restart();
+            MaybeWarmLimitFiloForStation();
+            sw.Stop();
+            _msLimitFilo = sw.ElapsedMilliseconds;
+
+            sw.Restart();
+            _localLabel = TelemetryReader.CurrentLocalCarHudLineOrNull();
+            EmitLookAtDebugIfNeeded();
+            EmitLocalCarDebugIfNeeded();
+            EmitCouplerDebugIfNeeded();
+            sw.Stop();
+            _msLookAt = sw.ElapsedMilliseconds;
+
+            sw.Restart();
             _pathLabel = TelemetryReader.CurrentPathCheckLabel();
             _facingLabel = TelemetryReader.CurrentFacingLabel();
             var exitLabel = TelemetryReader.CurrentExitLabel();
@@ -232,9 +283,6 @@ public sealed class MonitorHudDriver : MonoBehaviour
                 MonitorHudLine.Join(new[] { _facingLabel ?? "", exitLabel ?? "" }),
                 TelemetryReader.CurrentClockLabel());
             EmitConsistDebugIfNeeded();
-            EmitLocalCarDebugIfNeeded();
-            EmitLookAtDebugIfNeeded();
-            EmitCouplerDebugIfNeeded();
             EmitPowerDebugIfNeeded();
             EmitSpeedLimitDebugIfNeeded();
             EmitHeadingDebugIfNeeded();
@@ -244,6 +292,8 @@ public sealed class MonitorHudDriver : MonoBehaviour
             EmitPathCheckDebugIfNeeded();
             EmitActiveJobDebugIfNeeded();
             RefreshRemainingEtaIfDue();
+            sw.Stop();
+            _msHudBuild = buildMs + sw.ElapsedMilliseconds;
         }
         finally
         {
@@ -529,7 +579,13 @@ public sealed class MonitorHudDriver : MonoBehaviour
             previous = new HeadingDebugSnapshot(_lastHeadingPoint);
         }
 
-        var line = Tier2HeadingDebug.NextLogMessage(previous, snap);
+        var line = Tier2HeadingDebug.NextLogMessage(
+            previous,
+            snap,
+            Time.unscaledTime,
+            _lastHeadingChangeLogAt,
+            out var nextAt);
+        _lastHeadingChangeLogAt = nextAt;
         _lastHeadingPoint = snap.CompassPoint;
         _hasHeadingDebug = true;
         if (line != null)
@@ -667,6 +723,20 @@ public sealed class MonitorHudDriver : MonoBehaviour
         }
     }
 
+    private void MaybeWarmLimitFiloForStation()
+    {
+        var snap = TelemetryReader.CurrentStationWaypointDebugSnapshot();
+        var yard = snap.InZone ? snap.YardId : null;
+        if (string.Equals(_filoStationYardId, yard, System.StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        var from = _filoStationYardId;
+        _filoStationYardId = yard;
+        TelemetryReader.OnLimitFiloTownChanged(from, yard);
+    }
+
     private void EmitConsistDebugIfNeeded()
     {
         var snap = TelemetryReader.CurrentConsistDebugSnapshot();
@@ -785,9 +855,11 @@ public sealed class MonitorHudDriver : MonoBehaviour
         if (!HudWorldSession.IsActive(PlayerManager.PlayerTransform != null))
         {
             LastStackBottomGuiY = 0f;
+            _msOnGui = 0f;
             return;
         }
 
+        var sw = System.Diagnostics.Stopwatch.StartNew();
         EnsureStyles();
 
         // Stack top → bottom, all centered: loco → look-at → active job → always-on nav.
@@ -816,6 +888,9 @@ public sealed class MonitorHudDriver : MonoBehaviour
             var bottomY = Screen.height - MonitorHudStackLayout.Pad - MonitorHudStackLayout.BarHeight;
             DrawCenteredBar(_debugHotkeyLabel, _debugHotkeyStyle!, bottomY);
         }
+
+        sw.Stop();
+        _msOnGui = sw.ElapsedMilliseconds;
     }
 
     private float DrawCenteredBar(string label, GUIStyle style, float y)

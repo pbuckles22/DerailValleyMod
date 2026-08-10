@@ -85,6 +85,20 @@ public sealed class ArWaypointOverlay : MonoBehaviour
 
     private void OnGUI()
     {
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        try
+        {
+            OnGuiBody();
+        }
+        finally
+        {
+            sw.Stop();
+            HitchSectionSamples.ArGuiMs = sw.ElapsedMilliseconds;
+        }
+    }
+
+    private void OnGuiBody()
+    {
         if (!HudWorldSession.IsActive(PlayerManager.PlayerTransform != null))
         {
             EmitArDebug(false, false, false);

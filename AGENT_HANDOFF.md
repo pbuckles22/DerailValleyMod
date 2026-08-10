@@ -117,8 +117,8 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 |--|--|
 | **Project** | *Yard Master Suite* (UMM / Harmony / net48) |
 | **MVP** | **Epic 1** System Monitor HUD |
-| **Version (`main`)** | **0.6.28** *(4.13 yard mini-map; Tier 2 PASS)* |
-| **Active branch** | `main` |
+| **Version** | **0.6.37** *(on `main`)* |
+| **Active branch** | **`main`** |
 
 **Shipped on `main`**
 
@@ -132,6 +132,7 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 - [x] **F5 DH4/DE6 license debug** (**0.6.5**, Tier 2 **PASS** — real → DH4 only → DH4+DE6 → real; replaces lighter)
 - [x] **Maps path rem/ETA + job AR + UMM options** (**0.6.19**, Tier 2 **PASS** — rem until dest; pickup-track pins; Show nearest locos; false Path stale @ **0.6.13**)
 - [x] **4.13 Yard mini-map** (**0.6.28**, Tier 2 **PASS** — `M` toggle; MFMB 5 m office fence; off-map arrow; smoke-gates Tier 1 CI)
+- [x] **Active Roster Limit + hitch event gates** (**0.6.37**, Tier 2 **PASS** 2026-08-10 — FILO soft-warm; path map deferred; loco/office/job-car event scans; hitch attribution)
 - [x] **1.17** Posted Limit + Next (**0.5.104**, Tier 2 **PASS**; #4 behind-seed on ice)
 - [x] **Stress RAG HUD chip** (**0.5.105**, Tier 2 **PASS** — coupler/derail % RAG)
 - [x] **Tier 2 debug inject** — F5–F9 / F11 + PgUp/PgDn turntable (**F5** = DH4/DE6 @ **0.6.5**; **Motors** heat inject *parked* @ **0.6.21**)
@@ -146,9 +147,10 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 
 **Next**
 
-1. **4.13 follow-on** — unnamed/`#Y` rails on mini-map schematic; then retune MFMB fence. *Or* resume **3.7** from stash `park 3.7 WIP 0.6.28` on `feature/3.7-multi-step-maps` (user pick).
-2. **3.7 Multi-step Maps** — Switch List TurnAround inject (WIP parked). **3.1b iced**.
+1. **Town Turntable Align** (desk Set Dest) or **3.7** / **4.13 `#Y`** — user pick. **3.1b iced**.
+2. Do **not** merge `fix/hitch-0.4.20.1-hud-draw-gate`.
 3. Parking: 3.1b ghost/spawn; place ghost / Snap office under-mesh; Switch List couple auto-advance / arrival-track split; flight-sim HUD; AR house hide; DM3; session reset; 1.17 #4 behind-seed.
+
 **Merge-ready:** `dotnet test YardMasterSuite.sln` · `dotnet build YardMasterSuite.sln -c Release` · **deploy to Mods** via `package.ps1 -NoArchive` (required before Tier 2 smoke — see [.cursor/rules/deploy-before-smoke.mdc](.cursor/rules/deploy-before-smoke.mdc))
 
 ## Run and test

@@ -7,7 +7,7 @@ public class ModSettings : UnityModManager.ModSettings, IDrawable
 {
     [Draw(
         "Show nearest locos",
-        Tooltip = "Amber AR markers for other locos within 600 m (up to 3). Turn off when your main loco is enough and you want less clutter.")]
+        Tooltip = "Amber AR for other locos within 600 m (up to 3). Scans once per city and once when you leave a loco — not on a timer.")]
     public bool ShowNearestLocos = true;
 
     public override void Save(UnityModManager.ModEntry modEntry) =>

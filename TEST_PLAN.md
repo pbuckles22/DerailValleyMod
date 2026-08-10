@@ -24,6 +24,14 @@ Requires local `Directory.Build.targets` (from `Directory.Build.targets.example`
 
 Pure helpers live in `YardMasterSuite.Core` (no Unity/game refs).
 
+**Hitch attribution (cab look-around):** `HitchSectionBudget` + `HitchSectionBudgetTests` (Tier 1). In-game spikes log  
+`T2 hitch-spike: dt=…ms hot=<lookAt|hudBuild|onGui|arGui|locoRadar|limitFilo|outside> …`  
+so Player.log names the section. `hot=outside` ⇒ cost outside our timers (Unity/streaming/GC).
+
+**Office hide AABB:** `OfficeBoundsCachePolicy` — FoT once per town (yard id), not every 2s (`StationOfficeBounds`).
+
+**Job-car AR:** `JobCarArScanPolicy` — scan once when paperwork is picked up / swapped; clear when dropped (not on the ground). No 1s timer. Log: `T2 job-car-ar: scan|clear`.
+
 ---
 
 ## Tier 2 — In-game smoke
@@ -514,9 +522,11 @@ Screen markers: loco / office / pin **PNG icons** (shape primary). Edge clamp wh
 - [x] Office proximity — house hide + `Station … here` same gate (**PASS** Bundle C v0.4.48; accepted 2026-07-26)
 - [x] `T2 ar` shows loco / office / pin set changes
 
-### 4.10 Loco radar — **PASS** v0.4.75 · range cap **0.6.15**
+### 4.10 Loco radar — **PASS** v0.4.75 · range cap **0.6.15** · event scan **0.6.35**
 
 Nearest **other** locos as amber AR markers on the sticky locator bar (**≤600 m**, up to 3; fewer or none is OK). Place: `SM-T12P` / `FF-A2P` or `FF #Y-…` (city + spur). Rigid AABB pack. Unblocks Bundle E **#23**.
+
+**Scan policy (hitch):** FoT only on **city enter**, **leave loco** (marks departed id), or UMM force — never every 2.5s. Tier 1: `LocoRadarScanPolicyTests`. Log: `T2 loco-radar: scan reason=…`.
 
 **Sign-off**
 

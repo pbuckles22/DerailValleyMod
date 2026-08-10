@@ -24,14 +24,16 @@ internal static class RoutePlanService
             return "T2 path: no origin (stand on a track, or sit in a loco/car)";
         }
 
+        if (!PathGraphBuilder.HasReadyCache)
+        {
+            PathGraphBuilder.EnsureMappingStarted();
+            return "T2 path: Station mapping… (retry when ready)";
+        }
+
         if (!PathGraphBuilder.TryBuild(out var edges, out var selected))
         {
-            PathGraphBuilder.InvalidateCache();
-            if (!PathGraphBuilder.TryBuild(out edges, out selected))
-            {
-                RoutePlanSession.Clear();
-                return "T2 path: no graph (enter world session)";
-            }
+            RoutePlanSession.Clear();
+            return "T2 path: no graph (enter world session)";
         }
 
         var occupiedNamed = PathOccupancyScanner.SnapshotOccupiedTrackKeys();
@@ -116,13 +118,15 @@ internal static class RoutePlanService
             return Compute("post-align");
         }
 
+        if (!PathGraphBuilder.HasReadyCache)
+        {
+            PathGraphBuilder.EnsureMappingStarted();
+            return "T2 path: post-align Station mapping… (retry Align when ready)";
+        }
+
         if (!PathGraphBuilder.TryBuild(out var edges, out var selected))
         {
-            PathGraphBuilder.InvalidateCache();
-            if (!PathGraphBuilder.TryBuild(out edges, out selected))
-            {
-                return "T2 path: post-align no graph";
-            }
+            return "T2 path: post-align no graph";
         }
 
         PathTrackClass ClassFor(string id)
@@ -307,14 +311,16 @@ internal static class RoutePlanService
         }
 
         // Need live edges + junction branches for switch invalidation and fill-ins.
-        // Cold map ⇒ skip switch watch (do not MarkStale on unreadable state).
+        // Cold map ⇒ skip switch watch — do NOT TryBuild (that used to EnsureMappingStarted).
         System.Collections.Generic.IReadOnlyList<PathEdge>? edges = null;
         System.Collections.Generic.Dictionary<string, int>? selected = null;
-        var graphReady = PathGraphBuilder.TryBuild(out var built, out var liveSelected);
-        if (graphReady)
+        var graphReady = false;
+        if (PathGraphBuilder.HasReadyCache
+            && PathGraphBuilder.TryBuild(out var built, out var liveSelected))
         {
             edges = built;
             selected = liveSelected;
+            graphReady = true;
         }
 
         // PRODUCT: only Path OK watches throws. Misaligned already shows Path N wrong;
@@ -329,6 +335,7 @@ internal static class RoutePlanService
                 RoutePlanSession.JunctionSnapshot,
                 selected);
             RoutePlanSession.MarkStale("planned switch changed — Recheck or Align again");
+            TelemetryReader.OnLimitFiloSwitchChanged();
             return "T2 path: planned switch changed (Recheck or Align) · " + drift;
         }
 
