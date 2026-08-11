@@ -23,6 +23,8 @@ public sealed class ArWaypointOverlay : MonoBehaviour
     private static readonly Color StationColor = new(0.51f, 0.78f, 0.52f, 1f);
     private static readonly Color PinColor = new(1f, 0.84f, 0.31f, 1f);
     private static readonly Color RouteLegColor = new(0.95f, 0.55f, 0.2f, 1f);
+    /// <summary>CLEARED · Next — loco past safe circle on departure half.</summary>
+    private static readonly Color RouteLegClearedColor = new(0.35f, 0.85f, 0.42f, 1f);
 
     private const int MaxFrames =
         4 + LocoRadarSelection.DefaultMaxResults + JobCarMarkerDisplay.DefaultMaxMarkers;
@@ -166,14 +168,14 @@ public sealed class ArWaypointOverlay : MonoBehaviour
 
         var switchListActive = SwitchListSession.HasActive && !SwitchListSession.IsComplete;
         if (switchListActive
-            && TelemetryReader.TryGetArRouteLegWorldPosition(out var legWorld, out var legCaption)
+            && TelemetryReader.TryGetArRouteLegWorldPosition(out var legWorld, out var legCaption, out var legCleared)
             && TryPrepareWorldMarker(
                 cam,
                 playerPos,
                 ArWaypointKind.RouteLeg,
                 legWorld,
                 legCaption,
-                RouteLegColor,
+                legCleared ? RouteLegClearedColor : RouteLegColor,
                 _pinIcon,
                 ref _routeLegMotion,
                 out _frames[n]))

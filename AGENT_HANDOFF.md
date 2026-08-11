@@ -117,7 +117,7 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 |--|--|
 | **Project** | *Yard Master Suite* (UMM / Harmony / net48) |
 | **MVP** | **Epic 1** System Monitor HUD |
-| **Version** | **0.6.57** *(feature/yard-graph-snapshot — World/Yard PathPlan profiles + Dump graph)* |
+| **Version** | **0.6.71** *(feature/junction-first-stop — sticky until re-foul)* |
 | **Active branch** | **`feature/town-turntable-align`** |
 
 **Shipped on `main`**
@@ -146,11 +146,11 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 
 **In flight**
 
-- [ ] **Yard graph snapshot + dual PathPlan** (**0.6.57**) — Dump graph fixtures; World vs Yard Dijkstra (Yard skips junction-commitment hard-seal). SW-B4L→TT Set dest should path. Drive-set/Arrived locked PASS.
+- [x] **Junction-first stop pin** (**0.6.71**) — Clear line sticky green (blow-by OK); **re-enter danger → At switch** (Forward back onto switch cancels CLEARED). Tier 2 **PASS** (player 2026-08-11).
 
 **Next**
 
-1. Tier 2 smoke Town TT Align → commit/merge → then **3.7** inject. **3.1b iced**.
+1. **Optional:** couple cars and re-smoke butt clear (tipSpan &gt; loco-only). **Then** commit already done path: on-consist hotkeys spike (throttle/indy/train brake while on any car of the active trainset — not off-train remote). Then honest Yard rem / 2-step list; merge yard-graph stack remnants when ready → **3.7**. **3.1b iced**.
 2. Do **not** merge `fix/hitch-0.4.20.1-hud-draw-gate`.
 3. Parking: 3.1b ghost/spawn; place ghost / Snap office under-mesh; Switch List couple auto-advance / arrival-track split; flight-sim HUD; AR house hide; DM3; session reset; 1.17 #4 behind-seed.
 

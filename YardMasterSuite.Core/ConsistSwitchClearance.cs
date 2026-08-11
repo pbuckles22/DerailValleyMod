@@ -26,6 +26,12 @@ public static class ConsistSwitchClearance
 {
     public const float DefaultMarginMeters = 2f;
 
+    /// <summary>
+    /// Trailing tip must be this far past the frog for CLEARED · Next (switch gates buffer).
+    /// Larger than Align throw margin — smoke: mid-switch must not CLEARED.
+    /// </summary>
+    public const float SwitchClearGateMarginMeters = 12f;
+
     public static ConsistClearanceMode ModeForStep(SwitchListStepKind kind) =>
         kind == SwitchListStepKind.Delivery ? ConsistClearanceMode.CarsOnly : ConsistClearanceMode.FullTrain;
 
@@ -137,9 +143,7 @@ public static class ConsistSwitchClearance
         occupancy == ConsistClearanceStatus.Cleared;
 
     /// <summary>
-    /// Arrived at a switch pin: must be past along travel AND within near radius of the pin.
-    /// Prevents false Arrived when a nearby origin switch is already "behind" loco forward
-    /// while rem to the real pivot is still hundreds of meters.
+    /// Delivery / zone Arrived: zone cleared AND player within near radius.
     /// </summary>
     public static ConsistClearanceStatus CombinePastAndNear(
         ConsistClearanceStatus pastOrZone,
@@ -165,6 +169,31 @@ public static class ConsistSwitchClearance
         }
 
         return ConsistClearanceStatus.Cleared;
+    }
+
+    /// <summary>
+    /// Switch-list pin Arrived: within near radius of the pin (PickPin already chose
+    /// the right switch). Past-along-travel is not required — product allows the pin
+    /// slightly ahead; stopped / reverser flips often leave past=Fouling at 6 m.
+    /// <paramref name="past"/> is ignored for the decision (kept for call-site logging).
+    /// </summary>
+    public static ConsistClearanceStatus EvaluatePinArrive(
+        ConsistClearanceStatus past,
+        float pinX,
+        float pinZ,
+        float refX,
+        float refZ,
+        float nearRadiusMeters)
+    {
+        _ = past;
+        if (nearRadiusMeters <= 0f || float.IsNaN(nearRadiusMeters))
+        {
+            return ConsistClearanceStatus.Unknown;
+        }
+
+        return Within(pinX, pinZ, refX, refZ, nearRadiusMeters)
+            ? ConsistClearanceStatus.Cleared
+            : ConsistClearanceStatus.Fouling;
     }
 
     private static bool TryProjections(

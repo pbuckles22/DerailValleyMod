@@ -152,6 +152,66 @@ public class ConsistSwitchClearanceTests
                 nearRadiusMeters: 40f));
     }
 
+    /// <summary>
+    /// Smoke SW TT: mid-switch (past=Fouling) must not CLEARED even when near the frog.
+    /// CLEARED = past gate (trailing tip clear) AND near the junction pin.
+    /// </summary>
+    [Fact]
+    public void Smoke_SwitchCleared_RequiresPastAndNear()
+    {
+        Assert.Equal(
+            ConsistClearanceStatus.Fouling,
+            ConsistSwitchClearance.CombinePastAndNear(
+                ConsistClearanceStatus.Fouling,
+                pinX: 0f,
+                pinZ: 0f,
+                refX: 0f,
+                refZ: 6.5f,
+                nearRadiusMeters: 35f));
+
+        Assert.Equal(
+            ConsistClearanceStatus.Cleared,
+            ConsistSwitchClearance.CombinePastAndNear(
+                ConsistClearanceStatus.Cleared,
+                pinX: 0f,
+                pinZ: 0f,
+                refX: 0f,
+                refZ: 6.5f,
+                nearRadiusMeters: 35f));
+    }
+
+    [Fact]
+    public void EvaluatePastSwitch_gate_margin_blocks_mid_switch()
+    {
+        // Tips straddle frog: trailing still behind — Fouling at 12 m gate margin.
+        Assert.Equal(
+            ConsistClearanceStatus.Fouling,
+            ConsistSwitchClearance.EvaluatePastSwitch(
+                switchX: 0f,
+                switchZ: 0f,
+                tipAx: -5f,
+                tipAz: 0f,
+                tipBx: 8f,
+                tipBz: 0f,
+                travelX: 1f,
+                travelZ: 0f,
+                marginMeters: ConsistSwitchClearance.SwitchClearGateMarginMeters));
+
+        // Entire consist past frog by ≥12 m.
+        Assert.Equal(
+            ConsistClearanceStatus.Cleared,
+            ConsistSwitchClearance.EvaluatePastSwitch(
+                switchX: 0f,
+                switchZ: 0f,
+                tipAx: 14f,
+                tipAz: 0f,
+                tipBx: 22f,
+                tipBz: 0f,
+                travelX: 1f,
+                travelZ: 0f,
+                marginMeters: ConsistSwitchClearance.SwitchClearGateMarginMeters));
+    }
+
     [Fact]
     public void Unknown_when_travel_zero()
     {

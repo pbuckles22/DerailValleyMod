@@ -13,6 +13,30 @@ public enum PathPlanMode
     Yard = 1,
 }
 
+/// <summary>
+/// First place a Yard corridor re-uses a junction with a different required branch.
+/// Pin / list stop = this switch (approach), not the first corridor flip.
+/// </summary>
+public readonly struct PathJunctionFirstStop
+{
+    public PathJunctionFirstStop(
+        string junctionId,
+        int requiredBranch,
+        string fromTrackId,
+        string toTrackId)
+    {
+        JunctionId = junctionId ?? string.Empty;
+        RequiredBranch = requiredBranch;
+        FromTrackId = fromTrackId ?? string.Empty;
+        ToTrackId = toTrackId ?? string.Empty;
+    }
+
+    public string JunctionId { get; }
+    public int RequiredBranch { get; }
+    public string FromTrackId { get; }
+    public string ToTrackId { get; }
+}
+
 /// <summary>Dijkstra path plan with reverse cues for Align Route (3.5).</summary>
 public sealed class PathPlanResult
 {
@@ -23,7 +47,8 @@ public sealed class PathPlanResult
         int misalignedCount,
         int reverseCount,
         bool lastHopRequiresReverse,
-        float totalCost)
+        float totalCost,
+        PathJunctionFirstStop? junctionFirstStop = null)
     {
         Status = status;
         TrackIds = trackIds;
@@ -32,6 +57,7 @@ public sealed class PathPlanResult
         ReverseCount = reverseCount;
         LastHopRequiresReverse = lastHopRequiresReverse;
         TotalCost = totalCost;
+        JunctionFirstStop = junctionFirstStop;
     }
 
     public PathCheckStatus Status { get; }
@@ -41,6 +67,11 @@ public sealed class PathPlanResult
     public int ReverseCount { get; }
     public bool LastHopRequiresReverse { get; }
     public float TotalCost { get; }
+
+    /// <summary>
+    /// When set, AR pin prefers this approach switch over the first RequiredFlips entry.
+    /// </summary>
+    public PathJunctionFirstStop? JunctionFirstStop { get; }
 
     public PathCheckResult ToCheckResult() =>
         new(Status, TrackIds, Junctions, MisalignedCount);
@@ -148,6 +179,7 @@ public static class PathPlan
             AddUniqueJunctionEval(junctionEvals, seenJunctions, ref misaligned, hop, selected);
         }
 
+        TryFindJunctionFirstStop(path, adj, out var firstStop);
         var status = misaligned == 0 ? PathCheckStatus.Aligned : PathCheckStatus.Misaligned;
         return new PathPlanResult(
             status,
@@ -156,7 +188,52 @@ public static class PathPlan
             misaligned,
             reverseCount,
             lastReverse,
-            totalCost);
+            totalCost,
+            firstStop);
+    }
+
+    /// <summary>
+    /// Walk corridor hops; when a junction is required at a different branch than an
+    /// earlier hop committed, that switch is the junction-first stop (approach pin).
+    /// </summary>
+    private static bool TryFindJunctionFirstStop(
+        IReadOnlyList<string> trackIds,
+        Dictionary<string, List<PathEdge>> adj,
+        out PathJunctionFirstStop? stop)
+    {
+        stop = null;
+        if (trackIds == null || trackIds.Count < 2 || adj == null)
+        {
+            return false;
+        }
+
+        var committed = new Dictionary<string, int>(StringComparer.Ordinal);
+        for (var i = 0; i < trackIds.Count - 1; i++)
+        {
+            var from = Normalize(trackIds[i]);
+            var to = Normalize(trackIds[i + 1]);
+            if (from == null || to == null || !TryGetHop(adj, from, to, out var hop))
+            {
+                continue;
+            }
+
+            if (!hop.HasJunction || hop.JunctionId == null)
+            {
+                continue;
+            }
+
+            if (committed.TryGetValue(hop.JunctionId, out var prior)
+                && prior != hop.RequiredBranch)
+            {
+                stop = new PathJunctionFirstStop(
+                    hop.JunctionId, hop.RequiredBranch, from, to);
+                return true;
+            }
+
+            committed[hop.JunctionId] = hop.RequiredBranch;
+        }
+
+        return false;
     }
 
     /// <summary>
@@ -262,6 +339,7 @@ public static class PathPlan
             AddUniqueJunctionEval(junctionEvals, seenJunctions, ref misaligned, hop, selected);
         }
 
+        TryFindJunctionFirstStop(trackIds, adj, out var firstStop);
         var status = misaligned == 0 ? PathCheckStatus.Aligned : PathCheckStatus.Misaligned;
         return new PathPlanResult(
             status,
@@ -270,7 +348,8 @@ public static class PathPlan
             misaligned,
             reverseCount,
             lastReverse,
-            totalCost);
+            totalCost,
+            firstStop);
     }
 
     /// <summary>

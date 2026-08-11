@@ -112,6 +112,19 @@ internal static class RoutePlanService
                 ? ""
                 : " · "
                   + PathCorridorDrift.FormatJunctionDrift(snap, selected)));
+        if (plan.JunctionFirstStop is PathJunctionFirstStop jfs)
+        {
+            Main.Log(
+                "T2 path: junction-first pin="
+                + jfs.JunctionId
+                + " req="
+                + jfs.RequiredBranch
+                + " at="
+                + jfs.FromTrackId
+                + "→"
+                + jfs.ToTrackId);
+        }
+
         RoutePlanSession.SetDriveBaseline(TelemetryReader.SessionDriveMeters);
         ResetEtaPace();
         RefreshRemainingEta();
@@ -530,7 +543,8 @@ internal static class RoutePlanService
             plan.MisalignedCount,
             plan.ReverseCount,
             plan.LastHopRequiresReverse,
-            plan.TotalCost);
+            plan.TotalCost,
+            plan.JunctionFirstStop);
     }
 
     private static float _etaLogAt = -999f;

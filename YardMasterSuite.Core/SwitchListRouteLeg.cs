@@ -5,12 +5,24 @@ namespace YardMasterSuite.Core;
 /// <summary>RouteLeg pin target for active Switch List leg (switch gate, not dest track).</summary>
 public static class SwitchListRouteLeg
 {
-    /// <summary>First misaligned junction on the plan (RequiredFlips order).</summary>
+    /// <summary>
+    /// Pin target: junction-first stop (Yard dual-branch approach) when present;
+    /// else first misaligned junction (RequiredFlips order).
+    /// </summary>
     public static string? PickPinJunctionId(PathPlanResult? plan)
     {
         if (plan == null)
         {
             return null;
+        }
+
+        if (plan.JunctionFirstStop is PathJunctionFirstStop stop)
+        {
+            var stopId = stop.JunctionId?.Trim();
+            if (!string.IsNullOrEmpty(stopId))
+            {
+                return stopId;
+            }
         }
 
         var flips = PathPlan.RequiredFlips(plan);

@@ -20,4 +20,4 @@ Promote decisions into tracked docs (`PM_PLAN.md`, `doc/requirements/*`, `TEST_P
 
 | Pack | Topic |
 |------|--------|
-| [`SetForward_SwitchBehind.md`](./SetForward_SwitchBehind.md) | Desk says Set Forward but first switch / RouteLeg pin is behind the cab (drive-set vs stub ReverseCount) |
+| [`CLEARED_Early_On_Switch.md`](./CLEARED_Early_On_Switch.md) | CLEARED · Next while loco still on S-0421-SW points (0.6.64; tipPast Cleared at 343 m) |

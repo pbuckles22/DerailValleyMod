@@ -98,6 +98,60 @@ public class PathPlanTests
         Assert.Equal(0, flips[0].RequiredBranch);
     }
 
+    /// <summary>
+    /// Yard corridor that re-uses one junction with two branches: pin = conflict switch
+    /// (approach), not the earlier corridor flip.
+    /// </summary>
+    [Fact]
+    public void Yard_JunctionFirstStop_PinsConflictNotFirstFlip()
+    {
+        var edges = new[]
+        {
+            new PathEdge("A", "B", "J-early", 0, 1f),
+            new PathEdge("B", "C", "J-dual", 0, 1f),
+            new PathEdge("C", "D", "J-dual", 1, 1f),
+            new PathEdge("D", "TT", cost: 1f),
+        };
+        var selected = new Dictionary<string, int>
+        {
+            ["J-early"] = 1, // misaligned early flip
+            ["J-dual"] = 0,
+        };
+
+        var plan = PathPlan.Find(
+            edges, selected, "A", "TT", mode: PathPlanMode.Yard);
+        Assert.NotEqual(PathCheckStatus.NoPath, plan.Status);
+        Assert.NotNull(plan.JunctionFirstStop);
+        Assert.Equal("J-dual", plan.JunctionFirstStop!.Value.JunctionId);
+        Assert.Equal(1, plan.JunctionFirstStop.Value.RequiredBranch);
+        Assert.Equal("C", plan.JunctionFirstStop.Value.FromTrackId);
+        Assert.Equal("J-dual", SwitchListRouteLeg.PickPinJunctionId(plan));
+        Assert.NotEqual("J-early", SwitchListRouteLeg.PickPinJunctionId(plan));
+    }
+
+    [Fact]
+    public void World_JunctionFirstStop_NullWhenCommitmentPreventsConflict()
+    {
+        // Same edges: World hard-skips the conflicting hop → NoPath (or alternate).
+        var edges = new[]
+        {
+            new PathEdge("A", "B", "J-early", 0, 1f),
+            new PathEdge("B", "C", "J-dual", 0, 1f),
+            new PathEdge("C", "D", "J-dual", 1, 1f),
+            new PathEdge("D", "TT", cost: 1f),
+        };
+        var selected = new Dictionary<string, int>
+        {
+            ["J-early"] = 0,
+            ["J-dual"] = 0,
+        };
+
+        var plan = PathPlan.Find(
+            edges, selected, "A", "TT", mode: PathPlanMode.World);
+        Assert.Equal(PathCheckStatus.NoPath, plan.Status);
+        Assert.Null(plan.JunctionFirstStop);
+    }
+
     [Fact]
     public void Find_prefers_faster_time_over_scenic_long_mainline()
     {

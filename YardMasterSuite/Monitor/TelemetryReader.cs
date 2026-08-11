@@ -467,8 +467,16 @@ internal static class TelemetryReader
         string? chip;
         if (SwitchListSession.HasActive
             && !SwitchListSession.IsComplete
+            && TryGetSwitchListPinPrompt(out var pinPrompt, out var pinCleared))
+        {
+            chip = pinPrompt;
+            _ = pinCleared;
+        }
+        else if (SwitchListSession.HasActive
+            && !SwitchListSession.IsComplete
             && IsSwitchListStepArrived())
         {
+            // Dest-track zone (no pin) — Arrived wording.
             chip = "Arrived · Next";
         }
         else
@@ -1629,12 +1637,16 @@ internal static class TelemetryReader
 
     /// <summary>
     /// Active Switch List RouteLeg: pin on next throw switch (or dest track when Path OK).
-    /// Caption shows Arrived · Next only when consist is past the gate (or cars-in-zone on Delivery).
+    /// Caption: approach label · Xm → At switch · keep going · Nm → CLEARED · Next (green).
     /// </summary>
-    public static bool TryGetArRouteLegWorldPosition(out Vector3 world, out string caption)
+    public static bool TryGetArRouteLegWorldPosition(
+        out Vector3 world,
+        out string caption,
+        out bool clearSafeColor)
     {
         world = default;
         caption = "";
+        clearSafeColor = false;
         try
         {
             if (!SwitchListSession.HasActive || SwitchListSession.IsComplete)
@@ -1651,20 +1663,18 @@ internal static class TelemetryReader
             var step = SwitchListSession.CurrentStep;
             var plan = RoutePlanSession.Plan;
             var pinJ = SwitchListRouteLeg.PickPinJunctionId(plan);
+            // Pin stays on the junction (XZ offset left the rail). CLEARED is a separate gate.
             if (!string.IsNullOrEmpty(pinJ)
                 && PathGraphBuilder.TryGetJunctionWorldPosition(pinJ, out var jx, out var jy, out var jz))
             {
                 world = new Vector3(jx, jy, jz);
-                if (TryGetSwitchListArriveStatus(out var arrive) && ConsistSwitchClearance.IsArrived(arrive))
+                if (TryGetSwitchListPinPrompt(out caption, out clearSafeColor))
                 {
-                    caption = "Arrived · Next";
-                }
-                else
-                {
-                    var label = step?.Label ?? pinJ!;
-                    caption = FormatRouteLegCaption(label, jx, jy, jz);
+                    return true;
                 }
 
+                var label = step?.Label ?? pinJ!;
+                caption = FormatRouteLegCaption(label, jx, jy, jz);
                 return true;
             }
 
@@ -1695,6 +1705,137 @@ internal static class TelemetryReader
         {
             return false;
         }
+    }
+
+    /// <summary>Compat overload — color flag ignored.</summary>
+    public static bool TryGetArRouteLegWorldPosition(out Vector3 world, out string caption) =>
+        TryGetArRouteLegWorldPosition(out world, out caption, out _);
+
+    /// <summary>
+    /// Pin clear prompt for HUD / AR: CLEARED, at-switch coaching, or false (step · pin range).
+    /// Pin is always the switch frog — never labeled as the safe-zone marker.
+    /// </summary>
+    public static bool TryGetSwitchListPinPrompt(out string caption, out bool clearSafeColor)
+    {
+        caption = "";
+        clearSafeColor = false;
+        var plan = RoutePlanSession.Plan;
+        var pinJ = SwitchListRouteLeg.PickPinJunctionId(plan);
+        if (string.IsNullOrEmpty(pinJ)
+            || !PathGraphBuilder.TryGetJunctionWorldPosition(pinJ, out var jx, out _, out var jz))
+        {
+            return false;
+        }
+
+        // Drive arrive eval so latch/cache match caption.
+        _ = TryGetSwitchListArriveStatus(out var arrive);
+        EnsureClearPinGateCache(plan, pinJ!, jx, jz);
+
+        if (!TryResolveClearRefXz(jx, jz, out var refX, out var refZ, out _))
+        {
+            return false;
+        }
+
+        var dist = RadialSwitchClearance.DistanceMeters(jx, jz, refX, refZ);
+        var R = _clearPinSafeRadius > 0f
+            ? _clearPinSafeRadius
+            : RadialSwitchClearance.SafeRadiusMeters();
+
+        if (ConsistSwitchClearance.IsArrived(arrive))
+        {
+            caption = SwitchListClearPrompt.ClearedCaption;
+            clearSafeColor = true;
+            return true;
+        }
+
+        // Coach rem only near the switch (axis-symmetric). Far + latch → fall back to step · pin.
+        var entryLen = (_clearPinEntryDirX * _clearPinEntryDirX)
+            + (_clearPinEntryDirZ * _clearPinEntryDirZ);
+        var haveEntry = entryLen > 1e-6f;
+        var signedClear = haveEntry
+            ? RadialSwitchClearance.SignedClearMeters(
+                jx, jz, refX, refZ, _clearPinEntryDirX, _clearPinEntryDirZ)
+            : 0f;
+        var rem = haveEntry
+            ? RadialSwitchClearance.MetersToClearRimAlongAxis(signedClear, R)
+            : SwitchListClearPrompt.IsInsideDangerCircle(dist, R)
+                ? (int)Mathf.Ceil(Mathf.Max(0f, R - dist))
+                : 0;
+
+        var inside = SwitchListClearPrompt.IsInsideDangerCircle(dist, R);
+        var nearCoach = inside || dist <= RadialSwitchClearance.CoachNearMeters;
+        if (_clearPinWasInside && nearCoach)
+        {
+            caption = SwitchListClearPrompt.FormatAtSwitch(rem);
+            clearSafeColor = false;
+            return true;
+        }
+
+        // Far approach / far after reverse — caller uses step label · range to the switch pin.
+        return false;
+    }
+
+    /// <summary>
+    /// Clearance ref = trailing tip (butt) along entry/corridor axis; else loco; else player.
+    /// </summary>
+    private static bool TryResolveClearRefXz(
+        float pinX,
+        float pinZ,
+        out float refX,
+        out float refZ,
+        out float tipSpanMeters)
+    {
+        refX = refZ = 0f;
+        tipSpanMeters = 0f;
+
+        float axisX = _clearPinEntryDirX;
+        float axisZ = _clearPinEntryDirZ;
+        if ((axisX * axisX) + (axisZ * axisZ) < 1e-6f)
+        {
+            axisX = _clearPinDirX;
+            axisZ = _clearPinDirZ;
+        }
+
+        if (TryGetConsistTipXz(ConsistClearanceMode.FullTrain, out var ax, out var az, out var bx, out var bz))
+        {
+            var dx = ax - bx;
+            var dz = az - bz;
+            tipSpanMeters = Mathf.Sqrt((dx * dx) + (dz * dz));
+            if ((axisX * axisX) + (axisZ * axisZ) > 1e-6f)
+            {
+                RadialSwitchClearance.PickTrailingTip(
+                    ax, az, bx, bz, axisX, axisZ, out refX, out refZ);
+            }
+            else
+            {
+                // No axis yet — tip farther from pin is a stable "butt" stand-in.
+                var da = RadialSwitchClearance.DistanceMeters(pinX, pinZ, ax, az);
+                var db = RadialSwitchClearance.DistanceMeters(pinX, pinZ, bx, bz);
+                if (da >= db)
+                {
+                    refX = ax;
+                    refZ = az;
+                }
+                else
+                {
+                    refX = bx;
+                    refZ = bz;
+                }
+            }
+
+            return true;
+        }
+
+        var loco = TryGetUsableLoco();
+        if (loco != null)
+        {
+            var locoPos = loco.transform.position;
+            refX = locoPos.x;
+            refZ = locoPos.z;
+            return true;
+        }
+
+        return TryGetPlayerPosition(out refX, out _, out refZ);
     }
 
     private static string FormatRouteLegCaption(string label, float x, float y, float z)
@@ -1731,6 +1872,11 @@ internal static class TelemetryReader
 
     public static ConsistClearanceStatus EvaluateJunctionPast(string? junctionId)
     {
+        return EvaluateJunctionPast(junctionId, ConsistSwitchClearance.DefaultMarginMeters);
+    }
+
+    public static ConsistClearanceStatus EvaluateJunctionPast(string? junctionId, float marginMeters)
+    {
         if (string.IsNullOrEmpty(junctionId)
             || !PathGraphBuilder.TryGetJunctionWorldPosition(junctionId, out var sx, out _, out var sz)
             || !TryGetConsistTipXz(ConsistClearanceMode.FullTrain, out var ax, out var az, out var bx, out var bz)
@@ -1739,7 +1885,8 @@ internal static class TelemetryReader
             return ConsistClearanceStatus.Unknown;
         }
 
-        return ConsistSwitchClearance.EvaluatePastSwitch(sx, sz, ax, az, bx, bz, tx, tz);
+        return ConsistSwitchClearance.EvaluatePastSwitch(
+            sx, sz, ax, az, bx, bz, tx, tz, marginMeters);
     }
 
     public static bool TryGetSwitchListArriveStatus(out ConsistClearanceStatus status)
@@ -1747,6 +1894,7 @@ internal static class TelemetryReader
         status = ConsistClearanceStatus.Unknown;
         if (!SwitchListSession.HasActive || SwitchListSession.IsComplete)
         {
+            _arriveHold.Clear();
             return false;
         }
 
@@ -1754,6 +1902,8 @@ internal static class TelemetryReader
         if (RoutePlanSession.IsStale)
         {
             status = ConsistClearanceStatus.Fouling;
+            _arriveHold.Clear();
+            MaybeLogArrive("stale", status, status, ConsistClearanceStatus.Fouling, -1f, 50f);
             return true;
         }
 
@@ -1768,6 +1918,7 @@ internal static class TelemetryReader
             return false;
         }
 
+        var now = Time.unscaledTime;
         var mode = ConsistSwitchClearance.ModeForStep(step.Kind);
         if (mode == ConsistClearanceMode.CarsOnly)
         {
@@ -1780,8 +1931,11 @@ internal static class TelemetryReader
             }
 
             var zone = ConsistSwitchClearance.EvaluateCarsInZone(zx, zz, DeliveryZoneRadiusMeters, ax, az, bx, bz);
-            status = ConsistSwitchClearance.CombinePastAndNear(
+            var rawZone = ConsistSwitchClearance.CombinePastAndNear(
                 zone, zx, zz, px, pz, DeliveryZoneRadiusMeters);
+            status = _arriveHold.Apply(now, rawZone, trackId);
+            var nearZ = HorizontalMeters(px, pz, zx, zz);
+            MaybeLogArrive(trackId, rawZone, status, zone, nearZ, DeliveryZoneRadiusMeters);
             return true;
         }
 
@@ -1790,10 +1944,32 @@ internal static class TelemetryReader
         if (!string.IsNullOrEmpty(pinJ)
             && PathGraphBuilder.TryGetJunctionWorldPosition(pinJ, out var jx, out _, out var jz))
         {
-            var past = EvaluateJunctionPast(pinJ);
-            status = ConsistSwitchClearance.CombinePastAndNear(
-                past, jx, jz, px, pz, PinArriveRadiusMeters);
-            return status != ConsistClearanceStatus.Unknown;
+            // CLEARED = butt outside R on opposite half from entry (drive through).
+            EnsureClearPinGateCache(plan, pinJ!, jx, jz);
+            if (!TryResolveClearRefXz(jx, jz, out var refX, out var refZ, out var tipSpan))
+            {
+                return false;
+            }
+
+            var raw = RadialSwitchClearance.EvaluateThroughSwitch(
+                jx,
+                jz,
+                refX,
+                refZ,
+                _clearPinSafeRadius,
+                _clearPinWasInside,
+                _clearPinStickyCleared,
+                _clearPinEntryDirX,
+                _clearPinEntryDirZ,
+                out _clearPinWasInside,
+                out _clearPinStickyCleared,
+                out _clearPinEntryDirX,
+                out _clearPinEntryDirZ);
+
+            status = _arriveHold.Apply(now, raw, pinJ);
+            MaybeLogRadialArrive(pinJ, jx, jz, refX, refZ, tipSpan, raw, raw, status);
+            return status != ConsistClearanceStatus.Unknown
+                || raw != ConsistClearanceStatus.Unknown;
         }
 
         // No flips left — tips in dest zone AND player near dest.
@@ -1807,13 +1983,243 @@ internal static class TelemetryReader
 
         var atDest = ConsistSwitchClearance.EvaluateCarsInZone(
             dx, dz, DeliveryZoneRadiusMeters, fax, faz, fbx, fbz);
-        status = ConsistSwitchClearance.CombinePastAndNear(
+        var rawDest = ConsistSwitchClearance.CombinePastAndNear(
             atDest, dx, dz, px, pz, DeliveryZoneRadiusMeters);
+        status = _arriveHold.Apply(now, rawDest, dest);
+        var nearD = HorizontalMeters(px, pz, dx, dz);
+        MaybeLogArrive(dest, rawDest, status, atDest, nearD, DeliveryZoneRadiusMeters);
         return true;
     }
 
     private const float DeliveryZoneRadiusMeters = 40f;
-    private const float PinArriveRadiusMeters = 35f;
+
+    private static readonly SwitchListArriveHold _arriveHold = new();
+    private static string? _arriveLogKey;
+    private static string? _radialLogKey;
+
+    // Cached clear-gate geometry — set once per pin (Set dest), not every HUD frame.
+    private static string? _clearPinId;
+    private static float _clearPinDirX;
+    private static float _clearPinDirZ;
+    private static bool _clearPinHaveDir;
+    private static float _clearPinSafeRadius;
+    private static bool _clearPinWasInside;
+    private static bool _clearPinStickyCleared;
+    private static float _clearPinEntryDirX;
+    private static float _clearPinEntryDirZ;
+
+    private static float HorizontalMeters(float ax, float az, float bx, float bz)
+    {
+        var dx = ax - bx;
+        var dz = az - bz;
+        return Mathf.Sqrt((dx * dx) + (dz * dz));
+    }
+
+    private static void EnsureClearPinGateCache(PathPlanResult? plan, string pinJ, float jx, float jz)
+    {
+        var pinChanged = !string.Equals(_clearPinId, pinJ, StringComparison.Ordinal);
+        if (!pinChanged)
+        {
+            return;
+        }
+
+        _clearPinId = pinJ;
+        _clearPinHaveDir = false;
+        _clearPinDirX = _clearPinDirZ = 0f;
+        _clearPinSafeRadius = RadialSwitchClearance.SafeRadiusMeters();
+        _clearPinWasInside = false;
+        _clearPinStickyCleared = false;
+        _clearPinEntryDirX = _clearPinEntryDirZ = 0f;
+        _radialLogKey = null;
+        _arriveHold.Clear();
+
+        if (plan != null
+            && PathGraphBuilder.HasReadyCache
+            && PathGraphBuilder.TryBuild(out var edges, out _)
+            && edges.Count > 0)
+        {
+            _clearPinHaveDir = SwitchListPinClearOffset.TryCorridorDirAfterJunction(
+                plan.TrackIds,
+                edges,
+                pinJ,
+                jx,
+                jz,
+                id => PathGraphBuilder.TryGetTrackWorldXZ(id, out var tx, out _) ? tx : float.NaN,
+                id => PathGraphBuilder.TryGetTrackWorldXZ(id, out _, out var tz) ? tz : float.NaN,
+                out _clearPinDirX,
+                out _clearPinDirZ);
+        }
+
+        if (!_clearPinHaveDir)
+        {
+            _clearPinHaveDir = TryGetTravelAxisXz(out _clearPinDirX, out _clearPinDirZ);
+        }
+
+        Main.Log(
+            "T2 arrive: gate-cache pin="
+            + pinJ
+            + " pinXZ=("
+            + jx.ToString("0.00")
+            + ","
+            + jz.ToString("0.00")
+            + ") corridorDir="
+            + (_clearPinHaveDir ? "ok" : "—")
+            + " dirXZ=("
+            + _clearPinDirX.ToString("0.00")
+            + ","
+            + _clearPinDirZ.ToString("0.00")
+            + ") R="
+            + _clearPinSafeRadius.ToString("0.0")
+            + "m (baseline="
+            + SwitchListPinClearOffset.De2ClearPastMeters.ToString("0")
+            + "-shorten="
+            + RadialSwitchClearance.RadiusShortenMeters.ToString("0")
+            + ") latch=0 entry=—");
+    }
+
+    private static void MaybeLogRadialArrive(
+        string? pinId,
+        float pinX,
+        float pinZ,
+        float refX,
+        float refZ,
+        float tipSpanMeters,
+        ConsistClearanceStatus eval,
+        ConsistClearanceStatus raw,
+        ConsistClearanceStatus shown)
+    {
+        var dist = RadialSwitchClearance.DistanceMeters(pinX, pinZ, refX, refZ);
+        var inside = dist < _clearPinSafeRadius;
+        var entryLen = (_clearPinEntryDirX * _clearPinEntryDirX)
+            + (_clearPinEntryDirZ * _clearPinEntryDirZ);
+        var signedClear = entryLen > 1e-6f
+            ? RadialSwitchClearance.SignedClearMeters(
+                pinX, pinZ, refX, refZ, _clearPinEntryDirX, _clearPinEntryDirZ)
+            : 0f;
+        var rem = entryLen > 1e-6f
+            ? RadialSwitchClearance.MetersToClearRimAlongAxis(signedClear, _clearPinSafeRadius)
+            : 0;
+        var onClearHalf = entryLen > 1e-6f && signedClear > 0f;
+        var holding = shown == ConsistClearanceStatus.Cleared
+            && raw != ConsistClearanceStatus.Cleared;
+        var key = (pinId ?? "—")
+            + "|"
+            + eval
+            + "|"
+            + raw
+            + "|"
+            + shown
+            + "|"
+            + (_clearPinWasInside ? "1" : "0")
+            + "|"
+            + (_clearPinStickyCleared ? "s" : "-")
+            + "|"
+            + (inside ? "i" : "o")
+            + "|"
+            + (onClearHalf ? "c" : "e")
+            + (holding ? "|h" : "");
+        if (key == _radialLogKey)
+        {
+            return;
+        }
+
+        _radialLogKey = key;
+        Main.Log(
+            "T2 arrive: pin="
+            + (string.IsNullOrEmpty(pinId) ? "—" : pinId)
+            + " pinXZ=("
+            + pinX.ToString("0.00")
+            + ","
+            + pinZ.ToString("0.00")
+            + ") buttXZ=("
+            + refX.ToString("0.00")
+            + ","
+            + refZ.ToString("0.00")
+            + ") tipSpan="
+            + tipSpanMeters.ToString("0.0")
+            + "m entryXZ=("
+            + _clearPinEntryDirX.ToString("0.00")
+            + ","
+            + _clearPinEntryDirZ.ToString("0.00")
+            + ") R="
+            + _clearPinSafeRadius.ToString("0.0")
+            + "m dist="
+            + dist.ToString("0.00")
+            + "m signedClear="
+            + signedClear.ToString("0.00")
+            + "m rem="
+            + rem
+            + "m inside="
+            + (inside ? "1" : "0")
+            + " clearHalf="
+            + (onClearHalf ? "1" : "0")
+            + " latch="
+            + (_clearPinWasInside ? "1" : "0")
+            + " sticky="
+            + (_clearPinStickyCleared ? "1" : "0")
+            + " raw="
+            + raw
+            + " shown="
+            + shown
+            + (holding ? " hold" : ""));
+    }
+
+    private static void MaybeLogArrive(
+        string? pinId,
+        ConsistClearanceStatus raw,
+        ConsistClearanceStatus shown,
+        ConsistClearanceStatus past,
+        float nearMeters,
+        float nearRadius,
+        float consistLengthMeters = -1f,
+        float offsetMeters = -1f)
+    {
+        var holding = shown == ConsistClearanceStatus.Cleared
+            && raw != ConsistClearanceStatus.Cleared;
+        var key = (pinId ?? "—")
+            + "|"
+            + raw
+            + "|"
+            + shown
+            + "|"
+            + past
+            + (holding ? "|h" : "");
+        // Transitions only — near-radius pulse was hitching (Main.Log every 0.5s).
+        if (key == _arriveLogKey)
+        {
+            return;
+        }
+
+        _arriveLogKey = key;
+        Main.Log(SwitchListArriveHold.FormatDiag(
+            pinId, raw, shown, past, nearMeters, nearRadius, holding,
+            consistLengthMeters, offsetMeters));
+    }
+
+    /// <summary>
+    /// Junction frog world for AR pin / facing. Pin stays on the switch (no tip offset).
+    /// </summary>
+    internal static bool TryResolveClearPinWorld(
+        PathPlanResult? plan,
+        string? pinJunctionId,
+        out float x,
+        out float y,
+        out float z,
+        out float consistLengthMeters,
+        out float offsetMeters)
+    {
+        _ = plan;
+        x = y = z = 0f;
+        consistLengthMeters = 0f;
+        offsetMeters = 0f;
+        if (string.IsNullOrEmpty(pinJunctionId)
+            || !PathGraphBuilder.TryGetJunctionWorldPosition(pinJunctionId, out x, out y, out z))
+        {
+            return false;
+        }
+
+        return true;
+    }
 
     private static bool TryGetTravelAxisXz(out float tx, out float tz)
     {

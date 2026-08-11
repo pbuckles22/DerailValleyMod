@@ -1,4 +1,6 @@
+using System;
 using System.IO;
+using System.Linq;
 using YardMasterSuite.Core;
 
 namespace YardMasterSuite.Tests;
@@ -79,9 +81,19 @@ public class YardGraphFixtureDiagnosticTests
         }
         else
         {
-            // Real dump: at least prove we can read a chain or document NoPath.
-            Assert.True(snap.Edges.Count > 0);
-            Assert.True(snap.Tracks.Count > 0);
+            // Real dump: junction-first pin is the dual-branch approach (S-0421), not S-0220.
+            var classMap = snap.Tracks.ToDictionary(t => t.TrackId, t => t.TrackClass, StringComparer.Ordinal);
+            PathTrackClass ClassFor(string id) =>
+                classMap.TryGetValue(id, out var c) ? c : PathTrackClass.Unknown;
+            var selected = snap.Junctions.ToDictionary(
+                j => j.JunctionId, j => j.SelectedBranch, StringComparer.Ordinal);
+            string? YardFor(string id) => PathRouteConstraints.YardIdOf(id);
+            var yard = PathPlan.Find(
+                snap.Edges, selected, "SW-B4L", snap.TurntableTrackId, ClassFor,
+                skipPlainOnMultiBranchStem: false, destYardId: "SW", yardFor: YardFor,
+                mode: PathPlanMode.Yard);
+            Assert.NotEqual(PathCheckStatus.NoPath, yard.Status);
+            Assert.Equal("S-0421-SW", SwitchListRouteLeg.PickPinJunctionId(yard));
         }
     }
 }

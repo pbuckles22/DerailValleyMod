@@ -566,7 +566,7 @@ In-world **`M`** schematic **removed** (AR GPS philosophy). Sticky yard + MFMB *
 
 **Facing / Exit (drive-set):** `Set Forward` / `Set Reverse` = cab forward vs vector to first AR pin (or dest). Exit compass = loco → same pin. Not topological stub `ReverseCount` (stub count may still show as `(stub N)`).
 
-**Arrived (HERE pin):** past the pin along travel **and** within ~35 m — chip `Arrived · Next` means press **Next**. Pin may still sit slightly ahead; do **not** require kissing the pin. Product-accepted 2026-08-10.
+**Arrived / CLEARED (HERE pin):** Pin = switch. Danger = **9 m** circle (butt). Clear line = butt ≥9 m far side → green sticky (blow-by OK). **Butt back inside danger → At switch** (cancels green). Far: step · pin range.
 
 **TT resolve:** blank-yard nearest fallback only when sticky yard = City. CME while in SW → fail closed.
 
@@ -607,6 +607,18 @@ One graph, two Dijkstra profiles. World keeps W-0416 junction-commitment hard-sk
 - [ ] Cross-city Set dest still `mode=World`
 - Drive-set / Arrived — do not re-gate
 
+### Junction-first stop pin — Yard dual-branch approach — **0.6.71**
+
+Clear line sticky (blow-by OK); re-foul danger cancels green.
+
+**Sign-off — PASS @ 0.6.71 (player 2026-08-11)**
+
+- [x] UMM **0.6.71**
+- [x] Reverse past clear line → green; keep going → still green
+- [x] Forward back onto switch → **At switch** (not CLEARED)
+
+Player.log: `signedClear=9.00 sticky=1 raw=Cleared`; re-enter `inside=1 sticky=0 raw=Fouling`. Solo DE2 `tipSpan=7.0m`.
+- [ ] Set dest → drive: no stutter from arrive spam
 
 
 ### 4.7 HUD strip IA — **PASS** v0.4.23

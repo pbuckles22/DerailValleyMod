@@ -65,6 +65,39 @@ public class YardGraphSwAlignProbeTests
     }
 
     /// <summary>
+    /// Smoke SW TT: Yard path re-uses S-0421 with two branches — pin must be that
+    /// approach conflict switch, not the first corridor flip (S-0220 ~87 m).
+    /// </summary>
+    [Fact]
+    public void Smoke_SwB4L_ToTt_JunctionFirstPin_IsApproachNotFirstCorridor()
+    {
+        var snap = Load();
+        var origin = "SW-B4L";
+        var tt = snap.TurntableTrackId!;
+
+        var classMap = snap.Tracks.ToDictionary(t => t.TrackId, t => t.TrackClass, StringComparer.Ordinal);
+        PathTrackClass ClassFor(string id) =>
+            classMap.TryGetValue(id, out var c) ? c : PathTrackClass.Unknown;
+
+        var selected = snap.Junctions.ToDictionary(
+            j => j.JunctionId, j => j.SelectedBranch, StringComparer.Ordinal);
+        string? YardFor(string id) => PathRouteConstraints.YardIdOf(id);
+
+        var yard = PathPlan.Find(
+            snap.Edges, selected, origin, tt, ClassFor,
+            skipPlainOnMultiBranchStem: false, destYardId: "SW", yardFor: YardFor,
+            mode: PathPlanMode.Yard);
+        Assert.NotEqual(PathCheckStatus.NoPath, yard.Status);
+
+        var pin = SwitchListRouteLeg.PickPinJunctionId(yard);
+        Assert.Equal("S-0421-SW", pin);
+        Assert.NotEqual("S-0220-SW", pin);
+        Assert.NotNull(yard.JunctionFirstStop);
+        Assert.Equal("S-0421-SW", yard.JunctionFirstStop!.Value.JunctionId);
+        Assert.Equal(1, yard.JunctionFirstStop.Value.RequiredBranch);
+    }
+
+    /// <summary>
     /// Live occupancy filter must not seal the free B4L→TT corridor on this dump.
     /// </summary>
     [Fact]
