@@ -150,7 +150,7 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 
 **Next**
 
-1. **Optional:** couple cars and re-smoke butt clear (tipSpan &gt; loco-only). **Then** commit already done path: on-consist hotkeys spike (throttle/indy/train brake while on any car of the active trainset — not off-train remote). Then honest Yard rem / 2-step list; merge yard-graph stack remnants when ready → **3.7**. **3.1b iced**.
+1. **Spike (new branch from main):** on-consist hotkeys — throttle / indy / train brake while standing on **any car of the active trainset** (front loco is the control target; not off-train remote). Optional first: couple cars and re-smoke butt clear. Then honest Yard rem / 2-step list → **3.7**. **3.1b iced**.
 2. Do **not** merge `fix/hitch-0.4.20.1-hud-draw-gate`.
 3. Parking: 3.1b ghost/spawn; place ghost / Snap office under-mesh; Switch List couple auto-advance / arrival-track split; flight-sim HUD; AR house hide; DM3; session reset; 1.17 #4 behind-seed.
 
