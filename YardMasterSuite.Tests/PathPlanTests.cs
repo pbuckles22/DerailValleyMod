@@ -5,6 +5,32 @@ namespace YardMasterSuite.Tests;
 public class PathPlanTests
 {
     [Fact]
+    public void PathPlan_WorldMode_MatchesLegacyDefault()
+    {
+        var edges = new[]
+        {
+            new PathEdge("A", "TH", cost: PathTrackCosts.Through),
+            new PathEdge("TH", "A", cost: PathTrackCosts.Through),
+            new PathEdge("TH", "B", cost: PathTrackCosts.Through),
+            new PathEdge("B", "TH", cost: PathTrackCosts.Through),
+            new PathEdge("A", "PK", cost: PathTrackCosts.SpurPocket),
+            new PathEdge("PK", "A", cost: PathTrackCosts.SpurPocket),
+            new PathEdge("PK", "B", cost: PathTrackCosts.SpurPocket),
+            new PathEdge("B", "PK", cost: PathTrackCosts.SpurPocket),
+        };
+        var selected = new Dictionary<string, int>();
+
+        var legacy = PathPlan.Find(edges, selected, "A", "B");
+        var world = PathPlan.Find(edges, selected, "A", "B", mode: PathPlanMode.World);
+
+        Assert.Equal(legacy.Status, world.Status);
+        Assert.Equal(legacy.TrackIds, world.TrackIds);
+        Assert.Equal(legacy.TotalCost, world.TotalCost);
+        Assert.Equal(legacy.MisalignedCount, world.MisalignedCount);
+        Assert.Equal(legacy.ReverseCount, world.ReverseCount);
+    }
+
+    [Fact]
     public void Find_prefers_through_lane_over_spur_pocket()
     {
         // A -cheap-> Through -cheap-> B

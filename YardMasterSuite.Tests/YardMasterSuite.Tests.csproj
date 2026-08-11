@@ -22,4 +22,10 @@
     <ProjectReference Include="..\YardMasterSuite.Core\YardMasterSuite.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="Fixtures\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

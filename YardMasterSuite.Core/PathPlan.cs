@@ -3,6 +3,16 @@ using System.Collections.Generic;
 
 namespace YardMasterSuite.Core;
 
+/// <summary>
+/// Planner profile on one shared graph.
+/// World = long-haul (junction commitment hard-skip). Yard = in-town / TT.
+/// </summary>
+public enum PathPlanMode
+{
+    World = 0,
+    Yard = 1,
+}
+
 /// <summary>Dijkstra path plan with reverse cues for Align Route (3.5).</summary>
 public sealed class PathPlanResult
 {
@@ -67,7 +77,8 @@ public static class PathPlan
         Func<string, PathTrackClass>? classFor = null,
         bool skipPlainOnMultiBranchStem = true,
         string? destYardId = null,
-        Func<string, string?>? yardFor = null)
+        Func<string, string?>? yardFor = null,
+        PathPlanMode mode = PathPlanMode.World)
     {
         var dest = Normalize(destinationTrackId);
         if (dest == null)
@@ -102,6 +113,7 @@ public static class PathPlan
                 skipPlainOnMultiBranchStem,
                 destYardId,
                 yardFor,
+                mode,
                 out var path,
                 out var totalCost))
         {
@@ -339,6 +351,7 @@ public static class PathPlan
         bool skipPlainOnMultiBranchStem,
         string? destYardId,
         Func<string, string?>? yardFor,
+        PathPlanMode mode,
         out List<string> path,
         out float totalCost)
     {
@@ -352,6 +365,7 @@ public static class PathPlan
         var destYard = !string.IsNullOrWhiteSpace(destYardId)
             ? destYardId!.Trim()
             : YardOf(dest);
+        var enforceJunctionCommitment = mode != PathPlanMode.Yard;
 
         while (open.Count > 0)
         {
@@ -396,8 +410,10 @@ public static class PathPlan
                     continue;
                 }
 
-                // A single turnout cannot be both 0 and 1 on one corridor (W-0416 oscillation).
-                if (hop.HasJunction
+                // World: a single turnout cannot be both 0 and 1 on one corridor (W-0416).
+                // Yard: dense #Y mesh breaks cheapest-path substructure — do not hard-skip.
+                if (enforceJunctionCommitment
+                    && hop.HasJunction
                     && hop.JunctionId != null
                     && ConflictsJunctionCommitment(
                         cameFrom,

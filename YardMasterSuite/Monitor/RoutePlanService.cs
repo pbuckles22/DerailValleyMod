@@ -73,10 +73,14 @@ internal static class RoutePlanService
         Main.Log(PathRouteDebug.FormatThinkHeader(
             reason, origin, dest, originCands, RouteDestSession.YardId));
 
+        var mode = PathPlanModeSelect.ForTrip(origin, dest, RouteDestSession.YardId, YardFor);
+        Main.Log("T2 path: mode=" + mode + " " + reason + " (" + origin + " → " + dest + ")");
+
         // classFor drives spur / non-through penalties + forward-only reverse ban in Dijkstra.
         LogYardProbe(reason, origin, dest, edges, filtered, occupied, ClassFor);
         var plan = PathPlan.Find(
-            filtered, selected, origin, dest, ClassFor, destYardId: destYard, yardFor: YardFor);
+            filtered, selected, origin, dest, ClassFor,
+            destYardId: destYard, yardFor: YardFor, mode: mode);
         if (plan.Status == PathCheckStatus.NoPath)
         {
             // Still dump choices so we can see why every outbound died.
@@ -202,13 +206,16 @@ internal static class RoutePlanService
         const int maxTry = 12;
         var candidates = new System.Collections.Generic.List<RoutePivotCandidate>(maxTry);
         var n = System.Math.Min(maxTry, scored.Count);
+        var mode = PathPlanModeSelect.ForTrip(origin, finalTrackId, sessionYardId, YardFor);
         for (var i = 0; i < n; i++)
         {
             var id = scored[i].Id;
             var toPivot = PathPlan.Find(
-                filtered, selected, origin, id, ClassFor, destYardId: destYard, yardFor: YardFor);
+                filtered, selected, origin, id, ClassFor,
+                destYardId: destYard, yardFor: YardFor, mode: mode);
             var fromPivot = PathPlan.Find(
-                filtered, selected, id, finalTrackId, ClassFor, destYardId: destYard, yardFor: YardFor);
+                filtered, selected, id, finalTrackId, ClassFor,
+                destYardId: destYard, yardFor: YardFor, mode: mode);
             candidates.Add(new RoutePivotCandidate(
                 id,
                 canReachFromOrigin: toPivot.Status != PathCheckStatus.NoPath

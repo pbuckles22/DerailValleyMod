@@ -560,7 +560,7 @@ In-world **`M`** schematic **removed** (AR GPS philosophy). Sticky yard + MFMB *
 | **Recheck** | Recompute current dest |
 | **Align Route** | Throw safe flips (`TryAlign`); refuses absurd same-yard rem |
 | **Align step** / **Next** | Shown when a multi-leg list is active (same as Per job). Next = advance + Compute + TryAlign when Arrived |
-| Clear / Hide / Reload list | Session / UI |
+| Clear / Hide / Reload list / **Dump graph** | Session / UI / offline snapshot |
 
 **Per job** (was Switch List): Load / Align step / Next. Active steps also draw on **Route**.
 
@@ -584,6 +584,30 @@ In-world **`M`** schematic **removed** (AR GPS philosophy). Sticky yard + MFMB *
 - [ ] In SW: City=CME + Turntable → fail closed
 - [ ] Set dest to a normal track clears stale TT list
 - [ ] Cab look-around: no map warm without sticky/desk/Align/Set dest
+
+### Yard graph snapshot — Dump graph + offline replay — **0.6.56**
+
+Decouples in-yard connective tissue from Align policy. `PathGraphBuilder` → `YardGraphSnapshot` (tracks / edges with junction id+required branch / junctions with selected branch / occupancy) → `dumps/yardgraph_*.txt` → Tier 1 `YardGraphSnapshot.Parse`.
+
+**Capture (not a Tier 2 smoke):**
+
+- [x] UMM **0.6.56** — Dump graph at SW B-side (two captures; topology identical)
+- [x] Fixture `YardMasterSuite.Tests/Fixtures/yardgraph_SW.txt` (4146 tracks / 4528 edges)
+
+**Tier 1:** `YardGraphSnapshotTests`, `YardGraphFixtureDiagnosticTests`, `YardGraphSwAlignProbeTests`.
+
+### Dual PathPlan profiles — World vs Yard — **0.6.57**
+
+One graph, two Dijkstra profiles. World keeps W-0416 junction-commitment hard-skip. Yard disables that hard-skip so dense `#Y` in-town paths (SW-B4L→TT) resolve. Mode from `PathPlanModeSelect.ForTrip` (same-town / session-yard TT → Yard). Occupancy stays live `FilterEdges`.
+
+**Sign-off**
+
+- [ ] UMM **0.6.57**
+- [ ] SW-B4L → Track Turntable → **Set dest** → Path not NoPath (Player.log `T2 path: mode=Yard`)
+- [ ] Cross-city Set dest still `mode=World`
+- Drive-set / Arrived — do not re-gate
+
+
 
 ### 4.7 HUD strip IA — **PASS** v0.4.23
 

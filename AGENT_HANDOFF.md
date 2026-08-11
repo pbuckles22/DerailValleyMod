@@ -117,7 +117,7 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 |--|--|
 | **Project** | *Yard Master Suite* (UMM / Harmony / net48) |
 | **MVP** | **Epic 1** System Monitor HUD |
-| **Version** | **0.6.49** *(feature/town-turntable-align — drive-set + Arrived PASS; Next→TT Align open)* |
+| **Version** | **0.6.57** *(feature/yard-graph-snapshot — World/Yard PathPlan profiles + Dump graph)* |
 | **Active branch** | **`feature/town-turntable-align`** |
 
 **Shipped on `main`**
@@ -146,7 +146,7 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 
 **In flight**
 
-- [ ] **Town Turntable Align** (**0.6.49**) — drive-set + HERE/Arrived **PASS** (2026-08-10; no re-gate on later path ships). Open: **Next→TT** rem ~10 km / Align rem-guard.
+- [ ] **Yard graph snapshot + dual PathPlan** (**0.6.57**) — Dump graph fixtures; World vs Yard Dijkstra (Yard skips junction-commitment hard-seal). SW-B4L→TT Set dest should path. Drive-set/Arrived locked PASS.
 
 **Next**
 

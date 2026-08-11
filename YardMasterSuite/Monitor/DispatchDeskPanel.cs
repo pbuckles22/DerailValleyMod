@@ -274,7 +274,7 @@ internal sealed class DispatchDeskPanel : MonoBehaviour
         var stepCount = SwitchListSession.Steps?.Count ?? 0;
         var h = _mode == DeskMode.SwitchList
             ? 420f
-            : (PathGraphBuilder.IsMapping ? 300f : (stepCount > 0 ? 420f : 280f));
+            : (PathGraphBuilder.IsMapping ? 300f : (stepCount > 0 ? 450f : 310f));
         var x = (Screen.width - w) * 0.5f;
         var y = Screen.height * 0.12f;
         GUI.Box(new Rect(x, y, w, h), "Dispatch desk (Dispatcher)");
@@ -499,12 +499,19 @@ internal sealed class DispatchDeskPanel : MonoBehaviour
             }
         }
 
-        if (!string.IsNullOrEmpty(_status))
+        if (GUI.Button(new Rect(x + 268, row, 100, 28), "Dump graph"))
         {
-            GUI.Label(new Rect(x + 270, row, w - 282, 28), _status);
+            _yardDropOpen = _trackDropOpen = false;
+            DumpYardGraph();
         }
 
         row += 32f;
+        if (!string.IsNullOrEmpty(_status))
+        {
+            GUI.Label(new Rect(x + 12, row, w - 24, 28), _status);
+            row += 28f;
+        }
+
         DrawActiveSteps(x, ref row, w, emptyHint: null);
     }
 
@@ -870,6 +877,40 @@ internal sealed class DispatchDeskPanel : MonoBehaviour
         var bx = (Screen.width - bw) * 0.5f;
         var by = Screen.height * 0.06f;
         GUI.Box(new Rect(bx, by, bw, bh), banner);
+    }
+
+    private void DumpYardGraph()
+    {
+        if (!PathGraphBuilder.HasReadyCache)
+        {
+            PathGraphBuilder.EnsureMappingStarted();
+            _status = PathGraphBuilder.IsMapping
+                ? PathGraphBuilder.MappingBanner
+                : ("Dump graph: map first · " + PathGraphBuilder.LastDiag);
+            return;
+        }
+
+        var yard = _yards.Count > 0 ? _yards[_yardIndex] : null;
+        var trackOrToken = _tracks.Count > 0 ? _tracks[_trackIndex] : null;
+        string? tt = null;
+        if (!string.IsNullOrEmpty(yard)
+            && !string.IsNullOrEmpty(trackOrToken)
+            && DispatchDeskSetDest.TryResolveTrackId(yard!, trackOrToken!, out var resolved, out _))
+        {
+            if (DispatchDeskSetDest.IsTurntableToken(trackOrToken))
+            {
+                tt = resolved;
+            }
+        }
+
+        var path = YardGraphSnapshotWriter.TryDump(yard, TelemetryReaderOrigin.TryGet(), tt, out var err);
+        if (path == null)
+        {
+            _status = "Dump graph failed · " + err;
+            return;
+        }
+
+        _status = "Dump graph · " + System.IO.Path.GetFileName(path);
     }
 
     private void RefreshCatalog(bool force)

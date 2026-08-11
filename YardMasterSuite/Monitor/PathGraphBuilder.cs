@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using DV.Logic.Job;
@@ -478,6 +479,137 @@ internal static class PathGraphBuilder
         }
 
         return _metaByKey.TryGetValue(key!, out var meta) ? meta : null;
+    }
+
+    /// <summary>
+    /// Capture raw topology for offline Tier 1 replay (Dump graph). Works even when Dijkstra is sealed.
+    /// </summary>
+    public static bool TryCaptureSnapshot(
+        string? yardId,
+        string? originTrackId,
+        string? turntableTrackId,
+        IEnumerable<string>? occupiedTrackIds,
+        out YardGraphSnapshot snapshot)
+    {
+        snapshot = new YardGraphSnapshot();
+        if (!HasReadyCache || _edges == null || _selected == null)
+        {
+            return false;
+        }
+
+        RefreshSelectedBranches(_junctionsById!, _selected!);
+
+        snapshot.YardId = yardId?.Trim() ?? "";
+        snapshot.OriginTrackId = originTrackId?.Trim() ?? "";
+        snapshot.TurntableTrackId = turntableTrackId?.Trim() ?? "";
+        snapshot.CapturedAt = DateTime.UtcNow.ToString("o");
+
+        var seenTracks = new HashSet<string>(System.StringComparer.Ordinal);
+        if (_metaByKey != null)
+        {
+            foreach (var kv in _metaByKey)
+            {
+                AddTrack(snapshot, seenTracks, kv.Key, kv.Value);
+            }
+        }
+
+        if (_tracksByKey != null)
+        {
+            foreach (var kv in _tracksByKey)
+            {
+                if (seenTracks.Contains(kv.Key))
+                {
+                    continue;
+                }
+
+                var meta = TryGetTrackMeta(kv.Key) ?? new PathTrackMeta(1f, null, PathTrackClass.Unknown);
+                AddTrack(snapshot, seenTracks, kv.Key, meta);
+            }
+        }
+
+        for (var i = 0; i < _edges.Count; i++)
+        {
+            var e = _edges[i];
+            snapshot.Edges.Add(e);
+            if (!string.IsNullOrEmpty(e.FromTrackId) && !seenTracks.Contains(e.FromTrackId))
+            {
+                var meta = TryGetTrackMeta(e.FromTrackId)
+                    ?? new PathTrackMeta(1f, null, PathTrackClass.Unknown);
+                AddTrack(snapshot, seenTracks, e.FromTrackId, meta);
+            }
+
+            if (!string.IsNullOrEmpty(e.ToTrackId) && !seenTracks.Contains(e.ToTrackId))
+            {
+                var meta = TryGetTrackMeta(e.ToTrackId)
+                    ?? new PathTrackMeta(1f, null, PathTrackClass.Unknown);
+                AddTrack(snapshot, seenTracks, e.ToTrackId, meta);
+            }
+        }
+
+        if (_junctionsById != null)
+        {
+            foreach (var kv in _junctionsById)
+            {
+                var id = kv.Key?.Trim();
+                if (string.IsNullOrEmpty(id) || kv.Value == null)
+                {
+                    continue;
+                }
+
+                float x = 0f, y = 0f, z = 0f;
+                try
+                {
+                    var p = kv.Value.transform.position;
+                    x = p.x;
+                    y = p.y;
+                    z = p.z;
+                }
+                catch
+                {
+                    // keep zeros
+                }
+
+                _ = y;
+                _selected.TryGetValue(id!, out var sel);
+                snapshot.Junctions.Add(new YardGraphJunction(id!, x, z, sel));
+            }
+        }
+
+        if (occupiedTrackIds != null)
+        {
+            foreach (var raw in occupiedTrackIds)
+            {
+                var id = raw?.Trim();
+                if (!string.IsNullOrEmpty(id))
+                {
+                    snapshot.OccupiedTrackIds.Add(id!);
+                }
+            }
+        }
+
+        return snapshot.Edges.Count > 0 || snapshot.Tracks.Count > 0;
+    }
+
+    private static void AddTrack(
+        YardGraphSnapshot snapshot,
+        HashSet<string> seen,
+        string trackId,
+        PathTrackMeta meta)
+    {
+        var id = trackId?.Trim();
+        if (string.IsNullOrEmpty(id) || !seen.Add(id!))
+        {
+            return;
+        }
+
+        TryGetTrackWorldXZ(id, out var wx, out var wz);
+        snapshot.Tracks.Add(new YardGraphTrack(
+            id!,
+            meta.TrackClass,
+            meta.LengthMeters,
+            meta.GeometryLimitKmh,
+            wx,
+            wz));
     }
 
     /// <summary>
