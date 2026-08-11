@@ -117,8 +117,8 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 |--|--|
 | **Project** | *Yard Master Suite* (UMM / Harmony / net48) |
 | **MVP** | **Epic 1** System Monitor HUD |
-| **Version** | **0.6.71** *(feature/junction-first-stop — sticky until re-foul)* |
-| **Active branch** | **`feature/town-turntable-align`** |
+| **Version** | **0.6.71** *(junction-first pin + butt clear — sticky until re-foul)* |
+| **Active branch** | **`main`** |
 
 **Shipped on `main`**
 

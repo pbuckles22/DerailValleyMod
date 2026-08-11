@@ -10,7 +10,7 @@ Durable ranked backlog. Handoff notes may mention debt; **promote** anything tha
 
 
 
-**Last full pass:** 2026-08-10 (`main` @ 0.6.37 hitch event gates).
+**Last full pass:** 2026-08-11 (`main` @ 0.6.71 CLEARED / junction-first; handoff 0044).
 
 
 
@@ -51,6 +51,10 @@ High ROI; frequent pain; not blocking.
 - [ ] **3.1 place ghost / facing cue** — MVP chip-only; players can’t preview landing until Confirm. Add re-rail-style ghost (and Flip cue) on look-at aim.
 
 - [ ] **3.1 Snap office under-mesh** — Station Snap can drop the player under the office floor / into water; needs a known-good office spawn (or offset up).
+
+- [ ] **On-consist control loco (spike)** — No shared resolver for “player on any trainset car → front loco”; cab/governor assume loco context. Need Core resolve + ThreeGate writes; fail-closed off-train. Blocks on-consist throttle/indy/train-brake hotkeys.
+
+- [ ] **Clear-pin glue in TelemetryReader** — sticky/cache/pin-prompt still live in the god class (~2k LOC). Peel on next PathPlan/clear touch (`RadialSwitchClearance` already Core).
 
 - [ ] **3.7 Switch List inject TurnAround** — Core `TurntableTrackResolver` + desk Set Dest TT @ **0.6.38**; still need `SwitchListJobReader` to set `NeedsTurnAround` / `TurntableTrackId`. Blocks remaining 3.7 slice 1.
 
