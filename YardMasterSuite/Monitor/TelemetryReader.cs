@@ -4,10 +4,13 @@ using System.Linq;
 using System.Reflection;
 using DV;
 using DV.CabControls;
+using DV.HUD;
 using DV.InventorySystem;
 using DV.Logic.Job;
 using DV.Signs;
 using DV.Simulation.Cars;
+using DV.Simulation.Controllers;
+using DV.Simulation.Fuses;
 using DV.ThingTypes;
 using DV.ThingTypes.TransitionHelpers;
 using LocoSim.Implementations;
@@ -4266,7 +4269,9 @@ internal static class TelemetryReader
         {
             var loco = TryGetUsableLoco();
             var flow = loco?.SimController?.SimulationFlow;
-            var real = flow == null ? null : ReadMotorStatus(flow, TryGetCabTempBand(loco));
+            var real = flow == null
+                ? null
+                : ReadMotorStatus(flow, TryGetCabTempBand(loco), TryGetTmFuseOn(loco));
             return MotorDebugOverride.ApplyStatus(loco?.ID, real);
         }
         catch
@@ -6440,7 +6445,10 @@ internal static class TelemetryReader
         return null;
     }
 
-    private static MotorStatus? ReadMotorStatus(SimulationFlow flow, MotorCabTempBand? cabTempBand = null)
+    private static MotorStatus? ReadMotorStatus(
+        SimulationFlow flow,
+        MotorCabTempBand? cabTempBand = null,
+        bool? tmFuseOn = null)
     {
         if (flow?.OrderedSimComps == null)
         {
@@ -6454,11 +6462,118 @@ internal static class TelemetryReader
                 continue;
             }
 
-            var fromComp = ReadMotorStatusFromComponent(comp, cabTempBand);
+            var fromComp = ReadMotorStatusFromComponent(comp, cabTempBand, tmFuseOn);
             if (fromComp != null)
             {
                 return fromComp;
             }
+        }
+
+        // Knife off with no TM component signals still means Dead (idle / fuse-only locos).
+        if (tmFuseOn == false)
+        {
+            return MotorStatus.Dead;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Cab TM knife up/down → fuse on/off. Prefer sim <see cref="Fuse.State"/> (switch position),
+    /// not TMS (stays OK at idle with knife down).
+    /// </summary>
+    private static bool? TryGetTmFuseOn(TrainCar? loco)
+    {
+        if (loco == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            var flow = loco.SimController?.simFlow ?? loco.SimController?.SimulationFlow;
+
+            // 1) DeadTM controller holds the authoritative tmFuseId for this loco.
+            var deadTm = loco.GetComponent<DeadTractionMotorsController>()
+                ?? loco.GetComponentInChildren<DeadTractionMotorsController>(true);
+            if (deadTm != null
+                && !string.IsNullOrEmpty(deadTm.tmFuseId)
+                && flow != null
+                && flow.TryGetFuse(deadTm.tmFuseId, out var tmFuse, canBeNull: true)
+                && tmFuse != null)
+            {
+                return tmFuse.State;
+            }
+
+            // 2) Physical fuse box GameObject (cab interior / external interactables).
+            LocoFuseBoxReference? box = null;
+            try
+            {
+                box = loco.GetComponent<LocoFuseBoxReference>()
+                    ?? loco.GetComponentInChildren<LocoFuseBoxReference>(true)
+                    ?? loco.loadedInterior?.GetComponentInChildren<LocoFuseBoxReference>(true)
+                    ?? loco.loadedExternalInteractables?.GetComponent<LocoFuseBoxReference>()
+                    ?? loco.loadedExternalInteractables?.GetComponentInChildren<LocoFuseBoxReference>(true);
+            }
+            catch
+            {
+                box = null;
+            }
+
+            if (box?.tractionMotorFuse != null
+                && box.tractionMotorFuse.TryGetComponent<ControlImplBase>(out var boxCtrl))
+            {
+                // Switch up → Value ~1 (on); down → ~0 (off). Same as InteractableFuseFeeder.
+                return boxCtrl.Value > 0.5f;
+            }
+
+            // 3) ICM TractionMotorFuse (may be missing until interior HUD init).
+            var icm = loco.GetComponent<InteriorControlsManager>()
+                ?? loco.GetComponentInChildren<InteriorControlsManager>(true);
+            if (icm != null
+                && icm.TryGetControl(
+                    InteriorControlsManager.ControlType.TractionMotorFuse,
+                    out var reference))
+            {
+                if (reference.controlImplBase != null)
+                {
+                    return reference.controlImplBase.Value > 0.5f;
+                }
+
+                if (reference.overridableBaseControl != null)
+                {
+                    return reference.overridableBaseControl.Value > 0.5f;
+                }
+            }
+
+            // 4) Fuse feeder whose id looks like TM.
+            if (flow != null)
+            {
+                var feeders = loco.GetComponentsInChildren<InteractableFuseFeeder>(true);
+                for (var i = 0; i < feeders.Length; i++)
+                {
+                    var id = feeders[i]?.fuseId?.Trim();
+                    if (string.IsNullOrEmpty(id))
+                    {
+                        continue;
+                    }
+
+                    if (id!.IndexOf("tm", StringComparison.OrdinalIgnoreCase) < 0
+                        && id.IndexOf("traction", StringComparison.OrdinalIgnoreCase) < 0)
+                    {
+                        continue;
+                    }
+
+                    if (flow.TryGetFuse(id, out var fuse, canBeNull: true) && fuse != null)
+                    {
+                        return fuse.State;
+                    }
+                }
+            }
+        }
+        catch
+        {
+            // ignored
         }
 
         return null;
@@ -6527,7 +6642,10 @@ internal static class TelemetryReader
         return null;
     }
 
-    private static MotorStatus? ReadMotorStatusFromComponent(SimComponent comp, MotorCabTempBand? cabTempBand = null)
+    private static MotorStatus? ReadMotorStatusFromComponent(
+        SimComponent comp,
+        MotorCabTempBand? cabTempBand = null,
+        bool? tmFuseOn = null)
     {
         if (comp is TractionMotor tm)
         {
@@ -6537,18 +6655,22 @@ internal static class TelemetryReader
                 SafeFloat(tm.overheatingTemperatureThreshold),
                 SafePortValue(tm.workingTractionMotorsReadOut),
                 tm.numberOfTractionMotors,
-                cabTempBand);
+                cabTempBand,
+                tmFuseOn);
         }
 
         if (comp is TractionMotorSet set)
         {
-            return ReadMotorStatusFromMotorSet(set, cabTempBand);
+            return ReadMotorStatusFromMotorSet(set, cabTempBand, tmFuseOn);
         }
 
         return null;
     }
 
-    private static MotorStatus? ReadMotorStatusFromMotorSet(TractionMotorSet set, MotorCabTempBand? cabTempBand = null)
+    private static MotorStatus? ReadMotorStatusFromMotorSet(
+        TractionMotorSet set,
+        MotorCabTempBand? cabTempBand = null,
+        bool? tmFuseOn = null)
     {
         var map = GetMotorSetFieldMap();
         if (map is null)
@@ -6562,7 +6684,8 @@ internal static class TelemetryReader
             ReadFloatField(set, map.Value.OverheatThreshold),
             ReadPortField(set, map.Value.Working),
             ReadIntAsFloatField(set, map.Value.NumberOfMotors),
-            cabTempBand);
+            cabTempBand,
+            tmFuseOn);
     }
 
     private static MotorSetFieldMap? GetMotorSetFieldMap()

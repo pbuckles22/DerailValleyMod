@@ -127,6 +127,38 @@ public class MotorDisplayTests
     }
 
     [Fact]
+    public void StatusFromSignals_dead_when_tm_knife_off_even_if_tms_still_ok()
+    {
+        // Idle: TMS often stays OK until throttle demanded — knife must still show Dead.
+        Assert.Equal(
+            MotorStatus.Dead,
+            MotorDisplay.StatusFromSignals(
+                MotorDisplay.TmsOk,
+                temperature: 40f,
+                overheatingThreshold: 105f,
+                workingMotors: 2f,
+                totalMotors: 2f,
+                cabTempBand: MotorCabTempBand.Nominal,
+                tmFuseOn: false));
+    }
+
+    [Fact]
+    public void StatusFromSignals_ok_from_temperature_when_knife_unknown()
+    {
+        // No knife read yet — keep prior cool-temp → OK (knife-off is the explicit Dead path).
+        Assert.Equal(
+            MotorStatus.Ok,
+            MotorDisplay.StatusFromSignals(
+                tmsState: null,
+                temperature: 40f,
+                overheatingThreshold: 105f,
+                workingMotors: null,
+                totalMotors: null,
+                cabTempBand: null,
+                tmFuseOn: null));
+    }
+
+    [Fact]
     public void Format_shows_placeholder_and_plain_labels()
     {
         Assert.Equal("— Motors", MotorDisplay.Format(null));

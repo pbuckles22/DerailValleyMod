@@ -74,6 +74,7 @@ public sealed class MonitorHudDriver : MonoBehaviour
     private string? _localLabel;
     private string? _jobLabel;
     private string? _debugHotkeyLabel;
+    private string? _onConsistLabel;
     private string _headingLabel = "— Heading";
     private string? _parkLabel;
     private string? _stationLabel;
@@ -176,10 +177,17 @@ public sealed class MonitorHudDriver : MonoBehaviour
     {
         if (!HudWorldSession.IsActive(PlayerManager.PlayerTransform != null))
         {
+            var disarm = OnConsistControlGovernor.Tick();
+            if (disarm != null)
+            {
+                Main.Log(disarm);
+            }
+
             _trainLabel = null;
             _localLabel = null;
             _jobLabel = null;
             _debugHotkeyLabel = null;
+            _onConsistLabel = null;
             _parkLabel = null;
             _stationLabel = null;
             _pathLabel = null;
@@ -190,6 +198,15 @@ public sealed class MonitorHudDriver : MonoBehaviour
             StickyYardHost.Reset();
             return;
         }
+
+        // Update (not FixedUpdate): GetButtonDown edges are reliable here — matches cab keyboard.
+        var onConsist = OnConsistControlGovernor.Tick();
+        if (onConsist != null)
+        {
+            Main.Log(onConsist);
+        }
+
+        _onConsistLabel = OnConsistControlGovernor.HudLabel;
 
         var now = Time.unscaledTime;
         if (_hitchProbeLastFrameAt >= 0f
@@ -869,10 +886,16 @@ public sealed class MonitorHudDriver : MonoBehaviour
         y = DrawCenteredBar(_alwaysOnLabel, _alwaysOnStyle!, y);
         LastStackBottomGuiY = y;
 
+        var bottomY = Screen.height - MonitorHudStackLayout.Pad - MonitorHudStackLayout.BarHeight;
         if (_debugHotkeyLabel != null)
         {
-            var bottomY = Screen.height - MonitorHudStackLayout.Pad - MonitorHudStackLayout.BarHeight;
             DrawCenteredBar(_debugHotkeyLabel, _debugHotkeyStyle!, bottomY);
+            bottomY -= MonitorHudStackLayout.Gap + MonitorHudStackLayout.BarHeight;
+        }
+
+        if (_onConsistLabel != null)
+        {
+            DrawCenteredBar(_onConsistLabel, _debugHotkeyStyle!, bottomY);
         }
 
         sw.Stop();

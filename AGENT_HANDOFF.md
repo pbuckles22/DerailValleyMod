@@ -117,7 +117,7 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 |--|--|
 | **Project** | *Yard Master Suite* (UMM / Harmony / net48) |
 | **MVP** | **Epic 1** System Monitor HUD |
-| **Version** | **0.6.71** *(junction-first pin + butt clear — sticky until re-foul)* |
+| **Version** | **0.6.81** *(on-consist cab bindings → front loco)* |
 | **Active branch** | **`main`** |
 
 **Shipped on `main`**
@@ -147,10 +147,11 @@ Journey: Stage 1 Apprentice (“don’t blow up”) — see journey table in PM_
 **In flight**
 
 - [x] **Junction-first stop pin** (**0.6.71**) — Clear line sticky green (blow-by OK); **re-enter danger → At switch** (Forward back onto switch cancels CLEARED). Tier 2 **PASS** (player 2026-08-11).
+- [x] **On-consist control spike** (**0.6.81**) — Cab throttle/indy/train-brake/reverser → front loco from non-front car; hold-repeat; Numpad `.` TM fuse ON-only; Motors Dead when knife off. Tier 2 **PASS** (player 2026-08-11).
 
 **Next**
 
-1. **Spike (new branch from main):** on-consist hotkeys — throttle / indy / train brake while standing on **any car of the active trainset** (front loco is the control target; not off-train remote). Optional first: couple cars and re-smoke butt clear. Then honest Yard rem / 2-step list → **3.7**. **3.1b iced**.
+1. Honest Yard rem / 2-step list → **3.7**. Optional: CLEARED length-aware safe-zone (TECH_DEBT — not this spike). **3.1b iced**.
 2. Do **not** merge `fix/hitch-0.4.20.1-hud-draw-gate`.
 3. Parking: 3.1b ghost/spawn; place ghost / Snap office under-mesh; Switch List couple auto-advance / arrival-track split; flight-sim HUD; AR house hide; DM3; session reset; 1.17 #4 behind-seed.
 

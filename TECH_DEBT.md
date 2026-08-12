@@ -52,7 +52,9 @@ High ROI; frequent pain; not blocking.
 
 - [ ] **3.1 Snap office under-mesh** — Station Snap can drop the player under the office floor / into water; needs a known-good office spawn (or offset up).
 
-- [ ] **On-consist control loco (spike)** — No shared resolver for “player on any trainset car → front loco”; cab/governor assume loco context. Need Core resolve + ThreeGate writes; fail-closed off-train. Blocks on-consist throttle/indy/train-brake hotkeys.
+- [x] **On-consist control loco (spike)** — Landed **0.6.81** (Tier 2 PASS): Rewired cab throttle/indy/train-brake/reverser → front loco while on non-front car; hold-repeat; Numpad `.` TM fuse **ON-only**; Motors Dead when knife off. Residual: peel more of the Unity wire into Core if a second consumer appears.
+
+- [ ] **CLEARED / safe-zone ignores consist length** — Smoke FAIL @ **0.6.73** (5-car butt clear / junction-first): player could not validate end-of-consist into safe zone — gate behaves as loco/fixed DE2 baseline, not tip-of-consist. `SwitchListPinClearOffset.ClearedPastMeters` **discards** `consistLengthMeters` (`De2ClearPastMeters = 18`). Do **not** fold into on-consist control spike; fix as its own ship (dynamic trailing tip / length-aware past meters + Tier 1 smoke scenarios).
 
 - [ ] **Clear-pin glue in TelemetryReader** — sticky/cache/pin-prompt still live in the god class (~2k LOC). Peel on next PathPlan/clear touch (`RadialSwitchClearance` already Core).
 

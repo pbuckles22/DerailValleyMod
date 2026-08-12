@@ -57,6 +57,8 @@ public static class MotorDisplay
     /// Dead wins over Hot; null when no usable TM signals are present.
     /// Prefer <paramref name="cabTempBand"/> (MU Warning/Critical) so Hot matches cab TM TEMP.
     /// Fallback Hot: temperature ≥ TM <paramref name="overheatingThreshold"/> (critical).
+    /// <paramref name="tmFuseOn"/> is the cab TM knife (false → Dead even at idle / 0% throttle —
+    /// TMS often stays "OK" until power is demanded).
     /// </summary>
     public static MotorStatus? StatusFromSignals(
         float? tmsState,
@@ -64,14 +66,18 @@ public static class MotorDisplay
         float? overheatingThreshold,
         float? workingMotors,
         float? totalMotors,
-        MotorCabTempBand? cabTempBand = null)
+        MotorCabTempBand? cabTempBand = null,
+        bool? tmFuseOn = null)
     {
         var hasWorkingCount =
             workingMotors is not null
             && totalMotors is > 0f
             && workingMotors.Value + 0.01f < totalMotors.Value;
 
-        if (tmsState is TmsFuseOff or TmsHasDead || hasWorkingCount)
+        // Knife off must win at idle — do not wait for TMS to flip under load.
+        if (tmFuseOn == false
+            || tmsState is TmsFuseOff or TmsHasDead
+            || hasWorkingCount)
         {
             return MotorStatus.Dead;
         }
@@ -90,7 +96,13 @@ public static class MotorDisplay
             return MotorStatus.Hot;
         }
 
-        if (tmsState is TmsOk || temperature is not null || cabTempBand is MotorCabTempBand.Nominal)
+        // Temperature alone must not imply OK (masks knife-off while TMS idle).
+        if (tmsState is TmsOk || cabTempBand is MotorCabTempBand.Nominal)
+        {
+            return MotorStatus.Ok;
+        }
+
+        if (temperature is not null && tmFuseOn != false)
         {
             return MotorStatus.Ok;
         }

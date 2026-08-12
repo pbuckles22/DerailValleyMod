@@ -19,7 +19,9 @@
     <Reference Include="DV.SignPlacer" />
     <Reference Include="DV.Simulation" />
     <Reference Include="DV.ThingTypes" />
+    <Reference Include="DV.Interaction" />
     <Reference Include="DV.Utils" />
+    <Reference Include="Rewired_Core" />
   </ItemGroup>
 
   <!-- Unity -->
